@@ -1,0 +1,9 @@
+/target
+/.idea
+*.iml
+*.iws
+*.ipr
+/test-output
+.classpath
+.project
+.settings
