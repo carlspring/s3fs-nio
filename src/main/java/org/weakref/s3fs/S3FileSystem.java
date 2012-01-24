@@ -30,19 +30,18 @@ public class S3FileSystem
     public void close()
             throws IOException
     {
-        throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean isOpen()
     {
-        throw new UnsupportedOperationException();
+        return true;
     }
 
     @Override
     public boolean isReadOnly()
     {
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
