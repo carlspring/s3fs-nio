@@ -3,6 +3,7 @@ package org.weakref.s3fs;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -71,13 +72,13 @@ public class S3FileSystem
     @Override
     public Iterable<FileStore> getFileStores()
     {
-        throw new UnsupportedOperationException();
+        return ImmutableList.of();
     }
 
     @Override
     public Set<String> supportedFileAttributeViews()
     {
-        throw new UnsupportedOperationException();
+        return ImmutableSet.of("basic");
     }
 
     @Override
