@@ -58,6 +58,10 @@ public class S3Path
 
     private S3Path(String bucket, Iterable<String> parts, boolean isDirectory)
     {
+        if (bucket != null) {
+            bucket = bucket.replace("/", "");
+        }
+
         this.bucket = bucket;
         this.directory = isDirectory;
         this.parts = ImmutableList.copyOf(transform(parts, strip("/")));
