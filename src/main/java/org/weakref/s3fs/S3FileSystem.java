@@ -1,5 +1,9 @@
 package org.weakref.s3fs;
 
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.Bucket;
+import com.google.common.collect.ImmutableList;
+
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -14,10 +18,12 @@ public class S3FileSystem
         extends FileSystem
 {
     private final S3FileSystemProvider provider;
+    private final AmazonS3Client client;
 
-    public S3FileSystem(S3FileSystemProvider provider)
+    public S3FileSystem(S3FileSystemProvider provider, AmazonS3Client client)
     {
         this.provider = provider;
+        this.client = client;
     }
 
     @Override
@@ -53,7 +59,13 @@ public class S3FileSystem
     @Override
     public Iterable<Path> getRootDirectories()
     {
-        throw new UnsupportedOperationException();
+        ImmutableList.Builder<Path> builder = ImmutableList.builder();
+
+        for (Bucket bucket : client.listBuckets()) {
+            builder.add(new S3Path(bucket.getName()));
+        }
+
+        return builder.build();
     }
 
     @Override

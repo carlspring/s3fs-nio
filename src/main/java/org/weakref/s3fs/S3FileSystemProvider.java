@@ -93,7 +93,7 @@ public class S3FileSystemProvider
             client.setEndpoint(uri.getHost());
         }
 
-        S3FileSystem result = new S3FileSystem(this);
+        S3FileSystem result = new S3FileSystem(this, client);
 
         if (!fileSystem.compareAndSet(null, result)) {
             throw new FileSystemAlreadyExistsException("S3 filesystem already exists. Use getFileSystem() instead");
@@ -230,5 +230,4 @@ public class S3FileSystemProvider
     {
         throw new UnsupportedOperationException();
     }
-
 }
