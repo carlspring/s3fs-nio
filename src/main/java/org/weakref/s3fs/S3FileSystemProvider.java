@@ -1,5 +1,10 @@
 package org.weakref.s3fs;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.google.common.base.Preconditions;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,6 +15,8 @@ import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -19,6 +26,7 @@ import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Spec:
@@ -49,6 +57,11 @@ import java.util.Set;
 public class S3FileSystemProvider
         extends FileSystemProvider
 {
+    public static final String ACCESS_KEY = "access-key";
+    public static final String SECRET_KEY = "secret-key";
+
+    private final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
+
     @Override
     public String getScheme()
     {
@@ -59,13 +72,46 @@ public class S3FileSystemProvider
     public FileSystem newFileSystem(URI uri, Map<String, ?> env)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkNotNull(uri, "uri is null");
+        Preconditions.checkArgument(uri.getScheme().equals("s3"), "uri scheme must be 's3': '%s'", uri);
+
+        Object accessKey = env.get(ACCESS_KEY);
+        Object secretKey = env.get(SECRET_KEY);
+
+        Preconditions.checkArgument((accessKey == null && secretKey == null) || (accessKey != null && secretKey != null), "%s and %s should both be provided or should both be omitted", ACCESS_KEY, SECRET_KEY);
+
+        AmazonS3Client client;
+
+        if (accessKey == null && secretKey == null) {
+            client = new AmazonS3Client();
+        }
+        else {
+            client = new AmazonS3Client(new BasicAWSCredentials(accessKey.toString(), secretKey.toString()));
+        }
+
+        if (uri.getHost() != null) {
+            client.setEndpoint(uri.getHost());
+        }
+
+        S3FileSystem result = new S3FileSystem(this);
+
+        if (!fileSystem.compareAndSet(null, result)) {
+            throw new FileSystemAlreadyExistsException("S3 filesystem already exists. Use getFileSystem() instead");
+        }
+
+        return result;
     }
 
     @Override
     public FileSystem getFileSystem(URI uri)
     {
-        throw new UnsupportedOperationException();
+        FileSystem fileSystem = this.fileSystem.get();
+
+        if (fileSystem == null) {
+            throw new FileSystemNotFoundException(String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
+        }
+
+        return fileSystem;
     }
 
     @Override
