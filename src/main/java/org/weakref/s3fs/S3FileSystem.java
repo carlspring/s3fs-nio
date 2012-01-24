@@ -84,7 +84,11 @@ public class S3FileSystem
     @Override
     public Path getPath(String first, String... more)
     {
-        throw new UnsupportedOperationException();
+        if (more.length == 0) {
+            return S3Path.forPath(first);
+        }
+
+        return new S3Path(first, more);
     }
 
     @Override
