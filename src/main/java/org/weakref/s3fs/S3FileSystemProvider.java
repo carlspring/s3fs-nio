@@ -3,7 +3,12 @@ package org.weakref.s3fs;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Throwables;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,14 +23,17 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -223,7 +231,50 @@ public class S3FileSystemProvider
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
+        S3Path s3Path = (S3Path) path;
+
+        if (type == BasicFileAttributes.class) {
+            AmazonS3 client = s3Path.getFileSystem().getClient();
+
+            ObjectMetadata metadata = null;
+            try {
+                metadata = client.getObjectMetadata(s3Path.getBucket(), s3Path.getKey());
+            }
+            catch (AmazonS3Exception e) {
+                if (!s3Path.isDirectory()) { // don't bail out if this path represents a directory -- see if it has children
+                    if (e.getStatusCode() == 404) {
+                        throw new NoSuchFileException(path.toString());
+                    }
+                    Throwables.propagate(e);
+                }
+            }
+
+            if (metadata != null) {
+                return type.cast(new S3FileAttributes(s3Path.getKey(),
+                        FileTime.from(metadata.getLastModified().getTime(), TimeUnit.MILLISECONDS),
+                        metadata.getContentLength(),
+                        s3Path.isDirectory(),
+                        true));
+            }
+
+            // key doesn't exist. See if it's an "implicit" directory (i.e., there are entries with it as a common prefix)
+            if (s3Path.isDirectory()) {
+                ListObjectsRequest request = new ListObjectsRequest(s3Path.getBucket(), s3Path.getKey(), null, "/", 1);
+                ObjectListing listing = client.listObjects(request);
+
+                if (!listing.getObjectSummaries().isEmpty() || !listing.getCommonPrefixes().isEmpty()) {
+                    // has children
+                    return type.cast(new S3FileAttributes(s3Path.getKey(),
+                            FileTime.from(0, TimeUnit.MILLISECONDS),
+                            0,
+                            true,
+                            false));
+                }
+            }
+        }
+
+        return null;
     }
 
     @Override
