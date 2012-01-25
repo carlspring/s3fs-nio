@@ -208,7 +208,7 @@ public class S3FileSystemProvider
     public boolean isSameFile(Path path1, Path path2)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        return path1.isAbsolute() && path2.isAbsolute() && path1.equals(path2);
     }
 
     @Override
