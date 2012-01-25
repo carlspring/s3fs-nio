@@ -8,10 +8,15 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertSame;
+import static org.weakref.s3fs.S3Path.forPath;
 
 public class TestFileSystemProvider
 {
@@ -72,4 +77,16 @@ public class TestFileSystemProvider
         S3FileSystemProvider provider = new S3FileSystemProvider();
         provider.getFileSystem(URI.create("s3:///"));
     }
+    
+    @Test
+    public void testGetPath()
+            throws IOException
+    {
+        FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
+        Path path = Paths.get(URI.create("s3:///bucket/path/to/file"));
+
+        assertEquals(path, forPath("/bucket/path/to/file"));
+        assertSame(path.getFileSystem(), fs);
+    }
+    
 }

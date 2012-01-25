@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -114,7 +115,8 @@ public class S3Path
     @Override
     public FileSystem getFileSystem()
     {
-        throw new UnsupportedOperationException(); // TODO
+        // TODO: hold on to the filesystem that created this path and return it here
+        return FileSystems.getFileSystem(URI.create("s3:///"));
     }
 
     @Override

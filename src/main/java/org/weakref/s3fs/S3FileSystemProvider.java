@@ -114,10 +114,19 @@ public class S3FileSystemProvider
         return fileSystem;
     }
 
+    /**
+     * Deviation from spec: throws FileSystemNotFoundException if FileSystem hasn't yet been initialized. Call newFileSystem() first.
+     */
     @Override
     public Path getPath(URI uri)
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "URI scheme must be %s", getScheme());
+        
+        if (uri.getHost() != null && !uri.getHost().isEmpty()) {
+            throw new IllegalArgumentException(String.format("non-empty URI host not supported at this time: %s", uri.getHost())); // TODO
+        }
+
+        return getFileSystem(uri).getPath(uri.getPath());
     }
 
     @Override
