@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -184,11 +185,27 @@ public class S3FileSystemProvider
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Deviations from spec:
+     *  Does not perform atomic check-and-create.
+     *  Since a directory is just an S3 object, all directories in the hierarchy are created implicitly
+     *  The call succeeds whether the the directory was created or it already existed.
+     */
     @Override
     public void createDirectory(Path dir, FileAttribute<?>... attrs)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        S3Path s3Path = (S3Path) dir;
+        Preconditions.checkArgument(s3Path.isDirectory(), "dir does not represent a directory path: %s", dir);
+
+        Preconditions.checkArgument(attrs.length == 0, "attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(0);
+
+        s3Path.getFileSystem()
+                .getClient()
+                .putObject(s3Path.getBucket(), s3Path.getKey(), new ByteArrayInputStream(new byte[0]), metadata);
     }
 
     @Override
