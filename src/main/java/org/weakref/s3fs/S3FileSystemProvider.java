@@ -3,10 +3,14 @@ package org.weakref.s3fs;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Grant;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.Owner;
+import com.amazonaws.services.s3.model.Permission;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -19,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
@@ -289,7 +294,55 @@ public class S3FileSystemProvider
     public void checkAccess(Path path, AccessMode... modes)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        S3Path s3Path = (S3Path) path;
+        Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
+
+        AmazonS3 client = s3Path.getFileSystem().getClient();
+
+        // get ACL and check if the file exists as a side-effect
+        AccessControlList acl = null;
+        try {
+            acl = client.getObjectAcl(s3Path.getBucket(), s3Path.getKey());
+        }
+        catch (AmazonS3Exception e) {
+            if (e.getStatusCode() == 404) {
+                throw new NoSuchFileException(s3Path.toString());
+            }
+            Throwables.propagate(e);
+        }
+
+        for (AccessMode accessMode : modes) {
+            switch (accessMode) {
+                case EXECUTE:
+                    throw new AccessDeniedException(s3Path.toString(), null, "file is not executable");
+                case READ:
+                    if (!hasPermissions(acl, client.getS3AccountOwner(), EnumSet.of(Permission.FullControl, Permission.Read))) {
+                        throw new AccessDeniedException(s3Path.toString(), null, "file is not readable");
+                    }
+                    break;
+                case WRITE:
+                    if (!hasPermissions(client.getBucketAcl(s3Path.getBucket()),
+                            client.getS3AccountOwner(),
+                            EnumSet.of(Permission.FullControl, Permission.Write))) {
+                        throw new AccessDeniedException(s3Path.toString(), null, format("bucket '%s' is not writable", s3Path.getBucket()));
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(format("access mode '%s' not supported", accessMode));
+            }
+        }
+    }
+
+    private boolean hasPermissions(AccessControlList acl, Owner owner, EnumSet<Permission> permissions)
+    {
+        boolean result = false;
+        for (Grant grant : acl.getGrants()) {
+            if (grant.getGrantee().getIdentifier().equals(owner.getId()) && permissions.contains(grant.getPermission())) {
+                result = true;
+                break;
+            }
+        }
+        return result;
     }
 
     @Override
