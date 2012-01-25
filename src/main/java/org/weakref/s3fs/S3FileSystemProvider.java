@@ -9,6 +9,7 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
+import com.google.common.collect.ImmutableList;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -148,7 +149,17 @@ public class S3FileSystemProvider
     public InputStream newInputStream(Path path, OpenOption... options)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkArgument(options.length == 0, "OpenOptions not yet supported: %s", ImmutableList.copyOf(options)); // TODO
+
+        Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
+        S3Path s3Path = (S3Path) path;
+
+        Preconditions.checkArgument(!s3Path.getKey().equals(""), "cannot create InputStream for root directory: %s", s3Path);
+
+        return s3Path.getFileSystem()
+                .getClient()
+                .getObject(s3Path.getBucket(), s3Path.getKey())
+                .getObjectContent();
     }
 
     @Override
