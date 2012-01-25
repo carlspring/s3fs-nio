@@ -109,4 +109,9 @@ public class S3FileSystem
     {
         throw new UnsupportedOperationException();
     }
+
+    public AmazonS3Client getClient()
+    {
+        return client;
+    }
 }

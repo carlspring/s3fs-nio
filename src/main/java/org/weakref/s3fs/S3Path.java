@@ -113,10 +113,10 @@ public class S3Path
     }
     
     @Override
-    public FileSystem getFileSystem()
+    public S3FileSystem getFileSystem()
     {
         // TODO: hold on to the filesystem that created this path and return it here
-        return FileSystems.getFileSystem(URI.create("s3:///"));
+        return (S3FileSystem) FileSystems.getFileSystem(URI.create("s3:///"));
     }
 
     @Override
