@@ -208,11 +208,22 @@ public class S3FileSystemProvider
                 .putObject(s3Path.getBucket(), s3Path.getKey(), new ByteArrayInputStream(new byte[0]), metadata);
     }
 
+    /**
+     * Deviations from spec:
+     *  - does not check whether path exists before deleting it. I.e., the operation is considered
+     *    successful whether the entry was deleted or it didn't exist in the first place
+     *  - doesn't throw DirectoryNotEmptyException if the path is a directory and it contains entries
+     */
     @Override
     public void delete(Path path)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
+
+        S3Path s3Path = (S3Path) path;
+        s3Path.getFileSystem()
+                .getClient()
+                .deleteObject(s3Path.getBucket(), s3Path.getKey());
     }
 
     @Override
