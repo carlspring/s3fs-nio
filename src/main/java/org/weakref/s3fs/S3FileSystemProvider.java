@@ -10,6 +10,8 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +21,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
@@ -27,15 +30,20 @@ import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.google.common.collect.Sets.difference;
+import static java.lang.String.format;
 
 /**
  * Spec:
@@ -194,7 +202,31 @@ public class S3FileSystemProvider
     public void copy(Path source, Path target, CopyOption... options)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        Preconditions.checkArgument(source instanceof S3Path, "source must be an instance of %s", S3Path.class.getName());
+        Preconditions.checkArgument(target instanceof S3Path, "target must be an instance of %s", S3Path.class.getName());
+
+        if (isSameFile(source, target)) {
+            return;
+        }
+
+        S3Path s3Source = (S3Path) source;
+        S3Path s3Target = (S3Path) target;
+
+        Preconditions.checkArgument(!s3Source.isDirectory(), "copying directories is not yet supported: %s", source); // TODO
+        Preconditions.checkArgument(!s3Target.isDirectory(), "copying directories is not yet supported: %s", target); // TODO
+
+        ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
+        verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
+
+        if (!actualOptions.contains(StandardCopyOption.REPLACE_EXISTING)) {
+            if (exists(s3Target)) {
+                throw new FileAlreadyExistsException(format("target already exists: %s", target));
+            }
+        }
+
+        s3Source.getFileSystem()
+                .getClient()
+                .copyObject(s3Source.getBucket(), s3Source.getKey(), s3Target.getBucket(), s3Target.getKey());
     }
 
     @Override
@@ -300,5 +332,28 @@ public class S3FileSystemProvider
             throws IOException
     {
         throw new UnsupportedOperationException();
+    }
+
+    private <T> void verifySupportedOptions(Set<? extends T> allowedOptions, Set<? extends T> actualOptions)
+    {
+        Sets.SetView<? extends T> unsupported = difference(actualOptions, allowedOptions);
+        Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
+    }
+
+    private boolean exists(S3Path path)
+    {
+        AmazonS3 client = path.getFileSystem().getClient();
+
+        try {
+            client.getObjectMetadata(path.getBucket(), path.getKey());
+        }
+        catch (AmazonS3Exception e) {
+            if (e.getStatusCode() == 404) {
+                return false;
+            }
+            Throwables.propagate(e);
+        }
+
+        return true;
     }
 }
