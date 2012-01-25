@@ -196,7 +196,7 @@ public class S3FileSystemProvider
     public boolean isHidden(Path path)
             throws IOException
     {
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
