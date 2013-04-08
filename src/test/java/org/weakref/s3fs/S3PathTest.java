@@ -1,18 +1,34 @@
 package org.weakref.s3fs;
 
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.weakref.s3fs.S3Path.forPath;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Iterator;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.weakref.s3fs.S3Path.forPath;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-public class TestS3Path
+public class S3PathTest
 {
+	
+	@BeforeClass
+	public static void setup() throws IOException{
+		try {
+			FileSystems.getFileSystem(URI.create("s3:///"));
+		
+		} catch(FileSystemNotFoundException e) {
+			S3FileSystemBuilder.newDefault().build("", "");
+		}
+	}
+	
     @Test
     public void testCreateNoPath()
     {

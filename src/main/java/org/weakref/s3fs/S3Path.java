@@ -1,15 +1,12 @@
 package org.weakref.s3fs;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
+import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.transform;
+import static java.lang.String.format;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -19,9 +16,11 @@ import java.nio.file.WatchService;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.google.common.collect.Iterables.concat;
-import static com.google.common.collect.Iterables.transform;
-import static java.lang.String.format;
+import com.google.common.base.Function;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
 
 public class S3Path
         implements Path
@@ -32,15 +31,35 @@ public class S3Path
 
     private final boolean directory; // files that end in "/" are considered directories in s3
     private final List<String> parts;
+    private S3FileSystem fileSystem;
 
     /**
-     * Root component for the given bucket
+     * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just "{key}"
      */
-    public S3Path(String bucket)
-    {
-        this.bucket = bucket;
-        this.parts = ImmutableList.of();
-        this.directory = true;
+    public S3Path(S3FileSystem fileSystem, String path) {
+    	 List<String> parts = ImmutableList.copyOf(Splitter.on(PATH_SEPARATOR).omitEmptyStrings().split(path));
+
+         String bucket = null;
+         List<String> pathParts = parts;
+
+         if (path.startsWith(PATH_SEPARATOR)) { // absolute path
+             Preconditions.checkArgument(parts.size() >= 1, "path must start with bucket name");
+
+             bucket = parts.get(0);
+
+             if (!parts.isEmpty()) {
+                 pathParts = parts.subList(1, parts.size());
+             }
+         }
+         
+         if (bucket != null) {
+             bucket = bucket.replace("/", "");
+         }
+
+         this.bucket = bucket;
+         this.directory = path.endsWith("/") || pathParts.isEmpty();
+         this.parts = ImmutableList.copyOf(transform(pathParts, strip("/")));
+         this.fileSystem = fileSystem;
     }
 
     /**
@@ -48,16 +67,16 @@ public class S3Path
      *
      * If the last part ends in '/', the path is considered directory
      */
-    public S3Path(String bucket, String... parts)
+    public S3Path(S3FileSystem fileSystem, String bucket, String... parts)
     {
-        this(bucket,
+        this(fileSystem, bucket,
                 ImmutableList.copyOf(parts),
                 parts.length == 0 || (parts.length > 0 && parts[parts.length - 1].endsWith("/"))
                 );
     }
 
 
-    private S3Path(String bucket, Iterable<String> parts, boolean isDirectory)
+    private S3Path(S3FileSystem fileSystem, String bucket, Iterable<String> parts, boolean isDirectory)
     {
         if (bucket != null) {
             bucket = bucket.replace("/", "");
@@ -66,6 +85,7 @@ public class S3Path
         this.bucket = bucket;
         this.directory = isDirectory;
         this.parts = ImmutableList.copyOf(transform(parts, strip("/")));
+        this.fileSystem = fileSystem;
     }
     
     /**
@@ -73,24 +93,8 @@ public class S3Path
      *
      * redundant '/' are stripped
      */
-    public static S3Path forPath(String path)
-    {
-        List<String> parts = ImmutableList.copyOf(Splitter.on(PATH_SEPARATOR).omitEmptyStrings().split(path));
-
-        String bucket = null;
-        List<String> pathParts = parts;
-
-        if (path.startsWith(PATH_SEPARATOR)) { // absolute path
-            Preconditions.checkArgument(parts.size() >= 1, "path must start with bucket name");
-
-            bucket = parts.get(0);
-
-            if (!parts.isEmpty()) {
-                pathParts = parts.subList(1, parts.size());
-            }
-        }
-
-        return new S3Path(bucket, pathParts, path.endsWith("/") || pathParts.isEmpty());
+    public static S3Path forPath(String path) {
+        return new S3Path((S3FileSystem) FileSystems.getFileSystem(URI.create("s3:///")), path);
     }
 
     public String getBucket()
@@ -115,8 +119,7 @@ public class S3Path
     @Override
     public S3FileSystem getFileSystem()
     {
-        // TODO: hold on to the filesystem that created this path and return it here
-        return (S3FileSystem) FileSystems.getFileSystem(URI.create("s3:///"));
+        return this.fileSystem;
     }
 
     @Override
@@ -134,7 +137,7 @@ public class S3Path
     public Path getRoot()
     {
         if (isAbsolute()) {
-            return new S3Path(bucket, ImmutableList.<String>of(), true);
+            return new S3Path(fileSystem, bucket, ImmutableList.<String>of(), true);
         }
 
         return null;
@@ -144,7 +147,7 @@ public class S3Path
     public Path getFileName()
     {
         if (!parts.isEmpty()) {
-            return new S3Path(null, parts.subList(parts.size() - 1, parts.size()), directory);
+            return new S3Path(fileSystem, null, parts.subList(parts.size() - 1, parts.size()), directory);
         }
 
         return null;
@@ -153,11 +156,11 @@ public class S3Path
     @Override
     public Path getParent()
     {
-        if (parts.isEmpty()) {
+        if (parts.isEmpty() || parts.size() == 1) {
             return null;
         }
         
-        return new S3Path(bucket, parts.subList(0, parts.size() - 1), true);
+        return new S3Path(fileSystem, bucket, parts.subList(0, parts.size() - 1), true);
     }
 
     @Override
@@ -171,7 +174,7 @@ public class S3Path
     {
         boolean isDirectory = (index < parts.size() - 1) || directory;
 
-        return new S3Path(null, parts.subList(index, index + 1), isDirectory);
+        return new S3Path(fileSystem, null, parts.subList(index, index + 1), isDirectory);
     }
 
     @Override
@@ -179,7 +182,7 @@ public class S3Path
     {
         boolean isDirectory = (endIndex <= parts.size() - 1) || directory;
 
-        return new S3Path(null, parts.subList(beginIndex, endIndex), isDirectory);
+        return new S3Path(fileSystem, null, parts.subList(beginIndex, endIndex), isDirectory);
     }
 
     @Override
@@ -203,7 +206,7 @@ public class S3Path
     @Override
     public boolean endsWith(String other)
     {
-        throw new UnsupportedOperationException();
+    	return this.endsWith(new S3Path(this.fileSystem, other));
     }
 
     @Override
@@ -227,7 +230,7 @@ public class S3Path
             return this;
         }
 
-        return new S3Path(bucket, concat(parts, s3Path.parts), s3Path.directory);
+        return new S3Path(fileSystem, bucket, concat(parts, s3Path.parts), s3Path.directory);
     }
 
     @Override
@@ -253,7 +256,7 @@ public class S3Path
             return parent;
         }
 
-        return new S3Path(bucket, concat(parts.subList(0, parts.size() - 1), s3Path.parts), s3Path.directory);
+        return new S3Path(fileSystem, bucket, concat(parts.subList(0, parts.size() - 1), s3Path.parts), s3Path.directory);
     }
 
     @Override
@@ -271,7 +274,6 @@ public class S3Path
         if (this.equals(other)) {
             return S3Path.forPath("");
         }
-
 
         Preconditions.checkArgument(isAbsolute(), "Path is already relative: %s", this);
         Preconditions.checkArgument(s3Path.isAbsolute(), "Cannot relativize against a relative path: %s", s3Path);
@@ -334,7 +336,7 @@ public class S3Path
 
             boolean isDirectory = iterator.hasNext() || directory;
 
-            builder.add(new S3Path(null, ImmutableList.of(part), isDirectory));
+            builder.add(new S3Path(fileSystem, null, ImmutableList.of(part), isDirectory));
         }
 
         return builder.build().iterator();

@@ -31,7 +31,7 @@
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
-            <version>1.2.7</version>
+            <version>1.4.1</version>
         </dependency>
 
         <dependency>
@@ -41,12 +41,20 @@
         </dependency>
 
         <!-- for testing -->
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-            <version>6.2.1</version>
+         <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8</version>
             <scope>test</scope>
         </dependency>
+        
+         <dependency>
+	      <groupId>com.github.marschall</groupId>
+	      <artifactId>zipfilesystem-standalone</artifactId>
+	      <version>1.0.0</version>
+	       <scope>test</scope>
+	    </dependency>
+         
     </dependencies>
 
     <build>

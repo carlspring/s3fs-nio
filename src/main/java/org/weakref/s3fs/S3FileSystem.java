@@ -34,15 +34,14 @@ public class S3FileSystem
     }
 
     @Override
-    public void close()
-            throws IOException
-    {
+    public void close() throws IOException {
+    	this.provider.fileSystem.compareAndSet(this, null);
     }
 
     @Override
     public boolean isOpen()
     {
-        return true;
+        return this.provider.fileSystem.get() != null;
     }
 
     @Override
@@ -63,7 +62,7 @@ public class S3FileSystem
         ImmutableList.Builder<Path> builder = ImmutableList.builder();
 
         for (Bucket bucket : client.listBuckets()) {
-            builder.add(new S3Path(bucket.getName()));
+            builder.add(new S3Path(this, bucket.getName()));
         }
 
         return builder.build();
@@ -85,10 +84,10 @@ public class S3FileSystem
     public Path getPath(String first, String... more)
     {
         if (more.length == 0) {
-            return S3Path.forPath(first);
+            return new S3Path(this, first);
         }
 
-        return new S3Path(first, more);
+        return new S3Path(this, first, more);
     }
 
     @Override
