@@ -3,6 +3,7 @@
 *.iml
 *.iws
 *.ipr
+/src/test/resources/amazon-test.properties
 /test-output
 .classpath
 .project
