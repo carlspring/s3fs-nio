@@ -3,7 +3,7 @@
     <groupId>org.weakref</groupId>
     <artifactId>s3fs</artifactId>
     <packaging>jar</packaging>
-    <version>0.1.1-SNAPSHOT</version>
+    <version>0.1.2-SNAPSHOT</version>
     <name>s3fs</name>
     <description>S3 filesystem provider for Java 7</description>
     <url>https://github.com/martint/s3fs</url>

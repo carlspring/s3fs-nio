@@ -8,6 +8,7 @@ import static org.junit.Assert.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -43,24 +44,19 @@ public class FilesOperationsIT {
 		fileSystemAmazon = build();
 	}
 	
-	@After
-	public void close() throws IOException{
-		fileSystemAmazon.close();
-	}
-	
 	private static FileSystem build() throws IOException{
-		
 		try {
-			return FileSystems.getFileSystem(uriDefaultEndpoint);
+			FileSystems.getFileSystem(uri).close();
+			return createNewFileSystem();
 		} catch(FileSystemNotFoundException e){
-			final Properties props = new Properties();
-			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-			return FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com/"), 
-					new HashMap<String, Object>(){{
-						put("access-key", props.getProperty("accessKeyId"));
-						put("secret-key", props.getProperty("secretKey"));
-					}}, FilesOperationsIT.class.getClassLoader());
+			return createNewFileSystem();
 		}
+	}
+
+	private static FileSystem createNewFileSystem() throws IOException {
+		final Properties props = new Properties();
+		props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+		return S3FileSystemBuilder.newEndpoint("s3-eu-west-1.amazonaws.com").build(props.getProperty("accessKeyId"), props.getProperty("secretKey"));
 	}
 	
 	@Test
@@ -109,33 +105,27 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void createEmptyDir() throws IOException{
+	public void createEmptyDirTest() throws IOException{
 		
-		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
-		
-		Files.createDirectory(dir);
+		Path dir = createEmptyDir();
 		
 		assertTrue(Files.exists(dir));
 		assertTrue(Files.isDirectory(dir));
 	}
 	
 	@Test
-	public void createEmptyFile() throws IOException{
+	public void createEmptyFileTest() throws IOException{
 		
-		Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
-		
-		Files.createFile(file);
+		Path file = createEmptyFile();
 		
 		assertTrue(Files.exists(file));
 		assertTrue(Files.isRegularFile(file));
 	}
-	
+
 	@Test
 	public void createTempFile() throws IOException{
 		
-		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
-		
-		Files.createDirectory(dir);
+		Path dir = createEmptyDir();
 		
 		Path file = Files.createTempFile(dir, "file", "temp");
 		
@@ -145,13 +135,27 @@ public class FilesOperationsIT {
 	@Test
 	public void createTempDir() throws IOException{
 
-		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
-		
-		Files.createDirectory(dir);
+		Path dir = createEmptyDir();
 		
 		Path dir2 = Files.createTempDirectory(dir, "dir-temp");
 		
 		assertTrue(Files.exists(dir2));
+	}
+	
+	@Test
+	public void deleteFile() throws IOException{
+		Path file = createEmptyFile();
+		Files.delete(file);
+		
+		Files.notExists(file);
+	}
+	
+	@Test
+	public void deleteDir() throws IOException{
+		Path dir = createEmptyDir();
+		Files.delete(dir);
+		
+		Files.notExists(dir);
 	}
 	
 	@Test
@@ -166,7 +170,24 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void testDeleteFullDir() throws IOException, URISyntaxException {
+	public void directoryStreamTest() throws IOException, URISyntaxException{
+		Path dir = uploadDir();
+		
+		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)){
+			int number = 0;
+			for (Path path : dirStream){
+				number++;
+				// solo recorre ficheros del primer nivel
+				assertEquals(dir, path.getParent());
+				assertEquals("assets1", path.getFileName().toString());
+			}
+			
+			assertEquals(1, number);
+		}
+	}
+	
+	@Test
+	public void deleteFullDirTest() throws IOException, URISyntaxException {
 
 		Path dir = uploadDir();
 		
@@ -193,18 +214,16 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void copyUpload() throws URISyntaxException, IOException{
+	public void copyUploadTest() throws URISyntaxException, IOException{
 		Path result = uploadSingleFile();
 		
 		assertTrue(Files.exists(result));
 		assertArrayEquals(Files.readAllBytes(Paths.get(this.getClass().getResource("/dirFile/assets1/index.html")
 				.toURI())), Files.readAllBytes(result));
 	}
-
-	
 	
 	@Test
-	public void copyDownload() throws IOException, URISyntaxException{
+	public void copyDownloadTest() throws IOException, URISyntaxException{
 		Path result = uploadSingleFile();
 		
 		Path localResult = Files.createTempDirectory("temp-local-file");
@@ -215,7 +234,20 @@ public class FilesOperationsIT {
 		assertTrue(Files.exists(notExistLocalResult));
 		
 		assertArrayEquals(Files.readAllBytes(result), Files.readAllBytes(notExistLocalResult));
+	}
+	
+	private Path createEmptyDir() throws IOException {
+		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 		
+		Files.createDirectory(dir);
+		return dir;
+	}
+	
+	private Path createEmptyFile() throws IOException {
+		Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+		
+		Files.createFile(file);
+		return file;
 	}
 	
 	private Path uploadSingleFile() throws IOException, URISyntaxException {

@@ -1,6 +1,8 @@
 package org.weakref.s3fs;
 
 import com.google.common.collect.ImmutableMap;
+
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -20,6 +22,17 @@ import static org.junit.Assert.assertNotSame;
 import static org.weakref.s3fs.S3Path.forPath;
 
 public class FileSystemProviderTest {
+	
+	@Before
+	public void cleanup() throws IOException{
+		try{
+			FileSystems.getFileSystem(URI.create("s3:///")).close();
+		}
+		catch(FileSystemNotFoundException e){
+			
+		}
+	}
+	
 	@Test
 	public void testCreatesAuthenticated() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();

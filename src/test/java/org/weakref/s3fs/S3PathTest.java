@@ -36,7 +36,6 @@ public class S3PathTest
 
         assertEquals(path.getBucket(), "bucket");
         assertEquals(path.getKey(), "");
-        assertTrue(path.isDirectory());
     }
 
     @Test
@@ -46,7 +45,6 @@ public class S3PathTest
 
         assertEquals(path.getBucket(), "bucket");
         assertEquals(path.getKey(), "");
-        assertTrue(path.isDirectory());
     }
 
     @Test
@@ -56,7 +54,6 @@ public class S3PathTest
 
         assertEquals(path.getBucket(), "bucket");
         assertEquals(path.getKey(), "path/to/file");
-        assertFalse(path.isDirectory());
     }
 
     @Test
@@ -65,8 +62,7 @@ public class S3PathTest
         S3Path path = forPath("/bucket/path/to/file/");
 
         assertEquals(path.getBucket(), "bucket");
-        assertEquals(path.getKey(), "path/to/file/");
-        assertTrue(path.isDirectory());
+        assertEquals(path.getKey(), "path/to/file");
     }
 
     @Test
@@ -75,7 +71,6 @@ public class S3PathTest
         S3Path path = forPath("path/to/file");
         assertNull(path.getBucket());
         assertEquals(path.getKey(), "path/to/file");
-        assertFalse(path.isDirectory());
         assertFalse(path.isAbsolute());
     }
 

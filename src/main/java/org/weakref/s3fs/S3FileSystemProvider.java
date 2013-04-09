@@ -171,7 +171,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public DirectoryStream<Path> newDirectoryStream(Path dir,
 			DirectoryStream.Filter<? super Path> filter) throws IOException {
-		
+
 		Preconditions.checkArgument(dir instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) dir;
@@ -185,9 +185,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			@Override
 			public Iterator<Path> iterator() {
 				return new Iterator<Path>() {
-					
+
 					private S3Path dir = s3Path;
 					private Iterator<S3Path> it;
+
 					@Override
 					public void remove() {
 						// nada: no soportado
@@ -195,8 +196,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 					@Override
 					public Path next() {
-						/*S3ObjectSummary obj = getIterator().next();
-						return S3Path.forPath("/" + obj.getBucketName() + "/" + obj.getKey());*/
+						/*
+						 * S3ObjectSummary obj = getIterator().next(); return
+						 * S3Path.forPath("/" + obj.getBucketName() + "/" +
+						 * obj.getKey());
+						 */
 						return getIterator().next();
 					}
 
@@ -204,53 +208,61 @@ public class S3FileSystemProvider extends FileSystemProvider {
 					public boolean hasNext() {
 						return getIterator().hasNext();
 					}
-					
-					private Iterator<S3Path> getIterator(){
-						if (it == null){
+
+					private Iterator<S3Path> getIterator() {
+						if (it == null) {
 							List<S3Path> listPath = new ArrayList<>();
 							ListObjectsRequest request = new ListObjectsRequest();
 							request.setBucketName(s3Path.getBucket());
-							request.setPrefix(s3Path.getKey());
-							//request.setDelimiter("/");
+							request.setPrefix(s3Path.getKey() + "/");
+							// request.setDelimiter("/");
 							// carga TODOS los elementos a todos los niveles :(
-							for (final S3ObjectSummary objectSummary: dir.getFileSystem().getClient().listObjects(request).getObjectSummaries()) {
-							    final String key = objectSummary.getKey();
-							    // filtramos para quedarnos con los de primer nivel
-							    if (isImmediateDescendant(request.getPrefix(), key)) {
-							    	listPath.add(S3Path.forPath("/" + objectSummary.getBucketName() + "/" + objectSummary.getKey()));
-							    }
+							for (final S3ObjectSummary objectSummary : dir
+									.getFileSystem().getClient()
+									.listObjects(request).getObjectSummaries()) {
+								final String key = objectSummary.getKey();
+								// filtramos para quedarnos con los de primer
+								// nivel
+								if (isImmediateDescendant(request.getPrefix(),
+										key)) {
+									listPath.add(S3Path.forPath("/"
+											+ objectSummary.getBucketName()
+											+ "/" + objectSummary.getKey()));
+								}
 							}
 							it = listPath.iterator();
 						}
-						
+
 						return it;
 					}
-					
-					
 
-					public boolean isImmediateDescendant(final String parent, final String child) {
-					    if (!child.startsWith(parent)) {
-					        // maybe we just should return false
-					        throw new IllegalArgumentException("Invalid child '" + child 
-					            + "' for parent '" + parent + "'");
-					    }
-					    final int parentLen = parent.length();
-					    final String childWithoutParent = child.substring(parentLen);
-					    
-					    if (childWithoutParent.isEmpty()){
-					    	return false;
-					    }
-					    
-					    int numberPaths = childWithoutParent.length() - childWithoutParent.replaceAll("/", "").length();
-					    if (!childWithoutParent.endsWith("/")){
-					    	numberPaths++;
-					    }
-					    if (numberPaths == 1) {
-					        return true;
-					    }
-					    else{
-					    	return false;
-					    }
+					public boolean isImmediateDescendant(final String parent,
+							final String child) {
+						if (!child.startsWith(parent)) {
+							// maybe we just should return false
+							throw new IllegalArgumentException(
+									"Invalid child '" + child
+											+ "' for parent '" + parent + "'");
+						}
+						final int parentLen = parent.length();
+						final String childWithoutParent = child
+								.substring(parentLen);
+
+						if (childWithoutParent.isEmpty()) {
+							return false;
+						}
+
+						int numberPaths = childWithoutParent.length()
+								- childWithoutParent.replaceAll("/", "")
+										.length();
+						if (!childWithoutParent.endsWith("/")) {
+							numberPaths++;
+						}
+						if (numberPaths == 1) {
+							return true;
+						} else {
+							return false;
+						}
 					}
 				};
 			}
@@ -327,6 +339,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			public void close() throws IOException {
 				seekable.close();
 				// guardmaos en el close
+				// FIXME: comprobar que no existe una carpeta con el mismo nombre: si existe: lanzar exception
 				s3Path.getFileSystem()
 						.getClient()
 						.putObject(s3Path.getBucket(), s3Path.getKey(),
@@ -389,15 +402,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	/**
 	 * Deviations from spec: Does not perform atomic check-and-create. Since a
 	 * directory is just an S3 object, all directories in the hierarchy are
-	 * created implicitly The call succeeds whether the the directory was
 	 * created or it already existed.
 	 */
 	@Override
 	public void createDirectory(Path dir, FileAttribute<?>... attrs)
 			throws IOException {
+		
+		// FIXME: comprobar que si ya existe un fichero con la misma key: no permitir.
+		
 		S3Path s3Path = (S3Path) dir;
-		Preconditions.checkArgument(s3Path.isDirectory(),
-				"dir does not represent a directory path: %s", dir);
 
 		Preconditions.checkArgument(attrs.length == 0,
 				"attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
@@ -405,9 +418,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
 
+		String keyName = s3Path.getKey()
+				+ (s3Path.getKey().endsWith("/") ? "" : "/");
+
 		s3Path.getFileSystem()
 				.getClient()
-				.putObject(s3Path.getBucket(), s3Path.getKey(),
+				.putObject(s3Path.getBucket(), keyName,
 						new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
@@ -424,8 +440,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				"path must be an instance of %s", S3Path.class.getName());
 
 		S3Path s3Path = (S3Path) path;
+		// borramos los dos:
 		s3Path.getFileSystem().getClient()
-				.deleteObject(s3Path.getBucket(), s3Path.getKey());
+			.deleteObject(s3Path.getBucket(), s3Path.getKey());
+		s3Path.getFileSystem().getClient()
+			.deleteObject(s3Path.getBucket(), s3Path.getKey() + "/");
 	}
 
 	@Override
@@ -442,12 +461,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		S3Path s3Source = (S3Path) source;
 		S3Path s3Target = (S3Path) target;
-
-		Preconditions.checkArgument(!s3Source.isDirectory(),
-				"copying directories is not yet supported: %s", source); // TODO
-		Preconditions.checkArgument(!s3Target.isDirectory(),
-				"copying directories is not yet supported: %s", target); // TODO
-
+		/*
+		 * Preconditions.checkArgument(!s3Source.isDirectory(),
+		 * "copying directories is not yet supported: %s", source); // TODO
+		 * Preconditions.checkArgument(!s3Target.isDirectory(),
+		 * "copying directories is not yet supported: %s", target); // TODO
+		 */
 		ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
 		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING),
 				actualOptions);
@@ -495,15 +514,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		AmazonS3 client = s3Path.getFileSystem().getClient();
 
 		// get ACL and check if the file exists as a side-effect
-		AccessControlList acl = null;
-		try {
-			acl = client.getObjectAcl(s3Path.getBucket(), s3Path.getKey());
-		} catch (AmazonS3Exception e) {
-			if (e.getStatusCode() == 404) {
-				throw new NoSuchFileException(s3Path.toString());
-			}
-			Throwables.propagate(e);
-		}
+		AccessControlList acl = getAccessControl(s3Path);
 
 		for (AccessMode accessMode : modes) {
 			switch (accessMode) {
@@ -561,25 +572,40 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		if (type == BasicFileAttributes.class) {
 			AmazonS3 client = s3Path.getFileSystem().getClient();
-
+			boolean folder = false;
 			ObjectMetadata metadata = null;
 			try {
 				metadata = client.getObjectMetadata(s3Path.getBucket(),
 						s3Path.getKey());
 			} catch (AmazonS3Exception e) {
 				if (e.getStatusCode() == 404) {
-					throw new NoSuchFileException(path.toString());
+					// if not found: check for dir:
+					
+					try {
+						metadata = client.getObjectMetadata(s3Path.getBucket(),
+								s3Path.getKey() + "/");
+						folder = true;
+					} catch (AmazonS3Exception e2) {
+						if (e.getStatusCode() == 404) {
+							throw new NoSuchFileException(path.toString());
+						}
+						Throwables.propagate(e);
+					}
+					
 				}
-				Throwables.propagate(e);
+				else{
+					Throwables.propagate(e);
+				}
 			}
 
 			if (metadata != null) {
+
 				return type.cast(new S3FileAttributes(s3Path.getKey(), FileTime
 						.from(metadata.getLastModified().getTime(),
 								TimeUnit.MILLISECONDS), metadata
-						.getContentLength(), s3Path.isDirectory(), true));
-			}
-			else{
+						.getContentLength(), folder,
+						true));
+			} else {
 				throw new NoSuchFileException(path.toString());
 			}
 
@@ -621,5 +647,35 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		}
 
 		return true;
+	}
+	
+	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
+		
+		AmazonS3 client = path.getFileSystem().getClient();
+		AccessControlList acl = null;
+		try {
+			// chek first for file:
+			acl = client.getObjectAcl(path.getBucket(), path.getKey());
+		} catch (AmazonS3Exception e) {
+			if (e.getStatusCode() == 404) {
+				// if not found: check for dir:
+				
+				try {
+					acl = client.getObjectAcl(path.getBucket(),
+							path.getKey() + "/");
+				} catch (AmazonS3Exception e2) {
+					if (e.getStatusCode() == 404) {
+						throw new NoSuchFileException(path.toString());
+					}
+					Throwables.propagate(e);
+				}
+				
+			}
+			else{
+				Throwables.propagate(e);
+			}
+		}
+		
+		return acl;
 	}
 }
