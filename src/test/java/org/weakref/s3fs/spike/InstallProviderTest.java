@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -62,7 +63,15 @@ public class InstallProviderTest {
 	
 	@Test
 	public void useS3Provider() throws IOException{
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///hola/que/tal/"), new HashMap<String,Object>(), this.getClass().getClassLoader());
+		URI uri = URI.create("s3:///hola/que/tal/");
+		FileSystem fs = null;
+		try{
+			fs = FileSystems.newFileSystem(uri, new HashMap<String,Object>(), this.getClass().getClassLoader());
+		}
+		catch(FileSystemAlreadyExistsException e){
+			fs = FileSystems.getFileSystem(uri);
+		}
+
 		Path zipPath = fs.getPath("test.zip");
 		assertNotNull(zipPath);
 		assertNotNull(zipPath.getFileSystem());
