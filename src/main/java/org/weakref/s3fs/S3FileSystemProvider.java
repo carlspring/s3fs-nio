@@ -296,7 +296,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(path instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) path;
-		final Path tempFile = Files.createTempFile("file", "s3");
+		
+		final Path tempFile = Files.createTempFile("file", s3Path.getFileName().toString());
 		return new FileOutputStream(tempFile.toFile()) {
 			@Override
 			public void close() throws IOException {
@@ -325,7 +326,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		// creamos un fichero vacio:
 		final Path tempDir = Files.createTempDirectory("temp-s3");
 		// ahora podemos leer simulando las escrituras
-		final Path file = tempDir.resolve("file");
+		final Path file = tempDir.resolve(path.getFileName().toString());
 		final SeekableByteChannel seekable = Files
 				.newByteChannel(file, options);
 
