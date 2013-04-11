@@ -5,6 +5,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,6 +31,9 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.weakref.s3fs.util.CopyDirVisitor;
+
+import com.amazonaws.services.s3.model.ObjectMetadata;
 
 public class FilesOperationsIT {
 	
@@ -187,6 +191,55 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
+	public void virtualDirectoryStreamTest() throws IOException, URISyntaxException{
+		
+		String folder = UUID.randomUUID().toString();
+		
+		String file1 = folder+"/file.html";
+		String file2 = folder+"/file2.html";
+		
+		Path dir = fileSystemAmazon.getPath(bucket, folder);
+		
+		S3Path s3Path = (S3Path)dir;
+		// subimos un fichero sin sus paths
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentLength(0);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file1,
+				new ByteArrayInputStream(new byte[0]), metadata);
+		// subimos otro fichero sin sus paths
+		ObjectMetadata metadata2 = new ObjectMetadata();
+		metadata.setContentLength(0);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file2,
+				new ByteArrayInputStream(new byte[0]), metadata2);
+		
+		
+		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)){
+			int number = 0;
+			boolean file1Find = false;
+			boolean file2Find = false;
+			for (Path path : dirStream){
+				number++;
+				// solo recorre ficheros del primer nivel
+				assertEquals(dir, path.getParent());
+				switch (path.getFileName().toString()) {
+				case "file.html":
+					file1Find = true;
+					break;
+				case "file2.html":
+					file2Find = true;
+					break;
+				default:
+					break;
+				}
+				
+			}
+			assertTrue(file1Find);
+			assertTrue(file2Find);
+			assertEquals(2, number);
+		}
+	}
+	
+	@Test
 	public void deleteFullDirTest() throws IOException, URISyntaxException {
 
 		Path dir = uploadDir();
@@ -236,6 +289,25 @@ public class FilesOperationsIT {
 		assertArrayEquals(Files.readAllBytes(result), Files.readAllBytes(notExistLocalResult));
 	}
 	
+	@Test
+	public void createFileWithFolderAndNotExistsFolders(){
+		
+		String fileWithFolders = UUID.randomUUID().toString()+"/folder2/file.html";
+		
+		Path path = fileSystemAmazon.getPath(bucket, fileWithFolders.split("/"));
+		
+		S3Path s3Path = (S3Path)path;
+		// subimos un fichero sin sus paths
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentLength(0);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), fileWithFolders,
+				new ByteArrayInputStream(new byte[0]), metadata);
+		
+		assertTrue(Files.exists(path));
+		// debe ser true:
+		assertTrue(Files.exists(path.getParent()));
+	}
+	
 	private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 		
@@ -274,72 +346,5 @@ public class FilesOperationsIT {
 		return dir;
 	}
 
-	/**
-	 * Created by IntelliJ IDEA. User: bbejeck Date: 1/23/12 Time: 10:29 PM
-	 */
-	public static class CopyDirVisitor extends SimpleFileVisitor<Path> {
-
-		private Path fromPath;
-		private Path toPath;
-		private StandardCopyOption copyOption;
-
-		public CopyDirVisitor(Path fromPath, Path toPath,
-				StandardCopyOption copyOption) {
-			this.fromPath = fromPath;
-			this.toPath = toPath;
-			this.copyOption = copyOption;
-		}
-
-		public CopyDirVisitor(Path fromPath, Path toPath) {
-			this(fromPath, toPath, StandardCopyOption.REPLACE_EXISTING);
-		}
-
-		@Override
-		public FileVisitResult preVisitDirectory(Path dir,
-				BasicFileAttributes attrs) throws IOException {
-
-			// permitimos resolver entre distintos providers
-			Path targetPath = appendPath(dir);
-
-			if (!Files.exists(targetPath)) {
-				if (!targetPath.getFileName().toString().endsWith("/")){
-					targetPath = targetPath.getParent().resolve(targetPath.getFileName().toString() + "/");
-				}
-				Files.createDirectory(targetPath);
-			}
-			return FileVisitResult.CONTINUE;
-		}
-
-		@Override
-		public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-				throws IOException {
-
-			Path targetPath = appendPath(file);
-
-			Files.copy(file, targetPath, copyOption);
-			return FileVisitResult.CONTINUE;
-		}
-
-		/**
-		 * Obtenemos el path que corresponde en el parametro: {@link #fromPath}
-		 * relativo al parametro <code>Path to</code>
-		 * 
-		 * @param to
-		 *            Path
-		 * @return
-		 */
-		private Path appendPath(Path to) {
-			Path targetPath = toPath;
-			// sacamos el path relativo y lo recorremos para
-			// añadirlo al nuevo
-
-			for (Path path : fromPath.relativize(to)) {
-				// si utilizamos path en vez de string: lanza error por ser
-				// distintos paths
-				targetPath = targetPath.resolve(path.getFileName().toString());
-			}
-
-			return targetPath;
-		}
-	}
+	
 }

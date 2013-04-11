@@ -572,44 +572,36 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		S3Path s3Path = (S3Path) path;
 
 		if (type == BasicFileAttributes.class) {
-			AmazonS3 client = s3Path.getFileSystem().getClient();
-			boolean folder = false;
-			ObjectMetadata metadata = null;
-			try {
-				metadata = client.getObjectMetadata(s3Path.getBucket(),
-						s3Path.getKey());
-			} catch (AmazonS3Exception e) {
-				if (e.getStatusCode() == 404) {
-					// if not found: check for dir:
-					
-					try {
-						metadata = client.getObjectMetadata(s3Path.getBucket(),
-								s3Path.getKey() + "/");
-						folder = true;
-					} catch (AmazonS3Exception e2) {
-						if (e.getStatusCode() == 404) {
-							throw new NoSuchFileException(path.toString());
-						}
-						Throwables.propagate(e);
-					}
-					
-				}
-				else{
-					Throwables.propagate(e);
-				}
+
+			S3ObjectSummary objectSummary = getFirstObjectSummary(s3Path);
+
+			// transformamos los datos en BasicFileAttributes.
+			
+			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(),
+					TimeUnit.MILLISECONDS);
+			long size =  objectSummary.getSize();
+			boolean directory = false;
+			boolean regularFile = true;
+			String key = objectSummary.getKey();
+			// puede que exista el key dle folder y debe tener barra al final:
+			if (objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().endsWith("/")) {
+				directory = true;
 			}
-
-			if (metadata != null) {
-
-				return type.cast(new S3FileAttributes(s3Path.getKey(), FileTime
-						.from(metadata.getLastModified().getTime(),
-								TimeUnit.MILLISECONDS), metadata
-						.getContentLength(), folder,
-						true));
-			} else {
+			// es un subfichero: es un directorio
+			else if (!objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().startsWith(s3Path.getKey())){
+				directory = true;
+				// nos "inventamos" el metadata
+				size = 0;
+			}
+			// es un fichero:
+			else if (objectSummary.getKey().equals(s3Path.getKey())){
+				directory = false;
+			}
+			else {
 				throw new NoSuchFileException(path.toString());
 			}
-
+			
+			return type.cast(new S3FileAttributes(key, lastModifiedTime, size, directory, regularFile));
 		}
 
 		return null;
@@ -634,49 +626,75 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(unsupported.isEmpty(),
 				"the following options are not supported: %s", unsupported);
 	}
-
+	/**
+	 * Comprueba si existe
+	 * @param path
+	 * @return
+	 */
 	private boolean exists(S3Path path) {
-		AmazonS3 client = path.getFileSystem().getClient();
-
+		try{
+			getFirstObjectSummary(path);
+			return true;
+		}
+		catch(NoSuchFileException e){
+			return false;
+		}
+	}
+	/**
+	 * Obtiene el {@link S3ObjectSummary} que representa este Path
+	 * o su primer hijo (si no existe el object Path)
+	 * @param s3Path {@link S3Path}
+	 * @return {@link S3ObjectSummary}
+	 * @throws NoSuchFileException si no se encuentra el path (tanto con barra como sin barra) y tampoco ningun hijo
+	 */
+	private S3ObjectSummary getFirstObjectSummary(S3Path s3Path) throws NoSuchFileException{
+		
+		S3ObjectSummary res = null;
 		try {
-			client.getObjectMetadata(path.getBucket(), path.getKey());
+			
+			AmazonS3Client client = s3Path.getFileSystem().getClient();
+			
+			ListObjectsRequest request = new ListObjectsRequest();
+			request.setBucketName(s3Path.getBucket());
+			request.setPrefix(s3Path.getKey());
+			request.setMaxKeys(1);
+
+			if (!client.listObjects(request).getObjectSummaries().isEmpty()){
+				res = client.listObjects(request).getObjectSummaries().get(0);
+			}
+			else{
+				throw new NoSuchFileException(s3Path.toString());
+			}
+			
 		} catch (AmazonS3Exception e) {
 			if (e.getStatusCode() == 404) {
-				return false;
+				throw new NoSuchFileException(s3Path.toString());
 			}
 			Throwables.propagate(e);
 		}
-
-		return true;
+		
+		return res;
 	}
-	
+	/**
+	 * Obtiene el access Control list, si no existe el object porque el path
+	 * representa un directorio no creado en S3. devuelve el ACL del primer hijo o
+	 * lanza NoSuchFileException
+	 * @param path {@link S3Path}
+	 * @return AccessControlList
+	 * @throws NoSuchFileException si no encuentra el path (tanto con barra como sin barra) y tampoco ningun hijo
+	 */
 	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
 		
-		AmazonS3 client = path.getFileSystem().getClient();
-		AccessControlList acl = null;
+		AccessControlList res = null;
+		S3ObjectSummary obj = getFirstObjectSummary(path);
+		
 		try {
 			// chek first for file:
-			acl = client.getObjectAcl(path.getBucket(), path.getKey());
+			res = path.getFileSystem().getClient().getObjectAcl(obj.getBucketName(), obj.getKey());
 		} catch (AmazonS3Exception e) {
-			if (e.getStatusCode() == 404) {
-				// if not found: check for dir:
-				
-				try {
-					acl = client.getObjectAcl(path.getBucket(),
-							path.getKey() + "/");
-				} catch (AmazonS3Exception e2) {
-					if (e.getStatusCode() == 404) {
-						throw new NoSuchFileException(path.toString());
-					}
-					Throwables.propagate(e);
-				}
-				
-			}
-			else{
-				Throwables.propagate(e);
-			}
+			Throwables.propagate(e);
 		}
 		
-		return acl;
+		return res;
 	}
 }
