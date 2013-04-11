@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -260,9 +261,25 @@ public class S3Path implements Path {
 		Preconditions.checkArgument(bucket.equals(s3Path.getBucket()),
 				"Cannot relativize paths with different buckets: '%s', '%s'",
 				this, other);
+		
+		Preconditions.checkArgument(parts.size() <= s3Path.parts.size(),
+				"Cannot relativize against a parent path: '%s', '%s'",
+				this, other);
+		
+		
+		int startPart = 0;
+		for (int i = 0; i <this.parts.size() ; i++){
+			if (this.parts.get(i).equals(s3Path.parts.get(i))){
+				startPart++;
+			}
+		}
+		
+		List<String> resultParts = new ArrayList<>();
+		for (int i = startPart; i < s3Path.parts.size(); i++){
+			resultParts.add(s3Path.parts.get(i));
+		}
 
-		// TODO
-		throw new UnsupportedOperationException();
+		return new S3Path(fileSystem, null, resultParts);
 	}
 
 	@Override
@@ -309,9 +326,6 @@ public class S3Path implements Path {
 
 		for (Iterator<String> iterator = parts.iterator(); iterator.hasNext();) {
 			String part = iterator.next();
-
-			boolean isDirectory = iterator.hasNext();
-
 			builder.add(new S3Path(fileSystem, null, ImmutableList.of(part)));
 		}
 

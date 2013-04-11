@@ -153,4 +153,21 @@ public class S3PathTest
         assertEquals(forPath("path/to/file").resolveSibling(forPath("/bucket2/other/child")), forPath("/bucket2/other/child"));
         assertEquals(forPath("path/to/file").resolveSibling(forPath("")), forPath("path/to/"));
     }
+    
+    @Test
+    public void resolve(){
+    	Path path = forPath("/bucket/path/to/file");
+    	Path other = forPath("/bucket/path/to/file/hello");
+    	assertEquals(forPath("hello"), path.relativize(other));
+    	
+    	// another
+
+    	assertEquals(forPath("file/hello"),  forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/file/hello")));
+    	
+    	// empty
+    	
+    	assertEquals(forPath(""),  forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/")));
+    }
+    
+    
 }
