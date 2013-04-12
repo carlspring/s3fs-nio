@@ -215,7 +215,7 @@ public class S3Path implements Path {
 
 	@Override
 	public Path resolve(String other) {
-		return resolve(forPath(other));
+		return resolve(new S3Path(this.getFileSystem(), other));
 	}
 
 	@Override
@@ -241,7 +241,7 @@ public class S3Path implements Path {
 
 	@Override
 	public Path resolveSibling(String other) {
-		return resolveSibling(forPath(other));
+		return resolveSibling(new S3Path(this.getFileSystem(), other));
 	}
 
 	@Override
@@ -251,7 +251,7 @@ public class S3Path implements Path {
 		S3Path s3Path = (S3Path) other;
 
 		if (this.equals(other)) {
-			return S3Path.forPath("");
+			return new S3Path(this.getFileSystem(), "");
 		}
 
 		Preconditions.checkArgument(isAbsolute(),

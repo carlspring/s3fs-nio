@@ -224,7 +224,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 								String folder = getInmediateDescendent(s3Path.getKey() + "/", key);
 								if (folder != null){
-									S3Path descendentPart = S3Path.forPath("/"+ objectSummary.getBucketName()+ "/" + folder);
+									S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
 									
 									if (!listPath.contains(descendentPart)){
 										listPath.add(descendentPart);
@@ -259,35 +259,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 							return null;
 						}
 							
-					}
-
-					public boolean isImmediateDescendant(final String parent,
-							final String child) {
-						if (!child.startsWith(parent)) {
-							// maybe we just should return false
-							throw new IllegalArgumentException(
-									"Invalid child '" + child
-											+ "' for parent '" + parent + "'");
-						}
-						final int parentLen = parent.length();
-						final String childWithoutParent = child
-								.substring(parentLen);
-
-						if (childWithoutParent.isEmpty()) {
-							return false;
-						}
-
-						int numberPaths = childWithoutParent.length()
-								- childWithoutParent.replaceAll("/", "")
-										.length();
-						if (!childWithoutParent.endsWith("/")) {
-							numberPaths++;
-						}
-						if (numberPaths == 1) {
-							return true;
-						} else {
-							return false;
-						}
 					}
 				};
 			}
