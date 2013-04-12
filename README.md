@@ -15,7 +15,7 @@ Features:
 
 Roadmap:
 
-* Performance issue (slow querys)
+* Performance issue (slow querys with virtual folders)
 * Muchos mas tests unitarios (better test coverage)
 * No permitir subir ficheros con mismo nombre que folders y viceversa (Disallow upload binary files with same name as folders and vice versa)
 * Decidir que hacer con FileSystemProvider. ¿se pueden crear varios? ¿por bucketname, en vez de por endpoint?
