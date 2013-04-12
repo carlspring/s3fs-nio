@@ -240,6 +240,55 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
+	public void virtualDirectoryStreamWithVirtualSubFolderTest() throws IOException, URISyntaxException{
+		
+		String folder = UUID.randomUUID().toString();
+		
+		String subfoler = folder+"/subfolder/file.html";
+		String file2 = folder+"/file2.html";
+		
+		Path dir = fileSystemAmazon.getPath(bucket, folder);
+		
+		S3Path s3Path = (S3Path)dir;
+		// subimos un fichero sin sus paths
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setContentLength(0);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), subfoler,
+				new ByteArrayInputStream(new byte[0]), metadata);
+		// subimos otro fichero sin sus paths
+		ObjectMetadata metadata2 = new ObjectMetadata();
+		metadata.setContentLength(0);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file2,
+				new ByteArrayInputStream(new byte[0]), metadata2);
+		
+		
+		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)){
+			int number = 0;
+			boolean subfolderFind = false;
+			boolean file2Find = false;
+			for (Path path : dirStream){
+				number++;
+				// solo recorre ficheros del primer nivel
+				assertEquals(dir, path.getParent());
+				switch (path.getFileName().toString()) {
+				case "subfolder":
+					subfolderFind = true;
+					break;
+				case "file2.html":
+					file2Find = true;
+					break;
+				default:
+					break;
+				}
+				
+			}
+			assertTrue(subfolderFind);
+			assertTrue(file2Find);
+			assertEquals(2, number);
+		}
+	}
+	
+	@Test
 	public void deleteFullDirTest() throws IOException, URISyntaxException {
 
 		Path dir = uploadDir();

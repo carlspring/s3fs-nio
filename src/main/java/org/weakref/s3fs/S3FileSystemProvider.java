@@ -217,23 +217,48 @@ public class S3FileSystemProvider extends FileSystemProvider {
 							request.setPrefix(s3Path.getKey() + "/");
 							// request.setDelimiter("/");
 							// carga TODOS los elementos a todos los niveles :(
-							for (final S3ObjectSummary objectSummary : dir
-									.getFileSystem().getClient()
-									.listObjects(request).getObjectSummaries()) {
+							for (final S3ObjectSummary objectSummary : dir.getFileSystem().getClient().listObjects(request).getObjectSummaries()) {
 								final String key = objectSummary.getKey();
 								// filtramos para quedarnos con los de primer
 								// nivel
-								if (isImmediateDescendant(request.getPrefix(),
-										key)) {
-									listPath.add(S3Path.forPath("/"
-											+ objectSummary.getBucketName()
-											+ "/" + objectSummary.getKey()));
+
+								String folder = getInmediateDescendent(s3Path.getKey() + "/", key);
+								if (folder != null){
+									S3Path descendentPart = S3Path.forPath("/"+ objectSummary.getBucketName()+ "/" + folder);
+									
+									if (!listPath.contains(descendentPart)){
+										listPath.add(descendentPart);
+									}
+									
 								}
+								
 							}
 							it = listPath.iterator();
 						}
 
 						return it;
+					}
+					
+					public String getInmediateDescendent(final String keyParent, final String keyChild){
+						if (!keyChild.startsWith(keyParent)) {
+							// maybe we just should return false
+							throw new IllegalArgumentException(
+									"Invalid child '" + keyChild
+											+ "' for parent '" + keyParent + "'");
+						}
+						final int parentLen = keyParent.length();
+						final String childWithoutParent = keyChild
+								.substring(parentLen);
+						
+						String[] parts = childWithoutParent.split("/");
+						
+						if (parts.length > 0 && !parts[0].isEmpty()){
+							return keyParent + parts[0];
+						}
+						else{
+							return null;
+						}
+							
 					}
 
 					public boolean isImmediateDescendant(final String parent,
