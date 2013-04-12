@@ -11,9 +11,11 @@ Features:
 * Borrar directorios y ficheros
 * Copiar entre Paths con distintos providers
 * Recorrer ficheros de un directorio.
+* Permite trabajar con directorios virtuales (folders que no existen como objetos en Amazon S3 y son subkeys de un elemento)
 
 Roadmap:
 
+* Performance issue (slow querys)
 * Muchos mas tests unitarios (better test coverage)
 * No permitir subir ficheros con mismo nombre que folders y viceversa (Disallow upload binary files with same name as folders and vice versa)
 * Decidir que hacer con FileSystemProvider. ¿se pueden crear varios? ¿por bucketname, en vez de por endpoint?
