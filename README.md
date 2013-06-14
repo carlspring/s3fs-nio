@@ -1,7 +1,8 @@
 An Amazon AWS S3 FileSystem Provider for Java 7 (NIO2)
 
-Amazon Aws S3 es el servicio que ofrece Amazon para el almacenamiento de archivos en la nube. NIO2 es una nueva API de manejo de ficheros, de Java, introducida en su versión 7.
-En este proyecto se ofrece una primera implementación, básica y poco optimizada, pero "completa" de la API para poder gestionar ficheros y carpetas directamente en Amazon S3.
+Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any amount of data, at any time.
+NIO2 is the new file management API, introduced in Java version 7. 
+This project provides a first API implementation, little optimized, but "complete" to manage files and folders directly on Amazon S3.
 
 *Features*:
 
