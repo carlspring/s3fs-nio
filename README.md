@@ -4,7 +4,10 @@ Amazon Simple Storage Service provides a fully redundant data storage infrastruc
 NIO2 is the new file management API, introduced in Java version 7. 
 This project provides a first API implementation, little optimized, but "complete" to manage files and folders directly on Amazon S3.
 
-<img src="https://travis-ci.org/jarnaiz/Amazon-S3-FileSystem-NIO2.png" alt="Travis CI status"/>
+[![Build Status](https://travis-ci.org/jarnaiz/Amazon-S3-FileSystem-NIO2.png)](https://travis-ci.org/jarnaiz/Amazon-S3-FileSystem-NIO2)
+
+[![Coverage Status](https://coveralls.io/repos/jarnaiz/Amazon-S3-FileSystem-NIO2/badge.png)](https://coveralls.io/r/jarnaiz/Amazon-S3-FileSystem-NIO2)
+arg.. waiting for java support ;)
 
 *Features*:
 
