@@ -128,7 +128,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			client.setEndpoint(uri.getHost());
 		}
 
-		S3FileSystem result = new S3FileSystem(this, client);
+		S3FileSystem result = new S3FileSystem(this, client, uri.getHost());
 
 		if (!fileSystem.compareAndSet(null, result)) {
 			throw new FileSystemAlreadyExistsException(
@@ -153,18 +153,23 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	/**
 	 * Deviation from spec: throws FileSystemNotFoundException if FileSystem
 	 * hasn't yet been initialized. Call newFileSystem() first.
+	 * Need credentials. Maybe set credentials after? how?
 	 */
 	@Override
 	public Path getPath(URI uri) {
 		Preconditions.checkArgument(uri.getScheme().equals(getScheme()),
 				"URI scheme must be %s", getScheme());
 
-		if (uri.getHost() != null && !uri.getHost().isEmpty()) {
+		if (uri.getHost() != null && !uri.getHost().isEmpty() &&
+				!uri.getHost().equals(fileSystem.get().getEndpoint())) {
 			throw new IllegalArgumentException(String.format(
-					"non-empty URI host not supported at this time: %s",
-					uri.getHost())); // TODO
+					"only empty URI host or URI host that matching the current fileSystem: %s",
+					fileSystem.get().getEndpoint())); // TODO
 		}
-
+		/**
+		 * tener una lista: un s3fileSystem por region y posiblemente
+		 * poder incluir en la url el acceso.
+		 */
 		return getFileSystem(uri).getPath(uri.getPath());
 	}
 

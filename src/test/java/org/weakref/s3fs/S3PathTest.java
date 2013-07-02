@@ -8,6 +8,7 @@ import static org.weakref.s3fs.S3Path.forPath;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -167,6 +168,25 @@ public class S3PathTest
     	// empty
     	
     	assertEquals(forPath(""),  forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/")));
+    }
+    
+    @Test
+    public void toUri() {
+    	Path path = forPath("/bucket/path/to/file");
+    	URI uri = path.toUri();
+    	
+    	// the scheme is s3
+    	assertEquals("s3", uri.getScheme());
+    	
+    	// could get the correct fileSystem
+    	FileSystem fs = FileSystems.getFileSystem(uri);
+    	assertTrue(fs instanceof S3FileSystem);
+    	
+    	// bucket name as first path
+    	Path pathActual = fs.provider().getPath(uri);
+    	
+    	assertEquals(path, pathActual);
+    	
     }
     
     

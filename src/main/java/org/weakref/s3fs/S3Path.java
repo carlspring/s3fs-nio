@@ -284,8 +284,16 @@ public class S3Path implements Path {
 
 	@Override
 	public URI toUri() {
-		return URI.create("s3://" + bucket
-				+ Joiner.on(PATH_SEPARATOR).join(parts));
+		StringBuilder builder = new StringBuilder();
+		builder.append("s3://");
+		if (fileSystem.getEndpoint() != null) {
+			builder.append(fileSystem.getEndpoint());
+		}
+		builder.append("/");
+		builder.append(bucket);
+		builder.append(PATH_SEPARATOR);
+		builder.append(Joiner.on(PATH_SEPARATOR).join(parts));
+		return URI.create(builder.toString());
 	}
 
 	@Override

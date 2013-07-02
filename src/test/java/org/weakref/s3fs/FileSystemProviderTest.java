@@ -1,9 +1,10 @@
 package org.weakref.s3fs;
 
-import com.google.common.collect.ImmutableMap;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.weakref.s3fs.S3Path.forPath;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,14 +13,12 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertNotSame;
-import static org.weakref.s3fs.S3Path.forPath;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class FileSystemProviderTest {
 	
@@ -85,13 +84,40 @@ public class FileSystemProviderTest {
 	}
 
 	@Test
-	public void testGetPath() throws IOException {
+	public void testGetPathWithEmtpyEndpoint() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
 				ImmutableMap.<String, Object> of());
-		Path path = Paths.get(URI.create("s3:///bucket/path/to/file"));
+		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
 		assertEquals(path, forPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
+	}
+	
+	@Test
+	public void testGetPath() throws IOException {
+		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
+				ImmutableMap.<String, Object> of());
+		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
+
+		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertSame(path.getFileSystem(), fs);
+	}
+
+	@Test
+	public void testGetPath2() throws IOException {
+		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
+				ImmutableMap.<String, Object> of());
+		Path path = fs.provider().getPath(URI.create("s3://endpoint1/bucket/path/to/file"));
+
+		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertSame(path.getFileSystem(), fs);
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void testGetPathWithInvalidEndpoint () throws IOException {
+		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
+				ImmutableMap.<String, Object> of());
+		fs.provider().getPath(URI.create("s3://endpoint2/bucket/path/to/file"));
 	}
 
 	@Test

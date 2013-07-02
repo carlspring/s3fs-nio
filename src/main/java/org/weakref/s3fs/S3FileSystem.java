@@ -20,11 +20,13 @@ public class S3FileSystem
 {
     private final S3FileSystemProvider provider;
     private final AmazonS3Client client;
+    private final String endpoint;
 
-    public S3FileSystem(S3FileSystemProvider provider, AmazonS3Client client)
+    public S3FileSystem(S3FileSystemProvider provider, AmazonS3Client client, String endpoint)
     {
         this.provider = provider;
         this.client = client;
+        this.endpoint = endpoint;
     }
 
     @Override
@@ -109,8 +111,15 @@ public class S3FileSystem
         throw new UnsupportedOperationException();
     }
 
-    public AmazonS3Client getClient()
-    {
+    public AmazonS3Client getClient(){
         return client;
     }
+    /**
+     * get the endpoint associated with this fileSystem.
+     * @see http://docs.aws.amazon.com/general/latest/gr/rande.html
+     * @return string
+     */
+	public String getEndpoint() {
+		return endpoint;
+	}
 }
