@@ -37,7 +37,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 
-public class AmazonDirTest {
+public class AmazonDirIT {
 	
 	private static final URI uri = URI.create("s3://s3-eu-west-1.amazonaws.com/");
 	private static final URI uriDefaultEndpoint = URI.create("s3:///");
