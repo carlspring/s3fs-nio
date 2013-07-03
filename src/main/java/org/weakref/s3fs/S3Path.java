@@ -1,6 +1,7 @@
 package org.weakref.s3fs;
 
 import static com.google.common.collect.Iterables.concat;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterables.transform;
 import static java.lang.String.format;
 
@@ -17,13 +18,18 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.annotation.Nullable;
+
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 public class S3Path implements Path {
+	
 	public static final String PATH_SEPARATOR = "/";
 
 	private final String bucket;
@@ -33,23 +39,38 @@ public class S3Path implements Path {
 
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
-	 * "{key}"
+	 * "{key}".
+	 * Examples:
+	 * <ul>
+	 *  <li>"/{bucket}//{value}" good, empty key paths are ignored </li>
+	 * <li> "//{key}" error, missing bucket</li>
+	 * <li> "/" error, missing bucket </li>
+	 * </ul>
+	 * Study:
+	 * <ul>
+	 * <li>"" TODO: valid or invalid?</li>
+	 * </ul>
+	 *
 	 */
 	public S3Path(S3FileSystem fileSystem, String path) {
-		List<String> parts = ImmutableList.copyOf(Splitter.on(PATH_SEPARATOR)
-				.omitEmptyStrings().split(path));
-
+	
 		String bucket = null;
-		List<String> pathParts = parts;
-
+		List<String> parts = Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(path));
+		
+		if (path.endsWith(PATH_SEPARATOR)) {
+			parts.remove(parts.size()-1);
+		}
+		
 		if (path.startsWith(PATH_SEPARATOR)) { // absolute path
 			Preconditions.checkArgument(parts.size() >= 1,
-					"path must start with bucket name");
+					"path must start with bucket name");		
+			Preconditions.checkArgument(!parts.get(1).isEmpty(),
+					"bucket name must be not empty");
 
-			bucket = parts.get(0);
-
+			bucket = parts.get(1);
+			
 			if (!parts.isEmpty()) {
-				pathParts = parts.subList(1, parts.size());
+				parts = parts.subList(2, parts.size());
 			}
 		}
 
@@ -58,7 +79,7 @@ public class S3Path implements Path {
 		}
 
 		this.bucket = bucket;
-		this.parts = ImmutableList.copyOf(transform(pathParts, strip("/")));
+		this.parts = KeyParts.parse(parts);
 		this.fileSystem = fileSystem;
 	}
 
@@ -74,10 +95,9 @@ public class S3Path implements Path {
 		if (bucket != null) {
 			bucket = bucket.replace("/", "");
 		}
-
+		
 		this.bucket = bucket;
-
-		this.parts = ImmutableList.copyOf(transform(parts, strip("/")));
+		this.parts = KeyParts.parse(parts);
 		this.fileSystem = fileSystem;
 	}
 
@@ -85,7 +105,7 @@ public class S3Path implements Path {
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
 	 * "{key}"
 	 * 
-	 * redundant '/' are stripped
+	 * redundant '/' are stripped in the key path
 	 */
 	public static S3Path forPath(String path) {
 		return new S3Path((S3FileSystem) FileSystems.getFileSystem(URI
@@ -389,11 +409,37 @@ public class S3Path implements Path {
 		return result;
 	}
 
-	private static Function<String, String> strip(final String str) {
+	private static Function<String, String> strip(final String ... strs) {
 		return new Function<String, String>() {
 			public String apply(String input) {
-				return input.replace(str, "");
+				String res = input;
+				for (String str : strs) {
+					res = res.replace(str, "");
+				}
+				return res;
 			}
 		};
+	}
+	
+	private static Predicate<String> notEmpty() {
+		return new Predicate<String>() {
+			@Override
+			public boolean apply(@Nullable String input) {
+				return input != null && !input.isEmpty();
+			}
+		};
+	}
+	/*
+	 * delete redundant "/" and empty parts
+	 */
+	private static class KeyParts{
+		
+		private static ImmutableList<String> parse(List<String> parts) {
+			return ImmutableList.copyOf(filter(transform(parts, strip("/")), notEmpty()));
+		}
+		
+		private static ImmutableList<String> parse(Iterable<String> parts) {
+			return ImmutableList.copyOf(filter(transform(parts, strip("/")), notEmpty()));
+		}
 	}
 }

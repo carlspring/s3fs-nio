@@ -129,7 +129,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		}
 
 		S3FileSystem result = new S3FileSystem(this, client, uri.getHost());
-
+		// if this instance already has a S3FileSystem, throw exception
+		// otherwise set
 		if (!fileSystem.compareAndSet(null, result)) {
 			throw new FileSystemAlreadyExistsException(
 					"S3 filesystem already exists. Use getFileSystem() instead");
@@ -584,7 +585,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			boolean directory = false;
 			boolean regularFile = true;
 			String key = objectSummary.getKey();
-			// puede que exista el key dle folder y debe tener barra al final:
+			// puede que exista el key del folder y debe tener barra al final:
 			if (objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().endsWith("/")) {
 				directory = true;
 			}

@@ -27,13 +27,11 @@ public class FileSystemProviderTest {
 		try{
 			FileSystems.getFileSystem(URI.create("s3:///")).close();
 		}
-		catch(FileSystemNotFoundException e){
-			
-		}
+		catch(FileSystemNotFoundException e){}
 	}
 	
 	@Test
-	public void testCreatesAuthenticated() throws IOException {
+	public void createsAuthenticated() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
 
@@ -44,7 +42,7 @@ public class FileSystemProviderTest {
 	}
 
 	@Test
-	public void testCreatesAnonymous() throws IOException {
+	public void createsAnonymous() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 
 		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
@@ -54,7 +52,7 @@ public class FileSystemProviderTest {
 	}
 
 	@Test(expected = FileSystemAlreadyExistsException.class)
-	public void testCreateFailsIfAlreadyCreated() throws IOException {
+	public void createFailsIfAlreadyCreated() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 
 		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
@@ -66,7 +64,7 @@ public class FileSystemProviderTest {
 	}
 
 	@Test
-	public void testGetFileSystem() throws IOException {
+	public void getFileSystem() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 
 		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
@@ -78,13 +76,13 @@ public class FileSystemProviderTest {
 	}
 
 	@Test(expected = FileSystemNotFoundException.class)
-	public void testGetFailsIfNotYetCreated() {
+	public void getFailsIfNotYetCreated() {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		provider.getFileSystem(URI.create("s3:///"));
 	}
 
 	@Test
-	public void testGetPathWithEmtpyEndpoint() throws IOException {
+	public void gGetPathWithEmtpyEndpoint() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
@@ -94,7 +92,7 @@ public class FileSystemProviderTest {
 	}
 	
 	@Test
-	public void testGetPath() throws IOException {
+	public void getPath() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
@@ -104,7 +102,7 @@ public class FileSystemProviderTest {
 	}
 
 	@Test
-	public void testGetPath2() throws IOException {
+	public void getAnotherPath() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3://endpoint1/bucket/path/to/file"));
@@ -114,10 +112,24 @@ public class FileSystemProviderTest {
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void testGetPathWithInvalidEndpoint () throws IOException {
+	public void getPathWithInvalidEndpoint () throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
 				ImmutableMap.<String, Object> of());
 		fs.provider().getPath(URI.create("s3://endpoint2/bucket/path/to/file"));
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void getPathWithEndpointAndWithoutBucket() throws IOException {
+		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
+				ImmutableMap.<String, Object> of());
+		fs.provider().getPath(URI.create("s3://endpoint1//falta-bucket"));
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void getPathWithDefaultEndpointAndWithoutBucket() throws IOException {
+		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
+				ImmutableMap.<String, Object> of());
+		fs.provider().getPath(URI.create("s3:////falta-bucket"));
 	}
 
 	@Test

@@ -3,10 +3,10 @@
     <groupId>org.weakref</groupId>
     <artifactId>s3fs</artifactId>
     <packaging>jar</packaging>
-    <version>0.1.6-SNAPSHOT</version>
+    <version>0.1.9-SNAPSHOT</version>
     <name>s3fs</name>
     <description>S3 filesystem provider for Java 7</description>
-    <url>https://github.com/martint/s3fs</url>
+    <url>http://jarnaiz.github.io/Amazon-S3-FileSystem-NIO2/</url>
     <licenses>
         <license>
             <name>The Apache Software License, Version 2.0</name>
@@ -15,6 +15,10 @@
         </license>
     </licenses>
     <developers>
+    	<developer>
+            <id>jarnaiz</id>
+            <name>Javier Arnáiz</name>
+        </developer>
         <developer>
             <id>martint</id>
             <name>Martin Traverso</name>
@@ -22,9 +26,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/martint/s3fs.git</connection>
-        <developerConnection>scm:git:git@github.com:martint/s3fs.git</developerConnection>
-        <url>https://github.com/martint/s3fs</url>
+        <connection>scm:git:git://github.com/jarnaiz/s3fs.git</connection>
+        <developerConnection>scm:git:git@github.com:jarnaiz/s3fs.git</developerConnection>
+        <url>https://github.com/jarnaiz/s3fs</url>
     </scm>
 
     <dependencies>

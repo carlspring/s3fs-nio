@@ -17,11 +17,10 @@ import java.util.Iterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class S3PathTest
-{
+public class S3PathTest {
 	
 	@BeforeClass
-	public static void setup() throws IOException{
+	public static void setup() throws IOException {
 		try {
 			FileSystems.getFileSystem(URI.create("s3:///"));
 		
@@ -31,8 +30,7 @@ public class S3PathTest
 	}
 	
     @Test
-    public void testCreateNoPath()
-    {
+    public void createNoPath() {
         S3Path path = forPath("/bucket");
 
         assertEquals(path.getBucket(), "bucket");
@@ -40,8 +38,7 @@ public class S3PathTest
     }
 
     @Test
-    public void testCreateWithTrailingSlash()
-    {
+    public void createWithTrailingSlash() {
         S3Path path = forPath("/bucket/");
 
         assertEquals(path.getBucket(), "bucket");
@@ -49,8 +46,7 @@ public class S3PathTest
     }
 
     @Test
-    public void testCreateWithPath()
-    {
+    public void createWithPath() {
         S3Path path = forPath("/bucket/path/to/file");
 
         assertEquals(path.getBucket(), "bucket");
@@ -58,17 +54,15 @@ public class S3PathTest
     }
 
     @Test
-    public void testCreateWithPathAndTrailingSlash()
-    {
+    public void createWithPathAndTrailingSlash() {
         S3Path path = forPath("/bucket/path/to/file/");
 
-        assertEquals(path.getBucket(), "bucket");
-        assertEquals(path.getKey(), "path/to/file");
+        assertEquals("bucket", path.getBucket());
+        assertEquals("path/to/file", path.getKey());
     }
 
     @Test
-    public void testCreateRelative()
-    {
+    public void createRelative() {
         S3Path path = forPath("path/to/file");
         assertNull(path.getBucket());
         assertEquals(path.getKey(), "path/to/file");
@@ -76,8 +70,7 @@ public class S3PathTest
     }
 
     @Test
-    public void testGetParent()
-    {
+    public void getParent() {
         assertEquals(forPath("/bucket/path/to/file").getParent(), forPath("/bucket/path/to/"));
         assertEquals(forPath("/bucket/path/to/file/").getParent(), forPath("/bucket/path/to/"));
         assertNull(forPath("/bucket/").getParent());
@@ -85,15 +78,13 @@ public class S3PathTest
     }
     
     @Test
-    public void testNameCount()
-    {
+    public void nameCount() {
         assertEquals(forPath("/bucket/path/to/file").getNameCount(), 3);
         assertEquals(forPath("/bucket/").getNameCount(), 0);
     }
     
     @Test
-    public void testResolve()
-    {
+    public void resolve() {
         assertEquals(forPath("/bucket/path/to/dir/").resolve(forPath("child/xyz")), forPath("/bucket/path/to/dir/child/xyz"));
         assertEquals(forPath("/bucket/path/to/dir").resolve(forPath("child/xyz")), forPath("/bucket/path/to/dir/child/xyz"));
         assertEquals(forPath("/bucket/path/to/file").resolve(forPath("")), forPath("/bucket/path/to/file"));  // TODO: should this be "path/to/dir/"
@@ -103,16 +94,14 @@ public class S3PathTest
     }
     
     @Test
-    public void testName()
-    {
+    public void name() {
         assertEquals(forPath("/bucket/path/to/file").getName(0), forPath("path/"));
         assertEquals(forPath("/bucket/path/to/file").getName(1), forPath("to/"));
         assertEquals(forPath("/bucket/path/to/file").getName(2), forPath("file"));
     }
 
     @Test
-    public void testSubPath()
-    {
+    public void subPath() {
         assertEquals(forPath("/bucket/path/to/file").subpath(0, 1), forPath("path/"));
         assertEquals(forPath("/bucket/path/to/file").subpath(0, 2), forPath("path/to/"));
         assertEquals(forPath("/bucket/path/to/file").subpath(0, 3), forPath("path/to/file"));
@@ -122,8 +111,7 @@ public class S3PathTest
     }
     
     @Test
-    public void testIterator()
-    {
+    public void iterator() {
         Iterator<Path> iterator = forPath("/bucket/path/to/file").iterator();
         
         assertEquals(iterator.next(), forPath("path/"));
@@ -132,8 +120,7 @@ public class S3PathTest
     }
     
     @Test
-    public void testResolveSibling()
-    {
+    public void resolveSibling() {
         // absolute (non-root) vs...
         assertEquals(forPath("/bucket/path/to/file").resolveSibling(forPath("other/child")), forPath("/bucket/path/to/other/child"));
         assertEquals(forPath("/bucket/path/to/file").resolveSibling(forPath("/bucket2/other/child")), forPath("/bucket2/other/child"));
@@ -156,7 +143,7 @@ public class S3PathTest
     }
     
     @Test
-    public void resolve(){
+    public void relativize(){
     	Path path = forPath("/bucket/path/to/file");
     	Path other = forPath("/bucket/path/to/file/hello");
     	assertEquals(forPath("hello"), path.relativize(other));
@@ -181,12 +168,13 @@ public class S3PathTest
     	// could get the correct fileSystem
     	FileSystem fs = FileSystems.getFileSystem(uri);
     	assertTrue(fs instanceof S3FileSystem);
+    	// the host is the endpoint specified in fileSystem
+    	assertEquals(((S3FileSystem)fs).getEndpoint(), uri.getHost());
     	
     	// bucket name as first path
     	Path pathActual = fs.provider().getPath(uri);
     	
     	assertEquals(path, pathActual);
-    	
     }
     
     

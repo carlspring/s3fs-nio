@@ -28,7 +28,7 @@ public class FileSystemTest {
 	}
 
 	@Test
-	public void testGetPath() {
+	public void getPath() {
 		
 		assertEquals(fs.getPath("/bucket/path/to/file"),
 				forPath("/bucket/path/to/file"));
@@ -40,7 +40,17 @@ public class FileSystemTest {
 				forPath("/bucket/path/to/dir/"));
 		assertEquals(fs.getPath("bucket", "path/", "to/", "dir/"),
 				forPath("/bucket/path/to/dir/"));
+		assertEquals(fs.getPath("/bucket//path/to//file"),
+				forPath("/bucket/path/to/file"));
+		assertEquals(fs.getPath("path/to//file"),
+				forPath("path/to/file"));
 	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void getPathWithoutBucket() {
+		fs.getPath("//path/to/file");
+	}
+	
 	
 	@Test
 	public void close() throws IOException {
