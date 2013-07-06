@@ -16,7 +16,6 @@ public class SpecTest {
 	@Test
 	public void parentOfRelativeSinglePathIsNull(){
 		Path path = FileSystems.getDefault().getPath("relativo");
-		
 		assertNull(path.getParent());
 	}
 	

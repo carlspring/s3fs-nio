@@ -107,6 +107,17 @@ public class InstallProviderTest {
 		FileSystems.getFileSystem(uri);
 	}
 	
+	// desviaton from spec
+	@Test(expected=FileSystemNotFoundException.class)
+	public void getZipPath(){
+		Paths.get(URI.create("jar:file:/file.zip!/BAR"));
+	}
+	// desviation from spec
+	@Test(expected=FileSystemNotFoundException.class)
+	public void getMemoryPath(){
+		Paths.get(URI.create("memory:hellou:/file.zip"));
+	}
+	
 	private Path createZipTempFile() throws IOException{
 		File zip = Files.createTempFile("temp", ".zip").toFile();
 		
