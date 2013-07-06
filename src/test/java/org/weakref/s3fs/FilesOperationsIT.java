@@ -4,6 +4,8 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.*;
+import static org.weakref.s3fs.S3FileSystemProvider.ACCESS_KEY;
+import static org.weakref.s3fs.S3FileSystemProvider.SECRET_KEY;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -60,7 +62,7 @@ public class FilesOperationsIT {
 	private static FileSystem createNewFileSystem() throws IOException {
 		final Properties props = new Properties();
 		props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-		return S3FileSystemBuilder.newEndpoint("s3-eu-west-1.amazonaws.com").build(props.getProperty("accessKeyId"), props.getProperty("secretKey"));
+		return S3FileSystemBuilder.newEndpoint("s3-eu-west-1.amazonaws.com").build(props.getProperty(ACCESS_KEY), props.getProperty(SECRET_KEY));
 	}
 	
 	@Test

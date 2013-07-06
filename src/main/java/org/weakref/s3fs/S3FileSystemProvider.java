@@ -38,6 +38,7 @@ import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,9 +85,6 @@ import com.google.common.collect.Sets;
  * the semantics of the FileSystem provider API on a best effort basis, at an
  * increased processing cost.
  * 
- * TODO: how to deal with multiple '/' in a row? (e.g., a///b/c) TODO: support
- * for multiple independent filesystems (different endpoints, different
- * credentials)
  * 
  */
 public class S3FileSystemProvider extends FileSystemProvider {
@@ -106,29 +104,24 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkNotNull(uri, "uri is null");
 		Preconditions.checkArgument(uri.getScheme().equals("s3"),
 				"uri scheme must be 's3': '%s'", uri);
-
-		Object accessKey = env.get(ACCESS_KEY);
-		Object secretKey = env.get(SECRET_KEY);
-
+		// first try to load amazon props
+		Properties props = loadAmazonProperties();
+		Object accessKey = props.getProperty(ACCESS_KEY);
+		Object secretKey = props.getProperty(SECRET_KEY);
+		// but can overload by envs vars
+		if (env.get(ACCESS_KEY) != null){
+			accessKey = env.get(ACCESS_KEY);
+		}
+		if (env.get(SECRET_KEY) != null){
+			secretKey = env.get(SECRET_KEY);
+		}
+		
 		Preconditions.checkArgument((accessKey == null && secretKey == null)
 				|| (accessKey != null && secretKey != null),
 				"%s and %s should both be provided or should both be omitted",
 				ACCESS_KEY, SECRET_KEY);
 
-		AmazonS3Client client;
-
-		if (accessKey == null && secretKey == null) {
-			client = new AmazonS3Client();
-		} else {
-			client = new AmazonS3Client(new BasicAWSCredentials(
-					accessKey.toString(), secretKey.toString()));
-		}
-
-		if (uri.getHost() != null) {
-			client.setEndpoint(uri.getHost());
-		}
-
-		S3FileSystem result = new S3FileSystem(this, client, uri.getHost());
+		S3FileSystem result = createFileSystem(uri, accessKey, secretKey);
 		// if this instance already has a S3FileSystem, throw exception
 		// otherwise set
 		if (!fileSystem.compareAndSet(null, result)) {
@@ -620,6 +613,53 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			LinkOption... options) throws IOException {
 		throw new UnsupportedOperationException();
 	}
+	
+	// ~~
+	/**
+	 * Create the fileSystem
+	 * @param uri URI
+	 * @param accessKey Object maybe null for anonymous authentication
+	 * @param secretKey Object maybe null for anonymous authentication
+	 * @return
+	 */
+	protected S3FileSystem createFileSystem(URI uri, Object accessKey,
+			Object secretKey) {
+		AmazonS3Client client;
+
+		if (accessKey == null && secretKey == null) {
+			client = new AmazonS3Client();
+		} else {
+			client = new AmazonS3Client(new BasicAWSCredentials(
+					accessKey.toString(), secretKey.toString()));
+		}
+
+		if (uri.getHost() != null) {
+			client.setEndpoint(uri.getHost());
+		}
+
+		S3FileSystem result = new S3FileSystem(this, client, uri.getHost());
+		return result;
+	}
+	
+	/**
+	 * find /amazon.properties in the classpath
+	 * @return
+	 */
+	protected Properties loadAmazonProperties() {
+		Properties props = new Properties();
+		// http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
+		// http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html
+		try(InputStream in = Thread.currentThread ().getContextClassLoader ().getResourceAsStream("amazon.properties")){
+			if (in != null){
+				props.load(in);
+			}
+			
+		} catch (IOException e) {}
+		
+		return props;
+	}
+	
+	// ~~~
 
 	private <T> void verifySupportedOptions(Set<? extends T> allowedOptions,
 			Set<? extends T> actualOptions) {

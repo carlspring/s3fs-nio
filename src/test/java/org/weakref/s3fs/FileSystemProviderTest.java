@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.weakref.s3fs.S3Path.forPath;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,6 +15,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +23,7 @@ import org.junit.Test;
 import com.google.common.collect.ImmutableMap;
 
 public class FileSystemProviderTest {
+	S3FileSystemProvider provider;
 	
 	@Before
 	public void cleanup() throws IOException{
@@ -28,33 +31,49 @@ public class FileSystemProviderTest {
 			FileSystems.getFileSystem(URI.create("s3:///")).close();
 		}
 		catch(FileSystemNotFoundException e){}
+		// mock touch files
+		provider = spy(new S3FileSystemProvider());
+		doReturn(new Properties()).when(provider).loadAmazonProperties();
 	}
 	
 	@Test
-	public void createsAuthenticated() throws IOException {
-		S3FileSystemProvider provider = new S3FileSystemProvider();
+	public void createsAuthenticatedByEnv() throws IOException {
+		
 		Map<String, ?> env = buildFakeEnv();
-
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
+		URI uri = URI.create("s3:///");
+		
+		FileSystem fileSystem = provider.newFileSystem(uri,
 				env);
 
+		assertNotNull(fileSystem);	
+		verify(provider).createFileSystem(eq(uri),eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
+	}
+	
+	@Test
+	public void createAuthenticatedByProperties() throws IOException{
+		Properties props = new Properties();
+		props.setProperty(S3FileSystemProvider.SECRET_KEY, "secret key");
+		props.setProperty(S3FileSystemProvider.ACCESS_KEY, "access key");
+		doReturn(props).when(provider).loadAmazonProperties();
+		URI uri = URI.create("s3:///");
+		
+		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
+		
+		verify(provider).createFileSystem(eq(uri), eq("access key"), eq("secret key"));
 	}
 
 	@Test
 	public void createsAnonymous() throws IOException {
-		S3FileSystemProvider provider = new S3FileSystemProvider();
-
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
-				ImmutableMap.<String, Object> of());
+		URI uri = URI.create("s3:///");
+		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 
 		assertNotNull(fileSystem);
+		verify(provider).createFileSystem(eq(uri),eq(null),eq(null));
 	}
 
 	@Test(expected = FileSystemAlreadyExistsException.class)
 	public void createFailsIfAlreadyCreated() throws IOException {
-		S3FileSystemProvider provider = new S3FileSystemProvider();
-
 		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
 				ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
@@ -65,8 +84,6 @@ public class FileSystemProviderTest {
 
 	@Test
 	public void getFileSystem() throws IOException {
-		S3FileSystemProvider provider = new S3FileSystemProvider();
-
 		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
 				ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
@@ -77,12 +94,11 @@ public class FileSystemProviderTest {
 
 	@Test(expected = FileSystemNotFoundException.class)
 	public void getFailsIfNotYetCreated() {
-		S3FileSystemProvider provider = new S3FileSystemProvider();
 		provider.getFileSystem(URI.create("s3:///"));
 	}
 
 	@Test
-	public void gGetPathWithEmtpyEndpoint() throws IOException {
+	public void getPathWithEmtpyEndpoint() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));

@@ -18,10 +18,28 @@ import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.weakref.s3fs.S3FileSystemProvider;
 
+import com.github.marschall.com.sun.nio.zipfs.ZipFileSystem;
+/**
+ * FileSystems.newFileSystem busca mediante el serviceLoader los
+ * posibles fileSystemsProvider y los llama con newFileSystem.
+ * Si
+ * @author jarnaiz
+ *
+ */
 public class InstallProviderTest {
+	
+	@Before
+	public void cleanup(){
+		//clean resources
+		try{
+			FileSystems.getFileSystem(URI.create("s3:///")).close();
+		}
+		catch(FileSystemNotFoundException | IOException e){}
+	}
 	
 	@Test
 	public void useZipProvider() throws IOException{
@@ -30,7 +48,6 @@ public class InstallProviderTest {
 		String pathFinal = pathToString(path);
 		
 		FileSystem fs = FileSystems.newFileSystem(URI.create("jar:file:" + pathFinal), new HashMap<String,Object>(), this.getClass().getClassLoader());
-		
 		Path zipPath = fs.getPath("test.zip");
 	
 		assertNotNull(zipPath);
@@ -62,21 +79,32 @@ public class InstallProviderTest {
 	}
 	
 	@Test
-	public void useS3Provider() throws IOException{
+	public void newS3Provider() throws IOException{
 		URI uri = URI.create("s3:///hola/que/tal/");
-		FileSystem fs = null;
-		try{
-			fs = FileSystems.newFileSystem(uri, new HashMap<String,Object>(), this.getClass().getClassLoader());
-		}
-		catch(FileSystemAlreadyExistsException e){
-			fs = FileSystems.getFileSystem(uri);
-		}
+		// if meta-inf/services/java.ni.spi.FileSystemProvider is not present with
+		// the content: org.weakref.s3fs.S3FileSystemProvider
+		// this method return ProviderNotFoundException
+		FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<String,Object>(), this.getClass().getClassLoader());
 
-		Path zipPath = fs.getPath("test.zip");
-		assertNotNull(zipPath);
-		assertNotNull(zipPath.getFileSystem());
-		assertNotNull(zipPath.getFileSystem().provider());
-		assertTrue(zipPath.getFileSystem().provider() instanceof S3FileSystemProvider);
+		Path path = fs.getPath("test.zip");
+		assertNotNull(path);
+		assertNotNull(path.getFileSystem());
+		assertNotNull(path.getFileSystem().provider());
+		assertTrue(path.getFileSystem().provider() instanceof S3FileSystemProvider);
+		// close fs (FileSystems.getFileSystem throw exception)
+		fs.close();
+	}
+	
+	@Test(expected=FileSystemNotFoundException.class)
+	public void getZipProvider() throws IOException{
+		URI uri = URI.create("jar:file:/file.zip");
+		FileSystems.getFileSystem(uri);
+	}
+	
+	@Test(expected=FileSystemNotFoundException.class)
+	public void getS3Provider() throws IOException{
+		URI uri = URI.create("s3:///hola/que/tal/");
+		FileSystems.getFileSystem(uri);
 	}
 	
 	private Path createZipTempFile() throws IOException{
@@ -97,6 +125,5 @@ public class InstallProviderTest {
 			pathFinal.insert(0,  "/" + pathNext.getFileName().toString());
 		}
 		return pathFinal.toString();
-	}
-	
+	}	
 }

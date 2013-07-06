@@ -48,8 +48,8 @@ public class AmazonDirIT {
 		final Properties props = new Properties();
 		props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
 		return new HashMap<String, Object>(){{
-			put("access-key", props.getProperty("accessKeyId"));
-			put("secret-key", props.getProperty("secretKey"));
+			put("access-key", props.getProperty("access-key"));
+			put("secret-key", props.getProperty("secret-key"));
 		}};
 	}
 	
