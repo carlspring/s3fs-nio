@@ -11,22 +11,20 @@ arg.. waiting for java support ;)
 
 *Features*:
 
-* Crear directorio y ficheros
-* Borrar directorios y ficheros
-* Copiar entre Paths con distintos providers
-* Recorrer ficheros de un directorio.
-* Permite trabajar con directorios virtuales (folders que no existen como objetos en Amazon S3 y son subkeys de un elemento)
+* Copy and create folders and files
+* Delete folders and files
+* Copy paths between different providers
+* Walk file tree
+* Works with virtual s3 folders (not really exists and are element's subkeys)
 
 *Roadmap*:
 
-* Performance issue (slow querys with virtual folders)
-* Muchos mas tests unitarios (better test coverage)
-* No permitir subir ficheros con mismo nombre que folders y viceversa (Disallow upload binary files with same name as folders and vice versa)
-* Decidir que hacer con FileSystemProvider. ¿se pueden crear varios? ¿por bucketname, en vez de por endpoint?
-* Utilizar Multipart para una mejor implementación del outputstream
-* ¿alguna idea para los seekable?
+* Performance issue (slow querys with virtual folders, add multipart submit...)
+* Better test coverage
+* Disallow upload binary files with same name as folders and vice versa
+* Multi endpoint fileSystem (Actually one fileSystem at the same time)
 
-*Fuera del Roadmap*:
+*Out of Roadmap*:
 
 * Watchers
 * FileStore
