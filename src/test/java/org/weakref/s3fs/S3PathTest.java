@@ -17,15 +17,16 @@ import java.util.Iterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 public class S3PathTest {
 	
 	@BeforeClass
 	public static void setup() throws IOException {
 		try {
 			FileSystems.getFileSystem(URI.create("s3:///"));
-		
 		} catch(FileSystemNotFoundException e) {
-			S3FileSystemBuilder.newDefault().build("", "");
+			FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
 		}
 	}
 	

@@ -13,6 +13,8 @@ import java.nio.file.FileSystems;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 public class FileSystemTest {
 	
 	private FileSystem fs;
@@ -23,7 +25,7 @@ public class FileSystemTest {
 			fs = FileSystems.getFileSystem(URI.create("s3:///"));
 		
 		} catch(FileSystemNotFoundException e){
-			fs = S3FileSystemBuilder.newDefault().build("", "");
+			fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
 		}
 	}
 
