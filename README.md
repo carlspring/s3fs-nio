@@ -1,4 +1,4 @@
-An *Amazon AWS S3* FileSystem Provider *JSR-203* for Java 7 (NIO2)
+An **Amazon AWS S3** FileSystem Provider **JSR-203** for Java 7 (NIO2)
 
 Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any amount of data, at any time.
 NIO2 is the new file management API, introduced in Java version 7. 
@@ -9,7 +9,7 @@ This project provides a first API implementation, little optimized, but "complet
 [![Coverage Status](https://coveralls.io/repos/jarnaiz/Amazon-S3-FileSystem-NIO2/badge.png)](https://coveralls.io/r/jarnaiz/Amazon-S3-FileSystem-NIO2)
 arg.. waiting for java support ;)
 
-*Features*:
+**Features**:
 
 * Copy and create folders and files
 * Delete folders and files
@@ -17,14 +17,14 @@ arg.. waiting for java support ;)
 * Walk file tree
 * Works with virtual s3 folders (not really exists and are element's subkeys)
 
-*Roadmap*:
+**Roadmap**:
 
 * Performance issue (slow querys with virtual folders, add multipart submit...)
 * Better test coverage
 * Disallow upload binary files with same name as folders and vice versa
 * Multi endpoint fileSystem (Actually one fileSystem at the same time)
 
-*Out of Roadmap*:
+**Out of Roadmap**:
 
 * Watchers
 * FileStore
