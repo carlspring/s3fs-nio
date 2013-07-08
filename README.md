@@ -1,4 +1,4 @@
-An Amazon AWS S3 FileSystem Provider for Java 7 (NIO2)
+An Amazon AWS S3 FileSystem Provider JSR-203 for Java 7 (NIO2)
 
 Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any amount of data, at any time.
 NIO2 is the new file management API, introduced in Java version 7. 
