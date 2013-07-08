@@ -28,3 +28,5 @@ arg.. waiting for java support ;)
 
 * Watchers
 * FileStore
+
+http://jarnaiz.github.io/Amazon-S3-FileSystem-NIO2/
