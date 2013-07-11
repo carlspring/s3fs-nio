@@ -1,9 +1,9 @@
 package org.weakref.s3fs;
 
+import static java.lang.String.format;
+
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-
-import static java.lang.String.format;
 
 public class S3FileAttributes implements BasicFileAttributes {
 	
