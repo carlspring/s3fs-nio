@@ -31,10 +31,17 @@ import com.google.common.collect.Lists;
 public class S3Path implements Path {
 	
 	public static final String PATH_SEPARATOR = "/";
-
+	/**
+	 * bucket name
+	 */
 	private final String bucket;
-
+	/**
+	 * Parts without bucket name.
+	 */
 	private final List<String> parts;
+	/**
+	 * actual filesystem
+	 */
 	private S3FileSystem fileSystem;
 
 	/**
@@ -192,17 +199,83 @@ public class S3Path implements Path {
 
 	@Override
 	public boolean startsWith(Path other) {
-		throw new UnsupportedOperationException();
+		
+		if (other.getNameCount() > this.getNameCount()){
+			return false;
+		}
+		
+		if (!(other instanceof S3Path)){
+			return false;
+		}
+		
+		S3Path path = (S3Path) other;
+		
+		// empty (sin parts y sin bucket) y this no es vacio tb.
+		if (path.parts.size() == 0 && path.bucket == null &&
+				// si ambos somos vacios, permitimos continuar
+				(this.parts.size() != 0 || this.bucket != null)){
+			return false;
+		}
+		
+		// mismo bucket (si existe)
+		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
+				(path.getBucket() == null && this.getBucket() != null)){
+			return false;
+		}
+		
+		// comparamos subkeys
+		
+		for (int i = 0; i < path.parts.size() ; i++){
+			if (!path.parts.get(i).equals(this.parts.get(i))){
+				return false;
+			}
+		}
+		return true;		
 	}
 
 	@Override
-	public boolean startsWith(String other) {
-		throw new UnsupportedOperationException();
+	public boolean startsWith(String path) {
+		S3Path other = new S3Path(this.fileSystem, path);
+		return this.startsWith(other);
 	}
 
 	@Override
 	public boolean endsWith(Path other) {
-		throw new UnsupportedOperationException();
+		if (other.getNameCount() > this.getNameCount()){
+			return false;
+		}
+		// empty
+		if (other.getNameCount() == 0 && 
+				this.getNameCount() != 0){
+			return false;
+		}
+		
+		if (!(other instanceof S3Path)){
+			return false;
+		}
+		
+		S3Path path = (S3Path) other;
+		
+		// mismo bucket o null por ambos
+		
+		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
+				(path.getBucket() != null && this.getBucket() == null)){
+			return false;
+		}
+		
+		// comparamos subkeys
+		
+		int i = path.parts.size() - 1;
+		int j = this.parts.size() - 1;
+		for (; i >= 0 && j >= 0 ;){
+			
+			if (!path.parts.get(i).equals(this.parts.get(j))){
+				return false;
+			}
+			i--;
+			j--;
+		}
+		return true;
 	}
 
 	@Override
@@ -408,6 +481,8 @@ public class S3Path implements Path {
 		result = 31 * result + parts.hashCode();
 		return result;
 	}
+	
+	// ~ helpers methods
 
 	private static Function<String, String> strip(final String ... strs) {
 		return new Function<String, String>() {

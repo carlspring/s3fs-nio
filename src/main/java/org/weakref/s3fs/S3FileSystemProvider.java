@@ -43,17 +43,23 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.weakref.s3fs.util.CircularByteBuffer;
+
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Grant;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadRequest;
+import com.amazonaws.services.s3.model.InitiateMultipartUploadResult;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.Permission;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -72,8 +78,7 @@ import com.google.common.collect.Sets;
  * *and* a regular file. Otherwise, it's just a regular file. - It is legal for
  * a key "xyz" and "xyz/" to exist at the same time. The latter is treated as a
  * directory. - If a file "a/b/c" exists but there's no "a" or "a/b/", these are
- * considered "implicit" directories. They can be listed and traversed, but they
- * can't be deleted.
+ * considered "implicit" directories. They can be listed, traversed and deleted.
  * 
  * Deviations from FileSystem provider API: - Deleting a file or directory
  * always succeeds, regardless of whether the file/directory existed before the
@@ -88,6 +93,7 @@ import com.google.common.collect.Sets;
  * 
  */
 public class S3FileSystemProvider extends FileSystemProvider {
+	
 	public static final String ACCESS_KEY = "access-key";
 	public static final String SECRET_KEY = "secret-key";
 
@@ -293,11 +299,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		final S3Path s3Path = (S3Path) path;
 		
 		final Path tempFile = Files.createTempFile("file", s3Path.getFileName().toString());
+		
 		return new FileOutputStream(tempFile.toFile()) {
 			@Override
 			public void close() throws IOException {
 				super.close();
-
+				
 				s3Path.getFileSystem()
 						.getClient()
 						.putObject(s3Path.getBucket(), s3Path.getKey(),

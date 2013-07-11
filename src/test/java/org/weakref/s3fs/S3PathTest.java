@@ -12,6 +12,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Iterator;
 
 import org.junit.BeforeClass;
@@ -178,5 +179,146 @@ public class S3PathTest {
     	assertEquals(path, pathActual);
     }
     
+    // tests startsWith
     
+    @Test
+	public void startsWith(){
+		assertTrue(forPath("/bucket/file1").startsWith(forPath("/bucket")));
+	}
+    
+    @Test
+	public void startsWithBlank(){
+    	assertFalse(forPath("/bucket/file1").startsWith(forPath("")));
+	}
+    
+    @Test
+   	public void startsWithBlankRelative(){
+       	assertFalse(forPath("file1").startsWith(forPath("")));
+   	}
+    
+    @Test
+   	public void startsWithBlankBlank(){
+   		assertTrue(forPath("").startsWith(forPath("")));
+   	}
+    
+    @Test
+  	public void startsWithOnlyBuckets(){
+  		assertTrue(forPath("/bucket").startsWith(forPath("/bucket")));
+  	}
+	
+	@Test
+	public void startsWithRelativeVsAbsolute(){
+		assertFalse(forPath("/bucket/file1").startsWith(forPath("file1")));
+	}
+	
+	@Test
+	public void startsWithRelativeVsAbsoluteInBucket(){
+		assertFalse(forPath("/bucket/file1").startsWith(forPath("bucket")));
+	}
+	
+	@Test
+	public void startsWithFalse(){
+		assertFalse(forPath("/bucket/file1").startsWith(forPath("/bucket/file1/file2")));
+		assertTrue(forPath("/bucket/file1/file2").startsWith(forPath("/bucket/file1")));
+	}
+	
+	@Test
+	public void startsWithNotNormalize(){
+		assertFalse(forPath("/bucket/file1/file2").startsWith(forPath("/bucket/file1/../")));
+	}
+	
+	@Test
+	public void startsWithNormalize(){
+		// in this implementation not exists .. or . special paths
+		assertFalse(forPath("/bucket/file1/file2").startsWith(forPath("/bucket/file1/../").normalize()));
+	}
+	
+	@Test
+	public void startsWithRelative(){
+		assertTrue(forPath("file/file1").startsWith(forPath("file")));
+	}
+   
+    @Test
+    public void startsWithDifferentProvider() {
+    	assertFalse(forPath("/bucket/hello").startsWith(Paths.get("/bucket")));
+    }
+    
+    @Test
+    public void startsWithString(){
+    	assertTrue(forPath("/bucket/hello").startsWith("/bucket/hello"));
+    }
+    
+    @Test
+    public void startsWithStringRelative(){
+    	assertTrue(forPath("subkey1/hello").startsWith("subkey1/hello"));
+    }
+    
+    @Test
+  	public void startsWithStringOnlyBuckets(){
+  		assertTrue(forPath("/bucket").startsWith("/bucket"));
+  	}
+	
+	@Test
+	public void startsWithStringRelativeVsAbsolute(){
+		assertFalse(forPath("/bucket/file1").startsWith("file1"));
+	}
+    
+    @Test
+	public void startsWithStringFalse(){
+		assertFalse(forPath("/bucket/file1").startsWith("/bucket/file1/file2"));
+		assertTrue(forPath("/bucket/file1/file2").startsWith("/bucket/file1"));
+	}
+    
+    @Test
+	public void startsWithStringRelativeVsAbsoluteInBucket(){
+		assertFalse(forPath("/bucket/file1").startsWith("bucket"));
+	}
+    
+    // ends with
+	
+ 	@Test
+ 	public void endsWithAbsoluteRelative(){
+ 		assertTrue(forPath("/bucket/file1").endsWith(forPath("file1")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithAbsoluteAbsolute(){
+ 		assertTrue(forPath("/bucket/file1").endsWith(forPath("/bucket/file1")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithRelativeRelative(){
+ 		assertTrue(forPath("file/file1").endsWith(forPath("file1")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithRelativeAbsolute(){
+ 		assertFalse(forPath("file/file1").endsWith(forPath("/bucket")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithDifferenteFileSystem(){
+ 		assertFalse(forPath("/bucket/file1").endsWith(Paths.get("/bucket/file1")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithBlankRelativeAbsolute(){
+ 		assertFalse(forPath("").endsWith(forPath("/bucket")));
+ 	}
+ 	
+ 	@Test
+	public void endsWithBlankBlank() {
+		assertTrue(forPath("").endsWith(forPath("")));
+	}
+ 	
+ 	@Test
+ 	public void endsWithRelativeBlankAbsolute(){
+ 		assertFalse(forPath("/bucket/file1").endsWith(forPath("")));
+ 	}
+ 	
+ 	@Test
+ 	public void endsWithRelativeBlankRelative(){
+ 		assertFalse(forPath("file1").endsWith(forPath("")));
+ 	}
+ 	
 }

@@ -118,6 +118,8 @@ public class InstallProviderTest {
 		Paths.get(URI.create("memory:hellou:/file.zip"));
 	}
 	
+	// ~ helpers methods
+	
 	private Path createZipTempFile() throws IOException{
 		File zip = Files.createTempFile("temp", ".zip").toFile();
 		
