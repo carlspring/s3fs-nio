@@ -31,7 +31,7 @@
 		<developerConnection>scm:git:git@github.com:jarnaiz/s3fs.git</developerConnection>
 		<url>https://github.com/jarnaiz/s3fs</url>
 	</scm>
-	
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -158,20 +158,22 @@
 						<version>2.0.0</version>
 					</plugin>
 					<plugin>
-					    <groupId>org.codehaus.mojo</groupId>
-					    <artifactId>cobertura-maven-plugin</artifactId>
-					    <version>2.5.2</version>
-					    <configuration>
-					        <format>xml</format>
-					        <maxmem>256m</maxmem>
-					        <!-- aggregated reports for multi-module projects -->
-					        <aggregate>true</aggregate>
-					    </configuration>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>0.6.3.201306030806</version>
+						<executions>
+							<execution>
+								<id>prepare-agent</id>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>
 		</profile>
-		
+
 		<profile>
 			<id>release-sign-artifacts</id>
 			<activation>

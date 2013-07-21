@@ -2,4 +2,4 @@ language: java
 jdk:
   - openjdk7
   - oraclejdk7
-script: mvn -Ptravis test cobertura:cobertura coveralls:cobertura
+script: mvn -Ptravis test jacoco:report coveralls:jacoco
