@@ -31,6 +31,10 @@
 		<developerConnection>scm:git:git@github.com:jarnaiz/s3fs.git</developerConnection>
 		<url>https://github.com/jarnaiz/s3fs</url>
 	</scm>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 
 	<dependencies>
 		<dependency>
