@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Grant;
@@ -178,7 +177,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return new DirectoryStream<Path>() {
 			@Override
 			public void close() throws IOException {
-				// nada...
+				// nothing to do here
 			}
 
 			@Override
@@ -190,16 +189,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 					@Override
 					public void remove() {
-						// nada: no soportado
+						// not supported
 					}
 
 					@Override
 					public Path next() {
-						/*
-						 * S3ObjectSummary obj = getIterator().next(); return
-						 * S3Path.forPath("/" + obj.getBucketName() + "/" +
-						 * obj.getKey());
-						 */
 						return getIterator().next();
 					}
 
@@ -211,6 +205,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 					private Iterator<S3Path> getIterator() {
 						if (it == null) {
 							List<S3Path> listPath = new ArrayList<>();
+							// TODO: need revision for better performance!
 							ListObjectsRequest request = new ListObjectsRequest();
 							request.setBucketName(s3Path.getBucket());
 							request.setPrefix(s3Path.getKey() + "/");
@@ -220,7 +215,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 								final String key = objectSummary.getKey();
 								// filtramos para quedarnos con los de primer
 								// nivel
-
 								String folder = getInmediateDescendent(s3Path.getKey() + "/", key);
 								if (folder != null){
 									S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
@@ -278,10 +272,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		Preconditions.checkArgument(!s3Path.getKey().equals(""),
 				"cannot create InputStream for root directory: %s", s3Path);
-
-		return s3Path.getFileSystem().getClient()
+	
+		InputStream res = s3Path.getFileSystem().getClient()
 				.getObject(s3Path.getBucket(), s3Path.getKey())
 				.getObjectContent();
+	
+		if (res == null){
+			throw new IOException("path is a directory");
+		}
+		else{
+			return res;
+		}
 	}
 
 	@Override
@@ -508,7 +509,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(s3Path.isAbsolute(),
 				"path must be absolute: %s", s3Path);
 
-		AmazonS3 client = s3Path.getFileSystem().getClient();
+		AmazonS3Client client = s3Path.getFileSystem().getClient();
 
 		// get ACL and check if the file exists as a side-effect
 		AccessControlList acl = getAccessControl(s3Path);
@@ -628,10 +629,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		AmazonS3Client client;
 
 		if (accessKey == null && secretKey == null) {
-			client = new AmazonS3Client();
+			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client());
 		} else {
-			client = new AmazonS3Client(new BasicAWSCredentials(
-					accessKey.toString(), secretKey.toString()));
+			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(new BasicAWSCredentials(
+					accessKey.toString(), secretKey.toString())));
 		}
 
 		if (uri.getHost() != null) {
