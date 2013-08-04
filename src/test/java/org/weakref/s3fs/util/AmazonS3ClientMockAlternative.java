@@ -17,6 +17,7 @@ package org.weakref.s3fs.util;
  * limitations under the License.
  */
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -118,7 +119,10 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 	public ObjectListing listObjects(ListObjectsRequest listObjectsRequest)
 			throws AmazonClientException, AmazonServiceException {
 		ObjectListing objectListing = new ObjectListing();
-		int capacity = listObjectsRequest.getMaxKeys();
+		Integer capacity = listObjectsRequest.getMaxKeys();
+		if (capacity == null) {
+			capacity = Integer.MAX_VALUE;
+		}
 
 		Bucket bucket = find(listObjectsRequest.getBucketName());
 		for (S3Element elem : objects.get(bucket)) {
@@ -131,7 +135,13 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 					s3ObjectSummary.setBucketName(elem.getS3Object()
 							.getBucketName());
 					s3ObjectSummary.setKey(elem.getS3Object().getKey());
-
+					s3ObjectSummary.setLastModified(elem.getS3Object()
+							.getObjectMetadata().getLastModified());
+					s3ObjectSummary.setOwner(owner);
+					s3ObjectSummary.setETag(elem.getS3Object()
+							.getObjectMetadata().getETag());
+					s3ObjectSummary.setSize(elem.getS3Object()
+							.getObjectMetadata().getContentLength());
 					objectListing.getObjectSummaries().add(s3ObjectSummary);
 					capacity--;
 				}
@@ -187,22 +197,35 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 	}
 
 	@Override
-    public PutObjectResult putObject(String bucketName, String key, File file) throws AmazonClientException, AmazonServiceException {
-    	 S3Object s3Object = new S3Object();
-         s3Object.setBucketName(bucketName);
-         s3Object.setKey(key);
-         try {
-			s3Object.setObjectContent(new FileInputStream(file));
-		} catch (FileNotFoundException e) {
-			throw new AmazonClientException("error al crear el input file", e);
+	public PutObjectResult putObject(String bucketName, String key, File file)
+			throws AmazonClientException, AmazonServiceException {
+
+		try {
+			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(file.toPath()));
+			S3Element elem = parse(stream, bucketName, key);
+
+			objects.get(find(bucketName)).add(elem);
+
+			PutObjectResult putObjectResult = new PutObjectResult();
+			putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
+			return putObjectResult;
+		} catch (IOException e) {
+			throw new AmazonServiceException("",e);
 		}
-         S3Element elem = new S3Element(s3Object, createAllPermission());
-         objects.get(find(bucketName)).add(elem);
-         
-         PutObjectResult putObjectResult = new PutObjectResult();
-         putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
-         return putObjectResult;
-    }
+
+	}
+	
+	public PutObjectResult putObject(String bucket, String keyName,
+			ByteArrayInputStream byteArrayInputStream, ObjectMetadata metadata) {
+		S3Element elem = parse(byteArrayInputStream, bucket, keyName);
+
+		objects.get(find(bucket)).add(elem);
+
+		PutObjectResult putObjectResult = new PutObjectResult();
+		putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
+		return putObjectResult;
+		
+	}
 
 	@Override
 	public CopyObjectResult copyObject(String sourceBucketName,
@@ -213,9 +236,9 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 		S3Element element = find(sourceBucketName, sourceKey);
 
 		if (element != null) {
-			
+
 			S3Object objectSource = element.getS3Object();
-			// copy object with 
+			// copy object with
 			S3Object resObj = new S3Object();
 			resObj.setBucketName(destinationBucketName);
 			resObj.setKey(destinationKey);
@@ -225,9 +248,11 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 			// copy perission
 			AccessControlList permission = new AccessControlList();
 			permission.setOwner(element.getPermission().getOwner());
-			permission.grantAllPermissions(element.getPermission().getGrants().toArray(new Grant[0]));
+			permission.grantAllPermissions(element.getPermission().getGrants()
+					.toArray(new Grant[0]));
 			// maybe not exists key TODO
-			objects.get(find(destinationBucketName)).add(new S3Element(resObj, permission));
+			objects.get(find(destinationBucketName)).add(
+					new S3Element(resObj, permission, sourceKey.endsWith("/")));
 
 			return new CopyObjectResult();
 		}
@@ -243,16 +268,41 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 			objects.get(find(bucketName)).remove(res);
 		}
 	}
+	
+	private S3Element parse(ByteArrayInputStream stream, String bucket, String key){
+		
+		S3Object object = new S3Object();
+		
+		object.setBucketName(bucket);
+		object.setKey(key);
 
-	private S3Element parse(Path elem, Path bucket) throws IOException {
+		ObjectMetadata metadata = new ObjectMetadata();
+		metadata.setLastModified(new Date());
+		metadata.setContentLength(stream.available());
+		object.setObjectContent(stream);
+
+
+		object.setObjectMetadata(metadata);
+		// TODO: create converter between path permission and s3 permission
+		AccessControlList permission = createAllPermission();
+		return new S3Element(object, permission, false);
+	}
+	
+	private S3Element parse(Path elem, Path bucket) throws IOException{
 		boolean dir = false;
 		if (Files.isDirectory(elem)) {
 			dir = true;
 		}
-	
+
 		S3Object object = new S3Object();
+		
 		object.setBucketName(bucket.getFileName().toString());
-		object.setKey(bucket.relativize(elem).toString());
+		
+		String key = bucket.relativize(elem).toString();
+		if (dir) {
+			key += "/";
+		}		
+		object.setKey(key);
 
 		ObjectMetadata metadata = new ObjectMetadata();
 		BasicFileAttributes attr = Files.readAttributes(elem,
@@ -263,14 +313,14 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 			object.setObjectContent(null);
 		} else {
 			metadata.setContentLength(attr.size());
-			object.setObjectContent(Files.newInputStream(elem));
+			object.setObjectContent( new ByteArrayInputStream(Files.readAllBytes(elem)));
 		}
 
 		object.setObjectMetadata(metadata);
 		// TODO: create converter between path permission and s3 permission
 		AccessControlList permission = createAllPermission();
 
-		return 	new S3Element(object, permission);
+		return new S3Element(object, permission, dir);
 	}
 
 	private AccessControlList createAllPermission() {
@@ -306,7 +356,13 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 		}
 
 		for (S3Element elemnt : objects.get(bucket)) {
-			if (elemnt.getS3Object().getKey().equals(key)) {
+			String newKey = key;
+			if (elemnt.isDirectory()) {
+				if (!key.endsWith("/")) {
+					newKey += "/";
+				}
+			}
+			if (elemnt.getS3Object().getKey().equals(newKey)) {
 				return elemnt;
 			}
 		}
@@ -326,10 +382,13 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 	public static class S3Element {
 
 		private S3Object s3Object;
+		private boolean directory;
 		private AccessControlList permission;
 
-		public S3Element(S3Object s3Object, AccessControlList permission) {
+		public S3Element(S3Object s3Object, AccessControlList permission,
+				boolean directory) {
 			this.s3Object = s3Object;
+			this.directory = directory;
 			this.permission = permission;
 		}
 
@@ -343,6 +402,14 @@ public class AmazonS3ClientMockAlternative extends AmazonS3Client {
 
 		public AccessControlList getPermission() {
 			return permission;
+		}
+
+		public boolean isDirectory() {
+			return directory;
+		}
+
+		public void setDirectory(boolean directory) {
+			this.directory = directory;
 		}
 
 		public void setPermission(AccessControlList permission) {

@@ -28,6 +28,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -208,14 +209,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 							// TODO: need revision for better performance!
 							ListObjectsRequest request = new ListObjectsRequest();
 							request.setBucketName(s3Path.getBucket());
-							request.setPrefix(s3Path.getKey() + "/");
-							// request.setDelimiter("/");
+							request.setPrefix(s3Path.getKey());
+							request.setMarker(s3Path.getKey());
 							// carga TODOS los elementos a todos los niveles :(
 							for (final S3ObjectSummary objectSummary : dir.getFileSystem().getClient().listObjects(request).getObjectSummaries()) {
 								final String key = objectSummary.getKey();
 								// filtramos para quedarnos con los de primer
 								// nivel
-								String folder = getInmediateDescendent(s3Path.getKey() + "/", key);
+								String folder = getInmediateDescendent(s3Path.getKey(), key);
 								if (folder != null){
 									S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
 									
@@ -232,7 +233,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 						return it;
 					}
 					
-					public String getInmediateDescendent(final String keyParent, final String keyChild){
+					public String getInmediateDescendent(String keyParent, String keyChild){
+						
+						keyParent = deleteExtraPath(keyParent);
+						keyChild = deleteExtraPath(keyChild);
+						
 						if (!keyChild.startsWith(keyParent)) {
 							// maybe we just should return false
 							throw new IllegalArgumentException(
@@ -240,18 +245,28 @@ public class S3FileSystemProvider extends FileSystemProvider {
 											+ "' for parent '" + keyParent + "'");
 						}
 						final int parentLen = keyParent.length();
-						final String childWithoutParent = keyChild
-								.substring(parentLen);
+						final String childWithoutParent = deleteExtraPath(keyChild
+								.substring(parentLen));
 						
 						String[] parts = childWithoutParent.split("/");
 						
 						if (parts.length > 0 && !parts[0].isEmpty()){
-							return keyParent + parts[0];
+							return keyParent + "/" + parts[0];
 						}
 						else{
 							return null;
 						}
 							
+					}
+
+					private String deleteExtraPath(String keyChild) {
+						if (keyChild.startsWith("/")){
+							keyChild = keyChild.substring(1);
+						}
+						if (keyChild.endsWith("/")){
+							keyChild = keyChild.substring(0, keyChild.length() - 1);
+						}
+						return keyChild;
 					}
 				};
 			}
@@ -294,7 +309,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		final S3Path s3Path = (S3Path) path;
 		
 		final Path tempFile = Files.createTempFile("file", s3Path.getFileName().toString());
-		
+
 		return new FileOutputStream(tempFile.toFile()) {
 			@Override
 			public void close() throws IOException {
@@ -305,7 +320,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 						.putObject(s3Path.getBucket(), s3Path.getKey(),
 								tempFile.toFile());
 
-				Files.delete(tempFile);
+				Files.deleteIfExists(tempFile);
 			}
 		};
 	}
@@ -702,9 +717,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			request.setBucketName(s3Path.getBucket());
 			request.setPrefix(s3Path.getKey());
 			request.setMaxKeys(1);
-
-			if (!client.listObjects(request).getObjectSummaries().isEmpty()){
-				res = client.listObjects(request).getObjectSummaries().get(0);
+			List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
+			if (!query.isEmpty()){
+				res = query.get(0);
 			}
 			else{
 				throw new NoSuchFileException(s3Path.toString());

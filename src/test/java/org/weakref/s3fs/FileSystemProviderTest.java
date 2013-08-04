@@ -1,18 +1,21 @@
 package org.weakref.s3fs;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.weakref.s3fs.S3Path.forPath;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -22,8 +25,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -222,12 +223,7 @@ public class FileSystemProviderTest {
 		
 		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
 		// assert
-		provider.newDirectoryStream(bucket, new  DirectoryStream.Filter<Path>(){
-			@Override public boolean accept(Path entry) throws IOException {
-				assertEquals("file1", entry.getFileName().toString());
-				return true;
-			}
-		});
+		assertNewDirectoryStream(bucket, "file1");
 	}
 	
 	@Test
@@ -242,13 +238,7 @@ public class FileSystemProviderTest {
 		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
 
 		// assert
-		provider.newDirectoryStream(bucket, new  DirectoryStream.Filter<Path>(){
-			@Override public boolean accept(Path entry) throws IOException {
-				String fileName = entry.getFileName().toString();
-				assertTrue(fileName.equals("file1") || fileName.equals("file2"));
-				return true;
-			}
-		});
+		assertNewDirectoryStream(bucket, "file1", "file2");
 	}
 	
 	@Test
@@ -263,13 +253,7 @@ public class FileSystemProviderTest {
 		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
 
 		// assert
-		provider.newDirectoryStream(bucket, new  DirectoryStream.Filter<Path>(){
-			@Override public boolean accept(Path entry) throws IOException {
-				String fileName = entry.getFileName().toString();
-				assertTrue(fileName.equals("file1") || fileName.equals("dir1"));
-				return true;
-			}
-		});
+		assertNewDirectoryStream(bucket, "file1", "dir1");
 	}
 	
 	// newInputStream
@@ -285,17 +269,9 @@ public class FileSystemProviderTest {
 		mockFileSystem(fsMem.getPath("/base"));
 		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/file1");
 		
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		try (InputStream input = provider.newInputStream(file)){
-			int nRead;
-			byte[] data = new byte[16384];
-			while ((nRead = input.read(data, 0, data.length)) != -1) {
-			  buffer.write(data, 0, nRead);
-			}
-			buffer.flush();
-		}
+		byte[] buffer =  Files.readAllBytes(file);
 		// check
-		assertArrayEquals(res, buffer.toByteArray());
+		assertArrayEquals(res, buffer);
 	}
 	
 	@Test
@@ -308,18 +284,11 @@ public class FileSystemProviderTest {
 		mockFileSystem(fsMem.getPath("/base"));
 		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file1");
 		
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		try (InputStream input = provider.newInputStream(file)){
-			int nRead;
-			byte[] data = new byte[16384];
-			while ((nRead = input.read(data, 0, data.length)) != -1) {
-			  buffer.write(data, 0, nRead);
-			}
-			buffer.flush();
-		}
+		byte[] buffer = Files.readAllBytes(file);
 		// check
-		assertArrayEquals(res, buffer.toByteArray());
+		assertArrayEquals(res, buffer);
 	}
+
 	
 	@Test(expected = IOException.class)
 	public void inputStreamDirectory() throws IOException{
@@ -333,11 +302,103 @@ public class FileSystemProviderTest {
 	
 	// newOutputStream 
 	
+	@Test
+	public void outputStream() throws IOException{
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		mockFileSystem(fsMem.getPath("/base"));
+		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		
+		Path file = base.resolve("file1");
+		
+		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+			stream.write("hola que haces".getBytes());
+			stream.flush();
+		}
+		// get the input
+		byte[] buffer =  Files.readAllBytes(file);
+		// check
+		assertArrayEquals("hola que haces".getBytes(), buffer);
+	}
+	
+	@Test
+	public void anotherOutputStream() throws IOException{
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		mockFileSystem(fsMem.getPath("/base"));
+		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		
+		Path file = base.resolve("file1");
+		
+		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+			stream.write("heyyyyy".getBytes());
+			stream.flush();
+		}
+		// get the input
+		byte[] buffer =  Files.readAllBytes(file);
+		// check
+		assertArrayEquals("heyyyyy".getBytes(), buffer);
+	}
+	
+	// createDirectory
+	
+	@Test
+	public void createDirectory() throws IOException{
+		
+		Files.createDirectories(fsMem.getPath("/base", "bucketA"));
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		Files.createDirectory(base);
+		// assert
+		assertTrue(Files.exists(base));
+		assertTrue(Files.isDirectory(base));
+		assertTrue(Files.exists(base));
+	}
+	
+	// delete
+	
+	@Test
+	public void delete() throws IOException{
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		Files.delete(base);
+		// assert
+		assertTrue(Files.notExists(base));
+	}
+	
+	// copy
+	
+	
 	
 	
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
 				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+	}
+	
+	
+	private void assertNewDirectoryStream(Path base, final String ... files) throws IOException {
+		
+		try (DirectoryStream<Path> dir = provider.newDirectoryStream(base, new  DirectoryStream.Filter<Path>(){
+			@Override public boolean accept(Path entry) throws IOException {
+				return true;
+			}
+		})){
+			int finded = 0;
+			assertNotNull(dir);
+			assertNotNull(dir.iterator());
+			assertTrue(dir.iterator().hasNext());
+			for (Path path: dir){
+				String fileName = path.getFileName().toString();
+				for (String file : files){
+					if (fileName.equals(file)){
+						finded++;
+					}
+				}
+			}
+			assertEquals(files.length, finded);
+		}
 	}
 }

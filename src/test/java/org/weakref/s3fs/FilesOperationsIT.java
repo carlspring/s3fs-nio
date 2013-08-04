@@ -20,6 +20,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Calendar;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -169,7 +170,7 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void testCopyDir() throws IOException, URISyntaxException {
+	public void copyDir() throws IOException, URISyntaxException {
 
 		Path dir = uploadDir();
 
@@ -180,7 +181,47 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void directoryStreamTest() throws IOException, URISyntaxException{
+	public void directoryStreamBaseBucketFindDirectoryTest() throws IOException, URISyntaxException{
+		Path bucketPath = fileSystemAmazon.getPath(bucket);
+		String name = "01"+UUID.randomUUID().toString();
+		final Path fileToFind = Files.createDirectory(bucketPath.resolve(name));
+
+		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)){
+			boolean find = false;
+			for (Path path : dirStream){
+				// solo recorre ficheros del primer nivel
+				assertEquals(bucketPath, path.getParent());
+				if (path.equals(fileToFind)){
+					find = true;
+					break;
+				}
+			}
+			assertTrue(find);
+		}
+	}
+	
+	@Test
+	public void directoryStreamBaseBucketFindFileTest() throws IOException, URISyntaxException{
+		Path bucketPath = fileSystemAmazon.getPath(bucket);
+		String name = "00"+UUID.randomUUID().toString();
+		final Path fileToFind = Files.createFile(bucketPath.resolve(name));
+	
+		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)){
+			boolean find = false;
+			for (Path path : dirStream){
+				// solo recorre ficheros del primer nivel
+				assertEquals(bucketPath, path.getParent());
+				if (path.equals(fileToFind)){
+					find = true;
+					break;
+				}
+			}
+			assertTrue(find);
+		}
+	}
+	
+	@Test
+	public void directoryStreamFirstDirTest() throws IOException, URISyntaxException{
 		Path dir = uploadDir();
 		
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)){
