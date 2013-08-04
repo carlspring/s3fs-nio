@@ -23,8 +23,10 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.Properties;
 
@@ -362,12 +364,125 @@ public class FileSystemProviderTest {
 		mockFileSystem(fsMem.getPath("/base"));
 		// act
 		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
-		Files.delete(base);
+		provider.delete(base);
 		// assert
 		assertTrue(Files.notExists(base));
 	}
 	
 	// copy
+	
+	@Test
+	public void copy() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.write(dir.resolve("file1"), "content-file-1".getBytes(), StandardOpenOption.CREATE);
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file = fs.getPath("/bucketA/dir/file1");
+		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
+		provider.copy(file, fileDest);
+		// assert
+		assertArrayEquals("content-file-1".getBytes(), Files.readAllBytes(fileDest));
+	}
+	
+	// move
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void move() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.write(dir.resolve("file1"), "content-file-1".getBytes(), StandardOpenOption.CREATE);
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file = fs.getPath("/bucketA/dir/file1");
+		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
+		provider.move(file, fileDest);
+	}
+	
+	// isSameFile
+	
+	@Test
+	public void isSameFileTrue() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.write(dir.resolve("file1"), "content-file-1".getBytes(), StandardOpenOption.CREATE);
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file1 = fs.getPath("/bucketA/dir/file1");
+		Path fileCopy = fs.getPath("/bucketA/dir/file1");
+		// act
+		assertTrue(provider.isSameFile(file1, fileCopy));
+	}
+	
+	@Test
+	public void isSameFileFalse() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.createFile(dir.resolve("file1"));
+		Files.createFile(dir.resolve("file2"));
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file1 = fs.getPath("/bucketA/dir/file1");
+		Path fileCopy = fs.getPath("/bucketA/dir/file2");
+		// act
+		assertTrue(!provider.isSameFile(file1, fileCopy));
+	}
+	
+	// isHidden
+	
+	@Test
+	public void isHidden() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.createFile(dir.resolve("file1"));
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file1 = fs.getPath("/bucketA/dir/file1");
+		// act
+		assertTrue(!provider.isHidden(file1));
+	}
+	
+	// getFileStore
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void getFileStore() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
+		Files.createFile(dir.resolve("file1"));
+		mockFileSystem(fsMem.getPath("/base"));
+		// act
+		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		Path file1 = fs.getPath("/bucketA/dir/file1");
+		// act
+		provider.getFileStore(file1);
+	}
+	
+	// getFileAttributeView
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void getFileAttributeView(){
+		provider.getFileAttributeView(null, null, null);
+	}
+	
+	// readAttributes
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void readAttributesString() throws IOException{
+		provider.readAttributes(null, "", null);
+	}
+	
+	// setAttribute
+	
+	@Test(expected = UnsupportedOperationException.class)
+	public void readAttributesObject() throws IOException{
+		provider.setAttribute(null, "", new Object(), null);
+	}
+	
 	
 	
 	
