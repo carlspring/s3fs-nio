@@ -3,6 +3,8 @@ package org.weakref.s3fs.spike;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
+import static org.weakref.s3fs.S3FileSystemProvider.ACCESS_KEY;
+import static org.weakref.s3fs.S3FileSystemProvider.SECRET_KEY;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -36,6 +38,7 @@ import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class AmazonDirIT {
 	
@@ -45,12 +48,26 @@ public class AmazonDirIT {
 	
 	
 	private Map<String, ? extends Object> buildEnv() throws IOException{
-		final Properties props = new Properties();
-		props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-		return new HashMap<String, Object>(){{
-			put("access-key", props.getProperty("access-key"));
-			put("secret-key", props.getProperty("secret-key"));
-		}};
+	
+		Map<String, Object> env = null;
+		
+		String accessKey = System.getenv(ACCESS_KEY);
+		String secretKey = System.getenv(SECRET_KEY);
+		
+		if (accessKey != null && secretKey != null){
+			env = ImmutableMap.<String, Object> builder()
+				.put(ACCESS_KEY, accessKey)
+				.put(SECRET_KEY, secretKey).build();
+		}
+		else{
+			final Properties props = new Properties();
+			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+			env = ImmutableMap.<String, Object> builder()
+					.put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
+					.put(SECRET_KEY, props.getProperty(SECRET_KEY)).build();
+		}
+		
+		return env;
 	}
 	
 	@Test

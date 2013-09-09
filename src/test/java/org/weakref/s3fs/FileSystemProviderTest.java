@@ -17,6 +17,14 @@ import static org.weakref.s3fs.S3Path.forPath;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
@@ -27,6 +35,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
 
@@ -338,6 +347,28 @@ public class FileSystemProviderTest {
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
 		assertArrayEquals("heyyyyy".getBytes(), buffer);
+	}
+	
+	// seekable
+	
+	//TODO: @Test
+	public void seekable() throws IOException{
+		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+		Path file = Files.createFile(dir.resolve("file"));
+		mockFileSystem(fsMem.getPath("/base"));
+		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		
+		try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+			ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
+			seekable.write(buffer);
+			ByteBuffer bufferRead = ByteBuffer.allocate(7);
+			seekable.position(0);
+			seekable.read(bufferRead);
+
+			assertArrayEquals(bufferRead.array(), buffer.array());
+		}
+		
+		assertArrayEquals("content".getBytes(), Files.readAllBytes(base.resolve("file")));
 	}
 	
 	// createDirectory

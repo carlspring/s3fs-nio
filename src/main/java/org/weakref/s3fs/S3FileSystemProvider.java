@@ -332,13 +332,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(path instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) path;
-		if (Files.exists(s3Path)) {
-			throw new FileAlreadyExistsException(s3Path.toString());
-		}
 		// creamos un fichero vacio:
 		final Path tempDir = Files.createTempDirectory("temp-s3");
 		// ahora podemos leer simulando las escrituras
 		final Path file = tempDir.resolve(path.getFileName().toString());
+		// FIXME: delete, windows bug?
+		Files.createFile(file);
 		final SeekableByteChannel seekable = Files
 				.newByteChannel(file, options);
 

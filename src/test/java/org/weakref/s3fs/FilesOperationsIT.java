@@ -41,7 +41,7 @@ public class FilesOperationsIT {
 	
 	private static final URI uri = URI.create("s3://s3-eu-west-1.amazonaws.com/");
 	private static final URI uriDefaultEndpoint = URI.create("s3:///");
-	private static final String bucket = "/test-storage-upplication"; 
+	private static final String bucket = getBucket();
 	
 	private FileSystem fileSystemAmazon;
 	
@@ -58,14 +58,44 @@ public class FilesOperationsIT {
 			return createNewFileSystem();
 		}
 	}
-
-	private static FileSystem createNewFileSystem() throws IOException {
-		final Properties props = new Properties();
-		props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+	
+	private static String getBucket(){
+		final String bucketNameKey = "bucket-name";
 		
-		Map<String, Object> env = ImmutableMap.<String, Object> builder()
-				.put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-				.put(SECRET_KEY, props.getProperty(SECRET_KEY)).build();
+		String bucketName = System.getenv(bucketNameKey);
+		if (bucketName != null){
+			return bucketName;
+		}
+		else{
+			final Properties props = new Properties();
+			try {
+				props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+				return props.getProperty(bucketNameKey);
+			} catch (IOException e) {
+				throw new RuntimeException("needed /amazon-test.properties in the classpath");
+			}
+		}
+	}
+	
+	private static FileSystem createNewFileSystem() throws IOException {
+
+		Map<String, Object> env = null;
+		
+		String accessKey = System.getenv(ACCESS_KEY);
+		String secretKey = System.getenv(SECRET_KEY);
+		
+		if (accessKey != null && secretKey != null){
+			env = ImmutableMap.<String, Object> builder()
+				.put(ACCESS_KEY, accessKey)
+				.put(SECRET_KEY, secretKey).build();
+		}
+		else{
+			final Properties props = new Properties();
+			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+			env = ImmutableMap.<String, Object> builder()
+					.put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
+					.put(SECRET_KEY, props.getProperty(SECRET_KEY)).build();
+		}
 		
 		return FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com"), env);
 	}

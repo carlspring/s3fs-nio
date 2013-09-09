@@ -1,21 +1,16 @@
 package org.weakref.s3fs;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.weakref.s3fs.S3Path.forPath;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.Map;
-import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -26,11 +21,12 @@ public class FileSystemProviderIT {
 	S3FileSystemProvider provider;
 	
 	@Before
-	public void cleanup() throws IOException{
+	public void setup() throws IOException{
 		try{
 			FileSystems.getFileSystem(URI.create("s3:///")).close();
 		}
 		catch(FileSystemNotFoundException e){}
+		
 		
 		provider = spy(new S3FileSystemProvider());
 	}
