@@ -2,7 +2,7 @@ language: java
 jdk:
   - openjdk7
   - oraclejdk7
-script: mvn -Ptravis test integration-test jacoco:report coveralls:jacoco
+script: mvn -Ptravis test jacoco:report coveralls:jacoco
 
 env:
   global:
