@@ -6,6 +6,6 @@ script: mvn -Ptravis test jacoco:report coveralls:jacoco
 
 env:
   global:
-    - secure: "GheBAW37C//PQ9KYi+PtVjJ8no8vCn4Mm2l21lbUvULgmc5FAY+BUJQnl4Si1tqxnadDdSe0PM4n0lKYIBYqnqzgf0FBvVm9w+aK570SJiN8vH3Zkp6/AkN3Qwq+CSnHjNutLXPmLMtRMxS8qzaS40GAFr5/tpObjYaEneXDjKQ="
-    - secure: "X1XaHSp870o3xkrrKqsTMu5XRgN4kruARdDVJ26/RfTgxkJKn8doQdvvYDXG5SMesTY5TsiFtRCDS+1oefVe4mQCaqsmFTt2mYXMLnbdmcXQawbVMm7gLcr1jEB9/DjKdT7J7mNo3u4vmSLtBgVAnJg/WtNcHwsO8MSPhtmn7Y8="
-    - secure: "A/B8JWUliDLudTcDFJN7wkYd0WqmqrLDC2rS4pqpXLXtouAmDeJYq1ZmOx2SFSX8oE1pIlBrk400Aua6OEh/8mxunOR8K19LlgHiM1XQIw9iconfwOoCMLprUP3GdK2vrBRLBRi+0jqzNDJHNv5ZfRLCbJYOXNrlSLiHhUP8Fj4="
+    - secure: "fpL5G5V93op5BHOm8U+6AE5TKCwsVn/o3Wv8bCBYeROV2HAmyv4z4j8rdW4WiDWMO7r9/XELxWkDvvdAFCF0b9ANjpgCCg8q0O1H/DHXA7Ey6UnmLpmgy6mXGHjSdptGGkZOcpyPpFvA3N9d63rls/lxhjWdfqCfO0xKxEd28CQ="
+    - secure: "I1I4hrpOQ6ITx2LxmpQ4LgTsm6d2CTMu8NviUMDl9/7ozOojXxsPZI9pPieqB1BVGy9F+JgUs7SXi4v2Y4DHdqbh9DCCmtQviMJVUm3LDUEGjyTl650TtjnkfnU8J0Y0c31ThNUW2entDr4THNyNunXnX68mBaQjQqrZEuO9Jf0="
+    - secure: "iFXZeCjomL9KCUzQ+BFuWO9w+/uuunMadta1v/9ifZUGJAWfqyQ6Cc2S/COmOrcbYjE3ViPrj7fYbRBqgRl2yV0fuvy5Y+OMDIMwcMnVMDxLdId77aXTAd7LZ8z+wbpDRNlXyfiKP75CSHiMsFacJyMWYGkab715GzEF5UYcSZw="

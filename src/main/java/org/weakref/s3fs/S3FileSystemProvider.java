@@ -88,8 +88,8 @@ import com.google.common.collect.Sets;
  */
 public class S3FileSystemProvider extends FileSystemProvider {
 	
-	public static final String ACCESS_KEY = "access-key";
-	public static final String SECRET_KEY = "secret-key";
+	public static final String ACCESS_KEY = "access_key";
+	public static final String SECRET_KEY = "secret_key";
 
 	final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
 

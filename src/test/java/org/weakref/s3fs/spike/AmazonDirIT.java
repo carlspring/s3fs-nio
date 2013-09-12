@@ -1,74 +1,32 @@
 package org.weakref.s3fs.spike;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertEquals;
-import static org.weakref.s3fs.S3FileSystemProvider.ACCESS_KEY;
-import static org.weakref.s3fs.S3FileSystemProvider.SECRET_KEY;
+import static org.junit.Assert.assertTrue;
+import static org.weakref.s3fs.util.EnvironmentBuilder.getRealEnv;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.weakref.s3fs.FilesOperationsIT;
-import org.weakref.s3fs.S3FileAttributes;
 import org.weakref.s3fs.S3FileSystemProvider;
 import org.weakref.s3fs.S3Path;
-import org.weakref.s3fs.util.CopyDirVisitor;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 public class AmazonDirIT {
 	
+	// FIXME: add to config
 	private static final URI uri = URI.create("s3://s3-eu-west-1.amazonaws.com/");
-	private static final URI uriDefaultEndpoint = URI.create("s3:///");
 	private static final String bucket = "/test-storage-upplication"; 
-	
-	
-	private Map<String, ? extends Object> buildEnv() throws IOException{
-	
-		Map<String, Object> env = null;
-		
-		String accessKey = System.getenv(ACCESS_KEY);
-		String secretKey = System.getenv(SECRET_KEY);
-		
-		if (accessKey != null && secretKey != null){
-			env = ImmutableMap.<String, Object> builder()
-				.put(ACCESS_KEY, accessKey)
-				.put(SECRET_KEY, secretKey).build();
-		}
-		else{
-			final Properties props = new Properties();
-			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-			env = ImmutableMap.<String, Object> builder()
-					.put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-					.put(SECRET_KEY, props.getProperty(SECRET_KEY)).build();
-		}
-		
-		return env;
-	}
 	
 	@Test
 	public void createDirWithoutEndSlash() throws IOException{
@@ -95,7 +53,7 @@ public class AmazonDirIT {
 			}
 		};
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, buildEnv());
+		FileSystem fileSystem = provider.newFileSystem(uri, getRealEnv());
 		
 		String name = UUID.randomUUID().toString();
 		
@@ -123,7 +81,7 @@ public class AmazonDirIT {
 		String folder = UUID.randomUUID().toString();
 		String file1 = folder+"/file.html";
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, buildEnv());
+		FileSystem fileSystem = provider.newFileSystem(uri, getRealEnv());
 		Path dir = fileSystem.getPath(bucket, folder);
 		
 		S3Path s3Path = (S3Path)dir;

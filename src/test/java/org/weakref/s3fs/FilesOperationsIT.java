@@ -1,8 +1,10 @@
 package org.weakref.s3fs;
 
-import static org.junit.Assert.*;
-import static org.weakref.s3fs.S3FileSystemProvider.ACCESS_KEY;
-import static org.weakref.s3fs.S3FileSystemProvider.SECRET_KEY;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.weakref.s3fs.util.EnvironmentBuilder.getRealEnv;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,25 +19,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Calendar;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.weakref.s3fs.util.CopyDirVisitor;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.google.common.collect.ImmutableMap;
 
 public class FilesOperationsIT {
 	
@@ -60,7 +54,7 @@ public class FilesOperationsIT {
 	}
 	
 	private static String getBucket(){
-		final String bucketNameKey = "bucket-name";
+		final String bucketNameKey = "bucket_name";
 		
 		String bucketName = System.getenv(bucketNameKey);
 		if (bucketName != null){
@@ -78,26 +72,7 @@ public class FilesOperationsIT {
 	}
 	
 	private static FileSystem createNewFileSystem() throws IOException {
-
-		Map<String, Object> env = null;
-		
-		String accessKey = System.getenv(ACCESS_KEY);
-		String secretKey = System.getenv(SECRET_KEY);
-		
-		if (accessKey != null && secretKey != null){
-			env = ImmutableMap.<String, Object> builder()
-				.put(ACCESS_KEY, accessKey)
-				.put(SECRET_KEY, secretKey).build();
-		}
-		else{
-			final Properties props = new Properties();
-			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-			env = ImmutableMap.<String, Object> builder()
-					.put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-					.put(SECRET_KEY, props.getProperty(SECRET_KEY)).build();
-		}
-		
-		return FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com"), env);
+		return FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com"), getRealEnv());
 	}
 	
 	@Test
@@ -120,7 +95,6 @@ public class FilesOperationsIT {
 	}
 	@Test
 	public void notExistsDir() throws IOException{
-
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 		assertTrue(!Files.exists(dir));
 	}
