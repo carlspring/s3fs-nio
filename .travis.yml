@@ -1,11 +1,16 @@
 language: java
+
 jdk:
   - openjdk7
   - oraclejdk7
-script: mvn -Ptravis test jacoco:report coveralls:jacoco
-
+  
 env:
   global:
     - secure: "fpL5G5V93op5BHOm8U+6AE5TKCwsVn/o3Wv8bCBYeROV2HAmyv4z4j8rdW4WiDWMO7r9/XELxWkDvvdAFCF0b9ANjpgCCg8q0O1H/DHXA7Ey6UnmLpmgy6mXGHjSdptGGkZOcpyPpFvA3N9d63rls/lxhjWdfqCfO0xKxEd28CQ="
     - secure: "I1I4hrpOQ6ITx2LxmpQ4LgTsm6d2CTMu8NviUMDl9/7ozOojXxsPZI9pPieqB1BVGy9F+JgUs7SXi4v2Y4DHdqbh9DCCmtQviMJVUm3LDUEGjyTl650TtjnkfnU8J0Y0c31ThNUW2entDr4THNyNunXnX68mBaQjQqrZEuO9Jf0="
     - secure: "iFXZeCjomL9KCUzQ+BFuWO9w+/uuunMadta1v/9ifZUGJAWfqyQ6Cc2S/COmOrcbYjE3ViPrj7fYbRBqgRl2yV0fuvy5Y+OMDIMwcMnVMDxLdId77aXTAd7LZ8z+wbpDRNlXyfiKP75CSHiMsFacJyMWYGkab715GzEF5UYcSZw="
+  
+before_install:
+  - sudo sed -i 's/security.provider.9/#security.provider.9/g' $JAVA_HOME/jre/lib/security/java.security
+
+script: mvn -Ptravis test jacoco:report coveralls:jacoco
