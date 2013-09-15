@@ -4,7 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.weakref.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static org.weakref.s3fs.util.EnvironmentBuilder.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,7 +22,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
-import java.util.Properties;
 import java.util.UUID;
 
 import org.junit.Before;
@@ -33,7 +32,7 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 
 public class FilesOperationsIT {
 	
-	private static final URI uri = URI.create("s3://s3-eu-west-1.amazonaws.com/");
+	private static final URI uri = URI.create("s3://"+ getEndpoint() + "/");
 	private static final URI uriDefaultEndpoint = URI.create("s3:///");
 	private static final String bucket = getBucket();
 	
@@ -53,26 +52,8 @@ public class FilesOperationsIT {
 		}
 	}
 	
-	private static String getBucket(){
-		final String bucketNameKey = "bucket_name";
-		
-		String bucketName = System.getenv(bucketNameKey);
-		if (bucketName != null){
-			return bucketName;
-		}
-		else{
-			final Properties props = new Properties();
-			try {
-				props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-				return props.getProperty(bucketNameKey);
-			} catch (IOException e) {
-				throw new RuntimeException("needed /amazon-test.properties in the classpath");
-			}
-		}
-	}
-	
 	private static FileSystem createNewFileSystem() throws IOException {
-		return FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com"), getRealEnv());
+		return FileSystems.newFileSystem(uri, getRealEnv());
 	}
 	
 	@Test

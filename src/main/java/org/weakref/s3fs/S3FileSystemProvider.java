@@ -337,7 +337,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		// ahora podemos leer simulando las escrituras
 		final Path file = tempDir.resolve(path.getFileName().toString());
 		// FIXME: delete, windows bug?
-		Files.createFile(file);
+		//Files.createFile(file);
 		final SeekableByteChannel seekable = Files
 				.newByteChannel(file, options);
 
