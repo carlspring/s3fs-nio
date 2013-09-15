@@ -29,7 +29,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/jarnaiz/s3fs.git</connection>
 		<developerConnection>scm:git:git@github.com:jarnaiz/s3fs.git</developerConnection>
-		<url>https://github.com/jarnaiz/s3fs</url>
+		<url>https://github.com/jarnaiz/Amazon-S3-FileSystem-NIO2</url>
 	</scm>
 
 	<properties>
@@ -122,13 +122,6 @@
 				</configuration>
 			</plugin>
 
-			<!-- plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-surefire-plugin</artifactId> 
-				<configuration> <excludes> <exclude>**/*IT.java</exclude> </excludes> </configuration> 
-				<executions> <execution> <id>integration-test</id> <goals> <goal>test</goal> 
-				</goals> <phase>integration-test</phase> <configuration> <excludes> <exclude>none</exclude> 
-				</excludes> <includes> <include>**/*IT.java</include> </includes> </configuration> 
-				</execution> </executions> </plugin -->
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
@@ -160,21 +153,7 @@
 		</plugins>
 	</build>
 
-	<!--  distributionManagement>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>Sonatype Nexus Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</snapshotRepository>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<name>Nexus Release Repository</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-		</repository>
-	</distributionManagement-->
-
 	<profiles>
-
 		<profile>
 			<id>travis</id>
 			<activation>
