@@ -17,4 +17,4 @@ before_install:
 script: mvn clean install 
 
 after_success:
-  - mvn cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura
+  - mvn jacoco:report coveralls:jacoco
