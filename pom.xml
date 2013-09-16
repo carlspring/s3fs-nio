@@ -118,7 +118,7 @@
 				<configuration>
 					<includes>
 						<include>**/*IT.java</include>
-						<include>**/*TEST.java</include>
+						<include>**/*Test.java</include>
 					</includes>
 				</configuration>
 			</plugin>
