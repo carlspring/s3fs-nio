@@ -14,4 +14,7 @@ env:
 before_install:
   - sudo sed -i 's/security.provider.9/#security.provider.9/g' $JAVA_HOME/jre/lib/security/java.security
 
-script: mvn -Ptravis clean install cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura
+script: mvn clean install 
+
+after_success:
+  - mvn cobertura:cobertura org.eluder.coveralls:coveralls-maven-plugin:cobertura
