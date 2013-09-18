@@ -12,18 +12,11 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.weakref.s3fs.S3Path.forPath;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -31,10 +24,8 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
@@ -147,7 +138,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 	
@@ -157,7 +148,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 
@@ -167,7 +158,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3://endpoint1/bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 	
@@ -514,7 +505,11 @@ public class FileSystemProviderTest {
 		provider.setAttribute(null, "", new Object(), null);
 	}
 	
+<<<<<<< HEAD
 		
+=======
+	
+>>>>>>> 3265534a96066e504cc70d7244476758cf0628d6
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")

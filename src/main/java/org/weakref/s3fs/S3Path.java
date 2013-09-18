@@ -108,17 +108,7 @@ public class S3Path implements Path {
 		this.fileSystem = fileSystem;
 	}
 
-	/**
-	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
-	 * "{key}"
-	 * 
-	 * redundant '/' are stripped in the key path
-	 */
-	public static S3Path forPath(String path) {
-		return new S3Path((S3FileSystem) FileSystems.getFileSystem(URI
-				.create("s3:///")), path);
-	}
-
+	
 	public String getBucket() {
 		return bucket;
 	}
@@ -507,7 +497,7 @@ public class S3Path implements Path {
 	/*
 	 * delete redundant "/" and empty parts
 	 */
-	private static class KeyParts{
+	private abstract static class KeyParts{
 		
 		private static ImmutableList<String> parse(List<String> parts) {
 			return ImmutableList.copyOf(filter(transform(parts, strip("/")), notEmpty()));
