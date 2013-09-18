@@ -320,9 +320,43 @@ public class S3PathTest {
  		assertFalse(forPath("file1").endsWith(forPath("")));
  	}
  	
+ 	// register
+ 	
+ 	@Test(expected = UnsupportedOperationException.class)
+ 	public void registerWithEventsThrowException() throws IOException{
+ 		forPath("file1").register(null, null);
+ 	}
+ 	
+ 	@Test(expected = UnsupportedOperationException.class)
+ 	public void registerThrowException() throws IOException{
+ 		forPath("file1").register(null);
+ 	}
+ 	
+ 	// to file
+ 	
+ 	@Test(expected = UnsupportedOperationException.class)
+ 	public void toFile() {
+ 		forPath("file1").toFile();
+ 	}
+ 	
+ 	// compares to
+ 	
+ 	@Test
+ 	public void compare() {
+ 		assertTrue(forPath("file1").compareTo(forPath("file1")) == 0);
+ 		assertTrue(forPath("/path/file1").compareTo(forPath("/path/file1")) == 0);
+ 		assertTrue(forPath("/A/file1").compareTo(forPath("/B/file1")) == -1);
+ 		assertTrue(forPath("/B/file1").compareTo(forPath("/A/file1")) == 1);
+ 		assertTrue(forPath("/AA/file1").compareTo(forPath("/A/file1")) > 0);
+ 		assertTrue(forPath("a").compareTo(forPath("aa")) < 0);
+ 		assertTrue(forPath("ab").compareTo(forPath("aa")) > 0);
+ 	}
+ 	
  	private static S3Path forPath(String path) {
  		return (S3Path)FileSystems.getFileSystem(URI
 				.create("s3:///")).getPath(path);
  	}
+ 	
+ 	
  	
 }

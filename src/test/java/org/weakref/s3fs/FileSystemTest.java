@@ -37,22 +37,21 @@ public class FileSystemTest {
 	@Before
 	public void cleanup() throws IOException{
 		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
-		
+		// close old
 		try{
 			FileSystems.getFileSystem(URI.create("s3:///")).close();
 		}
 		catch(FileSystemNotFoundException e){}
-		
+		// create a new
 		provider = spy(new S3FileSystemProvider());
 		doReturn(new Properties()).when(provider).loadAmazonProperties();
-		
+		// by default with two buckets
 		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
 		Path bucketB = Files.createDirectories(fsMem.getPath("/base", "bucketB"));
 		Files.createFile(bucketA.resolve("file1"));
 		Files.createFile(bucketB.resolve("file2"));
-		
 		mockFileSystem(fsMem.getPath("/base"));
-		
+		//
 		fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
 	}
 	
@@ -99,18 +98,29 @@ public class FileSystemTest {
 	@Test
 	public void getRootDirectoriesReturnBuckets() {
 		
-		Iterable<Path> iterables = fs.getRootDirectories();
+		Iterable<Path> paths = fs.getRootDirectories();
 		
-		assertNotNull(iterables);
+		assertNotNull(paths);
 		
-		List<Path> buckets = Lists.newArrayList(iterables);
+		int size = 0;
+		boolean bucketNameA = false;
+		boolean bucketNameB = false;
 		
-		assertEquals(2, buckets.size());
-		//TODO: assertTrue(Files.isDirectory(buckets.get(0)));
-		assertEquals("bucketA", buckets.get(0).getFileName().toString());
+		for (Path path : paths) {
+			String name = path.getFileName().toString();
+			if (name.equals("bucketA")) {
+				bucketNameA = true;
+			}
+			else if (name.equals("bucketB")) {
+				bucketNameB = true;
+			}
+			size++;
+		}
 		
-		//TODO: assertTrue(Files.isDirectory(buckets.get(1)));
-		assertEquals("bucketB", buckets.get(1).getFileName().toString());
+		
+		assertEquals(2, size);
+		assertTrue(bucketNameA);
+		assertTrue(bucketNameB);
 		
 	}
 	
