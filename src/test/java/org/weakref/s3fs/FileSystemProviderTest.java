@@ -42,7 +42,7 @@ import java.util.Properties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.AmazonS3ClientMockAlternative;
+import org.weakref.s3fs.util.AmazonS3ClientMock;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +72,7 @@ public class FileSystemProviderTest {
 	
 	private void mockFileSystem(final Path memoryBucket){
 		try {
-			AmazonS3ClientMockAlternative clientMock = new AmazonS3ClientMockAlternative(memoryBucket);
+			AmazonS3ClientMock clientMock = new AmazonS3ClientMock(memoryBucket);
 			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, clientMock, "endpoint");
 			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), anyObject(), anyObject());
 		} catch (IOException e) {
@@ -514,16 +514,12 @@ public class FileSystemProviderTest {
 		provider.setAttribute(null, "", new Object(), null);
 	}
 	
-	
-	
-	
-	
+		
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
 				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
 	}
-	
 	
 	private void assertNewDirectoryStream(Path base, final String ... files) throws IOException {
 		

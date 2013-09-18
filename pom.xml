@@ -191,8 +191,7 @@
 					    <configuration>
 					        <format>xml</format>
 					        <maxmem>256m</maxmem>
-					        aggregated reports for multi-module projects 
-					        <!--  -->
+					        <!--aggregated reports for multi-module projects -->
 					        <aggregate>true</aggregate>
 					       
 					    </configuration>
