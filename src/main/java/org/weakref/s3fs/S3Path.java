@@ -497,7 +497,7 @@ public class S3Path implements Path {
 	/*
 	 * delete redundant "/" and empty parts
 	 */
-	private static class KeyParts{
+	private abstract static class KeyParts{
 		
 		private static ImmutableList<String> parse(List<String> parts) {
 			return ImmutableList.copyOf(filter(transform(parts, strip("/")), notEmpty()));

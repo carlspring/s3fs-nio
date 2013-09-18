@@ -332,6 +332,11 @@ public class S3PathTest {
  		forPath("file1").register(null);
  	}
  	
+ 	@Test(expected = UnsupportedOperationException.class)
+ 	public void registerWithEventsAndModiferThrowException() throws IOException{
+ 		forPath("file1").register(null, null, null);
+ 	}
+ 	
  	// to file
  	
  	@Test(expected = UnsupportedOperationException.class)
