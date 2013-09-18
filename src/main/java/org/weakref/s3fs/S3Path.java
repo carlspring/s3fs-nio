@@ -108,17 +108,7 @@ public class S3Path implements Path {
 		this.fileSystem = fileSystem;
 	}
 
-	/**
-	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
-	 * "{key}"
-	 * 
-	 * redundant '/' are stripped in the key path
-	 */
-	public static S3Path forPath(String path) {
-		return new S3Path((S3FileSystem) FileSystems.getFileSystem(URI
-				.create("s3:///")), path);
-	}
-
+	
 	public String getBucket() {
 		return bucket;
 	}

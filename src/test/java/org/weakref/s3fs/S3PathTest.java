@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.weakref.s3fs.S3Path.forPath;
 
 import java.io.IOException;
 import java.net.URI;
@@ -319,6 +318,11 @@ public class S3PathTest {
  	@Test
  	public void endsWithRelativeBlankRelative(){
  		assertFalse(forPath("file1").endsWith(forPath("")));
+ 	}
+ 	
+ 	private static S3Path forPath(String path) {
+ 		return (S3Path)FileSystems.getFileSystem(URI
+				.create("s3:///")).getPath(path);
  	}
  	
 }

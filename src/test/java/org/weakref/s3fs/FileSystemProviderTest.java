@@ -12,18 +12,11 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.weakref.s3fs.S3Path.forPath;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -31,10 +24,8 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
@@ -42,7 +33,7 @@ import java.util.Properties;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.AmazonS3ClientMockAlternative;
+import org.weakref.s3fs.util.AmazonS3ClientMock;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -72,7 +63,7 @@ public class FileSystemProviderTest {
 	
 	private void mockFileSystem(final Path memoryBucket){
 		try {
-			AmazonS3ClientMockAlternative clientMock = new AmazonS3ClientMockAlternative(memoryBucket);
+			AmazonS3ClientMock clientMock = new AmazonS3ClientMock(memoryBucket);
 			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, clientMock, "endpoint");
 			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), anyObject(), anyObject());
 		} catch (IOException e) {
@@ -147,7 +138,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 	
@@ -157,7 +148,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 
@@ -167,7 +158,7 @@ public class FileSystemProviderTest {
 				ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3://endpoint1/bucket/path/to/file"));
 
-		assertEquals(path, forPath("/bucket/path/to/file"));
+		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
 	}
 	
@@ -513,9 +504,6 @@ public class FileSystemProviderTest {
 	public void readAttributesObject() throws IOException{
 		provider.setAttribute(null, "", new Object(), null);
 	}
-	
-	
-	
 	
 	
 	private Map<String, ?> buildFakeEnv(){
