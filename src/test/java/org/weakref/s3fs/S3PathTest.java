@@ -144,6 +144,29 @@ public class S3PathTest {
     }
     
     @Test
+    public void resolveSiblingString() {
+        // absolute (non-root) vs...
+        assertEquals(forPath("/bucket/path/to/file").resolveSibling("other/child"), forPath("/bucket/path/to/other/child"));
+        assertEquals(forPath("/bucket/path/to/file").resolveSibling("/bucket2/other/child"), forPath("/bucket2/other/child"));
+        assertEquals(forPath("/bucket/path/to/file").resolveSibling(""), forPath("/bucket/path/to/"));
+
+        // absolute (root) vs ...
+        assertEquals(forPath("/bucket").resolveSibling("other/child"), forPath("other/child"));
+        assertEquals(forPath("/bucket").resolveSibling("/bucket2/other/child"), forPath("/bucket2/other/child"));
+        assertEquals(forPath("/bucket").resolveSibling(""), forPath(""));
+
+        // relative (empty) vs ...
+        assertEquals(forPath("").resolveSibling("other/child"), forPath("other/child"));
+        assertEquals(forPath("").resolveSibling("/bucket2/other/child"), forPath("/bucket2/other/child"));
+        assertEquals(forPath("").resolveSibling(""), forPath(""));
+
+        // relative (non-empty) vs ...
+        assertEquals(forPath("path/to/file").resolveSibling("other/child"), forPath("path/to/other/child"));
+        assertEquals(forPath("path/to/file").resolveSibling("/bucket2/other/child"), forPath("/bucket2/other/child"));
+        assertEquals(forPath("path/to/file").resolveSibling(""), forPath("path/to/"));
+    }
+    
+    @Test
     public void relativize(){
     	Path path = forPath("/bucket/path/to/file");
     	Path other = forPath("/bucket/path/to/file/hello");
@@ -320,6 +343,26 @@ public class S3PathTest {
  		assertFalse(forPath("file1").endsWith(forPath("")));
  	}
  	
+	@Test
+ 	public void endsWithString(){
+		// endsWithAbsoluteRelative(){
+ 		assertTrue(forPath("/bucket/file1").endsWith("file1"));
+		// endsWithAbsoluteAbsolute
+	 	assertTrue(forPath("/bucket/file1").endsWith("/bucket/file1"));
+		// endsWithRelativeRelative
+ 		assertTrue(forPath("file/file1").endsWith("file1"));
+		// endsWithRelativeAbsolute
+	 	assertFalse(forPath("file/file1").endsWith("/bucket"));
+	 	// endsWithBlankRelativeAbsolute
+	 	assertFalse(forPath("").endsWith("/bucket"));
+		// endsWithBlankBlank
+		assertTrue(forPath("").endsWith(""));
+		// endsWithRelativeBlankAbsolute
+		assertFalse(forPath("/bucket/file1").endsWith(""));
+		// endsWithRelativeBlankRelative
+ 		assertFalse(forPath("file1").endsWith(""));
+ 	}
+ 	
  	// register
  	
  	@Test(expected = UnsupportedOperationException.class)
@@ -355,6 +398,40 @@ public class S3PathTest {
  		assertTrue(forPath("/AA/file1").compareTo(forPath("/A/file1")) > 0);
  		assertTrue(forPath("a").compareTo(forPath("aa")) < 0);
  		assertTrue(forPath("ab").compareTo(forPath("aa")) > 0);
+ 	}
+ 	
+ 	// toRealPath
+ 	
+ 	@Test(expected = UnsupportedOperationException.class)
+ 	public void toRealPathThrowException() throws IOException{
+ 		forPath("file1").toRealPath();
+ 	}
+ 	
+ 	// toAbsolutePath
+ 	
+ 	@Test(expected = IllegalStateException.class)
+ 	public void toAbsolutePathRelativePathThrowException() throws IOException{
+ 		forPath("file1").toAbsolutePath();
+ 	}
+ 	
+ 	@Test
+ 	public void toAbsolutePath() throws IOException{
+ 		Path path = forPath("/file1");
+ 		Path other = path.toAbsolutePath();
+ 		
+ 		assertEquals(path, other);
+ 	}
+ 	
+ 	// get root
+ 	
+ 	@Test
+ 	public void getRootReturnBucket(){
+ 		assertEquals(forPath("/bucketA"), forPath("/bucketA/dir/file").getRoot());
+ 	}
+ 	
+ 	@Test
+ 	public void getRootRelativeReturnNull(){
+ 		assertNull(forPath("dir/file").getRoot());
  	}
  	
  	private static S3Path forPath(String path) {
