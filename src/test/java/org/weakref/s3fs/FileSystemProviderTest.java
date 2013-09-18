@@ -505,11 +505,6 @@ public class FileSystemProviderTest {
 		provider.setAttribute(null, "", new Object(), null);
 	}
 	
-<<<<<<< HEAD
-		
-=======
-	
->>>>>>> 3265534a96066e504cc70d7244476758cf0628d6
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
