@@ -28,7 +28,7 @@ This project provides a first API implementation, little optimized, but "complet
 * Watchers
 * FileStore
 
-** LICENSE **
+**LICENSE**
 
 Amazon S3 FileSystem NIO2 is released under the MIT License.
 
