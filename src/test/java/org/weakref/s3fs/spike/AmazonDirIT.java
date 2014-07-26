@@ -2,6 +2,8 @@ package org.weakref.s3fs.spike;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.weakref.s3fs.util.EnvironmentBuilder.getBucket;
+import static org.weakref.s3fs.util.EnvironmentBuilder.getEndpoint;
 import static org.weakref.s3fs.util.EnvironmentBuilder.getRealEnv;
 
 import java.io.ByteArrayInputStream;
@@ -21,13 +23,12 @@ import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import org.weakref.s3fs.util.EnvironmentBuilder;
 
 public class AmazonDirIT {
-	
-	// FIXME: add to config
-	private static final URI uri = URI.create("s3://s3-eu-west-1.amazonaws.com/");
-	private static final String bucket = "/test-storage-upplication"; 
-	
+
+    private static final URI uri = URI.create("s3://"+ getEndpoint() + "/");
+
 	@Test
 	public void createDirWithoutEndSlash() throws IOException{
 		
@@ -57,7 +58,7 @@ public class AmazonDirIT {
 		
 		String name = UUID.randomUUID().toString();
 		
-		Path dir = fileSystem.getPath(bucket, name);
+		Path dir = fileSystem.getPath(getBucket(), name);
 		
 		Files.createDirectory(dir);
 		
@@ -65,7 +66,7 @@ public class AmazonDirIT {
 		
 		// añadimos mas ficheros dentro:
 		
-		Path dir2 = fileSystem.getPath(bucket, name);
+		Path dir2 = fileSystem.getPath(getBucket(), name);
 		
 		// como se si un fichero es directorio? en amazon pueden existir 
 		// tanto como directorios como ficheros con el mismo nombre
@@ -75,14 +76,14 @@ public class AmazonDirIT {
 	}
 	
 	@Test
-	public void testCreatedFromAmazonWebConsoleNotExistkeyForFolder() throws IOException{
+	public void testCreatedFromAmazonWebConsoleNotExistKeyForFolder() throws IOException{
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		
 		String folder = UUID.randomUUID().toString();
 		String file1 = folder+"/file.html";
 		
 		FileSystem fileSystem = provider.newFileSystem(uri, getRealEnv());
-		Path dir = fileSystem.getPath(bucket, folder);
+		Path dir = fileSystem.getPath(getBucket(), folder);
 		
 		S3Path s3Path = (S3Path)dir;
 		// subimos un fichero sin sus paths
