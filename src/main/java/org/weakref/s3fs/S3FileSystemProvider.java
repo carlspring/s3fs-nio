@@ -46,14 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AccessControlList;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Grant;
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.Permission;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
@@ -167,112 +160,134 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return getFileSystem(uri).getPath(uri.getPath());
 	}
 
-	@Override
-	public DirectoryStream<Path> newDirectoryStream(Path dir,
-			DirectoryStream.Filter<? super Path> filter) throws IOException {
+    @Override
+    public DirectoryStream<Path> newDirectoryStream(Path dir,
+                                                    DirectoryStream.Filter<? super Path> filter) throws IOException {
 
-		Preconditions.checkArgument(dir instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
-		final S3Path s3Path = (S3Path) dir;
+        Preconditions.checkArgument(dir instanceof S3Path,
+                "path must be an instance of %s", S3Path.class.getName());
+        final S3Path s3Path = (S3Path) dir;
 
-		return new DirectoryStream<Path>() {
-			@Override
-			public void close() throws IOException {
-				// nothing to do here
-			}
+        return new DirectoryStream<Path>() {
+            @Override
+            public void close() throws IOException {
+                // nothing to do here
+            }
 
-			@Override
-			public Iterator<Path> iterator() {
-				return new Iterator<Path>() {
+            @Override
+            public Iterator<Path> iterator() {
+                return new Iterator<Path>() {
 
-					private S3Path dir = s3Path;
-					private Iterator<S3Path> it;
+                    private S3Path dir = s3Path;
+                    private Iterator<S3Path> it;
 
-					@Override
-					public void remove() {
-						// not supported
-					}
+                    @Override
+                    public void remove() {
+                        // not supported
+                    }
 
-					@Override
-					public Path next() {
-						return getIterator().next();
-					}
+                    @Override
+                    public Path next() {
+                        return getIterator().next();
+                    }
 
-					@Override
-					public boolean hasNext() {
-						return getIterator().hasNext();
-					}
+                    @Override
+                    public boolean hasNext() {
+                        return getIterator().hasNext();
+                    }
 
-					private Iterator<S3Path> getIterator() {
-						if (it == null) {
-							List<S3Path> listPath = new ArrayList<>();
-							// TODO: need revision for better performance!
-							ListObjectsRequest request = new ListObjectsRequest();
-							request.setBucketName(s3Path.getBucket());
-							request.setPrefix(s3Path.getKey());
-							request.setMarker(s3Path.getKey());
-							// carga TODOS los elementos a todos los niveles :(
-							for (final S3ObjectSummary objectSummary : dir.getFileSystem().getClient().listObjects(request).getObjectSummaries()) {
-								final String key = objectSummary.getKey();
-								// filtramos para quedarnos con los de primer
-								// nivel
-								String folder = getInmediateDescendent(s3Path.getKey(), key);
-								if (folder != null){
-									S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
-									
-									if (!listPath.contains(descendentPart)){
-										listPath.add(descendentPart);
-									}
-									
-								}
-								
-							}
-							it = listPath.iterator();
-						}
+                    private Iterator<S3Path> getIterator() {
+                        if (it == null) {
+                            List<S3Path> listPath = new ArrayList<>();
+                            // TODO: need revision for better performance!
+                            // this request load objects that start with the key at all levels
+                            ListObjectsRequest request = new ListObjectsRequest();
+                            request.setBucketName(s3Path.getBucket());
+                            request.setPrefix(s3Path.getKey());
+                            request.setMarker(s3Path.getKey());
+                            // iterator over this list
 
-						return it;
-					}
-					
-					public String getInmediateDescendent(String keyParent, String keyChild){
-						
-						keyParent = deleteExtraPath(keyParent);
-						keyChild = deleteExtraPath(keyChild);
-						
-						if (!keyChild.startsWith(keyParent)) {
-							// maybe we just should return false
-							throw new IllegalArgumentException(
-									"Invalid child '" + keyChild
-											+ "' for parent '" + keyParent + "'");
-						}
-						final int parentLen = keyParent.length();
-						final String childWithoutParent = deleteExtraPath(keyChild
-								.substring(parentLen));
-						
-						String[] parts = childWithoutParent.split("/");
-						
-						if (parts.length > 0 && !parts[0].isEmpty()){
-							return keyParent + "/" + parts[0];
-						}
-						else{
-							return null;
-						}
-							
-					}
+                            ObjectListing current = dir.getFileSystem().getClient().listObjects(request);
 
-					private String deleteExtraPath(String keyChild) {
-						if (keyChild.startsWith("/")){
-							keyChild = keyChild.substring(1);
-						}
-						if (keyChild.endsWith("/")){
-							keyChild = keyChild.substring(0, keyChild.length() - 1);
-						}
-						return keyChild;
-					}
-				};
-			}
+                            while (current.isTruncated()) {
+                                // parse the elements
+                                parseObjectListing(listPath, current);
 
-		};
-	}
+                                // continue
+                                current = dir.getFileSystem().getClient().listNextBatchOfObjects(current);
+                            }
+
+                            parseObjectListing(listPath, current);
+
+
+                            it = listPath.iterator();
+                        }
+
+                        return it;
+                    }
+
+                    /**
+                     * add to the listPath the elements at the same level that s3Path
+                     * @param listPath List not null list to add
+                     * @param current ObjectListing to walk
+                     */
+                    private void parseObjectListing(List<S3Path> listPath, ObjectListing current) {
+                        for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
+                            final String key = objectSummary.getKey();
+                            // we only want the first level
+                            String folder = getInmediateDescendent(s3Path.getKey(), key);
+                            if (folder != null){
+                                S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
+
+                                if (!listPath.contains(descendentPart)){
+                                    listPath.add(descendentPart);
+                                }
+
+                            }
+
+                        }
+                    }
+
+                    private String getInmediateDescendent(String keyParent, String keyChild){
+
+                        keyParent = deleteExtraPath(keyParent);
+                        keyChild = deleteExtraPath(keyChild);
+
+                        if (!keyChild.startsWith(keyParent)) {
+                            // maybe we just should return false
+                            throw new IllegalArgumentException(
+                                    "Invalid child '" + keyChild
+                                            + "' for parent '" + keyParent + "'");
+                        }
+                        final int parentLen = keyParent.length();
+                        final String childWithoutParent = deleteExtraPath(keyChild
+                                .substring(parentLen));
+
+                        String[] parts = childWithoutParent.split("/");
+
+                        if (parts.length > 0 && !parts[0].isEmpty()){
+                            return keyParent + "/" + parts[0];
+                        }
+                        else{
+                            return null;
+                        }
+
+                    }
+
+                    private String deleteExtraPath(String keyChild) {
+                        if (keyChild.startsWith("/")){
+                            keyChild = keyChild.substring(1);
+                        }
+                        if (keyChild.endsWith("/")){
+                            keyChild = keyChild.substring(0, keyChild.length() - 1);
+                        }
+                        return keyChild;
+                    }
+                };
+            }
+
+        };
+    }
 
 	@Override
 	public InputStream newInputStream(Path path, OpenOption... options)

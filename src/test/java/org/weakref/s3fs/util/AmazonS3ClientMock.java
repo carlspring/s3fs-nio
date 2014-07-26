@@ -115,9 +115,13 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		}
 	}
 
+    /**
+     * list all objects without and return ObjectListing with all elements
+     * and with truncated to false
+     */
 	@Override
 	public ObjectListing listObjects(ListObjectsRequest listObjectsRequest)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 		ObjectListing objectListing = new ObjectListing();
 		Integer capacity = listObjectsRequest.getMaxKeys();
 		if (capacity == null) {
@@ -143,6 +147,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 					s3ObjectSummary.setSize(elem.getS3Object()
 							.getObjectMetadata().getContentLength());
 					objectListing.getObjectSummaries().add(s3ObjectSummary);
+                    objectListing.setTruncated(false);
 					capacity--;
 				}
 			}
@@ -152,21 +157,24 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		return objectListing;
 	}
 
+    @Override
+    public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
+        throw new UnsupportedOperationException("Not needed listObjects always return all elements");
+    }
+
 	@Override
-	public Owner getS3AccountOwner() throws AmazonClientException,
-			AmazonServiceException {
+	public Owner getS3AccountOwner() throws AmazonClientException {
 		return owner;
 	}
 
 	@Override
-	public List<Bucket> listBuckets() throws AmazonClientException,
-			AmazonServiceException {
-		return new ArrayList<Bucket>(objects.keySet());
+	public List<Bucket> listBuckets() throws AmazonClientException {
+		return new ArrayList<>(objects.keySet());
 	}
 
 	@Override
 	public AccessControlList getObjectAcl(String bucketName, String key)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 
 		S3Element elem = find(bucketName, key);
 		if (elem != null) {
@@ -178,7 +186,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 
 	@Override
 	public AccessControlList getBucketAcl(String bucketName)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 
 		Bucket bucket = find(bucketName);
 
@@ -192,13 +200,13 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 
 	@Override
 	public S3Object getObject(String bucketName, String key)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 		return find(bucketName, key).getS3Object();
 	}
 
 	@Override
 	public PutObjectResult putObject(String bucketName, String key, File file)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 
 		try {
 			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(file.toPath()));
@@ -230,8 +238,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	@Override
 	public CopyObjectResult copyObject(String sourceBucketName,
 			String sourceKey, String destinationBucketName,
-			String destinationKey) throws AmazonClientException,
-			AmazonServiceException {
+			String destinationKey) throws AmazonClientException {
 
 		S3Element element = find(sourceBucketName, sourceKey);
 
@@ -262,7 +269,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 
 	@Override
 	public void deleteObject(String bucketName, String key)
-			throws AmazonClientException, AmazonServiceException {
+			throws AmazonClientException {
 		S3Element res = find(bucketName, key);
 		if (res != null) {
 			objects.get(find(bucketName)).remove(res);

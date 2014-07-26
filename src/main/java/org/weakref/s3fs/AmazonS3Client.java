@@ -100,4 +100,11 @@ public class AmazonS3Client {
 	public ObjectMetadata getObjectMetadata(String bucketName, String key) {
 		return client.getObjectMetadata(bucketName, key);
 	}
+
+    /**
+     * @see com.amazonaws.services.s3.AmazonS3Client#listNextBatchOfObjects(com.amazonaws.services.s3.model.ObjectListing)
+     */
+    public ObjectListing listNextBatchOfObjects(ObjectListing objectListing) {
+        return client.listNextBatchOfObjects(objectListing);
+    }
 }

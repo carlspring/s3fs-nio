@@ -22,7 +22,7 @@ public class FileSystemProviderIT {
 	
 	@Before
 	public void setup() throws IOException{
-		try{
+		try {
 			FileSystems.getFileSystem(URI.create("s3:///")).close();
 		}
 		catch(FileSystemNotFoundException e){}
