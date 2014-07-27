@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.eq;
@@ -52,8 +52,8 @@ public class FileSystemProviderIT {
 		FileSystem fileSystem = provider.newFileSystem(uri,
 				env);
 
-		assertNotNull(fileSystem);	
-		verify(provider).createFileSystem(eq(uri),eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
+		assertNotNull(fileSystem);
+		verify(provider).createFileSystem(eq(uri), eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
 	}
 
 	@Test

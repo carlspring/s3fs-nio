@@ -1,13 +1,13 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.weakref</groupId>
+	<groupId>com.upplication</groupId>
 	<artifactId>s3fs</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1.9-SNAPSHOT</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<name>s3fs</name>
 	<description>S3 filesystem provider for Java 7</description>
-	<url>http://jarnaiz.github.io/Amazon-S3-FileSystem-NIO2/</url>
+	<url>https://github.com/Upplication/Amazon-S3-FileSystem-NIO2</url>
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
@@ -19,6 +19,7 @@
 		<developer>
 			<id>jarnaiz</id>
 			<name>Javier Arnáiz</name>
+            <email>arnaix@gmail.com</email>
 		</developer>
 		<developer>
 			<id>martint</id>
@@ -27,9 +28,9 @@
 	</developers>
 
 	<scm>
-		<connection>scm:git:git://github.com/jarnaiz/s3fs.git</connection>
-		<developerConnection>scm:git:git@github.com:jarnaiz/s3fs.git</developerConnection>
-		<url>https://github.com/jarnaiz/Amazon-S3-FileSystem-NIO2</url>
+		<connection>scm:git:git://github.com/Upplication/Amazon-S3-FileSystem-NIO2.git</connection>
+		<developerConnection>scm:git:git@github.com:upplication/Amazon-S3-FileSystem-NIO2.git</developerConnection>
+		<url>https://github.com/Upplication/Amazon-S3-FileSystem-NIO2</url>
 	</scm>
 
 	<properties>
@@ -83,12 +84,14 @@
 			<version>1.0.0</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>com.github.marschall</groupId>
-			<artifactId>memoryfilesystem</artifactId>
-			<version>0.2.0</version>
-			<scope>test</scope>
-		</dependency>
+
+        <dependency>
+            <groupId>com.github.marschall</groupId>
+            <artifactId>memoryfilesystem</artifactId>
+            <version>0.5.4</version>
+            <scope>test</scope>
+        </dependency>
+
 
 		<!-- needs extra dependencies: objenesis & hamcrest -->
 		<dependency>

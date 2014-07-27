@@ -1,10 +1,9 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.weakref.s3fs.util.EnvironmentBuilder.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -24,17 +23,18 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.UUID;
 
+import com.upplication.s3fs.util.CopyDirVisitor;
+import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.CopyDirVisitor;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 
 public class FilesOperationsIT {
 	
-	private static final URI uri = URI.create("s3://"+ getEndpoint() + "/");
+	private static final URI uri = URI.create("s3://"+ EnvironmentBuilder.getEndpoint() + "/");
 	private static final URI uriDefaultEndpoint = URI.create("s3:///");
-	private static final String bucket = getBucket();
+	private static final String bucket = EnvironmentBuilder.getBucket();
 	
 	private FileSystem fileSystemAmazon;
 	
@@ -53,7 +53,7 @@ public class FilesOperationsIT {
 	}
 	
 	private static FileSystem createNewFileSystem() throws IOException {
-		return FileSystems.newFileSystem(uri, getRealEnv());
+		return FileSystems.newFileSystem(uri, EnvironmentBuilder.getRealEnv());
 	}
 	
 	@Test
@@ -353,7 +353,7 @@ public class FilesOperationsIT {
 		
 		assertTrue(Files.exists(result));
 		assertArrayEquals(Files.readAllBytes(Paths.get(this.getClass().getResource("/dirFile/assets1/index.html")
-				.toURI())), Files.readAllBytes(result));
+                .toURI())), Files.readAllBytes(result));
 	}
 	
 	@Test

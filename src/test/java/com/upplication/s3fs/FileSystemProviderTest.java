@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -30,10 +30,12 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
 
+import com.upplication.s3fs.S3FileSystem;
+import com.upplication.s3fs.S3FileSystemProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.AmazonS3ClientMock;
+import com.upplication.s3fs.util.AmazonS3ClientMock;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -80,8 +82,8 @@ public class FileSystemProviderTest {
 		FileSystem fileSystem = provider.newFileSystem(uri,
 				env);
 
-		assertNotNull(fileSystem);	
-		verify(provider).createFileSystem(eq(uri),eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
+		assertNotNull(fileSystem);
+		verify(provider).createFileSystem(eq(uri), eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
 	}
 	
 	@Test
@@ -104,7 +106,7 @@ public class FileSystemProviderTest {
 		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri),eq(null),eq(null));
+		verify(provider).createFileSystem(eq(uri), eq(null), eq(null));
 	}
 
 	@Test(expected = FileSystemAlreadyExistsException.class)

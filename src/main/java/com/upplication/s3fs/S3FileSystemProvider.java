@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
@@ -28,7 +28,6 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -45,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
@@ -149,7 +147,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		if (uri.getHost() != null && !uri.getHost().isEmpty() &&
 				!uri.getHost().equals(fileSystem.get().getEndpoint())) {
-			throw new IllegalArgumentException(String.format(
+			throw new IllegalArgumentException(format(
 					"only empty URI host or URI host that matching the current fileSystem: %s",
 					fileSystem.get().getEndpoint())); // TODO
 		}

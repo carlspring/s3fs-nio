@@ -1,4 +1,4 @@
-package org.weakref.s3fs.spike;
+package com.upplication.s3fs.spike;
 
 import static org.junit.Assert.assertArrayEquals;
 

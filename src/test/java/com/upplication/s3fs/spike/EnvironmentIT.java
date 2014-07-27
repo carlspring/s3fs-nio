@@ -1,12 +1,12 @@
-package org.weakref.s3fs.spike;
+package com.upplication.s3fs.spike;
 
 import static org.junit.Assert.*;
 
 import java.util.Map;
 
 import org.junit.Test;
-import org.weakref.s3fs.S3FileSystemProvider;
-import org.weakref.s3fs.util.EnvironmentBuilder;
+import com.upplication.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.util.EnvironmentBuilder;
 
 public class EnvironmentIT {
 

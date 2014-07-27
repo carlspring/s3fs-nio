@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -65,6 +65,7 @@ public class S3PathTest {
     @Test
     public void createRelative() {
         S3Path path = forPath("path/to/file");
+        
         assertNull(path.getBucket());
         assertEquals(path.getKey(), "path/to/file");
         assertFalse(path.isAbsolute());
@@ -170,15 +171,16 @@ public class S3PathTest {
     public void relativize(){
     	Path path = forPath("/bucket/path/to/file");
     	Path other = forPath("/bucket/path/to/file/hello");
-    	assertEquals(forPath("hello"), path.relativize(other));
+    	
+        assertEquals(forPath("hello"), path.relativize(other));
     	
     	// another
 
-    	assertEquals(forPath("file/hello"),  forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/file/hello")));
+    	assertEquals(forPath("file/hello"), forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/file/hello")));
     	
     	// empty
     	
-    	assertEquals(forPath(""),  forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/")));
+    	assertEquals(forPath(""), forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/")));
     }
     
     @Test
@@ -193,7 +195,7 @@ public class S3PathTest {
     	FileSystem fs = FileSystems.getFileSystem(uri);
     	assertTrue(fs instanceof S3FileSystem);
     	// the host is the endpoint specified in fileSystem
-    	assertEquals(((S3FileSystem)fs).getEndpoint(), uri.getHost());
+    	assertEquals(((S3FileSystem) fs).getEndpoint(), uri.getHost());
     	
     	// bucket name as first path
     	Path pathActual = fs.provider().getPath(uri);

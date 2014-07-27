@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

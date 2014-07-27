@@ -1,4 +1,4 @@
-package org.weakref.s3fs.util;
+package com.upplication.s3fs.util;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;

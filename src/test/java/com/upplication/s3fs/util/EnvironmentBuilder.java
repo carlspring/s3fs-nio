@@ -1,13 +1,13 @@
-package org.weakref.s3fs.util;
+package com.upplication.s3fs.util;
 
-import static org.weakref.s3fs.S3FileSystemProvider.ACCESS_KEY;
-import static org.weakref.s3fs.S3FileSystemProvider.SECRET_KEY;
+import static com.upplication.s3fs.S3FileSystemProvider.ACCESS_KEY;
+import static com.upplication.s3fs.S3FileSystemProvider.SECRET_KEY;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import org.weakref.s3fs.FilesOperationsIT;
+import com.upplication.s3fs.FilesOperationsIT;
 
 import com.google.common.collect.ImmutableMap;
 /**

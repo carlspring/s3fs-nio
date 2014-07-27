@@ -1,4 +1,4 @@
-package org.weakref.s3fs.util;
+package com.upplication.s3fs.util;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -19,8 +19,6 @@ package org.weakref.s3fs.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
@@ -34,7 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.weakref.s3fs.AmazonS3Client;
+import com.upplication.s3fs.AmazonS3Client;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;

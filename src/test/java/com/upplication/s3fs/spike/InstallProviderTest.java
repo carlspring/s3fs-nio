@@ -1,11 +1,10 @@
-package org.weakref.s3fs.spike;
+package com.upplication.s3fs.spike;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -13,16 +12,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.S3FileSystemProvider;
 
-import com.github.marschall.com.sun.nio.zipfs.ZipFileSystem;
 /**
  * FileSystems.newFileSystem busca mediante el serviceLoader los
  * posibles fileSystemsProvider y los llama con newFileSystem.
@@ -82,7 +79,7 @@ public class InstallProviderTest {
 	public void newS3Provider() throws IOException{
 		URI uri = URI.create("s3:///hola/que/tal/");
 		// if meta-inf/services/java.ni.spi.FileSystemProvider is not present with
-		// the content: org.weakref.s3fs.S3FileSystemProvider
+		// the content: com.upplication.s3fs.S3FileSystemProvider
 		// this method return ProviderNotFoundException
 		FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<String,Object>(), this.getClass().getClassLoader());
 

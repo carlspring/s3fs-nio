@@ -1,4 +1,4 @@
-package org.weakref.s3fs.spike;
+package com.upplication.s3fs.spike;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -10,7 +10,7 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
 
 import org.junit.Test;
-import org.weakref.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.S3FileSystemProvider;
 
 public class SpecTest {
 	@Test

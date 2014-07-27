@@ -1,4 +1,4 @@
-package org.weakref.s3fs;
+package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -20,10 +20,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import com.upplication.s3fs.util.AmazonS3ClientMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.AmazonS3ClientMock;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
@@ -75,19 +75,19 @@ public class FileSystemTest {
 	public void getPath() throws IOException {
 		
 		assertEquals(fs.getPath("/bucket/path/to/file"),
-				fs.getPath("/bucket/path/to/file"));
+                fs.getPath("/bucket/path/to/file"));
 		assertEquals(fs.getPath("/bucket", "path", "to", "file"),
-				fs.getPath("/bucket/path/to/file"));
+                fs.getPath("/bucket/path/to/file"));
 		assertEquals(fs.getPath("bucket", "path", "to", "file"),
-				fs.getPath("/bucket/path/to/file"));
+                fs.getPath("/bucket/path/to/file"));
 		assertEquals(fs.getPath("bucket", "path", "to", "dir/"),
-				fs.getPath("/bucket/path/to/dir/"));
+                fs.getPath("/bucket/path/to/dir/"));
 		assertEquals(fs.getPath("bucket", "path/", "to/", "dir/"),
-				fs.getPath("/bucket/path/to/dir/"));
+                fs.getPath("/bucket/path/to/dir/"));
 		assertEquals(fs.getPath("/bucket//path/to//file"),
-				fs.getPath("/bucket/path/to/file"));
+                fs.getPath("/bucket/path/to/file"));
 		assertEquals(fs.getPath("path/to//file"),
-				fs.getPath("path/to/file"));
+                fs.getPath("path/to/file"));
 	}
 	
 	@Test

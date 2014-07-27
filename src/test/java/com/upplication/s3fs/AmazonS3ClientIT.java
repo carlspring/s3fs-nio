@@ -1,6 +1,4 @@
-package org.weakref.s3fs;
-
-import static org.junit.Assert.assertNotNull;
+package com.upplication.s3fs;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,11 +9,11 @@ import java.util.Map;
 
 import static java.util.UUID.*;
 
+import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.junit.Before;
 import org.junit.Test;
-import org.weakref.s3fs.util.EnvironmentBuilder;
+import static org.junit.Assert.*;
 
-import static org.weakref.s3fs.util.EnvironmentBuilder.*;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
@@ -30,12 +28,12 @@ public class AmazonS3ClientIT {
 	@Before
 	public void setup() throws IOException{
 		// s3client
-		final Map<String, Object> credentials = getRealEnv();
+		final Map<String, Object> credentials = EnvironmentBuilder.getRealEnv();
 		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(S3FileSystemProvider.ACCESS_KEY).toString(), 
 				credentials.get(S3FileSystemProvider.SECRET_KEY).toString());
 		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 		client = new AmazonS3Client(s3);
-		client.setEndpoint(getEndpoint());
+		client.setEndpoint(EnvironmentBuilder.getEndpoint());
 	}
 	
 	@Test
