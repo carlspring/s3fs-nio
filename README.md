@@ -8,9 +8,9 @@ This project provides a first API implementation, little optimized, but "complet
 
 [![Coverage Status](https://coveralls.io/repos/Upplication/Amazon-S3-FileSystem-NIO2/badge.png?branch=master)](https://coveralls.io/r/Upplication/Amazon-S3-FileSystem-NIO2?branch=master)
 
-**How to use**:
+## How to use
 
-_Using service locator and system vars_
+### Using service locator and system vars
 
 Add to your meta-inf/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
 
@@ -22,7 +22,7 @@ Use this code to create the fileSystem and set to a concrete endpoint.
 FileSystems.newFileSystem("s3://endpoint", new HashMap<String,Object>(), this.getClass().getClassLoader()); 
 ```
 
-_Using service locator and amazon.properties in the classpath_
+### Using service locator and amazon.properties in the classpath
 
 Add to your meta-inf/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
 
@@ -36,7 +36,7 @@ Use this code to create the fileSystem and set to a concrete endpoint.
 FileSystems.newFileSystem("s3://endpoint", new HashMap<String,Object>(), this.getClass().getClassLoader()); 
 ```
 
-_Using service locator and programatically authentication_
+### Using service locator and programatically authentication
 
 Add to your meta-inf/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
 
@@ -49,7 +49,7 @@ FileSystems.newFileSystem("s3://endpoint", env, this.getClass().getClassLoader()
 ```
 
 
-**Features**:
+## Features:
 
 * Copy and create folders and files
 * Delete folders and files
@@ -57,18 +57,18 @@ FileSystems.newFileSystem("s3://endpoint", env, this.getClass().getClassLoader()
 * Walk file tree
 * Works with virtual s3 folders (not really exists and are element's subkeys)
 
-**Roadmap**:
+## Roadmap:
 
 * Performance issue (slow querys with virtual folders, add multipart submit...)
 * Better test coverage
 * Disallow upload binary files with same name as folders and vice versa
 * Multi endpoint fileSystem (Actually one fileSystem at the same time)
 
-**Out of Roadmap**:
+## Out of Roadmap:
 
 * Watchers
 * FileStore
 
-**LICENSE**
+## LICENSE:
 
 Amazon S3 FileSystem NIO2 is released under the MIT License.
