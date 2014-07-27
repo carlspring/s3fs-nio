@@ -31,5 +31,3 @@ This project provides a first API implementation, little optimized, but "complet
 **LICENSE**
 
 Amazon S3 FileSystem NIO2 is released under the MIT License.
-
-http://jarnaiz.github.io/Amazon-S3-FileSystem-NIO2/
