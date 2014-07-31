@@ -152,8 +152,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 					fileSystem.get().getEndpoint())); // TODO
 		}
 		/**
-		 * tener una lista: un s3fileSystem por region y posiblemente
-		 * poder incluir en la url el acceso.
+		 * TODO: set as a list. one s3FileSystem by region
 		 */
 		return getFileSystem(uri).getPath(uri.getPath());
 	}
@@ -204,19 +203,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
                             request.setPrefix(s3Path.getKey());
                             request.setMarker(s3Path.getKey());
                             // iterator over this list
-
                             ObjectListing current = dir.getFileSystem().getClient().listObjects(request);
 
                             while (current.isTruncated()) {
                                 // parse the elements
                                 parseObjectListing(listPath, current);
-
                                 // continue
                                 current = dir.getFileSystem().getClient().listNextBatchOfObjects(current);
                             }
 
                             parseObjectListing(listPath, current);
-
 
                             it = listPath.iterator();
                         }
@@ -345,12 +341,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(path instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) path;
-		// creamos un fichero vacio:
 		final Path tempDir = Files.createTempDirectory("temp-s3");
-		// ahora podemos leer simulando las escrituras
+		// we resolve to a file inside the temp folder with the s3path name
 		final Path file = tempDir.resolve(path.getFileName().toString());
-		// FIXME: delete, windows bug?
-		//Files.createFile(file);
+		// FIXME: windows bug? Files.createFile(file);
+        // and we can use the File SeekableByteChannel implementation
 		final SeekableByteChannel seekable = Files
 				.newByteChannel(file, options);
 
@@ -363,13 +358,13 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			@Override
 			public void close() throws IOException {
 				seekable.close();
-				// guardmaos en el close
-				// FIXME: comprobar que no existe una carpeta con el mismo nombre: si existe: lanzar exception
+				// upload the content where the seekable ends (close)
+				// FIXME: throw exception if the file already exists
 				s3Path.getFileSystem()
 						.getClient()
 						.putObject(s3Path.getBucket(), s3Path.getKey(),
 								file.toFile());
-				// eliminamos el fichero temporal que utilizamos de puente
+				// and delete the temp dir
 				Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
 
 					@Override
@@ -433,7 +428,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public void createDirectory(Path dir, FileAttribute<?>... attrs)
 			throws IOException {
 		
-		// FIXME: comprobar que si ya existe un fichero con la misma key: no permitir.
+		// FIXME: throw exception if the same key already exists at amazon s3
 		
 		S3Path s3Path = (S3Path) dir;
 
@@ -465,7 +460,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				"path must be an instance of %s", S3Path.class.getName());
 
 		S3Path s3Path = (S3Path) path;
-		// borramos los dos:
+		// we delete the two objects (sometimes exists the key '/' and sometimes not)
 		s3Path.getFileSystem().getClient()
 			.deleteObject(s3Path.getBucket(), s3Path.getKey());
 		s3Path.getFileSystem().getClient()
@@ -599,7 +594,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 			S3ObjectSummary objectSummary = getFirstObjectSummary(s3Path);
 
-			// transformamos los datos en BasicFileAttributes.
+			// parse the data to BasicFileAttributes.
 			
 			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(),
 					TimeUnit.MILLISECONDS);
@@ -607,17 +602,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			boolean directory = false;
 			boolean regularFile = true;
 			String key = objectSummary.getKey();
-			// puede que exista el key del folder y debe tener barra al final:
+            // check if is a directory and exists the key of this directory at amazon s3
 			if (objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().endsWith("/")) {
 				directory = true;
 			}
-			// es un subfichero: es un directorio
+			// is a directory but not exists at amazon s3
 			else if (!objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().startsWith(s3Path.getKey())){
 				directory = true;
-				// nos "inventamos" el metadata
+				// no metadata, we fake one
 				size = 0;
 			}
-			// es un fichero:
+			// is a file:
 			else if (objectSummary.getKey().equals(s3Path.getKey())){
 				directory = false;
 			}
@@ -649,7 +644,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @param uri URI
 	 * @param accessKey Object maybe null for anonymous authentication
 	 * @param secretKey Object maybe null for anonymous authentication
-	 * @return
+	 * @return S3FileSystem never null
 	 */
 	protected S3FileSystem createFileSystem(URI uri, Object accessKey,
 			Object secretKey) {
@@ -672,7 +667,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	
 	/**
 	 * find /amazon.properties in the classpath
-	 * @return
+	 * @return Properties amazon.properties
 	 */
 	protected Properties loadAmazonProperties() {
 		Properties props = new Properties();
@@ -698,9 +693,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				"the following options are not supported: %s", unsupported);
 	}
 	/**
-	 * Comprueba si existe
-	 * @param path
-	 * @return
+	 * check that the paths exists or not
+	 * @param path S3Path
+	 * @return true if exists
 	 */
 	private boolean exists(S3Path path) {
 		try{
@@ -712,11 +707,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		}
 	}
 	/**
-	 * Obtiene el {@link S3ObjectSummary} que representa este Path
-	 * o su primer hijo (si no existe el object Path)
+	 * Get the {@link S3ObjectSummary} that represent this Path or her first child if this path not exists
 	 * @param s3Path {@link S3Path}
 	 * @return {@link S3ObjectSummary}
-	 * @throws NoSuchFileException si no se encuentra el path (tanto con barra como sin barra) y tampoco ningun hijo
+	 * @throws NoSuchFileException if not found the path and any child
 	 */
 	private S3ObjectSummary getFirstObjectSummary(S3Path s3Path) throws NoSuchFileException{
 		
@@ -747,12 +741,13 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return res;
 	}
 	/**
-	 * Obtiene el access Control list, si no existe el object porque el path
-	 * representa un directorio no creado en S3. devuelve el ACL del primer hijo o
-	 * lanza NoSuchFileException
+	 * Get the Control List, if the path not exists
+     * (because the path is a directory and this key isnt created at amazon s3)
+     * then return the ACL of the first child.
+     *
 	 * @param path {@link S3Path}
 	 * @return AccessControlList
-	 * @throws NoSuchFileException si no encuentra el path (tanto con barra como sin barra) y tampoco ningun hijo
+	 * @throws NoSuchFileException if not found the path and any child
 	 */
 	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
 		

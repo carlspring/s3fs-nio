@@ -60,9 +60,7 @@ public class ProviderSpecTest {
 		*/
 		Path path = Files.write(Files.createTempFile("asdas", "asdsadad"), "contenido uyuhu".getBytes(), StandardOpenOption.APPEND);
 		try (SeekableByteChannel channel = Files.newByteChannel(path)) {
-		      
-			
-			
+
 			//channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
 		    ByteBuffer buffer = ByteBuffer.allocate(4096);
 

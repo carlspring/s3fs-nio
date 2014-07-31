@@ -157,12 +157,11 @@ public class S3Path implements Path {
 
 	@Override
 	public Path getParent() {
-		// bucket name no forma parte de los parts
+		// bucket is not present int the parts
 		if (parts.isEmpty()) {
 			return null;
 		}
-		// si es null o vacio y solo tengo un path relativo
-		// no tengo parent
+
 		if (parts.size() == 1 && (bucket == null || bucket.isEmpty())){
 			return null;
 		}
@@ -198,22 +197,17 @@ public class S3Path implements Path {
 		}
 		
 		S3Path path = (S3Path) other;
-		
-		// empty (sin parts y sin bucket) y this no es vacio tb.
+
 		if (path.parts.size() == 0 && path.bucket == null &&
-				// si ambos somos vacios, permitimos continuar
 				(this.parts.size() != 0 || this.bucket != null)){
 			return false;
 		}
-		
-		// mismo bucket (si existe)
+
 		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
 				(path.getBucket() == null && this.getBucket() != null)){
 			return false;
 		}
-		
-		// comparamos subkeys
-		
+
 		for (int i = 0; i < path.parts.size() ; i++){
 			if (!path.parts.get(i).equals(this.parts.get(i))){
 				return false;
@@ -244,15 +238,13 @@ public class S3Path implements Path {
 		}
 		
 		S3Path path = (S3Path) other;
-		
-		// mismo bucket o null por ambos
-		
+
 		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
 				(path.getBucket() != null && this.getBucket() == null)){
 			return false;
 		}
 		
-		// comparamos subkeys
+		// check subkeys
 		
 		int i = path.parts.size() - 1;
 		int j = this.parts.size() - 1;

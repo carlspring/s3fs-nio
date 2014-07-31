@@ -104,7 +104,7 @@ public class S3FileSystem extends FileSystem {
 	/**
 	 * get the endpoint associated with this fileSystem.
 	 * 
-	 * @see http://docs.aws.amazon.com/general/latest/gr/rande.html
+	 * @see <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html">http://docs.aws.amazon.com/general/latest/gr/rande.html</a>
 	 * @return string
 	 */
 	public String getEndpoint() {
