@@ -10,6 +10,16 @@ This project provides a first API implementation, little optimized, but "complet
 
 ## How to use
 
+### Download from Maven Central
+
+```XML
+<dependency>
+	<groupId>com.upplication</groupId>
+	<artifactId>s3fs</artifactId>
+	<version>0.2.0</version>
+</dependency>
+```
+
 ### Using service locator and system vars
 
 Add to your meta-inf/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
