@@ -10,8 +10,6 @@ env:
   - secure: iFXZeCjomL9KCUzQ+BFuWO9w+/uuunMadta1v/9ifZUGJAWfqyQ6Cc2S/COmOrcbYjE3ViPrj7fYbRBqgRl2yV0fuvy5Y+OMDIMwcMnVMDxLdId77aXTAd7LZ8z+wbpDRNlXyfiKP75CSHiMsFacJyMWYGkab715GzEF5UYcSZw=
 before_install:
 - sudo sed -i 's/security.provider.9/#security.provider.9/g' $JAVA_HOME/jre/lib/security/java.security
-before_script:
-- gem install travis-artifacts
 script: mvn clean install
 after_success:
 - mvn jacoco:report coveralls:jacoco
