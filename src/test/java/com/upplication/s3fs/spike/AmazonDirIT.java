@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getBucket;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getEndpoint;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.UUID;
 
+import org.junit.Assert;
 import org.junit.Test;
 import com.upplication.s3fs.S3FileSystemProvider;
 import com.upplication.s3fs.S3Path;
@@ -94,7 +96,7 @@ public class AmazonDirIT {
 		// para amazon no existe el path: folder
 		try{
 			s3Path.getFileSystem().getClient().getObjectMetadata(s3Path.getBucket(), s3Path.getKey());
-			assertTrue(false);
+            fail("expected AmazonS3Exception");
 		}
 		catch(AmazonS3Exception e){
 			assertEquals(404, e.getStatusCode());
