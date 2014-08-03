@@ -19,6 +19,7 @@ deploy:
   secret_access_key:
     secure: nOs9q5WEoxlGoS069Hke52JSXXOS8PotrdGwfr6ZFfFqBuhNPStnwjRDSjkGsOdzswfBH0NzuLmFYp8XrxmIzZ0RXKNJH8WT3T04le3EGgUkii8V17ZHAP8IHKFt8AG2O8QL89Gphceg0dAFXGYEMD45nSBNo15ZstkE4LwV86Y=
   bucket: s3fs-artifacts
+  skip_cleanup: true
   local-dir: target/surefire-reports
   upload-dir: surfire-reports
   acl: !ruby/string:HighLine::String |-
