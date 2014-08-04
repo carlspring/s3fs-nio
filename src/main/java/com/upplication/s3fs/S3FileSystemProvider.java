@@ -327,16 +327,22 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			public void close() throws IOException {
 				seekable.close();
 				// upload the content where the seekable ends (close)
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentLength(Files.size(tempFile));
+                if (Files.exists(tempFile)){
+                    ObjectMetadata metadata = new ObjectMetadata();
+                    metadata.setContentLength(Files.size(tempFile));
 
-                try (InputStream stream = Files.newInputStream(tempFile)){
-                    s3Path.getFileSystem()
-                            .getClient()
-                            .putObject(s3Path.getBucket(), s3Path.getKey(),
-                                    stream,
-                                    metadata);
+                    try (InputStream stream = Files.newInputStream(tempFile)){
+                        s3Path.getFileSystem()
+                                .getClient()
+                                .putObject(s3Path.getBucket(), s3Path.getKey(),
+                                        stream,
+                                        metadata);
+                    }
                 }
+                else{
+                    // delete?
+                }
+
 				// and delete the temp dir
                 Files.deleteIfExists(tempFile);
                 Files.deleteIfExists(tempFile.getParent());
