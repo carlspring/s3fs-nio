@@ -383,7 +383,7 @@ public class FileSystemProviderTest {
 	
 	// seekable
 	
-	//TODO: @Test
+	@Test
 	public void seekable() throws IOException{
 		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
 		Files.createFile(dir.resolve("file"));
@@ -404,6 +404,74 @@ public class FileSystemProviderTest {
 		
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
 	}
+    @Test
+    public void seekableRead() throws IOException{
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        final String content = "content";
+        Path file = Files.write(base.resolve("file"), content.getBytes());
+
+        ByteBuffer bufferRead = ByteBuffer.allocate(7);
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
+            seekable.position(0);
+            seekable.read(bufferRead);
+        }
+        assertArrayEquals(bufferRead.array(), content.getBytes());
+
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
+    }
+
+    @Test
+    public void seekableReadPartialContent() throws IOException{
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        final String content = "content";
+        Path file = Files.write(base.resolve("file"), content.getBytes());
+
+        ByteBuffer bufferRead = ByteBuffer.allocate(4);
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
+            seekable.position(3);
+            seekable.read(bufferRead);
+        }
+
+        assertArrayEquals(bufferRead.array(), "tent".getBytes());
+        assertArrayEquals("content".getBytes(), Files.readAllBytes(base.resolve("file")));
+    }
+
+    @Test
+    public void seekableCreateEmpty() throws IOException{
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        Path file = base.resolve("file");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.CREATE))){
+
+        }
+
+        assertTrue(Files.exists(file));
+        assertArrayEquals("".getBytes(), Files.readAllBytes(file));
+    }
+
+    @Test
+    public void seekableDeleteOnClose() throws IOException{
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        Path file = Files.createFile(base.resolve("file"));
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
+
+        }
+
+        assertTrue(Files.notExists(file));
+    }
 	
 	// createDirectory
 	

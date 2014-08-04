@@ -339,8 +339,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
                                         metadata);
                     }
                 }
-                else{
-                    // delete?
+                else {
+                    // delete: check option delete_on_close
+                    s3Path.getFileSystem().
+                        getClient().deleteObject(s3Path.getBucket(), s3Path.getKey());
                 }
 
 				// and delete the temp dir
