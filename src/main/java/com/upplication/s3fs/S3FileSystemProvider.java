@@ -3,43 +3,17 @@ package com.upplication.s3fs;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.AccessMode;
-import java.nio.file.CopyOption;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -50,6 +24,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.util.IOUtils;
 
 /**
  * Spec:
@@ -313,26 +288,13 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public OutputStream newOutputStream(Path path, OpenOption... options)
 			throws IOException {
 
-		Preconditions.checkArgument(path instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
-		final S3Path s3Path = (S3Path) path;
-		
-		final Path tempFile = Files.createTempFile("file", s3Path.getFileName().toString());
+        Preconditions.checkArgument(path instanceof S3Path,
+                "path must be an instance of %s", S3Path.class.getName());
 
-		return new FileOutputStream(tempFile.toFile()) {
-			@Override
-			public void close() throws IOException {
-				super.close();
-				
-				s3Path.getFileSystem()
-						.getClient()
-						.putObject(s3Path.getBucket(), s3Path.getKey(),
-								tempFile.toFile());
-
-				Files.deleteIfExists(tempFile);
-			}
-		};
+        return super.newOutputStream(path, options);
 	}
+
+
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path,
@@ -341,13 +303,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(path instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) path;
-		final Path tempDir = Files.createTempDirectory("temp-s3");
 		// we resolve to a file inside the temp folder with the s3path name
-		final Path file = tempDir.resolve(path.getFileName().toString());
-		// FIXME: windows bug? Files.createFile(file);
+        final Path tempFile = createTempDir().resolve(path.getFileName().toString());
+
+        if (Files.exists(path)){
+            InputStream is = s3Path.getFileSystem()
+                    .getClient()
+            .getObject(s3Path.getBucket(), s3Path.getKey()).getObjectContent();
+
+           Files.write(tempFile, IOUtils.toByteArray(is));
+        }
         // and we can use the File SeekableByteChannel implementation
 		final SeekableByteChannel seekable = Files
-				.newByteChannel(file, options);
+				.newByteChannel(tempFile, options);
 
 		return new SeekableByteChannel() {
 			@Override
@@ -359,31 +327,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			public void close() throws IOException {
 				seekable.close();
 				// upload the content where the seekable ends (close)
-				// FIXME: throw exception if the file already exists
-				s3Path.getFileSystem()
-						.getClient()
-						.putObject(s3Path.getBucket(), s3Path.getKey(),
-								file.toFile());
+                ObjectMetadata metadata = new ObjectMetadata();
+                metadata.setContentLength(Files.size(tempFile));
+
+                try (InputStream stream = Files.newInputStream(tempFile)){
+                    s3Path.getFileSystem()
+                            .getClient()
+                            .putObject(s3Path.getBucket(), s3Path.getKey(),
+                                    stream,
+                                    metadata);
+                }
 				// and delete the temp dir
-				Files.walkFileTree(tempDir, new SimpleFileVisitor<Path>() {
-
-					@Override
-					public FileVisitResult visitFile(Path file,
-							BasicFileAttributes attrs) throws IOException {
-						Files.delete(file);
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult postVisitDirectory(Path dir,
-							IOException exc) throws IOException {
-						if (exc == null) {
-							Files.delete(dir);
-							return FileVisitResult.CONTINUE;
-						}
-						throw exc;
-					}
-				});
+                Files.deleteIfExists(tempFile);
+                Files.deleteIfExists(tempFile.getParent());
 			}
 
 			@Override
@@ -763,4 +719,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		
 		return res;
 	}
+
+    /**
+     * create a temporal directory to create streams
+     * @return Path temporal folder
+     * @throws IOException
+     */
+    protected Path createTempDir() throws IOException {
+
+        return Files.createTempDirectory("temp-s3-");
+    }
 }

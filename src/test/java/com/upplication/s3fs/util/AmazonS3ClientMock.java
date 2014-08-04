@@ -20,17 +20,14 @@ package com.upplication.s3fs.util;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.upplication.s3fs.AmazonS3Client;
 
@@ -49,6 +46,7 @@ import com.amazonaws.services.s3.model.Permission;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.upplication.s3fs.S3Path;
 
 public class AmazonS3ClientMock extends AmazonS3Client {
 
@@ -56,7 +54,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 
 	// List<S3Object> objects = new ArrayList<S3Object>();
 	// List<Bucket> buckets = new ArrayList<Bucket>();
-	Map<Bucket, List<S3Element>> objects = new HashMap<>();
+	Map<Bucket, HashSet<S3Element>> objects = new HashMap<>();
 	// default owner
 	Owner owner = new Owner() {
 		private static final long serialVersionUID = 5510838843790352879L;
@@ -82,7 +80,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 				bucket.setCreationDate(new Date(attr.creationTime().toMillis()));
 				bucket.setName(bucketPath.getFileName().toString());
 				bucket.setOwner(owner);
-				final List<S3Element> elemnts = new ArrayList<>();
+				final HashSet<S3Element> elemnts = new HashSet<>();
 				// all s3object
 				Files.walkFileTree(bucketPath, new SimpleFileVisitor<Path>() {
 					@Override
@@ -210,7 +208,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(file.toPath()));
 			S3Element elem = parse(stream, bucketName, key);
 
-			objects.get(find(bucketName)).add(elem);
+            persist(bucketName, elem);
 
 			PutObjectResult putObjectResult = new PutObjectResult();
 			putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
@@ -222,10 +220,10 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	}
 	
 	public PutObjectResult putObject(String bucket, String keyName,
-			ByteArrayInputStream byteArrayInputStream, ObjectMetadata metadata) {
-		S3Element elem = parse(byteArrayInputStream, bucket, keyName);
+			InputStream inputStream, ObjectMetadata metadata) {
+		S3Element elem = parse(inputStream, bucket, keyName);
 
-		objects.get(find(bucket)).add(elem);
+        persist(bucket, elem);
 
 		PutObjectResult putObjectResult = new PutObjectResult();
 		putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
@@ -233,7 +231,21 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		
 	}
 
-	@Override
+    /**
+     * store in the memory map
+     * @param bucket bucket where persist
+     * @param elem
+     */
+    private void persist(String bucket, S3Element elem) {
+        Set<S3Element> list = objects.get(find(bucket));
+        // replace existing
+        if (list.contains(elem)){
+            list.remove(elem);
+        }
+        list.add(elem);
+    }
+
+    @Override
 	public CopyObjectResult copyObject(String sourceBucketName,
 			String sourceKey, String destinationBucketName,
 			String destinationKey) throws AmazonClientException {
@@ -274,19 +286,26 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		}
 	}
 	
-	private S3Element parse(ByteArrayInputStream stream, String bucket, String key){
+	private S3Element parse(InputStream stream, String bucket, String key) {
 		
 		S3Object object = new S3Object();
 		
 		object.setBucketName(bucket);
 		object.setKey(key);
 
+        byte[] content;
+        try {
+            content = IOUtils.toByteArray(stream);
+        }
+        catch (IOException e) {
+            throw new IllegalStateException("the stream is closed", e);
+        }
+
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setLastModified(new Date());
-		metadata.setContentLength(stream.available());
-		object.setObjectContent(stream);
+        metadata.setContentLength(content.length);
 
-
+        object.setObjectContent(new ByteArrayInputStream(content));
 		object.setObjectMetadata(metadata);
 		// TODO: create converter between path permission and s3 permission
 		AccessControlList permission = createAllPermission();
@@ -387,7 +406,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	public static class S3Element {
 
 		private S3Object s3Object;
-		private boolean directory;
+        private boolean directory;
 		private AccessControlList permission;
 
 		public S3Element(S3Object s3Object, AccessControlList permission,
@@ -420,5 +439,38 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		public void setPermission(AccessControlList permission) {
 			this.permission = permission;
 		}
-	}
+
+
+        @Override
+        public boolean equals(Object object){
+
+            if (object == null){
+                return false;
+            }
+
+            if (object instanceof S3Element){
+                S3Element elem = (S3Element)object;
+                // only is the same if bucketname and key are not null and are the same
+                if (elem.getS3Object() != null && this.getS3Object() != null &&
+                        elem.getS3Object().getBucketName() != null &&
+                        elem.getS3Object().getBucketName().equals(this.getS3Object().getBucketName()) &&
+                        elem.getS3Object().getKey() != null && elem.getS3Object().getKey().equals(this.getS3Object().getKey())){
+                    return true;
+                }
+
+                return false;
+            }
+            else{
+                return false;
+            }
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = s3Object != null && s3Object.getBucketName() != null ? s3Object.getBucketName().hashCode() : 0;
+            result = 31 * result + (s3Object != null && s3Object.getKey() != null? s3Object.getKey().hashCode() : 0);
+            return result;
+        }
+    }
 }

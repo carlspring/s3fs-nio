@@ -18,17 +18,11 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 
 import com.upplication.s3fs.S3FileSystem;
 import com.upplication.s3fs.S3FileSystemProvider;
@@ -52,8 +46,12 @@ public class FileSystemProviderTest {
 		}
 		catch(FileSystemNotFoundException e){}
 		
-		//S3FileSystem fs = spy(new S3FileSystem(provider, client, endpoint))
 		provider = spy(new S3FileSystemProvider());
+        // TODO: we need some real temp dir with unique path when is called
+        doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+                .when(provider).createTempDir();
 		doReturn(new Properties()).when(provider).loadAmazonProperties();
 	}
 	
@@ -224,7 +222,7 @@ public class FileSystemProviderTest {
 		Files.createFile(bucketA.resolve("file1"));
 		
 		mockFileSystem(fsMem.getPath("/base"));
-		
+		// act
 		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
 		// assert
 		assertNewDirectoryStream(bucket, "file1");
@@ -237,8 +235,9 @@ public class FileSystemProviderTest {
 		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
 		Files.createFile(bucketA.resolve("file1"));
 		Files.createFile(bucketA.resolve("file2"));
-		
 		mockFileSystem(fsMem.getPath("/base"));
+
+        // act
 		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
 
 		// assert
@@ -266,40 +265,38 @@ public class FileSystemProviderTest {
 	public void inputStreamFile() throws IOException{
 		
 		// fixtures
-		byte[] res = "contenido".getBytes();
+		String content = "content";
 		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
-		Files.write(bucketA.resolve("file1"), res, StandardOpenOption.CREATE_NEW);
+		Files.write(bucketA.resolve("file1"), content.getBytes(), StandardOpenOption.CREATE_NEW);
 		
 		mockFileSystem(fsMem.getPath("/base"));
 		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/file1");
 		
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
-		assertArrayEquals(res, buffer);
+		assertArrayEquals(content.getBytes(), buffer);
 	}
 	
 	@Test
 	public void anotherInputStreamFile() throws IOException{
 		// fixtures
-		byte[] res = "contenido diferente".getBytes();
+		String res = "another content";
 		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		Files.write(dir.resolve("file1"), res, StandardOpenOption.CREATE_NEW);
+		Files.write(dir.resolve("file1"), res.getBytes(), StandardOpenOption.CREATE_NEW);
 		
 		mockFileSystem(fsMem.getPath("/base"));
 		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file1");
 		
 		byte[] buffer = Files.readAllBytes(file);
 		// check
-		assertArrayEquals(res, buffer);
+		assertArrayEquals(res.getBytes(), buffer);
 	}
 
 	
 	@Test(expected = IOException.class)
 	public void inputStreamDirectory() throws IOException{
 		// fixtures
-		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		mockFileSystem(fsMem.getPath("/base"));
-		Path result = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path result = getS3Directory();
 		// act
 		provider.newInputStream(result);
 	}
@@ -307,39 +304,81 @@ public class FileSystemProviderTest {
 	// newOutputStream 
 	
 	@Test
-	public void outputStream() throws IOException{
-		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		mockFileSystem(fsMem.getPath("/base"));
-		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+	public void outputStreamWithCreateNew() throws IOException{
+        Path base = getS3Directory();
 		
 		Path file = base.resolve("file1");
+        final String content = "sample content";
 		
 		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
-			stream.write("hola que haces".getBytes());
+			stream.write(content.getBytes());
 			stream.flush();
 		}
 		// get the input
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
-		assertArrayEquals("hola que haces".getBytes(), buffer);
+		assertArrayEquals(content.getBytes(), buffer);
 	}
+
+    @Test(expected = FileAlreadyExistsException.class)
+    public void outputStreamWithCreateNewAndFileExists() throws IOException{
+        Path base = getS3Directory();
+
+        Path file = Files.createFile(base.resolve("file1"));
+
+        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+        }
+    }
+
+    @Test
+    public void outputStreamWithCreateAndFileExists() throws IOException{
+        Path base = getS3Directory();
+
+        Path file = base.resolve("file1");
+        Files.createFile(file);
+
+        final String content = "sample content";
+
+        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE)){
+            stream.write(content.getBytes());
+            stream.flush();
+        }
+        // get the input
+        byte[] buffer =  Files.readAllBytes(file);
+        // check
+        assertArrayEquals(content.getBytes(), buffer);
+    }
+
+    @Test
+    public void outputStreamWithCreateAndFileNotExists() throws IOException{
+        Path base = getS3Directory();
+
+        Path file = base.resolve("file1");
+
+        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE)){
+            stream.write("sample content".getBytes());
+            stream.flush();
+        }
+        // get the input
+        byte[] buffer =  Files.readAllBytes(file);
+        // check
+        assertArrayEquals("sample content".getBytes(), buffer);
+    }
 	
 	@Test
 	public void anotherOutputStream() throws IOException{
-		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		mockFileSystem(fsMem.getPath("/base"));
-		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
-		
+        Path base = getS3Directory();
+        final String content = "heyyyyyy";
 		Path file = base.resolve("file1");
-		
+
 		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
-			stream.write("heyyyyy".getBytes());
+			stream.write(content.getBytes());
 			stream.flush();
 		}
 		// get the input
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
-		assertArrayEquals("heyyyyy".getBytes(), buffer);
+		assertArrayEquals(content.getBytes(), buffer);
 	}
 	
 	// seekable
@@ -347,12 +386,14 @@ public class FileSystemProviderTest {
 	//TODO: @Test
 	public void seekable() throws IOException{
 		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		Path file = Files.createFile(dir.resolve("file"));
+		Files.createFile(dir.resolve("file"));
 		mockFileSystem(fsMem.getPath("/base"));
 		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        final String content = "content";
 		
 		try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
-			ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
+			ByteBuffer buffer = ByteBuffer.wrap(content.getBytes());
 			seekable.write(buffer);
 			ByteBuffer bufferRead = ByteBuffer.allocate(7);
 			seekable.position(0);
@@ -361,7 +402,7 @@ public class FileSystemProviderTest {
 			assertArrayEquals(bufferRead.array(), buffer.array());
 		}
 		
-		assertArrayEquals("content".getBytes(), Files.readAllBytes(base.resolve("file")));
+		assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
 	}
 	
 	// createDirectory
@@ -384,10 +425,7 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void delete() throws IOException{
-		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		mockFileSystem(fsMem.getPath("/base"));
-		// act
-		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = getS3Directory();
 		provider.delete(base);
 		// assert
 		assertTrue(Files.notExists(base));
@@ -397,9 +435,10 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void copy() throws IOException{
+        final String content = "content-file-1";
 		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
 		Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir2"));
-		Files.write(dir.resolve("file1"), "content-file-1".getBytes(), StandardOpenOption.CREATE);
+		Files.write(dir.resolve("file1"), content.getBytes(), StandardOpenOption.CREATE);
 		mockFileSystem(fsMem.getPath("/base"));
 		// act
 		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
@@ -407,7 +446,8 @@ public class FileSystemProviderTest {
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
 		provider.copy(file, fileDest);
 		// assert
-		assertArrayEquals("content-file-1".getBytes(), Files.readAllBytes(fileDest));
+        assertTrue(Files.exists(fileDest));
+		assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
 	}
 	
 	// move
@@ -437,7 +477,7 @@ public class FileSystemProviderTest {
 		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir/file1");
-		// act
+		// assert
 		assertTrue(provider.isSameFile(file1, fileCopy));
 	}
 	
@@ -452,7 +492,7 @@ public class FileSystemProviderTest {
 		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir/file2");
-		// act
+		// assert
 		assertTrue(!provider.isSameFile(file1, fileCopy));
 	}
 	
@@ -467,7 +507,7 @@ public class FileSystemProviderTest {
 		// act
 		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
 		Path file1 = fs.getPath("/bucketA/dir/file1");
-		// act
+		// assert
 		assertTrue(!provider.isHidden(file1));
 	}
 	
@@ -482,7 +522,7 @@ public class FileSystemProviderTest {
 		// act
 		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
 		Path file1 = fs.getPath("/bucketA/dir/file1");
-		// act
+		// assert
 		provider.getFileStore(file1);
 	}
 	
@@ -535,4 +575,10 @@ public class FileSystemProviderTest {
 			assertEquals(files.length, finded);
 		}
 	}
+
+    private Path getS3Directory() throws IOException {
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        return provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+    }
 }

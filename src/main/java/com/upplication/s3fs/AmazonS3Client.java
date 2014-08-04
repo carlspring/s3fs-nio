@@ -2,6 +2,7 @@ package com.upplication.s3fs;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 import java.util.List;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -54,8 +55,8 @@ public class AmazonS3Client {
 	 * @see com.amazonaws.services.s3.AmazonS3Client#putObject(String, String, java.io.InputStream, ObjectMetadata)
 	 */
 	public PutObjectResult putObject(String bucket, String keyName,
-			ByteArrayInputStream byteArrayInputStream, ObjectMetadata metadata) {
-		return client.putObject(bucket, keyName, byteArrayInputStream, metadata);
+			InputStream inputStream, ObjectMetadata metadata) {
+		return client.putObject(bucket, keyName, inputStream, metadata);
 	}
 	/**
 	 * @see com.amazonaws.services.s3.AmazonS3Client#deleteObject(String, String)
