@@ -5,10 +5,15 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Utils io
+ * Utilities for streams
  */
 public class IOUtils {
-
+    /**
+     * get the stream content and return as a byte array
+     * @param is InputStream
+     * @return byte array
+     * @throws IOException if the stream is closed
+     */
     public static byte[] toByteArray(InputStream is) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 
