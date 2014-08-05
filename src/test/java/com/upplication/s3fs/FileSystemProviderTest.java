@@ -19,6 +19,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
@@ -37,7 +38,7 @@ import com.google.common.collect.ImmutableMap;
 public class FileSystemProviderTest {
 	S3FileSystemProvider provider;
 	FileSystem fsMem;
-	
+
 	@Before
 	public void cleanup() throws IOException{
 		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
@@ -492,12 +493,40 @@ public class FileSystemProviderTest {
 	// delete
 	
 	@Test
-	public void delete() throws IOException{
-        Path base = getS3Directory();
-		provider.delete(base);
+	public void deleteFile() throws IOException{
+        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        Files.createFile(dir.resolve("file"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+		provider.delete(file);
 		// assert
-		assertTrue(Files.notExists(base));
+		assertTrue(Files.notExists(file));
 	}
+
+    @Test
+    public void deleteEmptyDirectory() throws IOException{
+        Path base = getS3Directory();
+        provider.delete(base);
+        // assert
+        assertTrue(Files.notExists(base));
+    }
+
+    @Test(expected = DirectoryNotEmptyException.class)
+    public void deleteDirectoryWithEntries() throws IOException{
+        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        Files.createFile(dir.resolve("file"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        provider.delete(file.getParent());
+    }
+
+    @Test(expected = NoSuchFileException.class)
+    public void deleteFileNotExists() throws IOException{
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        provider.delete(file);
+    }
 	
 	// copy
 	
@@ -602,7 +631,79 @@ public class FileSystemProviderTest {
 	}
 	
 	// readAttributes
-	
+
+    @Test
+    public void readAttributesFileEmpty() throws IOException {
+
+        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        Files.createFile(dir.resolve("file1"));
+        mockFileSystem(fsMem.getPath("/base"));
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        Path file1 = fs.getPath("/bucketA/dir/file1");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(file1, BasicFileAttributes.class);
+
+        assertNotNull(fileAttributes);
+        assertEquals(false, fileAttributes.isDirectory());
+        assertEquals(true, fileAttributes.isRegularFile());
+        assertEquals(false, fileAttributes.isSymbolicLink());
+        assertEquals(false, fileAttributes.isOther());
+        assertEquals(0L, fileAttributes.size());
+    }
+
+    @Test
+    public void readAttributesFile() throws IOException {
+
+        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        final String content = "sample";
+        Files.write(dir.resolve("file1"), content.getBytes());
+        mockFileSystem(fsMem.getPath("/base"));
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        Path file1 = fs.getPath("/bucketA/dir/file1");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(file1, BasicFileAttributes.class);
+
+        assertNotNull(fileAttributes);
+        assertEquals(false, fileAttributes.isDirectory());
+        assertEquals(true, fileAttributes.isRegularFile());
+        assertEquals(false, fileAttributes.isSymbolicLink());
+        assertEquals(false, fileAttributes.isOther());
+        assertEquals(content.getBytes().length, fileAttributes.size());
+    }
+
+    @Test
+    public void readAttributesDirectory() throws IOException {
+
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        Path dir1 = fs.getPath("/bucketA/dir");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(dir1, BasicFileAttributes.class);
+
+        assertNotNull(fileAttributes);
+        assertEquals(true, fileAttributes.isDirectory());
+        assertEquals(false, fileAttributes.isRegularFile());
+        assertEquals(false, fileAttributes.isSymbolicLink());
+        assertEquals(false, fileAttributes.isOther());
+        assertEquals(0L, fileAttributes.size());
+    }
+
+    @Test(expected= NoSuchFileException.class)
+    public void readAttributesFileNotExists() throws IOException {
+
+        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        mockFileSystem(fsMem.getPath("/base"));
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        Path file1 = fs.getPath("/bucketA/dir/file1");
+
+        provider.readAttributes(file1, BasicFileAttributes.class);
+    }
+
 	@Test(expected = UnsupportedOperationException.class)
 	public void readAttributesString() throws IOException{
 		provider.readAttributes(null, "", null);

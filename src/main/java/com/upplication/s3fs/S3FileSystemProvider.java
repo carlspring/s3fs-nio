@@ -411,19 +411,25 @@ public class S3FileSystemProvider extends FileSystemProvider {
 						new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
-	/**
-	 * Deviations from spec: - does not check whether path exists before
-	 * deleting it. I.e., the operation is considered successful whether the
-	 * entry was deleted or it didn't exist in the first place - doesn't throw
-	 * DirectoryNotEmptyException if the path is a directory and it contains
-	 * entries
-	 */
 	@Override
 	public void delete(Path path) throws IOException {
 		Preconditions.checkArgument(path instanceof S3Path,
 				"path must be an instance of %s", S3Path.class.getName());
 
 		S3Path s3Path = (S3Path) path;
+
+        if (Files.notExists(path)){
+            throw new NoSuchFileException("the path: " + path + " not exists");
+        }
+
+        if (Files.isDirectory(path)){
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
+                if (stream.iterator().hasNext()){
+                    throw new DirectoryNotEmptyException("the path: " + path + " is a directory and is not empty");
+                }
+            }
+        }
+
 		// we delete the two objects (sometimes exists the key '/' and sometimes not)
 		s3Path.getFileSystem().getClient()
 			.deleteObject(s3Path.getBucket(), s3Path.getKey());
@@ -564,7 +570,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 					TimeUnit.MILLISECONDS);
 			long size =  objectSummary.getSize();
 			boolean directory = false;
-			boolean regularFile = true;
+			boolean regularFile = false;
 			String key = objectSummary.getKey();
             // check if is a directory and exists the key of this directory at amazon s3
 			if (objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().endsWith("/")) {
@@ -578,7 +584,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			}
 			// is a file:
 			else if (objectSummary.getKey().equals(s3Path.getKey())){
-				directory = false;
+                regularFile = true;
 			}
 			else {
 				throw new NoSuchFileException(path.toString());
