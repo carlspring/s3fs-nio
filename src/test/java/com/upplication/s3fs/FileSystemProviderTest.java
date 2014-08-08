@@ -259,6 +259,65 @@ public class FileSystemProviderTest {
 		// assert
 		assertNewDirectoryStream(bucket, "file1", "dir1");
 	}
+
+    @Test
+    public void list999Paths() throws IOException {
+
+        // fixtures
+        Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
+
+        final int count999 = 999;
+
+        for (int i = 0; i < count999; i++) {
+            Path path = bucketA.resolve(i + "file");
+            Files.createFile(path);
+        }
+
+        mockFileSystem(fsMem.getPath("/base"));
+
+
+        Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+
+        int count = 0;
+
+        try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
+            for(Path file : files) {
+                count++;
+            }
+        }
+
+        assertEquals(count999, count);
+
+    }
+
+    @Test
+    public void list1050Paths() throws IOException {
+
+        // fixtures
+        Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
+
+        final int count1050 = 1050;
+
+        for (int i = 0; i < count1050; i++) {
+            Path path = bucketA.resolve(i + "file");
+            Files.createFile(path);
+        }
+
+        mockFileSystem(fsMem.getPath("/base"));
+
+        Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+
+        int count = 0;
+
+        try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
+            for(Path file : files) {
+                count++;
+            }
+        }
+
+        assertEquals(count1050, count);
+
+    }
 	
 	// newInputStream
 	

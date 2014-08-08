@@ -46,15 +46,15 @@ import com.amazonaws.services.s3.model.Permission;
 import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.upplication.s3fs.S3Path;
 
 public class AmazonS3ClientMock extends AmazonS3Client {
 
-	// TODO: map with key: bucket and value: DTO with S3Object and aclpermission
+    /**
+     * max elements amazon aws
+     */
+    private static final int LIMIT_AWS_MAX_ELEMENTS = 1000;
 
-	// List<S3Object> objects = new ArrayList<S3Object>();
-	// List<Bucket> buckets = new ArrayList<Bucket>();
-	Map<Bucket, HashSet<S3Element>> objects = new HashMap<>();
+	Map<Bucket, LinkedHashSet<S3Element>> objects = new HashMap<>();
 	// default owner
 	Owner owner = new Owner() {
 		private static final long serialVersionUID = 5510838843790352879L;
@@ -80,7 +80,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 				bucket.setCreationDate(new Date(attr.creationTime().toMillis()));
 				bucket.setName(bucketPath.getFileName().toString());
 				bucket.setOwner(owner);
-				final HashSet<S3Element> elemnts = new HashSet<>();
+				final LinkedHashSet<S3Element> elemnts = new LinkedHashSet<>();
 				// all s3object
 				Files.walkFileTree(bucketPath, new SimpleFileVisitor<Path>() {
 					@Override
@@ -118,47 +118,125 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	@Override
 	public ObjectListing listObjects(ListObjectsRequest listObjectsRequest)
 			throws AmazonClientException {
-		ObjectListing objectListing = new ObjectListing();
-		Integer capacity = listObjectsRequest.getMaxKeys();
-		if (capacity == null) {
-			capacity = Integer.MAX_VALUE;
-		}
+
+        ObjectListing objectListing = new ObjectListing();
+        objectListing.setBucketName(listObjectsRequest.getBucketName());
+        objectListing.setPrefix(listObjectsRequest.getPrefix());
+        objectListing.setMarker(listObjectsRequest.getMarker());
+        objectListing.setDelimiter(listObjectsRequest.getDelimiter());
 
 		Bucket bucket = find(listObjectsRequest.getBucketName());
-		for (S3Element elem : objects.get(bucket)) {
-			if (capacity > 0) {
-				// TODO. add delimiter and marker support
-				if (listObjectsRequest.getPrefix() != null
-						&& elem.getS3Object().getKey()
-								.startsWith(listObjectsRequest.getPrefix())) {
-					S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
-					s3ObjectSummary.setBucketName(elem.getS3Object()
-							.getBucketName());
-					s3ObjectSummary.setKey(elem.getS3Object().getKey());
-					s3ObjectSummary.setLastModified(elem.getS3Object()
-							.getObjectMetadata().getLastModified());
-					s3ObjectSummary.setOwner(owner);
-					s3ObjectSummary.setETag(elem.getS3Object()
-							.getObjectMetadata().getETag());
-					s3ObjectSummary.setSize(elem.getS3Object()
-							.getObjectMetadata().getContentLength());
-					objectListing.getObjectSummaries().add(s3ObjectSummary);
-                    objectListing.setTruncated(false);
-					capacity--;
-				}
-			}
+        Iterator<S3Element> iterator = objects.get(bucket).iterator();
 
-		}
+        int i = 0;
+
+        while(iterator.hasNext()){
+
+            S3Element elem = iterator.next();
+
+            // TODO. add delimiter and marker support
+            if (listObjectsRequest.getPrefix() != null
+                    && elem.getS3Object().getKey()
+                    .startsWith(listObjectsRequest.getPrefix())) {
+
+                S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
+                objectListing.getObjectSummaries().add(s3ObjectSummary);
+
+                if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()){
+                    objectListing.setTruncated(true);
+                    objectListing.setNextMarker(iterator.next().getS3Object().getKey());
+                    return objectListing;
+                }
+                else {
+                    objectListing.setTruncated(false);
+                }
+
+                i++;
+            }
+
+        }
 
 		return objectListing;
 	}
 
     @Override
     public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
-        throw new UnsupportedOperationException("Not needed listObjects always return all elements");
+
+
+        ObjectListing objectListing = new ObjectListing();
+        objectListing.setBucketName(previousObjectListing.getBucketName());
+        objectListing.setPrefix(previousObjectListing.getPrefix());
+        objectListing.setMarker(previousObjectListing.getMarker());
+        objectListing.setDelimiter(previousObjectListing.getDelimiter());
+
+        if (!previousObjectListing.isTruncated() ||
+                previousObjectListing.getNextMarker() == null){
+            return objectListing;
+        }
+
+        Bucket bucket = find(previousObjectListing.getBucketName());
+        Iterator<S3Element> iterator = objects.get(bucket).iterator();
+
+        int i = 0;
+        boolean continueElement = false;
+
+        while (iterator.hasNext()) {
+
+            S3Element elem = iterator.next();
+
+            if (!continueElement &&
+                    elem.getS3Object().getKey().equals(previousObjectListing.getNextMarker())){
+                continueElement = true;
+            }
+
+            if (continueElement) {
+                // TODO. add delimiter and marker support
+                if (previousObjectListing.getPrefix() != null
+                        && elem.getS3Object().getKey()
+                        .startsWith(previousObjectListing.getPrefix())) {
+
+                    S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
+                    objectListing.getObjectSummaries().add(s3ObjectSummary);
+                    // max 1000 elements at same time.
+                    if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()){
+                        objectListing.setTruncated(true);
+                        objectListing.setNextMarker(iterator.next().getS3Object().getKey());
+                        return objectListing;
+                    }
+                    else {
+                        objectListing.setTruncated(false);
+                    }
+
+                    i++;
+                }
+            }
+        }
+
+        return objectListing;
     }
 
-	@Override
+    /**
+     * create a new S3ObjectSummary using the S3Element
+     * @param elem S3Element to parse
+     * @return S3ObjectSummary
+     */
+    private S3ObjectSummary parseToS3ObjectSummary(S3Element elem) {
+        S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
+        s3ObjectSummary.setBucketName(elem.getS3Object()
+                .getBucketName());
+        s3ObjectSummary.setKey(elem.getS3Object().getKey());
+        s3ObjectSummary.setLastModified(elem.getS3Object()
+                .getObjectMetadata().getLastModified());
+        s3ObjectSummary.setOwner(owner);
+        s3ObjectSummary.setETag(elem.getS3Object()
+                .getObjectMetadata().getETag());
+        s3ObjectSummary.setSize(elem.getS3Object()
+                .getObjectMetadata().getContentLength());
+
+        return s3ObjectSummary;
+    }
+
+    @Override
 	public Owner getS3AccountOwner() throws AmazonClientException {
 		return owner;
 	}

@@ -1,6 +1,7 @@
 package com.upplication.s3fs.spike;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -31,7 +32,20 @@ public class ProviderSpecTest {
 	public void close() throws IOException {
 		fs.close();
 	}
-	
+
+    @Test
+    public void readNothing() throws IOException {
+        //Path base = Files.createDirectories(fs.getPath("/dir"));
+        Path base = Files.createTempDirectory("asdadadasd");
+
+        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")),
+                EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
+        }
+
+        assertTrue(Files.notExists(base.resolve("file1.html")));
+
+    }
+
 	// FIXME @Test
 	public void seekable() throws IOException{
 		Path base = Files.createDirectories(fs.getPath("/dir"));

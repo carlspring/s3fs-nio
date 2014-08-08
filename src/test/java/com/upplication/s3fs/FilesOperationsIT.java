@@ -389,55 +389,7 @@ public class FilesOperationsIT {
 		assertTrue(Files.exists(path.getParent()));
 	}
 
-    @Test
-    public void list999Paths() throws IOException {
 
-        Path base = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
-        Files.createDirectory(base);
-
-        final int count999 = 999;
-
-        for (int i = 0; i < count999; i++) {
-            Path path = base.resolve(i + "file");
-            Files.createFile(path);
-        }
-
-        int count = 0;
-
-        try(DirectoryStream<Path> files = Files.newDirectoryStream(base)) {
-            for(Path file : files) {
-                count++;
-            }
-        }
-
-        assertEquals(count999, count);
-
-    }
-
-    @Test
-    public void list1050Paths() throws IOException {
-
-        Path base = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
-        Files.createDirectory(base);
-
-        final int count1050 = 1050;
-
-        for (int i = 0; i < count1050; i++) {
-            Path path = base.resolve(i + "file");
-            Files.createFile(path);
-        }
-
-        int count = 0;
-
-        try(DirectoryStream<Path> files = Files.newDirectoryStream(base)) {
-            for(Path file : files) {
-                count++;
-            }
-        }
-
-        assertEquals(count1050, count);
-
-    }
 	
 	private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
