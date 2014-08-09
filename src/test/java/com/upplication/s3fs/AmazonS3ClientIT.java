@@ -39,7 +39,7 @@ public class AmazonS3ClientIT {
 	@Test
 	public void putObject() throws IOException{
 		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "contenido1".getBytes(), StandardOpenOption.APPEND);
+		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 		
 		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), file.toFile());
 	
@@ -49,7 +49,7 @@ public class AmazonS3ClientIT {
 	@Test
 	public void putObjectWithEndSlash() throws IOException{
 		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "contenido1".getBytes(), StandardOpenOption.APPEND);
+		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 		
 		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString() + "/", file.toFile());
 	
@@ -59,7 +59,7 @@ public class AmazonS3ClientIT {
 	@Test(expected = AmazonS3Exception.class)
 	public void putObjectWithStartSlash() throws IOException{
 		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "contenido1".getBytes(), StandardOpenOption.APPEND);
+		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 		
 		client.putObject(getBucket(), "/" + randomUUID().toString(), file.toFile());
 	}
@@ -67,7 +67,7 @@ public class AmazonS3ClientIT {
 	@Test(expected = AmazonS3Exception.class)
 	public void putObjectWithBothSlash() throws IOException{
 		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "contenido1".getBytes(), StandardOpenOption.APPEND);
+		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 		
 		PutObjectResult result = client.putObject(getBucket(), "/" + randomUUID().toString() + "/", file.toFile());
 	

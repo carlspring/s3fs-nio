@@ -1,6 +1,5 @@
 package com.upplication.s3fs;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
@@ -17,8 +16,7 @@ import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 /**
  * Client Amazon S3
- * 
- * @author Javier Arnáiz
+ * @see com.amazonaws.services.s3.AmazonS3Client
  */
 public class AmazonS3Client {
 	
