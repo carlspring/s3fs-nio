@@ -589,7 +589,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			else {
 				throw new NoSuchFileException(path.toString());
 			}
-			
+
 			return type.cast(new S3FileAttributes(key, lastModifiedTime, size, directory, regularFile));
 		}
 

@@ -1,11 +1,7 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
@@ -36,6 +32,7 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
 
 public class FileSystemProviderTest {
+
 	S3FileSystemProvider provider;
 	FileSystem fsMem;
 
@@ -716,13 +713,16 @@ public class FileSystemProviderTest {
 
         Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
         final String content = "sample";
-        Files.write(dir.resolve("file1"), content.getBytes());
+        Path memoryFile = Files.write(dir.resolve("file"), content.getBytes());
+
+        BasicFileAttributes expectedAttributes = Files.readAttributes(memoryFile,  BasicFileAttributes.class);
+
         mockFileSystem(fsMem.getPath("/base"));
 
         FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-        Path file1 = fs.getPath("/bucketA/dir/file1");
+        Path file = fs.getPath("/bucketA/dir/file");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(file1, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = provider.readAttributes(file, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(false, fileAttributes.isDirectory());
@@ -730,18 +730,25 @@ public class FileSystemProviderTest {
         assertEquals(false, fileAttributes.isSymbolicLink());
         assertEquals(false, fileAttributes.isOther());
         assertEquals(content.getBytes().length, fileAttributes.size());
+        assertEquals("dir/file", fileAttributes.fileKey());
+        assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.lastModifiedTime());
+        // TODO: creation and access are the same that last modified time
+        assertEquals(fileAttributes.lastModifiedTime(), fileAttributes.creationTime());
+        assertEquals(fileAttributes.lastModifiedTime(), fileAttributes.lastAccessTime());
     }
 
     @Test
     public void readAttributesDirectory() throws IOException {
 
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
+        Path memoryDir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
         mockFileSystem(fsMem.getPath("/base"));
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-        Path dir1 = fs.getPath("/bucketA/dir");
+        BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(dir1, BasicFileAttributes.class);
+        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        Path dir = fs.getPath("/bucketA/dir");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(true, fileAttributes.isDirectory());
@@ -749,6 +756,13 @@ public class FileSystemProviderTest {
         assertEquals(false, fileAttributes.isSymbolicLink());
         assertEquals(false, fileAttributes.isOther());
         assertEquals(0L, fileAttributes.size());
+        assertEquals("dir/", fileAttributes.fileKey());
+        assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.lastModifiedTime());
+        assertEquals(expectedAttributes.creationTime(), fileAttributes.creationTime());
+        assertEquals(expectedAttributes.lastAccessTime(), fileAttributes.lastAccessTime());
+        // TODO: creation and access are the same that last modified time
+        assertEquals(fileAttributes.creationTime(), fileAttributes.lastModifiedTime());
+        assertEquals(fileAttributes.lastAccessTime(), fileAttributes.lastModifiedTime());
     }
 
     @Test(expected= NoSuchFileException.class)
