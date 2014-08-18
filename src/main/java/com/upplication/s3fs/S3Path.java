@@ -52,60 +52,65 @@ public class S3Path implements Path {
 	 * <li> "//{key}" error, missing bucket</li>
 	 * <li> "/" error, missing bucket </li>
 	 * </ul>
-	 * Study:
-	 * <ul>
-	 * <li>"" TODO: valid or invalid?</li>
-	 * </ul>
 	 *
 	 */
 	public S3Path(S3FileSystem fileSystem, String path) {
 	
-		String bucket = null;
-		List<String> parts = Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(path));
-		
-		if (path.endsWith(PATH_SEPARATOR)) {
-			parts.remove(parts.size()-1);
-		}
-		
-		if (path.startsWith(PATH_SEPARATOR)) { // absolute path
-			Preconditions.checkArgument(parts.size() >= 1,
-					"path must start with bucket name");		
-			Preconditions.checkArgument(!parts.get(1).isEmpty(),
-					"bucket name must be not empty");
+		this(fileSystem, path, "");
+	}
 
-			bucket = parts.get(1);
-			
-			if (!parts.isEmpty()) {
-				parts = parts.subList(2, parts.size());
-			}
-		}
+    /**
+     * Build an S3Path from path segments. '/' are stripped from each segment.
+     * @param first should be star with a '/' and the first element is the bucket
+     * @param more directories and files
+     */
+	public S3Path(S3FileSystem fileSystem, String first,
+                   String ... more) {
 
-		if (bucket != null) {
-			bucket = bucket.replace("/", "");
-		}
+        String bucket = null;
+        List<String> parts = Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(first));
+
+        if (first.endsWith(PATH_SEPARATOR)) {
+            parts.remove(parts.size()-1);
+        }
+
+        if (first.startsWith(PATH_SEPARATOR)) { // absolute path
+            Preconditions.checkArgument(parts.size() >= 1,
+                    "path must start with bucket name");
+            Preconditions.checkArgument(!parts.get(1).isEmpty(),
+                    "bucket name must be not empty");
+
+            bucket = parts.get(1);
+
+            if (!parts.isEmpty()) {
+                parts = parts.subList(2, parts.size());
+            }
+        }
+
+        if (bucket != null) {
+            bucket = bucket.replace("/", "");
+        }
+
+        List<String> moreSplitted = Lists.newArrayList();
+
+        for (String part : more){
+            moreSplitted.addAll(Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(part)));
+        }
+
+        parts.addAll(moreSplitted);
+
 
 		this.bucket = bucket;
 		this.parts = KeyParts.parse(parts);
 		this.fileSystem = fileSystem;
 	}
 
-	/**
-	 * Build an S3Path from path segments. '/' are stripped from each segment.
-	 */
-	public S3Path(S3FileSystem fileSystem, String bucket, String... parts) {
-		this(fileSystem, bucket, ImmutableList.copyOf(parts));
-	}
-
-	private S3Path(S3FileSystem fileSystem, String bucket,
-			Iterable<String> parts) {
-		if (bucket != null) {
-			bucket = bucket.replace("/", "");
-		}
-		
-		this.bucket = bucket;
-		this.parts = KeyParts.parse(parts);
-		this.fileSystem = fileSystem;
-	}
+    private S3Path(S3FileSystem fileSystem, String bucket,
+                   Iterable<String> keys){
+        this.bucket = bucket;
+        this.parts = KeyParts.parse(keys);
+        this.fileSystem = fileSystem;
+    }
 
 	
 	public String getBucket() {

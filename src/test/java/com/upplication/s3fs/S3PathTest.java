@@ -34,8 +34,8 @@ public class S3PathTest {
     public void createNoPath() {
         S3Path path = forPath("/bucket");
 
-        assertEquals(path.getBucket(), "bucket");
-        assertEquals(path.getKey(), "");
+        assertEquals("bucket", path.getBucket());
+        assertEquals("", path.getKey());
     }
 
     @Test
@@ -73,8 +73,8 @@ public class S3PathTest {
 
     @Test
     public void getParent() {
-        assertEquals(forPath("/bucket/path/to/file").getParent(), forPath("/bucket/path/to/"));
-        assertEquals(forPath("/bucket/path/to/file/").getParent(), forPath("/bucket/path/to/"));
+        assertEquals(forPath("/bucket/path/to/"), forPath("/bucket/path/to/file").getParent());
+        assertEquals(forPath("/bucket/path/to/"), forPath("/bucket/path/to/file/").getParent());
         assertNull(forPath("/bucket/").getParent());
         assertNull(forPath("/bucket").getParent());
     }

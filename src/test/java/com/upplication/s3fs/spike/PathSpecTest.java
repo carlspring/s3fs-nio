@@ -1,5 +1,6 @@
 package com.upplication.s3fs.spike;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -27,6 +28,14 @@ public class PathSpecTest {
 	public void close() throws IOException {
 		fs.close();
 	}
+
+    // first and more
+
+    @Test
+    public void firstAndMore(){
+        assertEquals(fs.getPath("/dir","dir", "file"), fs.getPath("/dir", "dir/file"));
+        assertEquals(fs.getPath("/dir/dir/file"), fs.getPath("/dir", "dir/file"));
+    }
 
 	// absolute relative
 

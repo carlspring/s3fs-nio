@@ -206,7 +206,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                             // we only want the first level
                             String folder = getInmediateDescendent(s3Path.getKey(), key);
                             if (folder != null){
-                                S3Path descendentPart = new S3Path(dir.getFileSystem(), objectSummary.getBucketName(), folder.split("/"));
+                                S3Path descendentPart = new S3Path(dir.getFileSystem(), "/" + objectSummary.getBucketName(), folder.split("/"));
 
                                 if (!listPath.contains(descendentPart)){
                                     listPath.add(descendentPart);

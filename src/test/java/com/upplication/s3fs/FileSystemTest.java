@@ -1,8 +1,6 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doReturn;
@@ -71,26 +69,81 @@ public class FileSystemTest {
 		}
 	}
 
-	@Test
-	public void getPath() throws IOException {
-		
-		assertEquals(fs.getPath("/bucket/path/to/file"),
+    @Test
+    public void getPathFirst() throws IOException {
+        assertEquals(fs.getPath("/bucket"),
+                fs.getPath("/bucket"));
+
+        assertEquals(fs.getPath("file"),
+                fs.getPath("file"));
+    }
+
+    @Test
+    public void getPathFirstWithMultiplesPaths() throws IOException {
+        assertEquals(fs.getPath("/bucket/path/to/file"),
+            fs.getPath("/bucket/path/to/file"));
+        assertNotEquals(fs.getPath("/bucket/path/other/file"),
                 fs.getPath("/bucket/path/to/file"));
-		assertEquals(fs.getPath("/bucket", "path", "to", "file"),
-                fs.getPath("/bucket/path/to/file"));
-		assertEquals(fs.getPath("bucket", "path", "to", "file"),
-                fs.getPath("/bucket/path/to/file"));
-		assertEquals(fs.getPath("bucket", "path", "to", "dir/"),
-                fs.getPath("/bucket/path/to/dir/"));
-		assertEquals(fs.getPath("bucket", "path/", "to/", "dir/"),
-                fs.getPath("/bucket/path/to/dir/"));
-		assertEquals(fs.getPath("/bucket//path/to//file"),
-                fs.getPath("/bucket/path/to/file"));
-		assertEquals(fs.getPath("path/to//file"),
-                fs.getPath("path/to/file"));
-	}
-	
-	@Test
+
+        assertEquals(fs.getPath("dir/path/to/file"),
+                fs.getPath("dir/path/to/file"));
+        assertNotEquals(fs.getPath("dir/path/other/file"),
+                fs.getPath("dir/path/to/file"));
+    }
+
+    @Test
+    public void getPathFirstAndMore() throws IOException {
+        Path actualAbsolute = fs.getPath("/bucket", "dir", "file");
+        assertEquals(fs.getPath("/bucket", "dir", "file"), actualAbsolute);
+        assertEquals(fs.getPath("/bucket/dir/file"), actualAbsolute);
+
+        Path actualRelative = fs.getPath("dir", "dir", "file");
+        assertEquals(fs.getPath("dir", "dir", "file"), actualRelative);
+        assertEquals(fs.getPath("dir/dir/file"), actualRelative);
+    }
+
+    @Test
+    public void getPathFirstAndMoreWithMultiplesPaths() throws IOException {
+        Path actual = fs.getPath("/bucket", "dir/file");
+        assertEquals(fs.getPath("/bucket", "dir/file"), actual);
+        assertEquals(fs.getPath("/bucket/dir/file"), actual);
+        assertEquals(fs.getPath("/bucket", "dir", "file"), actual);
+    }
+
+    @Test
+    public void getPathFirstWithMultiplesPathsAndMoreWithMultiplesPaths() throws IOException {
+        Path actual = fs.getPath("/bucket/dir", "dir/file");
+        assertEquals(fs.getPath("/bucket/dir", "dir/file"), actual);
+        assertEquals(fs.getPath("/bucket/dir/dir/file"), actual);
+        assertEquals(fs.getPath("/bucket", "dir", "dir", "file"), actual);
+        assertEquals(fs.getPath("/bucket/dir/dir", "file"), actual);
+    }
+
+    @Test
+    public void getPathRelativeAndAbsoulte() throws IOException {
+        assertNotEquals(fs.getPath("/bucket"), fs.getPath("bucket"));
+        assertNotEquals(fs.getPath("/bucket/dir"), fs.getPath("bucket/dir"));
+        assertNotEquals(fs.getPath("/bucket", "dir"), fs.getPath("bucket", "dir"));
+        assertNotEquals(fs.getPath("/bucket/dir", "dir"), fs.getPath("bucket/dir", "dir"));
+        assertNotEquals(fs.getPath("/bucket", "dir/file"), fs.getPath("bucket", "dir/file"));
+        assertNotEquals(fs.getPath("/bucket/dir", "dir/file"), fs.getPath("bucket/dir", "dir/file"));
+    }
+
+    @Test
+    public void duplicatedSlashesAreDeleted() throws IOException {
+        Path actualFirst = fs.getPath("/bucket//file");
+        assertEquals(fs.getPath("/bucket/file"), actualFirst);
+        assertEquals(fs.getPath("/bucket", "file"), actualFirst);
+
+        Path actualFirstAndMore = fs.getPath("/bucket//dir", "dir//file");
+        assertEquals(fs.getPath("/bucket/dir/dir/file"), actualFirstAndMore);
+        assertEquals(fs.getPath("/bucket", "dir/dir/file"), actualFirstAndMore);
+        assertEquals(fs.getPath("/bucket/dir", "dir/file"), actualFirstAndMore);
+        assertEquals(fs.getPath("/bucket/dir/dir", "file"), actualFirstAndMore);
+    }
+
+
+    @Test
 	public void readOnlyAlwaysFalse(){
 		assertTrue(!fs.isReadOnly());
 	}
@@ -186,4 +239,8 @@ public class FileSystemTest {
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
 				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
 	}
+
+    private static void assertNotEquals(Object a, Object b){
+        assertTrue(a + " are not equal to: " + b, !a.equals(b));
+    }
 }

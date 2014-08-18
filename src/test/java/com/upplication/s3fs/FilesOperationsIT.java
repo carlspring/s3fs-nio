@@ -174,7 +174,7 @@ public class FilesOperationsIT {
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)){
 			boolean find = false;
 			for (Path path : dirStream){
-				// solo recorre ficheros del primer nivel
+				// only first level
 				assertEquals(bucketPath, path.getParent());
 				if (path.equals(fileToFind)){
 					find = true;
@@ -194,7 +194,7 @@ public class FilesOperationsIT {
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)){
 			boolean find = false;
 			for (Path path : dirStream){
-				// solo recorre ficheros del primer nivel
+				// check parent at first level
 				assertEquals(bucketPath, path.getParent());
 				if (path.equals(fileToFind)){
 					find = true;
