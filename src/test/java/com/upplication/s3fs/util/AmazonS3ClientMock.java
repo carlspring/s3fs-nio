@@ -64,10 +64,6 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		}
 	};
 
-	public AmazonS3ClientMock() {
-		super(null);
-	}
-
 	public AmazonS3ClientMock(Path base) throws IOException {
 		super(null);
 		// construimos el bucket
@@ -340,14 +336,15 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 			resObj.setObjectContent(objectSource.getObjectContent());
 			resObj.setObjectMetadata(objectSource.getObjectMetadata());
 			resObj.setRedirectLocation(objectSource.getRedirectLocation());
-			// copy perission
+			// copy permission
 			AccessControlList permission = new AccessControlList();
 			permission.setOwner(element.getPermission().getOwner());
 			permission.grantAllPermissions(element.getPermission().getGrants()
 					.toArray(new Grant[0]));
-			// maybe not exists key TODO
-			objects.get(find(destinationBucketName)).add(
-					new S3Element(resObj, permission, sourceKey.endsWith("/")));
+            S3Element elementResult = new S3Element(resObj, permission, sourceKey.endsWith("/"));
+            // TODO: add should replace existing
+            objects.get(find(destinationBucketName)).remove(elementResult);
+			objects.get(find(destinationBucketName)).add(elementResult);
 
 			return new CopyObjectResult();
 		}

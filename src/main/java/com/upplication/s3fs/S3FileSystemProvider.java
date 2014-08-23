@@ -155,7 +155,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
                     @Override
                     public void remove() {
-                        // not supported
+                        throw new UnsupportedOperationException();
                     }
 
                     @Override
@@ -211,9 +211,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                                 if (!listPath.contains(descendentPart)){
                                     listPath.add(descendentPart);
                                 }
-
                             }
-
                         }
                     }
 
@@ -222,12 +220,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
                         keyParent = deleteExtraPath(keyParent);
                         keyChild = deleteExtraPath(keyChild);
 
-                        if (!keyChild.startsWith(keyParent)) {
-                            // maybe we just should return false
-                            throw new IllegalArgumentException(
-                                    "Invalid child '" + keyChild
-                                            + "' for parent '" + keyParent + "'");
-                        }
                         final int parentLen = keyParent.length();
                         final String childWithoutParent = deleteExtraPath(keyChild
                                 .substring(parentLen));
@@ -519,8 +511,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				}
 				break;
 			case WRITE:
-				if (!hasPermissions(client.getBucketAcl(s3Path.getBucket()),
-						client.getS3AccountOwner(),
+				if (!hasPermissions(acl, client.getS3AccountOwner(),
 						EnumSet.of(Permission.FullControl, Permission.Write))) {
 					throw new AccessDeniedException(s3Path.toString(), null,
 							format("bucket '%s' is not writable",
@@ -534,6 +525,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		}
 	}
 
+    /**
+     * check if the param acl has the same owner than the parameter owner and
+     * have almost one of the permission set in the parameter permissions
+     * @param acl
+     * @param owner
+     * @param permissions almost one
+     * @return
+     */
 	private boolean hasPermissions(AccessControlList acl, Owner owner,
 			EnumSet<Permission> permissions) {
 		boolean result = false;
