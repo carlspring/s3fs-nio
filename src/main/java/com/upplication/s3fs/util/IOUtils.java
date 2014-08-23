@@ -7,7 +7,7 @@ import java.io.InputStream;
 /**
  * Utilities for streams
  */
-public class IOUtils {
+public abstract class IOUtils {
     /**
      * get the stream content and return as a byte array
      * @param is InputStream
