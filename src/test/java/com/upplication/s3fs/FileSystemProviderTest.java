@@ -2,12 +2,8 @@ package com.upplication.s3fs;
 
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,14 +29,16 @@ import com.google.common.collect.ImmutableMap;
 
 public class FileSystemProviderTest {
 
-	S3FileSystemProvider provider;
+    public static final URI S3_GLOBAL_URI = URI.create("s3:///");
+
+    S3FileSystemProvider provider;
 	FileSystem fsMem;
 
 	@Before
 	public void cleanup() throws IOException{
 		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
 		try{
-			FileSystems.getFileSystem(URI.create("s3:///")).close();
+			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
 		catch(FileSystemNotFoundException e){}
 		
@@ -74,13 +72,11 @@ public class FileSystemProviderTest {
 	public void createsAuthenticatedByEnv() throws IOException {
 		
 		Map<String, ?> env = buildFakeEnv();
-		URI uri = URI.create("s3:///");
-		
-		FileSystem fileSystem = provider.newFileSystem(uri,
-				env);
+
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
 	}
 	
 	@Test
@@ -89,7 +85,7 @@ public class FileSystemProviderTest {
 		props.setProperty(S3FileSystemProvider.SECRET_KEY, "secret key");
 		props.setProperty(S3FileSystemProvider.ACCESS_KEY, "access key");
 		doReturn(props).when(provider).loadAmazonProperties();
-		URI uri = URI.create("s3:///");
+		URI uri = S3_GLOBAL_URI;
 		
 		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
@@ -99,7 +95,7 @@ public class FileSystemProviderTest {
 
 	@Test
 	public void createsAnonymous() throws IOException {
-		URI uri = URI.create("s3:///");
+		URI uri = S3_GLOBAL_URI;
 		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 
 		assertNotNull(fileSystem);
@@ -108,33 +104,33 @@ public class FileSystemProviderTest {
 
 	@Test(expected = FileSystemAlreadyExistsException.class)
 	public void createFailsIfAlreadyCreated() throws IOException {
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
-				ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI.create("s3:///"),
+                ImmutableMap.<String, Object>of());
 		assertNotNull(fileSystem);
 
-		provider.newFileSystem(URI.create("s3:///"),
+		provider.newFileSystem(S3_GLOBAL_URI,
 				ImmutableMap.<String, Object> of());
 	}
 
 	@Test
 	public void getFileSystem() throws IOException {
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
-				ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
+                ImmutableMap.<String, Object>of());
 		assertNotNull(fileSystem);
 
-		FileSystem other = provider.getFileSystem(URI.create("s3:///"));
+		FileSystem other = provider.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystem, other);
 	}
 
 	@Test(expected = FileSystemNotFoundException.class)
 	public void getFailsIfNotYetCreated() {
-		provider.getFileSystem(URI.create("s3:///"));
+		provider.getFileSystem(S3_GLOBAL_URI);
 	}
 
 	@Test
 	public void getPathWithEmtpyEndpoint() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
-				ImmutableMap.<String, Object> of());
+		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI,
+                ImmutableMap.<String, Object>of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
 		assertEquals(path, fs.getPath("/bucket/path/to/file"));
@@ -177,8 +173,8 @@ public class FileSystemProviderTest {
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void getPathWithDefaultEndpointAndWithoutBucket() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"),
-				ImmutableMap.<String, Object> of());
+		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI,
+                ImmutableMap.<String, Object>of());
 		fs.provider().getPath(URI.create("s3:////falta-bucket"));
 	}
 
@@ -187,13 +183,13 @@ public class FileSystemProviderTest {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
 
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
-				env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
+                env);
 		assertNotNull(fileSystem);
 
 		fileSystem.close();
 
-		FileSystem fileSystem2 = provider.newFileSystem(URI.create("s3:///"),
+		FileSystem fileSystem2 = provider.newFileSystem(S3_GLOBAL_URI,
 				env);
 
 		assertNotSame(fileSystem, fileSystem2);
@@ -204,10 +200,10 @@ public class FileSystemProviderTest {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
 
-		FileSystem fileSystem = provider.newFileSystem(URI.create("s3:///"),
-				env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
+                env);
 		assertNotNull(fileSystem);
-		provider.newFileSystem(URI.create("s3:///"), env);
+		provider.newFileSystem(S3_GLOBAL_URI, env);
 
 	}
 	
@@ -221,7 +217,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/file1", "content"}
         );
 		// act
-		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+		Path bucket = createNewS3FileSystem().getPath("/bucketA");
 		// assert
 		assertNewDirectoryStream(bucket, "file1");
 	}
@@ -236,7 +232,7 @@ public class FileSystemProviderTest {
         );
 
         // act
-		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+		Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
 		// assert
 		assertNewDirectoryStream(bucket, "file1", "file2");
@@ -251,7 +247,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/file1", "content"}
         );
 		// act
-		Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+		Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
 		// assert
 		assertNewDirectoryStream(bucket, "file1", "dir1");
@@ -266,7 +262,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/file1", "content"}
         );
         // act
-        Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+        Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
         // act
         try (DirectoryStream<Path> dir = Files.newDirectoryStream(bucket)){
@@ -291,7 +287,7 @@ public class FileSystemProviderTest {
         mockFileSystem(fsMem.getPath("/base"));
 
 
-        Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+        Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
         int count = 0;
 
@@ -320,7 +316,7 @@ public class FileSystemProviderTest {
 
         mockFileSystem(fsMem.getPath("/base"));
 
-        Path bucket = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA");
+        Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
         int count = 0;
 
@@ -345,7 +341,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/file1", content}
         );
 
-		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/file1");
+		Path file = createNewS3FileSystem().getPath("/bucketA/file1");
 		
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
@@ -361,7 +357,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file1", res}
         );
 		// act
-		Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file1");
+		Path file = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		
 		byte[] buffer = Files.readAllBytes(file);
 		// check
@@ -465,7 +461,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", ""}
         );
 
-		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         final String content = "content";
 		
@@ -489,7 +485,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
 
@@ -506,7 +502,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
 
@@ -523,7 +519,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             long position = seekable.position();
@@ -542,7 +538,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         ByteBuffer copy = ByteBuffer.allocate(3);
 
@@ -563,7 +559,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         ByteBuffer copy = ByteBuffer.allocate(5);
 
@@ -578,12 +574,30 @@ public class FileSystemProviderTest {
     }
 
     @Test
+    public void seekableIsOpen() throws IOException {
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", ""}
+        );
+
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
+            assertTrue(seekable.isOpen());
+        }
+
+        SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"),EnumSet.of(StandardOpenOption.READ));
+        assertTrue(seekable.isOpen());
+        seekable.close();
+        assertTrue(!seekable.isOpen());
+    }
+
+    @Test
     public void seekableRead() throws IOException{
         createPathsAndMock(
                 new String[]{"/bucketA/dir/"}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         final String content = "content";
         Path file = Files.write(base.resolve("file"), content.getBytes());
@@ -604,7 +618,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/"}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         final String content = "content";
         Path file = Files.write(base.resolve("file"), content.getBytes());
@@ -626,7 +640,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             // discard all content except the first c.
@@ -643,7 +657,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             // discard all content except the first three chars 'con'
@@ -660,7 +674,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", content}
         );
 
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
         try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             seekable.truncate(10);
@@ -675,7 +689,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/"}
         );
 
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         Path file = base.resolve("file");
 
@@ -692,7 +706,7 @@ public class FileSystemProviderTest {
         createPathsAndMock(
                 new String[]{"/bucketA/dir/"}
         );
-        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         Path file = Files.createFile(base.resolve("file"));
 
@@ -713,7 +727,7 @@ public class FileSystemProviderTest {
         );
 
 		// act
-		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 		Files.createDirectory(base);
 		// assert
 		assertTrue(Files.exists(base));
@@ -729,7 +743,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", "content"}
         );
         // act
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 		provider.delete(file);
 		// assert
 		assertTrue(Files.notExists(file));
@@ -745,18 +759,22 @@ public class FileSystemProviderTest {
 
     @Test(expected = DirectoryNotEmptyException.class)
     public void deleteDirectoryWithEntries() throws IOException{
-        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        Files.createFile(dir.resolve("file"));
-        mockFileSystem(fsMem.getPath("/base"));
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", "content"}
+        );
+
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
         provider.delete(file.getParent());
     }
 
     @Test(expected = NoSuchFileException.class)
     public void deleteFileNotExists() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
-        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+        createPathsAndMock(
+            new String[]{"/bucketA/dir"}
+        );
+
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
         provider.delete(file);
     }
 	
@@ -771,7 +789,7 @@ public class FileSystemProviderTest {
         );
 
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		FileSystem fs = createNewS3FileSystem();
 		Path file = fs.getPath("/bucketA/dir/file1");
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
 		provider.copy(file, fileDest);
@@ -785,7 +803,7 @@ public class FileSystemProviderTest {
         final String content = "sample-content";
         createPathsAndMock(new String[]{"/bucketA/dir/file1", content});
         // act
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file1");
         provider.copy(file, fileDest);
@@ -803,7 +821,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file2", "content-2"}
         );
         // act
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
         provider.copy(file, fileDest, StandardCopyOption.REPLACE_EXISTING);
@@ -820,7 +838,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file2", content}
         );
         // act
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
         provider.copy(file, fileDest);
@@ -835,7 +853,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir2/"}
         );
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		FileSystem fs = createNewS3FileSystem();
 		Path file = fs.getPath("/bucketA/dir/file1");
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
 		provider.move(file, fileDest);
@@ -850,7 +868,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file1", "some content"}
         );
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		FileSystem fs = createNewS3FileSystem();
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir/file1");
 		// assert
@@ -865,7 +883,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir2/file2", "some content"}
         );
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+		FileSystem fs = createNewS3FileSystem();
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir/file2");
 		// assert
@@ -881,8 +899,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir2/"}
         );
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-		Path file1 = fs.getPath("/bucketA/dir/file1");
+		Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		// assert
 		assertTrue(!provider.isHidden(file1));
 	}
@@ -898,8 +915,7 @@ public class FileSystemProviderTest {
         );
 
 		// act
-		FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-		Path file1 = fs.getPath("/bucketA/dir/file1");
+		Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		// assert
 		provider.getFileStore(file1);
 	}
@@ -920,8 +936,7 @@ public class FileSystemProviderTest {
         Files.createFile(dir.resolve("file1"));
         mockFileSystem(fsMem.getPath("/base"));
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-        Path file1 = fs.getPath("/bucketA/dir/file1");
+        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(file1, BasicFileAttributes.class);
 
@@ -944,7 +959,7 @@ public class FileSystemProviderTest {
 
         mockFileSystem(fsMem.getPath("/base"));
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA/dir/file");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(file, BasicFileAttributes.class);
@@ -970,7 +985,7 @@ public class FileSystemProviderTest {
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
@@ -999,7 +1014,7 @@ public class FileSystemProviderTest {
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
@@ -1026,7 +1041,7 @@ public class FileSystemProviderTest {
         );
 
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file1");
 
         provider.readAttributes(file1, BasicFileAttributes.class);
@@ -1039,7 +1054,7 @@ public class FileSystemProviderTest {
         );
 
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
         provider.readAttributes(dir, DosFileAttributes.class);
@@ -1065,7 +1080,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", "content"}
         );
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file");
 
         provider.checkAccess(file1, AccessMode.READ);
@@ -1078,7 +1093,7 @@ public class FileSystemProviderTest {
         // return empty list
         doReturn(new AccessControlList()).when(amazonS3ClientMock).getObjectAcl("bucketA", "dir/");
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir");
 
         provider.checkAccess(file1, AccessMode.READ);
@@ -1090,7 +1105,7 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", "content"}
         );
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file");
 
         provider.checkAccess(file1, AccessMode.WRITE);
@@ -1103,8 +1118,7 @@ public class FileSystemProviderTest {
         // return empty list
         doReturn(new AccessControlList()).when(amazonS3ClientMock).getObjectAcl("bucketA", "dir/");
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-        Path file1 = fs.getPath("/bucketA/dir");
+        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir");
 
         provider.checkAccess(file1, AccessMode.WRITE);
     }
@@ -1115,12 +1129,11 @@ public class FileSystemProviderTest {
                 new String[]{"/bucketA/dir/file", "content"}
         );
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
-        Path file1 = fs.getPath("/bucketA/dir/file");
+        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
         provider.checkAccess(file1, AccessMode.EXECUTE);
     }
-	
+
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
 				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
@@ -1160,24 +1173,39 @@ public class FileSystemProviderTest {
      * @param pathsAndContents string with two optional parameters, the first set the path and the second the content
      *                         if the path ends with slash '/' is a directory, otherwise is a file. If is a directory
      *                         not need to set the content
+     * @return AmazonS3ClientMock internal spyed AmazonS3Client that you can fake it with mockito.
+     */
+    private AmazonS3ClientMock createPathsAndMock(String[] ... pathsAndContents ) {
+        try {
+            for (String[] pathAndContent : pathsAndContents){
+
+                Path path = fsMem.getPath("/base" + pathAndContent[0]);
+                if (pathAndContent[0].endsWith("/")) {
+                    Files.createDirectories(path);
+                }
+                else{
+                    Files.createDirectories(path.getParent());
+                }
+
+                if (pathAndContent.length == 2){
+                    Files.write(path, pathAndContent[1].getBytes());
+                }
+            }
+            return mockFileSystem(fsMem.getPath("/base"));
+
+        }
+        catch (IOException e){
+            throw new RuntimeException("Test error", e);
+        }
+    }
+
+    /**
+     * create a new file system for s3 scheme with fake credentials
+     * and global endpoint
+     * @return FileSystem
      * @throws IOException
      */
-    private void createPathsAndMock(String[] ... pathsAndContents ) throws IOException {
-
-        for (String[] pathAndContent : pathsAndContents){
-
-            Path path = fsMem.getPath("/base" + pathAndContent[0]);
-            if (pathAndContent[0].endsWith("/")) {
-                Files.createDirectories(path);
-            }
-            else{
-                Files.createDirectories(path.getParent());
-            }
-
-            if (pathAndContent.length == 2){
-                Files.write(path, pathAndContent[1].getBytes());
-            }
-        }
-        mockFileSystem(fsMem.getPath("/base"));
+    private FileSystem createNewS3FileSystem() throws IOException {
+        return provider.newFileSystem(S3_GLOBAL_URI, buildFakeEnv());
     }
 }

@@ -638,7 +638,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = new Properties();
 		// http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
 		// http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html
-		try(InputStream in = Thread.currentThread ().getContextClassLoader ().getResourceAsStream("amazon.properties")){
+		try(InputStream in = Thread.currentThread().getContextClassLoader ().getResourceAsStream("amazon.properties")){
 			if (in != null){
 				props.load(in);
 			}
@@ -663,11 +663,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return true if exists
 	 */
 	private boolean exists(S3Path path) {
-		try{
+		try {
 			getFirstObjectSummary(path);
 			return true;
 		}
-		catch(NoSuchFileException e){
+        catch(NoSuchFileException e) {
 			return false;
 		}
 	}
@@ -679,32 +679,21 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	private S3ObjectSummary getFirstObjectSummary(S3Path s3Path) throws NoSuchFileException{
 		
-		S3ObjectSummary res = null;
-		try {
-			
-			AmazonS3Client client = s3Path.getFileSystem().getClient();
-			
-			ListObjectsRequest request = new ListObjectsRequest();
-			request.setBucketName(s3Path.getBucket());
-			request.setPrefix(s3Path.getKey());
-			request.setMaxKeys(1);
-			List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
-			if (!query.isEmpty()){
-				res = query.get(0);
-			}
-			else{
-				throw new NoSuchFileException(s3Path.toString());
-			}
-			
-		} catch (AmazonS3Exception e) {
-			if (e.getStatusCode() == 404) {
-				throw new NoSuchFileException(s3Path.toString());
-			}
-			Throwables.propagate(e);
-		}
-		
-		return res;
+        AmazonS3Client client = s3Path.getFileSystem().getClient();
+
+        ListObjectsRequest request = new ListObjectsRequest();
+        request.setBucketName(s3Path.getBucket());
+        request.setPrefix(s3Path.getKey());
+        request.setMaxKeys(1);
+        List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
+        if (!query.isEmpty()) {
+            return query.get(0);
+        }
+        else {
+            throw new NoSuchFileException(s3Path.toString());
+        }
 	}
+
 	/**
 	 * Get the Control List, if the path not exists
      * (because the path is a directory and this key isnt created at amazon s3)
@@ -715,18 +704,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @throws NoSuchFileException if not found the path and any child
 	 */
 	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
-		
-		AccessControlList res = null;
 		S3ObjectSummary obj = getFirstObjectSummary(path);
-		
-		try {
-			// chek first for file:
-			res = path.getFileSystem().getClient().getObjectAcl(obj.getBucketName(), obj.getKey());
-		} catch (AmazonS3Exception e) {
-			Throwables.propagate(e);
-		}
-		
-		return res;
+		// check first for file:
+        return path.getFileSystem().getClient().getObjectAcl(obj.getBucketName(), obj.getKey());
 	}
 
     /**
@@ -735,7 +715,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
      * @throws IOException
      */
     protected Path createTempDir() throws IOException {
-
         return Files.createTempDirectory("temp-s3-");
     }
 }

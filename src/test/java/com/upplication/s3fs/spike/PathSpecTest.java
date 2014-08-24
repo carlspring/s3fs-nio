@@ -1,9 +1,5 @@
 package com.upplication.s3fs.spike;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -14,6 +10,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+
+import static org.junit.Assert.*;
 
 public class PathSpecTest {
 
@@ -150,6 +148,19 @@ public class PathSpecTest {
  	public void endsWithRelativeBlankRelative(){
  		assertFalse(get("file1").endsWith(get("")));
  	}
+
+    // file name
+
+    @Test
+    public void getFileName() throws IOException {
+        try (FileSystem windows = MemoryFileSystemBuilder.newWindows().build("widows")){
+            Path fileName = windows.getPath("C:/file").getFileName();
+            Path rootName = windows.getPath("C:/").getFileName();
+
+            assertEquals(windows.getPath("file"), fileName);
+            assertNull(rootName);
+        }
+    }
 
 	// ~ helpers methods
 

@@ -7,13 +7,13 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.util.HashMap;
 import java.util.Iterator;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,14 +21,21 @@ import com.google.common.collect.ImmutableMap;
 
 public class S3PathTest {
 	
-	@BeforeClass
-	public static void setup() throws IOException {
-		try {
-			FileSystems.getFileSystem(URI.create("s3:///"));
-		} catch(FileSystemNotFoundException e) {
-			FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
-		}
+	@Before
+	public void setup() throws IOException {
+        FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
 	}
+
+    @After
+    public void close() throws IOException {
+        try{
+            FileSystems.getFileSystem(URI.create("s3:///")).close();;
+        }
+        catch (FileSystemNotFoundException e){
+            // already closed
+        }
+    }
+
 	
     @Test
     public void createNoPath() {
@@ -182,6 +189,8 @@ public class S3PathTest {
     	
     	assertEquals(forPath(""), forPath("/bucket/path/to/").relativize(forPath("/bucket/path/to/")));
     }
+
+    // to uri
     
     @Test
     public void toUri() {
@@ -201,6 +210,20 @@ public class S3PathTest {
     	Path pathActual = fs.provider().getPath(uri);
     	
     	assertEquals(path, pathActual);
+    }
+
+    @Test
+    public void toUriWithEndpoint() throws IOException {
+        FileSystems.getFileSystem(URI.create("s3:///")).close();
+
+        try(FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint/"), ImmutableMap.<String, Object>of())){
+            Path path = fs.getPath("/bucket/path/to/file");
+            URI uri = path.toUri();
+            // the scheme is s3
+            assertEquals("s3", uri.getScheme());
+            assertEquals("endpoint", uri.getHost());
+            assertEquals("/bucket/path/to/file", uri.getPath());
+        }
     }
     
     // tests startsWith
@@ -344,6 +367,26 @@ public class S3PathTest {
  	public void endsWithRelativeBlankRelative(){
  		assertFalse(forPath("file1").endsWith(forPath("")));
  	}
+
+    @Test
+    public void endsWithDifferent(){
+        assertFalse(forPath("/bucket/dir/dir/file1").endsWith(forPath("fail/dir/file1")));
+    }
+
+    @Test
+    public void endsWithDifferentProvider() throws IOException {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
+            Path fileLinux = linux.getPath("/file");
+
+            assertFalse(forPath("/bucket/file").endsWith(fileLinux));
+        }
+
+        try (FileSystem window = MemoryFileSystemBuilder.newWindows().build("window")) {
+            Path file = window.getPath("c:/file");
+
+            assertFalse(forPath("/c/file").endsWith(file));
+        }
+    }
  	
 	@Test
  	public void endsWithString(){
@@ -435,12 +478,90 @@ public class S3PathTest {
  	public void getRootRelativeReturnNull(){
  		assertNull(forPath("dir/file").getRoot());
  	}
+
+    // file name
+
+    @Test
+    public void getFileName(){
+        Path path = forPath("/bucketA/file");
+        Path name = path.getFileName();
+
+        assertEquals(forPath("file"), name);
+    }
+
+    @Test
+    public void getAnotherFileName(){
+        Path path = forPath("/bucketA/dir/another-file");
+        Path fileName = path.getFileName();
+        Path dirName = path.getParent().getFileName();
+
+        assertEquals(forPath("another-file"), fileName);
+        assertEquals(forPath("dir"), dirName);
+    }
+
+    @Test
+    public void getFileNameBucket(){
+        Path path = forPath("/bucket");
+        Path name = path.getFileName();
+
+        assertNull(name);
+    }
+
+    // equals
+
+    @Test
+    public void equals(){
+        Path path = forPath("/bucketA/dir/file");
+        Path path2 = forPath("/bucketA/dir/file");
+
+        assertTrue(path.equals(path2));
+    }
+
+    @Test
+    public void notEquals(){
+        Path path = forPath("/bucketA/dir/file");
+        Path path2 = forPath("/bucketA/dir/file2");
+
+        assertFalse(path.equals(path2));
+    }
+
+    @Test
+    public void notEqualsNull(){
+        Path path = forPath("/bucketA/dir/file");
+
+        assertFalse(path.equals(null));
+    }
+
+    @Test
+    public void notEqualsDifferentProvider() throws IOException {
+        Path path = forPath("/c/dir/file");
+
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
+            Path fileLinux = linux.getPath("/dir/file");
+
+            assertFalse(path.equals(fileLinux));
+        }
+
+        try (FileSystem window = MemoryFileSystemBuilder.newWindows().build("window")) {
+            Path file = window.getPath("c:/dir/file");
+
+            assertFalse(path.equals(file));
+        }
+    }
+
+    @Test
+    public void hashCodeHashMap(){
+        HashMap<S3Path, String> hashMap = new HashMap<>();
+        hashMap.put(forPath("/bucket/a"), "a");
+        hashMap.put(forPath("/bucket/a"), "b");
+
+        assertEquals(1, hashMap.size());
+        assertEquals("b", hashMap.get(forPath("/bucket/a")));
+    }
+
  	
  	private static S3Path forPath(String path) {
  		return (S3Path)FileSystems.getFileSystem(URI
 				.create("s3:///")).getPath(path);
  	}
- 	
- 	
- 	
 }

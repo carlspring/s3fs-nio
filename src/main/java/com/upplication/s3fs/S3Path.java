@@ -156,13 +156,15 @@ public class S3Path implements Path {
 			return new S3Path(fileSystem, null, parts.subList(parts.size() - 1,
 					parts.size()));
 		}
-
-		return null;
+        else {
+            // bucket dont have fileName
+            return null;
+        }
 	}
 
 	@Override
 	public Path getParent() {
-		// bucket is not present int the parts
+		// bucket is not present in the parts
 		if (parts.isEmpty()) {
 			return null;
 		}
