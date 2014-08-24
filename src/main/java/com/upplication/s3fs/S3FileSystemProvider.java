@@ -518,9 +518,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 									s3Path.getBucket()));
 				}
 				break;
-			default:
-				throw new UnsupportedOperationException(format(
-						"access mode '%s' not supported", accessMode));
 			}
 		}
 	}
@@ -564,7 +561,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			S3ObjectSummary objectSummary = getFirstObjectSummary(s3Path);
 
 			// parse the data to BasicFileAttributes.
-			
 			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(),
 					TimeUnit.MILLISECONDS);
 			long size =  objectSummary.getSize();
@@ -572,7 +568,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			boolean regularFile = false;
 			String key = objectSummary.getKey();
             // check if is a directory and exists the key of this directory at amazon s3
-			if (objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().endsWith("/")) {
+			if (objectSummary.getKey().equals(s3Path.getKey() + "/") && objectSummary.getKey().endsWith("/")) {
 				directory = true;
 			}
 			// is a directory but not exists at amazon s3
@@ -580,19 +576,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				directory = true;
 				// no metadata, we fake one
 				size = 0;
+                // delete extra part
+                key = s3Path.getKey() + "/";
 			}
 			// is a file:
-			else if (objectSummary.getKey().equals(s3Path.getKey())){
-                regularFile = true;
-			}
 			else {
-				throw new NoSuchFileException(path.toString());
+                regularFile = true;
 			}
 
 			return type.cast(new S3FileAttributes(key, lastModifiedTime, size, directory, regularFile));
 		}
-
-		return null;
+        else {
+            throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
+        }
 	}
 
 	@Override

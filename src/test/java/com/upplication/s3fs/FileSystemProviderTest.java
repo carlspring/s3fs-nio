@@ -16,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.Properties;
@@ -460,9 +461,10 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void seekable() throws IOException{
-		Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-		Files.createFile(dir.resolve("file"));
-		mockFileSystem(fsMem.getPath("/base"));
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", ""}
+        );
+
 		Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
 
         final String content = "content";
@@ -479,10 +481,108 @@ public class FileSystemProviderTest {
 		
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
 	}
+
+    @Test
+    public void seekableSize() throws IOException {
+        final String content = "content";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+
+            long size = seekable.size();
+
+            assertEquals(content.length(), size);
+        }
+    }
+
+    @Test
+    public void seekableAnotherSize() throws IOException {
+        final String content = "content-more-large";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+
+            long size = seekable.size();
+
+            assertEquals(content.length(), size);
+        }
+    }
+
+    @Test
+    public void seekablePosition() throws IOException {
+        final String content = "content";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+            long position = seekable.position();
+            assertEquals(0, position);
+
+            seekable.position(10);
+            long position2 = seekable.position();
+            assertEquals(10, position2);
+        }
+    }
+
+    @Test
+    public void seekablePositionRead() throws IOException {
+        final String content = "content-more-larger";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        ByteBuffer copy = ByteBuffer.allocate(3);
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.READ))){
+            long position = seekable.position();
+            assertEquals(0, position);
+
+            seekable.read(copy);
+            long position2 = seekable.position();
+            assertEquals(3, position2);
+        }
+    }
+
+    @Test
+    public void seekablePositionWrite() throws IOException {
+        final String content = "content-more-larger";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
+        ByteBuffer copy = ByteBuffer.allocate(5);
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
+            long position = seekable.position();
+            assertEquals(0, position);
+
+            seekable.write(copy);
+            long position2 = seekable.position();
+            assertEquals(5, position2);
+        }
+    }
+
     @Test
     public void seekableRead() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/"}
+        );
+
         Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
 
         final String content = "content";
@@ -500,8 +600,10 @@ public class FileSystemProviderTest {
 
     @Test
     public void seekableReadPartialContent() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/"}
+        );
+
         Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
 
         final String content = "content";
@@ -518,9 +620,61 @@ public class FileSystemProviderTest {
     }
 
     @Test
+    public void seekableTruncate() throws IOException {
+        final String content = "content";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+            // discard all content except the first c.
+            seekable.truncate(1);
+        }
+
+        assertArrayEquals("c".getBytes(), Files.readAllBytes(file));
+    }
+
+    @Test
+    public void seekableAnotherTruncate() throws IOException {
+        final String content = "content";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+            // discard all content except the first three chars 'con'
+            seekable.truncate(3);
+        }
+
+        assertArrayEquals("con".getBytes(), Files.readAllBytes(file));
+    }
+
+    @Test
+    public void seekableruncateGreatherThanSize() throws IOException {
+        final String content = "content";
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/file", content}
+        );
+
+        Path file = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir/file");
+
+        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+            seekable.truncate(10);
+        }
+
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(file));
+    }
+
+    @Test
     public void seekableCreateEmpty() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/"}
+        );
+
         Path base = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
 
         Path file = base.resolve("file");
@@ -790,7 +944,7 @@ public class FileSystemProviderTest {
 
         mockFileSystem(fsMem.getPath("/base"));
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
         Path file = fs.getPath("/bucketA/dir/file");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(file, BasicFileAttributes.class);
@@ -816,7 +970,36 @@ public class FileSystemProviderTest {
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
-        FileSystem fs = provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv());
+        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        Path dir = fs.getPath("/bucketA/dir");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
+
+        assertNotNull(fileAttributes);
+        assertEquals(true, fileAttributes.isDirectory());
+        assertEquals(false, fileAttributes.isRegularFile());
+        assertEquals(false, fileAttributes.isSymbolicLink());
+        assertEquals(false, fileAttributes.isOther());
+        assertEquals(0L, fileAttributes.size());
+        assertEquals("dir/", fileAttributes.fileKey());
+        assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.lastModifiedTime());
+        assertEquals(expectedAttributes.creationTime(), fileAttributes.creationTime());
+        assertEquals(expectedAttributes.lastAccessTime(), fileAttributes.lastAccessTime());
+        // TODO: creation and access are the same that last modified time
+        assertEquals(fileAttributes.creationTime(), fileAttributes.lastModifiedTime());
+        assertEquals(fileAttributes.lastAccessTime(), fileAttributes.lastModifiedTime());
+    }
+
+    @Test
+    public void readAttributesDirectoryNotExistsAtAmazon() throws IOException {
+
+        Path memoryDir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir", "dir2"))
+                .getParent();
+        mockFileSystem(fsMem.getPath("/base"));
+
+        BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
         Path dir = fs.getPath("/bucketA/dir");
 
         BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
@@ -847,6 +1030,19 @@ public class FileSystemProviderTest {
         Path file1 = fs.getPath("/bucketA/dir/file1");
 
         provider.readAttributes(file1, BasicFileAttributes.class);
+    }
+
+    @Test(expected= UnsupportedOperationException.class)
+    public void readAttributesNotAcceptedSubclass() throws IOException {
+        createPathsAndMock(
+                new String[]{"/bucketA/dir/"}
+        );
+
+
+        FileSystem fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+        Path dir = fs.getPath("/bucketA/dir");
+
+        provider.readAttributes(dir, DosFileAttributes.class);
     }
 
 	@Test(expected = UnsupportedOperationException.class)

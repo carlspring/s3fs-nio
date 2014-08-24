@@ -10,6 +10,6 @@ public class IOUtilsTest {
 
     @Test
     public void just_to_silence_coverage(){
-        IOUtils io = new IOUtils(){};
+        new IOUtils(){};
     }
 }
