@@ -1,10 +1,5 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -23,12 +18,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.UUID;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.upplication.s3fs.util.CopyDirVisitor;
 import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
+
+import static org.junit.Assert.*;
 
 public class FilesOperationsIT {
 	
@@ -348,17 +346,17 @@ public class FilesOperationsIT {
 	}
 	
 	@Test
-	public void copyUploadTest() throws URISyntaxException, IOException{
-		Path result = uploadSingleFile();
+	public void copyUploadTest() throws URISyntaxException, IOException {
+        final String content = "sample content";
+		Path result = uploadSingleFile(content);
 		
 		assertTrue(Files.exists(result));
-		assertArrayEquals(Files.readAllBytes(Paths.get(this.getClass().getResource("/dirFile/assets1/index.html")
-                .toURI())), Files.readAllBytes(result));
+		assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
 	}
 	
 	@Test
 	public void copyDownloadTest() throws IOException, URISyntaxException{
-		Path result = uploadSingleFile();
+		Path result = uploadSingleFile(null);
 		
 		Path localResult = Files.createTempDirectory("temp-local-file");
 		Path notExistLocalResult = localResult.resolve("result");
@@ -405,29 +403,40 @@ public class FilesOperationsIT {
 		return file;
 	}
 	
-	private Path uploadSingleFile() throws IOException, URISyntaxException {
-		
-		Path localFile =Paths.get(this.getClass().getResource("/dirFile/assets1/index.html")
-				.toURI());
-		
-		Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
-		
-		Files.copy(localFile, result);
-		return result;
+	private Path uploadSingleFile(String content) throws IOException, URISyntaxException {
+
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
+
+            if (content != null) {
+                Files.write(linux.getPath("/index.html"), content.getBytes());
+            }
+            else {
+                Files.createFile(linux.getPath("/index.html"));
+            }
+
+            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+
+            Files.copy(linux.getPath("/index.html"), result);
+            return result;
+        }
 	}
 	
 	private Path uploadDir() throws IOException, URISyntaxException {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
 
-		Path dir = fileSystemAmazon.getPath(bucket, "0000example" + UUID.randomUUID().toString() + "/");
+            Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
+            Path index = Files.createFile(assets.resolve("index.html"));
+            Path img = Files.createDirectory(assets.resolve("img"));
+            Path penguins = Files.createFile(img.resolve("Penguins.jpg"));
+            Path js = Files.createDirectory(assets.resolve("js"));
+            Path main = Files.createFile(assets.resolve("js").resolve("main.js"));
 
-		Path dirPath = Paths.get(this.getClass().getResource("/dirFile")
-				.toURI());
-		
-		Files.exists(dir);
+            Path dir = fileSystemAmazon.getPath(bucket, "0000example" + UUID.randomUUID().toString() + "/");
 
-		Files.walkFileTree(dirPath, new CopyDirVisitor(dirPath, dir));
-		return dir;
+            Files.exists(assets);
+
+            Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));
+            return dir;
+        }
 	}
-
-	
 }
