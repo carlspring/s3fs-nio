@@ -1,30 +1,20 @@
 package com.upplication.s3fs;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.EnumSet;
-import java.util.UUID;
-
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.upplication.s3fs.util.CopyDirVisitor;
 import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 

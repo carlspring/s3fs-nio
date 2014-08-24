@@ -1,11 +1,12 @@
 package com.upplication.s3fs.spike;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static com.upplication.s3fs.util.EnvironmentBuilder.getBucket;
-import static com.upplication.s3fs.util.EnvironmentBuilder.getEndpoint;
-import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
-import static org.junit.Assert.fail;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.upplication.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.S3Path;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,15 +17,8 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.UUID;
 
-import org.junit.Assert;
-import org.junit.Test;
-import com.upplication.s3fs.S3FileSystemProvider;
-import com.upplication.s3fs.S3Path;
-
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
+import static com.upplication.s3fs.util.EnvironmentBuilder.*;
+import static org.junit.Assert.*;
 
 public class AmazonDirIT {
 

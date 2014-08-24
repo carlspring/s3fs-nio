@@ -1,12 +1,12 @@
 package com.upplication.s3fs.spike;
 
-import static org.junit.Assert.*;
+import com.upplication.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.junit.Test;
 
 import java.util.Map;
 
-import org.junit.Test;
-import com.upplication.s3fs.S3FileSystemProvider;
-import com.upplication.s3fs.util.EnvironmentBuilder;
+import static org.junit.Assert.assertNotNull;
 
 public class EnvironmentIT {
 

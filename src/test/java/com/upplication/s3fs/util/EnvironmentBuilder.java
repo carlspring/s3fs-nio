@@ -1,15 +1,14 @@
 package com.upplication.s3fs.util;
 
-import static com.upplication.s3fs.S3FileSystemProvider.ACCESS_KEY;
-import static com.upplication.s3fs.S3FileSystemProvider.SECRET_KEY;
+import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.FilesOperationsIT;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import com.upplication.s3fs.FilesOperationsIT;
-
-import com.google.common.collect.ImmutableMap;
+import static com.upplication.s3fs.S3FileSystemProvider.ACCESS_KEY;
+import static com.upplication.s3fs.S3FileSystemProvider.SECRET_KEY;
 /**
  * Test Helper
  * @author jarnaiz
@@ -78,12 +77,13 @@ public abstract class EnvironmentBuilder {
 		if (bucketName != null){
 			return bucketName;
 		}
-		else{
+		else {
 			final Properties props = new Properties();
 			try {
 				props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
 				return props.getProperty(ENDPOINT_KEY);
-			} catch (IOException e) {
+			}
+            catch (IOException e) {
 				throw new RuntimeException("needed /amazon-test.properties in the classpath");
 			}
 		}

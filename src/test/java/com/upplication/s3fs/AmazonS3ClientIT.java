@@ -1,5 +1,14 @@
 package com.upplication.s3fs;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,19 +16,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
-import static java.util.UUID.*;
-
-import com.upplication.s3fs.util.EnvironmentBuilder;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
-
-
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectResult;
+import static com.upplication.s3fs.util.EnvironmentBuilder.getEndpoint;
+import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertNotNull;
 
 public class AmazonS3ClientIT {
 	
@@ -28,12 +28,12 @@ public class AmazonS3ClientIT {
 	@Before
 	public void setup() throws IOException{
 		// s3client
-		final Map<String, Object> credentials = EnvironmentBuilder.getRealEnv();
+		final Map<String, Object> credentials = getRealEnv();
 		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(S3FileSystemProvider.ACCESS_KEY).toString(), 
 				credentials.get(S3FileSystemProvider.SECRET_KEY).toString());
 		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 		client = new AmazonS3Client(s3);
-		client.setEndpoint(EnvironmentBuilder.getEndpoint());
+		client.setEndpoint(getEndpoint());
 	}
 	
 	@Test

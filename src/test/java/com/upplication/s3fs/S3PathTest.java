@@ -1,9 +1,10 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.google.common.collect.ImmutableMap;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,27 +12,26 @@ import java.nio.file.*;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.*;
 
 public class S3PathTest {
 	
 	@Before
 	public void setup() throws IOException {
-        FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
+        try {
+            FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
+        }
+        catch (FileSystemAlreadyExistsException e) {
+            // already exist. Only when all test are executed in parallel
+        }
 	}
 
     @After
     public void close() throws IOException {
-        try{
-            FileSystems.getFileSystem(URI.create("s3:///")).close();;
+        try {
+            FileSystems.getFileSystem(URI.create("s3:///")).close();
         }
-        catch (FileSystemNotFoundException e){
+        catch (FileSystemNotFoundException e) {
             // already closed
         }
     }

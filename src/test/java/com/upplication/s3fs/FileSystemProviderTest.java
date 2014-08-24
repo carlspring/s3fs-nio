@@ -1,9 +1,12 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.*;
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.util.AmazonS3ClientMock;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,14 +21,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.model.AccessControlList;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import com.upplication.s3fs.util.AmazonS3ClientMock;
-
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 public class FileSystemProviderTest {
 

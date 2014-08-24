@@ -1,30 +1,24 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.google.common.collect.ImmutableMap;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.*;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class FileSystemTest {
 	

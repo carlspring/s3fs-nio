@@ -1,15 +1,14 @@
 package com.upplication.s3fs.spike;
 
-import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 

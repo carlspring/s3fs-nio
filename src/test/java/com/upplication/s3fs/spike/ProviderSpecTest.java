@@ -1,24 +1,21 @@
 package com.upplication.s3fs.spike;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ProviderSpecTest {
 	FileSystem fs;

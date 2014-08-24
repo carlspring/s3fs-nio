@@ -1,9 +1,17 @@
 package com.upplication.s3fs;
 
-import static com.google.common.collect.Sets.difference;
-import static java.lang.String.format;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.model.*;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import com.upplication.s3fs.util.IOUtils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -17,14 +25,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.model.*;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import com.upplication.s3fs.util.IOUtils;
+import static com.google.common.collect.Sets.difference;
+import static java.lang.String.format;
 
 /**
  * Spec:

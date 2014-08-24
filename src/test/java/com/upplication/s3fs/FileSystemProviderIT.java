@@ -1,9 +1,8 @@
 package com.upplication.s3fs;
 
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -12,10 +11,10 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 public class FileSystemProviderIT {
 	S3FileSystemProvider provider;
