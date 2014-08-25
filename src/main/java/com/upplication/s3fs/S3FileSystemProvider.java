@@ -150,105 +150,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
             @Override
             public Iterator<Path> iterator() {
-                return new Iterator<Path>() {
-
-                    private S3Path dir = s3Path;
-                    private Iterator<S3Path> it;
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    @Override
-                    public Path next() {
-                        return getIterator().next();
-                    }
-
-                    @Override
-                    public boolean hasNext() {
-                        return getIterator().hasNext();
-                    }
-
-                    private Iterator<S3Path> getIterator() {
-                        if (it == null) {
-                            List<S3Path> listPath = new ArrayList<>();
-                            // TODO: need revision for better performance!
-                            // this request load objects that start with the key at all levels
-                            ListObjectsRequest request = new ListObjectsRequest();
-                            request.setBucketName(s3Path.getBucket());
-                            request.setPrefix(s3Path.getKey());
-                            request.setMarker(s3Path.getKey());
-                            // iterator over this list
-                            ObjectListing current = dir.getFileSystem().getClient().listObjects(request);
-
-                            while (current.isTruncated()) {
-                                // parse the elements
-                                parseObjectListing(listPath, current);
-                                // continue
-                                current = dir.getFileSystem().getClient().listNextBatchOfObjects(current);
-                            }
-
-                            parseObjectListing(listPath, current);
-
-                            it = listPath.iterator();
-                        }
-
-                        return it;
-                    }
-
-                    /**
-                     * add to the listPath the elements at the same level that s3Path
-                     * @param listPath List not null list to add
-                     * @param current ObjectListing to walk
-                     */
-                    private void parseObjectListing(List<S3Path> listPath, ObjectListing current) {
-                        for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
-                            final String key = objectSummary.getKey();
-                            // we only want the first level
-                            String folder = getInmediateDescendent(s3Path.getKey(), key);
-                            if (folder != null){
-                                S3Path descendentPart = new S3Path(dir.getFileSystem(), "/" + objectSummary.getBucketName(), folder.split("/"));
-
-                                if (!listPath.contains(descendentPart)){
-                                    listPath.add(descendentPart);
-                                }
-                            }
-                        }
-                    }
-
-                    private String getInmediateDescendent(String keyParent, String keyChild){
-
-                        keyParent = deleteExtraPath(keyParent);
-                        keyChild = deleteExtraPath(keyChild);
-
-                        final int parentLen = keyParent.length();
-                        final String childWithoutParent = deleteExtraPath(keyChild
-                                .substring(parentLen));
-
-                        String[] parts = childWithoutParent.split("/");
-
-                        if (parts.length > 0 && !parts[0].isEmpty()){
-                            return keyParent + "/" + parts[0];
-                        }
-                        else{
-                            return null;
-                        }
-
-                    }
-
-                    private String deleteExtraPath(String keyChild) {
-                        if (keyChild.startsWith("/")){
-                            keyChild = keyChild.substring(1);
-                        }
-                        if (keyChild.endsWith("/")){
-                            keyChild = keyChild.substring(0, keyChild.length() - 1);
-                        }
-                        return keyChild;
-                    }
-                };
+                return new S3Iterator(s3Path.getFileSystem(), s3Path.getBucket(), s3Path.getKey() + "/");
             }
-
         };
     }
 
@@ -640,7 +543,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = new Properties();
 		// http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
 		// http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html
-		try(InputStream in = Thread.currentThread().getContextClassLoader ().getResourceAsStream("amazon.properties")){
+		try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties")){
 			if (in != null){
 				props.load(in);
 			}

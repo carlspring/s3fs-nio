@@ -20,8 +20,8 @@ import static org.junit.Assert.*;
 
 public class FilesOperationsIT {
 	
-	private static final URI uri = URI.create("s3://"+ EnvironmentBuilder.getEndpoint() + "/");
-	private static final URI uriDefaultEndpoint = URI.create("s3:///");
+	private static final URI uri = URI.create("s3:///");
+	private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
 	private static final String bucket = EnvironmentBuilder.getBucket();
 	
 	private FileSystem fileSystemAmazon;
@@ -52,13 +52,13 @@ public class FilesOperationsIT {
 	
 	@Test
 	public void buildEnvAnotherURIReturnSame() throws IOException{
-		FileSystem fileSystem = FileSystems.getFileSystem(uriDefaultEndpoint);
+		FileSystem fileSystem = FileSystems.getFileSystem(uriEurope);
 		assertSame(fileSystemAmazon, fileSystem);
 	}
 	
 	@Test
 	public void buildEnvWithoutEndPointReturnSame() throws IOException{
-		FileSystem fileSystem = FileSystems.getFileSystem(uriDefaultEndpoint);
+		FileSystem fileSystem = FileSystems.getFileSystem(uriEurope);
 		FileSystem fileSystem2 = FileSystems.getFileSystem(uri);
 		assertSame(fileSystem2, fileSystem);
 	}
@@ -209,7 +209,7 @@ public class FilesOperationsIT {
 			assertEquals(1, number);
 		}
 	}
-	
+
 	@Test
 	public void virtualDirectoryStreamTest() throws IOException, URISyntaxException{
 		
@@ -415,11 +415,11 @@ public class FilesOperationsIT {
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
 
             Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
-            Path index = Files.createFile(assets.resolve("index.html"));
+            Files.createFile(assets.resolve("index.html"));
             Path img = Files.createDirectory(assets.resolve("img"));
-            Path penguins = Files.createFile(img.resolve("Penguins.jpg"));
-            Path js = Files.createDirectory(assets.resolve("js"));
-            Path main = Files.createFile(assets.resolve("js").resolve("main.js"));
+            Files.createFile(img.resolve("Penguins.jpg"));
+            Files.createDirectory(assets.resolve("js"));
+            Files.createFile(assets.resolve("js").resolve("main.js"));
 
             Path dir = fileSystemAmazon.getPath(bucket, "0000example" + UUID.randomUUID().toString() + "/");
 

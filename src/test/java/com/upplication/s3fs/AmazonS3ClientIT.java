@@ -16,7 +16,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
-import static com.upplication.s3fs.util.EnvironmentBuilder.getEndpoint;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertNotNull;
@@ -33,7 +32,6 @@ public class AmazonS3ClientIT {
 				credentials.get(S3FileSystemProvider.SECRET_KEY).toString());
 		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 		client = new AmazonS3Client(s3);
-		client.setEndpoint(getEndpoint());
 	}
 	
 	@Test

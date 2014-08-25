@@ -22,7 +22,7 @@ import static org.junit.Assert.*;
 
 public class AmazonDirIT {
 
-    private static final URI uri = URI.create("s3://"+ getEndpoint() + "/");
+    private static final URI uri = URI.create("s3:///");
 
 	@Test
 	public void createDirWithoutEndSlash() throws IOException{
