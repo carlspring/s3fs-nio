@@ -394,8 +394,11 @@ public class FilesOperationsIT {
 
     @Test
     public void amazonCopyNotDetectContentTypeSetDefault() throws IOException {
+        final byte[] data = new byte[] { (byte)0xe0, 0x4f, (byte)0xd0,
+                0x20, (byte)0xea, 0x3a, 0x69, 0x10, (byte)0xa2, (byte)0xd8, 0x08, 0x00, 0x2b,
+                0x30, 0x30, (byte)0x9d };
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
-            Path htmlFile = Files.write(linux.getPath("/index.adsadas"),"unknown format".getBytes());
+            Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
 
             Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + htmlFile.getFileName().toString());
             Files.copy(htmlFile, result);
