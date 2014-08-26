@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.*;
@@ -377,7 +378,58 @@ public class FilesOperationsIT {
 		assertTrue(Files.exists(path.getParent()));
 	}
 
+    @Test
+    public void amazonCopyDetectContentType() throws IOException {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
+            Path htmlFile = Files.write(linux.getPath("/index.html"),"<html><body>html file</body></html>".getBytes());
 
+            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            Files.copy(htmlFile, result);
+
+            S3Path resultS3 = (S3Path) result;
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            assertEquals("text/html", metadata.getContentType());
+        }
+    }
+
+    @Test
+    public void amazonCopyNotDetectContentTypeSetDefault() throws IOException {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
+            Path htmlFile = Files.write(linux.getPath("/index.adsadas"),"unknown format".getBytes());
+
+            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            Files.copy(htmlFile, result);
+
+            S3Path resultS3 = (S3Path) result;
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            assertEquals("application/octet-stream", metadata.getContentType());
+        }
+    }
+
+    @Test
+    public void amazonOutpuStreamDetectContentType() throws IOException {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
+            Path htmlFile = Files.write(linux.getPath("/index.html"),"<html><body>html file</body></html>".getBytes());
+
+            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+
+            try (OutputStream out = Files.newOutputStream(result)){
+                // copied from Files.write
+                byte[] bytes = Files.readAllBytes(htmlFile);
+                int len = bytes.length;
+                int rem = len;
+                while (rem > 0) {
+                    int n = Math.min(rem, 8192);
+                    out.write(bytes, (len-rem), n);
+                    rem -= n;
+                }
+            }
+
+            S3Path resultS3 = (S3Path) result;
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            assertEquals("text/html", metadata.getContentType());
+        }
+    }
 	
 	private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");

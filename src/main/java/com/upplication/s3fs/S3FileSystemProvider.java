@@ -227,6 +227,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                 if (Files.exists(tempFile)){
                     ObjectMetadata metadata = new ObjectMetadata();
                     metadata.setContentLength(Files.size(tempFile));
+                    metadata.setContentType(Files.probeContentType(tempFile));
 
                     try (InputStream stream = Files.newInputStream(tempFile)){
                         s3Path.getFileSystem()
