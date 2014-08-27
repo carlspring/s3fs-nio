@@ -7,6 +7,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.upplication.s3fs.util.IOUtils;
+import org.apache.tika.Tika;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -228,8 +229,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
                     ObjectMetadata metadata = new ObjectMetadata();
                     metadata.setContentLength(Files.size(tempFile));
                     metadata.setContentType(Files.probeContentType(tempFile));
-
                     try (InputStream stream = Files.newInputStream(tempFile)){
+                        /*
+                         FIXME: if the stream is {@link InputStream#markSupported()} i can reuse the same stream
+                         and evict the close and open methods of probeContentType. By this way:
+                         metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
+                        */
                         s3Path.getFileSystem()
                                 .getClient()
                                 .putObject(s3Path.getBucket(), s3Path.getKey(),
