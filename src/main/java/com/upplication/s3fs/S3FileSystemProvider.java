@@ -601,7 +601,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
         request.setMaxKeys(1);
         List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
         if (!query.isEmpty()) {
-            return query.get(0);
+            S3ObjectSummary object = query.get(0);
+            // S3ObjectSummary not a directory, not a file inside s3path directory and not the same key,
+            // this S3ObjectSummary represent a different file with the startsWith key. And is not a "First Object Summary"
+            // Example: s3Path -> /bucketA/dir/file and S3ObjectSummary /bucketA/dir/file1
+            if (!object.getKey().endsWith("/") && !object.getKey().contains(s3Path.getKey() + "/") &&
+                    !object.getKey().equals(s3Path.getKey())){
+                throw new NoSuchFileException(s3Path.toString());
+            }
+            else{
+                return query.get(0);
+            }
         }
         else {
             throw new NoSuchFileException(s3Path.toString());

@@ -1103,6 +1103,20 @@ public class FileSystemProviderTest {
         provider.readAttributes(file1, BasicFileAttributes.class);
     }
 
+    @Test(expected= NoSuchFileException.class)
+    public void readAttributesFileNotExistsButExistsAnotherThatContainsTheKey() throws IOException {
+
+        new AmazonS3ClientMockBuilder(fsMem)
+                .withBucket("bucketA")
+                .withFile("dir/file1hola", "content")
+                .build(provider);
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file1 = fs.getPath("/bucketA/dir/file1");
+
+        provider.readAttributes(file1, BasicFileAttributes.class);
+    }
+
     @Test(expected= UnsupportedOperationException.class)
     public void readAttributesNotAcceptedSubclass() throws IOException {
 
