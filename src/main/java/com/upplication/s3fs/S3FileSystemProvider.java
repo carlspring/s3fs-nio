@@ -8,6 +8,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.upplication.s3fs.util.FileTypeDetector;
 import com.upplication.s3fs.util.IOUtils;
+import com.upplication.s3fs.util.S3ObjectSummaryLookup;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -63,6 +64,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
 
     private final FileTypeDetector fileTypeDetector = new com.upplication.s3fs.util.FileTypeDetector();
+    private final S3ObjectSummaryLookup s3ObjectSummaryLookup = new S3ObjectSummaryLookup();
 
 	@Override
 	public String getScheme() {
@@ -472,7 +474,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		if (type == BasicFileAttributes.class) {
 
-			S3ObjectSummary objectSummary = getFirstObjectSummary(s3Path);
+			S3ObjectSummary objectSummary = s3ObjectSummaryLookup.lookup(s3Path);
 
 			// parse the data to BasicFileAttributes.
 			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(),
@@ -578,44 +580,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	private boolean exists(S3Path path) {
 		try {
-			getFirstObjectSummary(path);
+            s3ObjectSummaryLookup.lookup(path);
 			return true;
 		}
         catch(NoSuchFileException e) {
 			return false;
 		}
-	}
-	/**
-	 * Get the {@link S3ObjectSummary} that represent this Path or her first child if this path not exists
-	 * @param s3Path {@link S3Path}
-	 * @return {@link S3ObjectSummary}
-	 * @throws NoSuchFileException if not found the path and any child
-	 */
-	private S3ObjectSummary getFirstObjectSummary(S3Path s3Path) throws NoSuchFileException{
-		
-        AmazonS3Client client = s3Path.getFileSystem().getClient();
-
-        ListObjectsRequest request = new ListObjectsRequest();
-        request.setBucketName(s3Path.getBucket());
-        request.setPrefix(s3Path.getKey());
-        request.setMaxKeys(1);
-        List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
-        if (!query.isEmpty()) {
-            S3ObjectSummary object = query.get(0);
-            // S3ObjectSummary not a directory, not a file inside s3path directory and not the same key,
-            // this S3ObjectSummary represent a different file with the startsWith key. And is not a "First Object Summary"
-            // Example: s3Path -> /bucketA/dir/file and S3ObjectSummary /bucketA/dir/file1
-            if (!object.getKey().endsWith("/") && !object.getKey().contains(s3Path.getKey() + "/") &&
-                    !object.getKey().equals(s3Path.getKey())){
-                throw new NoSuchFileException(s3Path.toString());
-            }
-            else{
-                return query.get(0);
-            }
-        }
-        else {
-            throw new NoSuchFileException(s3Path.toString());
-        }
 	}
 
 	/**
@@ -628,7 +598,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @throws NoSuchFileException if not found the path and any child
 	 */
 	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
-		S3ObjectSummary obj = getFirstObjectSummary(path);
+		S3ObjectSummary obj = s3ObjectSummaryLookup.lookup(path);
 		// check first for file:
         return path.getFileSystem().getClient().getObjectAcl(obj.getBucketName(), obj.getKey());
 	}
