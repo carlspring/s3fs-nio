@@ -57,7 +57,8 @@ import static java.lang.String.format;
  */
 public class S3FileSystemProvider extends FileSystemProvider {
 	
-	public static final String ACCESS_KEY = "access_key";
+	public static final String
+            ACCESS_KEY = "access_key";
 	public static final String SECRET_KEY = "secret_key";
 
 	final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
@@ -598,13 +599,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
         ListObjectsRequest request = new ListObjectsRequest();
         request.setBucketName(s3Path.getBucket());
         request.setPrefix(s3Path.getKey());
-        request.setMaxKeys(1);
+        request.setMaxKeys(5);
         List<S3ObjectSummary> query = client.listObjects(request).getObjectSummaries();
         if (!query.isEmpty()) {
             S3ObjectSummary object = query.get(0);
             // S3ObjectSummary not a directory, not a file inside s3path directory and not the same key,
             // this S3ObjectSummary represent a different file with the startsWith key. And is not a "First Object Summary"
             // Example: s3Path -> /bucketA/dir/file and S3ObjectSummary /bucketA/dir/file1
+
+            // otro caso: s3Patgh -> /bucketA/dir/ and S3ObjectSummary /bucketA/dir2/ pero si existe dir/
             if (!object.getKey().endsWith("/") && !object.getKey().contains(s3Path.getKey() + "/") &&
                     !object.getKey().equals(s3Path.getKey())){
                 throw new NoSuchFileException(s3Path.toString());

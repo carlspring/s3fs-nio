@@ -1061,6 +1061,22 @@ public class FileSystemProviderTest {
     }
 
     @Test
+    public void readAnotherAttributesDirectory() throws IOException {
+
+        new AmazonS3ClientMockBuilder(fsMem)
+                .withBucket("bucketA")
+                .withFile("dir/dir", "content")
+                .build(provider);
+
+        FileSystem fs = createNewS3FileSystem();
+        Path dir = fs.getPath("/bucketA/dir");
+
+        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
+        assertNotNull(fileAttributes);
+        assertEquals(true, fileAttributes.isDirectory());
+    }
+
+    @Test
     public void readAttributesDirectoryNotExistsAtAmazon() throws IOException {
 
         Path memoryDir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir", "dir2"))

@@ -433,6 +433,32 @@ public class FilesOperationsIT {
             assertEquals("text/html", metadata.getContentType());
         }
     }
+
+    @Test
+    public void readAttributesDirectory() throws IOException {
+        Path dir;
+
+        final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
+            Path dirDynamicLocale = Files.createDirectories(linux.getPath("/lib").resolve("angular-dynamic-locale"));
+            Path assets = Files.createDirectories(linux.getPath("/lib").resolve("angular"));
+            Files.createFile(assets.resolve("angular-locale_es-es.min.js"));
+            Files.createFile(assets.resolve("angular.min.js"));
+            Files.createDirectory(assets.resolve("locales"));
+            Files.createFile(dirDynamicLocale.resolve("tmhDinamicLocale.min.js"));
+            dir = fileSystemAmazon.getPath(bucket, startPath);
+            Files.exists(assets);
+            Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent().getParent(), dir));
+        }
+
+
+        //dir = fileSystemAmazon.getPath("/upp-sources", "DES", "skeleton");
+
+        BasicFileAttributes fileAttributes = Files.readAttributes(dir.resolve("lib").resolve("angular"), BasicFileAttributes.class);
+        assertNotNull(fileAttributes);
+        assertEquals(true, fileAttributes.isDirectory());
+        assertEquals(startPath + "lib/angular/", fileAttributes.fileKey());
+    }
 	
 	private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
