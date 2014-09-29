@@ -254,7 +254,17 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	@Override
 	public S3Object getObject(String bucketName, String key)
 			throws AmazonClientException {
-		return find(bucketName, key).getS3Object();
+
+        S3Element result = find(bucketName, key);
+
+        if (result == null){
+            AmazonS3Exception amazonS3Exception = new AmazonS3Exception("not found with key: " + key);
+            amazonS3Exception.setStatusCode(404);
+            throw amazonS3Exception;
+        }
+        else{
+            return result.getS3Object();
+        }
 	}
 
 	@Override
