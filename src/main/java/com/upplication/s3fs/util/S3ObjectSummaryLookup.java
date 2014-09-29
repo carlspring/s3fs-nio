@@ -1,9 +1,11 @@
 package com.upplication.s3fs.util;
 
 import com.amazonaws.services.s3.model.*;
+import com.google.common.base.Throwables;
 import com.upplication.s3fs.AmazonS3Client;
 import com.upplication.s3fs.S3Path;
 
+import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 
 
@@ -28,6 +30,7 @@ public class S3ObjectSummaryLookup {
             result.setKey(object.getKey());
             result.setLastModified(object.getObjectMetadata().getLastModified());
             result.setSize(object.getObjectMetadata().getContentLength());
+
             return result;
         }
         // is a virtual directory
@@ -54,9 +57,14 @@ public class S3ObjectSummaryLookup {
      */
     private S3Object getS3Object(S3Path s3Path){
         try {
-            return s3Path.getFileSystem()
+            S3Object object = s3Path.getFileSystem()
                     .getClient()
                     .getObject(s3Path.getBucket(), s3Path.getKey());
+            // FIXME: how only get the metadata
+            if (object.getObjectContent() != null){
+                object.getObjectContent().close();
+            }
+            return object;
         }
         catch (AmazonS3Exception e){
             if (e.getStatusCode() != 404){
@@ -64,10 +72,16 @@ public class S3ObjectSummaryLookup {
             }
             else{
                 try {
-                    return s3Path.getFileSystem()
+                    S3Object object = s3Path.getFileSystem()
                         .getClient()
                         .getObject(s3Path.getBucket(), s3Path.getKey() + "/");
-                }catch (AmazonS3Exception e2){
+                    // FIXME: how only get the metadata
+                    if (object.getObjectContent() != null){
+                        object.getObjectContent().close();
+                    }
+                    return object;
+                }
+                catch (AmazonS3Exception e2) {
                     if (e2.getStatusCode() != 404){
                         throw e;
                     }
@@ -75,7 +89,13 @@ public class S3ObjectSummaryLookup {
                         return null;
                     }
                 }
+                catch (IOException e2){
+                    throw new RuntimeException(e2);
+                }
             }
+        }
+        catch (IOException e){
+            throw new RuntimeException(e);
         }
     }
 }
