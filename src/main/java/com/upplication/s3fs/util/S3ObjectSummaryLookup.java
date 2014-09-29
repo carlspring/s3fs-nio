@@ -56,10 +56,31 @@ public class S3ObjectSummaryLookup {
      * @return S3Object or null if not exists
      */
     private S3Object getS3Object(S3Path s3Path){
+
+        AmazonS3Client client = s3Path.getFileSystem()
+                .getClient();
+
+        S3Object object = getS3Object(s3Path.getBucket(), s3Path.getKey(), client);
+
+        if (object != null) {
+            return object;
+        }
+        else{
+            return getS3Object(s3Path.getBucket(), s3Path.getKey() + "/", client);
+        }
+    }
+
+    /**
+     * get s3Object with S3Object#getObjectContent closed
+     * @param bucket String bucket
+     * @param key String key
+     * @param client AmazonS3Client client
+     * @return S3Object
+     */
+    private S3Object getS3Object(String bucket, String key, AmazonS3Client client){
         try {
-            S3Object object = s3Path.getFileSystem()
-                    .getClient()
-                    .getObject(s3Path.getBucket(), s3Path.getKey());
+            S3Object object = client
+                    .getObject(bucket, key);
             // FIXME: how only get the metadata
             if (object.getObjectContent() != null){
                 object.getObjectContent().close();
@@ -70,29 +91,7 @@ public class S3ObjectSummaryLookup {
             if (e.getStatusCode() != 404){
                 throw e;
             }
-            else{
-                try {
-                    S3Object object = s3Path.getFileSystem()
-                        .getClient()
-                        .getObject(s3Path.getBucket(), s3Path.getKey() + "/");
-                    // FIXME: how only get the metadata
-                    if (object.getObjectContent() != null){
-                        object.getObjectContent().close();
-                    }
-                    return object;
-                }
-                catch (AmazonS3Exception e2) {
-                    if (e2.getStatusCode() != 404){
-                        throw e;
-                    }
-                    else{
-                        return null;
-                    }
-                }
-                catch (IOException e2){
-                    throw new RuntimeException(e2);
-                }
-            }
+            return null;
         }
         catch (IOException e){
             throw new RuntimeException(e);
