@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
@@ -458,6 +459,17 @@ public class FilesOperationsIT {
         assertNotNull(fileAttributes);
         assertEquals(true, fileAttributes.isDirectory());
         assertEquals(startPath + "lib/angular/", fileAttributes.fileKey());
+    }
+
+    @Test
+    public void seekableCloseTwice() throws IOException{
+        Path file = createEmptyFile();
+
+        SeekableByteChannel seekableByteChannel = Files.newByteChannel(file);
+        seekableByteChannel.close();
+        seekableByteChannel.close();
+
+        assertTrue(Files.exists(file));
     }
 	
 	private Path createEmptyDir() throws IOException {

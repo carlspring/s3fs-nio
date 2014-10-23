@@ -757,7 +757,24 @@ public class FileSystemProviderTest {
 
         assertTrue(Files.notExists(file));
     }
-	
+
+    @Test
+    public void seekableCloseTwice() throws IOException{
+
+        new AmazonS3ClientMockBuilder(fsMem)
+                .withBucket("bucketA")
+                .withDirectory("dir")
+                .build(provider);
+
+        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
+
+        Path file = Files.createFile(base.resolve("file"));
+        SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.noneOf(StandardOpenOption.class));
+        seekable.close();
+        seekable.close();
+
+        assertTrue(Files.exists(file));
+    }
 	// createDirectory
 	
 	@Test

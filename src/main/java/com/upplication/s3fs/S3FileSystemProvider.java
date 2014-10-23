@@ -228,14 +228,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 			@Override
 			public void close() throws IOException {
+
+                if (!seekable.isOpen()) {
+                    return;
+                }
 				seekable.close();
 				// upload the content where the seekable ends (close)
-                if (Files.exists(tempFile)){
+                if (Files.exists(tempFile)) {
                     ObjectMetadata metadata = new ObjectMetadata();
                     metadata.setContentLength(Files.size(tempFile));
                     // FIXME: #20 ServiceLoader cant load com.upplication.s3fs.util.FileTypeDetector when this library is used inside a ear :(
                     metadata.setContentType(fileTypeDetector.probeContentType(tempFile));
-                    try (InputStream stream = Files.newInputStream(tempFile)){
+
+                    try (InputStream stream = Files.newInputStream(tempFile)) {
                         /*
                          FIXME: if the stream is {@link InputStream#markSupported()} i can reuse the same stream
                          and evict the close and open methods of probeContentType. By this way:
@@ -253,7 +258,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
                     s3Path.getFileSystem().
                         getClient().deleteObject(s3Path.getBucket(), s3Path.getKey());
                 }
-
 				// and delete the temp dir
                 Files.deleteIfExists(tempFile);
                 Files.deleteIfExists(tempFile.getParent());
