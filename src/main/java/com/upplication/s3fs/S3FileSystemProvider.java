@@ -119,8 +119,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				"uri scheme must be 's3': '%s'", uri);
 		// first try to load amazon props
 		Properties props = loadAmazonProperties();
-		// but can overload by envs vars
+		// but can be overloaded by envs vars
 		overloadProperties(props, env);
+		String userInfo = uri.getUserInfo();
+		if(userInfo != null) {
+			String[] keys = userInfo.split(":");
+			props.setProperty(ACCESS_KEY, keys[0]);
+			props.setProperty(SECRET_KEY, keys[1]);
+		}
 		
 		Preconditions.checkArgument((props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
 				|| (props.getProperty(ACCESS_KEY) != null && props.getProperty(SECRET_KEY) != null),
