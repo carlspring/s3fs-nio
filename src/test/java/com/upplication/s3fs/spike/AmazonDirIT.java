@@ -1,11 +1,10 @@
 package com.upplication.s3fs.spike;
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.upplication.s3fs.S3FileSystemProvider;
-import com.upplication.s3fs.S3Path;
+import static com.upplication.s3fs.util.EnvironmentBuilder.getBucket;
+import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,8 +17,12 @@ import java.util.UUID;
 
 import org.junit.Ignore;
 
-import static com.upplication.s3fs.util.EnvironmentBuilder.*;
-import static org.junit.Assert.*;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.upplication.s3fs.S3FileSystemProvider;
+import com.upplication.s3fs.S3Path;
 
 @Ignore
 public class AmazonDirIT {
@@ -54,7 +57,7 @@ public class AmazonDirIT {
 
 				s3Path.getFileSystem()
 						.getClient()
-						.putObject(s3Path.getBucket(), s3Path.getKey(),
+						.putObject(s3Path.getFileStore().name(), s3Path.getKey(),
 								new ByteArrayInputStream(new byte[0]), metadata);
 			}
 		};
@@ -93,12 +96,12 @@ public class AmazonDirIT {
 		// subimos un fichero sin sus paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file1,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file1,
 				new ByteArrayInputStream(new byte[0]), metadata);
 		
 		// para amazon no existe el path: folder
 		try{
-			s3Path.getFileSystem().getClient().getObjectMetadata(s3Path.getBucket(), s3Path.getKey());
+			s3Path.getFileSystem().getClient().getObjectMetadata(s3Path.getFileStore().name(), s3Path.getKey());
             fail("expected AmazonS3Exception");
 		}
 		catch(AmazonS3Exception e){

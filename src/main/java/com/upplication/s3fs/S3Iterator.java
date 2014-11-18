@@ -19,16 +19,16 @@ import com.upplication.s3fs.util.S3KeyHelper;
 public class S3Iterator implements Iterator<Path> {
 
     private S3FileSystem s3FileSystem;
-    private String bucket;
+    private S3FileStore fileStore;
     private String key;
 
     private Iterator<S3Path> it;
 
-    public S3Iterator(S3FileSystem s3FileSystem, String bucket, String key) {
+    public S3Iterator(S3FileSystem s3FileSystem, S3FileStore fileStore, String key) {
 
         Preconditions.checkArgument(key != null && key.endsWith("/"), "key %s should be ended with slash '/'", key);
 
-        this.bucket = bucket;
+        this.fileStore = fileStore;
         // the only case i dont need the end slash is to list buckets content
         this.key = key.length() == 1 ? "" : key;
         this.s3FileSystem = s3FileSystem;
@@ -74,9 +74,8 @@ public class S3Iterator implements Iterator<Path> {
     }
 
     private ListObjectsRequest buildRequest(){
-
         ListObjectsRequest request = new ListObjectsRequest();
-        request.setBucketName(bucket);
+        request.setBucketName(fileStore.name());
         request.setPrefix(key);
         request.setMarker(key);
         return request;

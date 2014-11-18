@@ -1,12 +1,16 @@
 package com.upplication.s3fs.util;
 
-import com.amazonaws.services.s3.model.*;
-import com.google.common.base.Throwables;
-import com.upplication.s3fs.AmazonS3Client;
-import com.upplication.s3fs.S3Path;
-
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
+
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.upplication.s3fs.AmazonS3Client;
+import com.upplication.s3fs.S3FileStore;
+import com.upplication.s3fs.S3Path;
 
 
 public class S3ObjectSummaryLookup {
@@ -37,7 +41,7 @@ public class S3ObjectSummaryLookup {
         String key = s3Path.getKey() + "/";
 
         ListObjectsRequest request = new ListObjectsRequest();
-        request.setBucketName(s3Path.getBucket());
+        request.setBucketName(s3Path.getFileStore().name());
         request.setPrefix(key);
         request.setMaxKeys(1);
         ObjectListing current = client.listObjects(request);
@@ -59,14 +63,13 @@ public class S3ObjectSummaryLookup {
 
         AmazonS3Client client = s3Path.getFileSystem()
                 .getClient();
-
-        S3Object object = getS3Object(s3Path.getBucket(), s3Path.getKey(), client);
+        S3Object object = getS3Object(s3Path.getFileStore(), s3Path.getKey(), client);
 
         if (object != null) {
             return object;
         }
         else{
-            return getS3Object(s3Path.getBucket(), s3Path.getKey() + "/", client);
+            return getS3Object(s3Path.getFileStore(), s3Path.getKey() + "/", client);
         }
     }
 
@@ -77,10 +80,9 @@ public class S3ObjectSummaryLookup {
      * @param client AmazonS3Client client
      * @return S3Object
      */
-    private S3Object getS3Object(String bucket, String key, AmazonS3Client client){
+    private S3Object getS3Object(S3FileStore fileStore, String key, AmazonS3Client client){
         try {
-            S3Object object = client
-                    .getObject(bucket, key);
+            S3Object object = client.getObject(fileStore.name(), key);
             // FIXME: how only get the metadata
             if (object.getObjectContent() != null){
                 object.getObjectContent().close();

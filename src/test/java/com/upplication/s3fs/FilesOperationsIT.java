@@ -258,12 +258,12 @@ public class FilesOperationsIT {
 		// subimos un fichero sin sus paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file1,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file1,
 				new ByteArrayInputStream(new byte[0]), metadata);
 		// subimos otro fichero sin sus paths
 		ObjectMetadata metadata2 = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file2,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file2,
 				new ByteArrayInputStream(new byte[0]), metadata2);
 		
 		
@@ -306,12 +306,12 @@ public class FilesOperationsIT {
 		// subimos un fichero sin sus paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), subfoler,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), subfoler,
 				new ByteArrayInputStream(new byte[0]), metadata);
 		// subimos otro fichero sin sus paths
 		ObjectMetadata metadata2 = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), file2,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file2,
 				new ByteArrayInputStream(new byte[0]), metadata2);
 		
 		
@@ -398,7 +398,7 @@ public class FilesOperationsIT {
 		// subimos un fichero sin sus paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		s3Path.getFileSystem().getClient().putObject(s3Path.getBucket(), fileWithFolders,
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), fileWithFolders,
 				new ByteArrayInputStream(new byte[0]), metadata);
 		
 		assertTrue(Files.exists(path));
@@ -414,7 +414,7 @@ public class FilesOperationsIT {
             Files.copy(htmlFile, result);
 
             S3Path resultS3 = (S3Path) result;
-            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getFileStore().name(), resultS3.getKey());
             assertEquals("text/html", metadata.getContentType());
         }
     }
@@ -430,7 +430,7 @@ public class FilesOperationsIT {
             Files.copy(htmlFile, result);
 
             S3Path resultS3 = (S3Path) result;
-            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getFileStore().name(), resultS3.getKey());
             assertEquals("application/octet-stream", metadata.getContentType());
         }
     }
@@ -454,7 +454,7 @@ public class FilesOperationsIT {
             }
 
             S3Path resultS3 = (S3Path) result;
-            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getBucket(), resultS3.getKey());
+            ObjectMetadata metadata = resultS3.getFileSystem().getClient().getObjectMetadata(resultS3.getFileStore().name(), resultS3.getKey());
             assertEquals("text/html", metadata.getContentType());
         }
     }

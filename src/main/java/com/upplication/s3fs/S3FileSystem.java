@@ -1,17 +1,20 @@
 package com.upplication.s3fs;
 
-import com.amazonaws.services.s3.model.Bucket;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 
+import com.amazonaws.services.s3.model.Bucket;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
 public class S3FileSystem extends FileSystem {
-	
 	private final S3FileSystemProvider provider;
 	private final AmazonS3Client client;
 	private final String endpoint;
@@ -59,9 +62,24 @@ public class S3FileSystem extends FileSystem {
 		return builder.build();
 	}
 
+	Bucket getBucket(String name) {
+		for (Bucket bucket : client.listBuckets())
+			if(bucket.getName().equals(name))
+			 return bucket;
+		return null;
+	}
+
 	@Override
 	public Iterable<FileStore> getFileStores() {
-		return ImmutableList.of();
+		ImmutableList.Builder<FileStore> builder = ImmutableList.builder();
+		for (Bucket bucket : client.listBuckets()) {
+			builder.add(new S3FileStore(this, bucket));
+		}
+		return builder.build();
+	}
+
+	public S3FileStore getFileStore(String bucket) {
+		return new S3FileStore(this, bucket);
 	}
 
 	@Override

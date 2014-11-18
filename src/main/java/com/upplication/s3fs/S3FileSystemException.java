@@ -7,6 +7,10 @@ public class S3FileSystemException extends RuntimeException {
 		//
 	}
 
+	public S3FileSystemException(String message) {
+		super(message);
+	}
+
 	public S3FileSystemException(Throwable cause) {
 		super(cause);
 	}

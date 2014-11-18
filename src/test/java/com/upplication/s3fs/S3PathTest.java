@@ -1,18 +1,27 @@
 package com.upplication.s3fs;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.google.common.collect.ImmutableMap;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.*;
-import java.util.HashMap;
-import java.util.Iterator;
-
-import static org.junit.Assert.*;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.google.common.collect.ImmutableMap;
 
 public class S3PathTest {
 	
@@ -41,7 +50,7 @@ public class S3PathTest {
     public void createNoPath() {
         S3Path path = forPath("/bucket");
 
-        assertEquals("bucket", path.getBucket());
+        assertEquals("bucket", path.getFileStore().name());
         assertEquals("", path.getKey());
     }
 
@@ -49,7 +58,7 @@ public class S3PathTest {
     public void createWithTrailingSlash() {
         S3Path path = forPath("/bucket/");
 
-        assertEquals(path.getBucket(), "bucket");
+        assertEquals(path.getFileStore().name(), "bucket");
         assertEquals(path.getKey(), "");
     }
 
@@ -57,7 +66,7 @@ public class S3PathTest {
     public void createWithPath() {
         S3Path path = forPath("/bucket/path/to/file");
 
-        assertEquals(path.getBucket(), "bucket");
+        assertEquals(path.getFileStore().name(), "bucket");
         assertEquals(path.getKey(), "path/to/file");
     }
 
@@ -65,7 +74,7 @@ public class S3PathTest {
     public void createWithPathAndTrailingSlash() {
         S3Path path = forPath("/bucket/path/to/file/");
 
-        assertEquals("bucket", path.getBucket());
+        assertEquals("bucket", path.getFileStore().name());
         assertEquals("path/to/file", path.getKey());
     }
 
@@ -73,7 +82,7 @@ public class S3PathTest {
     public void createRelative() {
         S3Path path = forPath("path/to/file");
         
-        assertNull(path.getBucket());
+        assertNull(path.getFileStore());
         assertEquals(path.getKey(), "path/to/file");
         assertFalse(path.isAbsolute());
     }
@@ -561,7 +570,6 @@ public class S3PathTest {
 
  	
  	private static S3Path forPath(String path) {
- 		return (S3Path)FileSystems.getFileSystem(URI
-				.create("s3:///")).getPath(path);
+ 		return (S3Path) FileSystems.getFileSystem(URI.create("s3:///")).getPath(path);
  	}
 }

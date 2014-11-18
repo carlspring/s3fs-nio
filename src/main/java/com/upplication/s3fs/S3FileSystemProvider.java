@@ -112,11 +112,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	@Override
-	public FileSystem newFileSystem(URI uri, Map<String, ?> env)
-			throws IOException {
+	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
 		Preconditions.checkNotNull(uri, "uri is null");
-		Preconditions.checkArgument(uri.getScheme().equals("s3"),
-				"uri scheme must be 's3': '%s'", uri);
+		Preconditions.checkArgument(uri.getScheme().equals("s3"), "uri scheme must be 's3': '%s'", uri);
 		// first try to load amazon props
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
@@ -215,7 +213,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
             @Override
             public Iterator<Path> iterator() {
-                return new S3Iterator(s3Path.getFileSystem(), s3Path.getBucket(), s3Path.getKey() + "/");
+                return new S3Iterator(s3Path.getFileSystem(), s3Path.getFileStore(), s3Path.getKey() + "/");
             }
         };
     }
@@ -235,43 +233,31 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				"cannot create InputStream for root directory: %s", s3Path);
 	
 		InputStream res = s3Path.getFileSystem().getClient()
-				.getObject(s3Path.getBucket(), s3Path.getKey())
+				.getObject(s3Path.getFileStore().name(), s3Path.getKey())
 				.getObjectContent();
 	
-		if (res == null){
+		if (res == null)
 			throw new IOException("path is a directory");
-		}
-		else{
-			return res;
-		}
+		return res;
 	}
 
 	@Override
-	public OutputStream newOutputStream(Path path, OpenOption... options)
-			throws IOException {
-
-        Preconditions.checkArgument(path instanceof S3Path,
-                "path must be an instance of %s", S3Path.class.getName());
-
+	public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
+        Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
         return super.newOutputStream(path, options);
 	}
 
 
 
 	@Override
-	public SeekableByteChannel newByteChannel(Path path,
-			Set<? extends OpenOption> options, FileAttribute<?>... attrs)
-			throws IOException {
-		Preconditions.checkArgument(path instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
+	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
 		final S3Path s3Path = (S3Path) path;
 		// we resolve to a file inside the temp folder with the s3path name
         final Path tempFile = createTempDir().resolve(path.getFileName().toString());
 
         if (Files.exists(path)){
-            InputStream is = s3Path.getFileSystem()
-                    .getClient()
-            .getObject(s3Path.getBucket(), s3Path.getKey()).getObjectContent();
+            InputStream is = s3Path.getFileSystem().getClient().getObject(s3Path.getFileStore().name(), s3Path.getKey()).getObjectContent();
 
            Files.write(tempFile, IOUtils.toByteArray(is));
         }
@@ -305,17 +291,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
                          and evict the close and open methods of probeContentType. By this way:
                          metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
                         */
-                        s3Path.getFileSystem()
-                                .getClient()
-                                .putObject(s3Path.getBucket(), s3Path.getKey(),
-                                        stream,
-                                        metadata);
+                        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), s3Path.getKey(), stream, metadata);
                     }
                 }
                 else {
                     // delete: check option delete_on_close
-                    s3Path.getFileSystem().
-                        getClient().deleteObject(s3Path.getBucket(), s3Path.getKey());
+                    s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey());
                 }
 				// and delete the temp dir
                 Files.deleteIfExists(tempFile);
@@ -361,8 +342,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * created or it already existed.
 	 */
 	@Override
-	public void createDirectory(Path dir, FileAttribute<?>... attrs)
-			throws IOException {
+	public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
 		
 		// FIXME: throw exception if the same key already exists at amazon s3
 		
@@ -374,22 +354,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
 
-		String keyName = s3Path.getKey()
-				+ (s3Path.getKey().endsWith("/") ? "" : "/");
+		String keyName = s3Path.getKey() + (s3Path.getKey().endsWith("/") ? "" : "/");
 
-		s3Path.getFileSystem()
-				.getClient()
-				.putObject(s3Path.getBucket(), keyName,
-						new ByteArrayInputStream(new byte[0]), metadata);
+		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), keyName, new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
 	@Override
 	public void delete(Path path) throws IOException {
-		Preconditions.checkArgument(path instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
-
+		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
 		S3Path s3Path = (S3Path) path;
-
         if (Files.notExists(path)){
             throw new NoSuchFileException("the path: " + path + " not exists");
         }
@@ -403,10 +376,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
         }
 
 		// we delete the two objects (sometimes exists the key '/' and sometimes not)
-		s3Path.getFileSystem().getClient()
-			.deleteObject(s3Path.getBucket(), s3Path.getKey());
-		s3Path.getFileSystem().getClient()
-			.deleteObject(s3Path.getBucket(), s3Path.getKey() + "/");
+		s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey());
+		s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey() + "/");
 	}
 
 	@Override
@@ -440,10 +411,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			}
 		}
 
-		s3Source.getFileSystem()
-				.getClient()
-				.copyObject(s3Source.getBucket(), s3Source.getKey(),
-						s3Target.getBucket(), s3Target.getKey());
+		s3Source.getFileSystem().getClient().copyObject(s3Source.getFileStore().name(), s3Source.getKey(),s3Target.getFileStore().name(), s3Target.getKey());
 	}
 
 	@Override
@@ -481,21 +449,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		for (AccessMode accessMode : modes) {
 			switch (accessMode) {
 			case EXECUTE:
-				throw new AccessDeniedException(s3Path.toString(), null,
-						"file is not executable");
+				throw new AccessDeniedException(s3Path.toString(), null, "file is not executable");
 			case READ:
-				if (!hasPermissions(acl, client.getS3AccountOwner(),
-						EnumSet.of(Permission.FullControl, Permission.Read))) {
+				if (!hasPermissions(acl, client.getS3AccountOwner(), EnumSet.of(Permission.FullControl, Permission.Read))) {
 					throw new AccessDeniedException(s3Path.toString(), null,
 							"file is not readable");
 				}
 				break;
 			case WRITE:
-				if (!hasPermissions(acl, client.getS3AccountOwner(),
-						EnumSet.of(Permission.FullControl, Permission.Write))) {
-					throw new AccessDeniedException(s3Path.toString(), null,
-							format("bucket '%s' is not writable",
-									s3Path.getBucket()));
+				if (!hasPermissions(acl, client.getS3AccountOwner(), EnumSet.of(Permission.FullControl, Permission.Write))) {
+					throw new AccessDeniedException(s3Path.toString(), null, format("bucket '%s' is not writable", s3Path.getFileStore().name()));
 				}
 				break;
 			}

@@ -29,12 +29,11 @@ import com.google.common.collect.Lists;
 import com.upplication.s3fs.util.S3KeyHelper;
 
 public class S3Path implements Path {
-	
 	public static final String PATH_SEPARATOR = "/";
 	/**
-	 * bucket name
+	 * S3FileStore which represents the Bucket this path resides in.
 	 */
-	private final String bucket;
+	private final S3FileStore fileStore;
 	/**
 	 * Parts without bucket name.
 	 */
@@ -83,10 +82,6 @@ public class S3Path implements Path {
             }
         }
 
-        if (bucket != null) {
-            bucket = bucket.replace("/", "");
-        }
-
         List<String> moreSplitted = Lists.newArrayList();
 
         for (String part : more){
@@ -95,22 +90,23 @@ public class S3Path implements Path {
 
         parts.addAll(moreSplitted);
 
-
-		this.bucket = bucket;
+        if(bucket != null)
+        	this.fileStore = fileSystem.getFileStore(bucket.replace("/", ""));
+        else
+        	this.fileStore = null;
 		this.parts = KeyParts.parse(parts);
 		this.fileSystem = fileSystem;
 	}
 
-    private S3Path(S3FileSystem fileSystem, String bucket,
-                   Iterable<String> keys){
-        this.bucket = bucket;
+    private S3Path(S3FileSystem fileSystem, S3FileStore fileStore, Iterable<String> keys){
+        this.fileStore = fileStore;
         this.parts = KeyParts.parse(keys);
         this.fileSystem = fileSystem;
     }
 
 	
-	public String getBucket() {
-		return bucket;
+	public S3FileStore getFileStore() {
+		return fileStore;
 	}
 	/**
 	 * key for amazon without final slash.
@@ -130,13 +126,13 @@ public class S3Path implements Path {
 
 	@Override
 	public boolean isAbsolute() {
-		return bucket != null;
+		return fileStore != null;
 	}
 
 	@Override
 	public Path getRoot() {
 		if (isAbsolute()) {
-			return new S3Path(fileSystem, bucket, ImmutableList.<String> of());
+			return new S3Path(fileSystem, fileStore, ImmutableList.<String> of());
 		}
 
 		return null;
@@ -161,12 +157,11 @@ public class S3Path implements Path {
 			return null;
 		}
 
-		if (parts.size() == 1 && (bucket == null || bucket.isEmpty())){
+		if (parts.size() == 1 && fileStore == null){
 			return null;
 		}
 
-		return new S3Path(fileSystem, bucket,
-				parts.subList(0, parts.size() - 1));
+		return new S3Path(fileSystem, fileStore, parts.subList(0, parts.size() - 1));
 	}
 
 	@Override
@@ -197,13 +192,11 @@ public class S3Path implements Path {
 		
 		S3Path path = (S3Path) other;
 
-		if (path.parts.size() == 0 && path.bucket == null &&
-				(this.parts.size() != 0 || this.bucket != null)){
+		if (path.parts.size() == 0 && path.fileStore == null && (this.parts.size() != 0 || this.fileStore != null)){
 			return false;
 		}
 
-		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
-				(path.getBucket() == null && this.getBucket() != null)){
+		if ((path.getFileStore() != null && !path.getFileStore().equals(this.getFileStore())) || (path.getFileStore() == null && this.getFileStore() != null)){
 			return false;
 		}
 
@@ -238,8 +231,7 @@ public class S3Path implements Path {
 		
 		S3Path path = (S3Path) other;
 
-		if ((path.getBucket() != null && !path.getBucket().equals(this.getBucket())) ||
-				(path.getBucket() != null && this.getBucket() == null)){
+		if ((path.getFileStore() != null && !path.getFileStore().equals(this.getFileStore())) || (path.getFileStore() != null && this.getFileStore() == null)){
 			return false;
 		}
 		
@@ -283,7 +275,7 @@ public class S3Path implements Path {
 			return this;
 		}
 
-		return new S3Path(fileSystem, bucket, concat(parts, s3Path.parts));
+		return new S3Path(fileSystem, fileStore, concat(parts, s3Path.parts));
 	}
 
 	@Override
@@ -308,8 +300,7 @@ public class S3Path implements Path {
 			return parent;
 		}
 
-		return new S3Path(fileSystem, bucket, concat(
-				parts.subList(0, parts.size() - 1), s3Path.parts));
+		return new S3Path(fileSystem, fileStore, concat(parts.subList(0, parts.size() - 1), s3Path.parts));
 	}
 
 	@Override
@@ -327,17 +318,10 @@ public class S3Path implements Path {
 			return new S3Path(this.getFileSystem(), "");
 		}
 
-		Preconditions.checkArgument(isAbsolute(),
-				"Path is already relative: %s", this);
-		Preconditions.checkArgument(s3Path.isAbsolute(),
-				"Cannot relativize against a relative path: %s", s3Path);
-		Preconditions.checkArgument(bucket.equals(s3Path.getBucket()),
-				"Cannot relativize paths with different buckets: '%s', '%s'",
-				this, other);
-		
-		Preconditions.checkArgument(parts.size() <= s3Path.parts.size(),
-				"Cannot relativize against a parent path: '%s', '%s'",
-				this, other);
+		Preconditions.checkArgument(isAbsolute(), "Path is already relative: %s", this);
+		Preconditions.checkArgument(s3Path.isAbsolute(), "Cannot relativize against a relative path: %s", s3Path);
+		Preconditions.checkArgument(fileStore.equals(s3Path.getFileStore()), "Cannot relativize paths with different buckets: '%s', '%s'", this, other);
+		Preconditions.checkArgument(parts.size() <= s3Path.parts.size(), "Cannot relativize against a parent path: '%s', '%s'", this, other);
 		
 		
 		int startPart = 0;
@@ -363,8 +347,10 @@ public class S3Path implements Path {
 			builder.append(fileSystem.getEndpoint());
 		}
 		builder.append("/");
-		builder.append(bucket);
-		builder.append(PATH_SEPARATOR);
+		if(fileStore != null) {
+			builder.append(fileStore.name());
+			builder.append(PATH_SEPARATOR);
+		}
 		builder.append(Joiner.on(PATH_SEPARATOR).join(parts));
 		return URI.create(builder.toString());
 	}
@@ -424,7 +410,7 @@ public class S3Path implements Path {
 
 		if (isAbsolute()) {
 			builder.append(PATH_SEPARATOR);
-			builder.append(bucket);
+			builder.append(fileStore.name());
 			builder.append(PATH_SEPARATOR);
 		}
 
@@ -444,8 +430,7 @@ public class S3Path implements Path {
 
 		S3Path paths = (S3Path) o;
 
-		if (bucket != null ? !bucket.equals(paths.bucket)
-				: paths.bucket != null) {
+		if (fileStore != null ? !fileStore.equals(paths.fileStore) : paths.fileStore != null) {
 			return false;
 		}
 		if (!parts.equals(paths.parts)) {
@@ -457,7 +442,7 @@ public class S3Path implements Path {
 
 	@Override
 	public int hashCode() {
-		int result = bucket != null ? bucket.hashCode() : 0;
+		int result = fileStore != null ? fileStore.name().hashCode() : 0;
 		result = 31 * result + parts.hashCode();
 		return result;
 	}

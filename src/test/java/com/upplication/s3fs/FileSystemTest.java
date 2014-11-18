@@ -1,6 +1,7 @@
 package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
@@ -16,6 +17,7 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -177,12 +179,16 @@ public class FileSystemTest {
 	}
 	
 	@Test
-	public void getFileStoresReturnEmptyList(){
+	public void getFileStores(){
 		Iterable<FileStore> result = fs.getFileStores();
-		
 		assertNotNull(result);
-		assertNotNull(result.iterator());
-		assertTrue(!result.iterator().hasNext());
+		Iterator<FileStore> iterator = result.iterator();
+		assertNotNull(iterator);
+		assertTrue(iterator.hasNext());
+		assertNotNull(iterator.next());
+		assertTrue(iterator.hasNext());
+		assertNotNull(iterator.next());
+		assertFalse(iterator.hasNext());
 	}
 	
 	@Test
