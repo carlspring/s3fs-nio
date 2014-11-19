@@ -29,6 +29,7 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.google.common.collect.ImmutableList;
 import com.upplication.s3fs.util.FileTypeDetector;
 import com.upplication.s3fs.util.IOUtils;
 
@@ -47,7 +48,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	public S3FileStore(S3FileSystem s3FileSystem, String name) {
 		this.fileSystem = s3FileSystem;
 		this.name = name;
-		this.bucket = null;
+		if(getClient().doesBucketExist(name)) {
+			this.bucket = getBucket(name);
+		} else {
+			this.bucket = null;
+		}
 	}
 
 	@Override
@@ -113,32 +118,15 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return bucket;
 	}
 
-	@Override
-	public int compareTo(S3FileStore o) {
-		if(this == o)
-			return 0;
-		// TODO: actually compare this S3FileStore with the o(ther).
-		return 0;
+	private Bucket getBucket(String bucketName) {
+		for (Bucket buck : getClient().listBuckets())
+			if(buck.getName().equals(bucketName))
+				return buck;
+		return null;
 	}
-	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null || getClass() != obj.getClass())
-			return false;
-		S3FileStore other = (S3FileStore) obj;
-		if(other.fileSystem == null && fileSystem == null)
-			return other.name().equals(name());
-		if(other.fileSystem == null || fileSystem == null)
-			return false;
-		if(other.fileSystem.getEndpoint() == null && fileSystem.getEndpoint() == null)
-			return other.name().equals(name());
-		if(other.fileSystem.getEndpoint() == null || fileSystem.getEndpoint() == null)
-			return false;
-		if(!other.fileSystem.getEndpoint().equals(fileSystem.getEndpoint()))
-			return false;
-		return other.name().equals(name());
+
+	public S3Path getRootDirectory() {
+		return new S3Path(fileSystem, this, ImmutableList.<String> of());
 	}
 
 	public void delete(String key) {
@@ -147,11 +135,25 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		getClient().deleteObject(name, key + "/");
 	}
 
+	/**
+	 * @param options  
+	 */
 	public void copy(String key, S3Path target, CopyOption[] options) {
 		getClient().copyObject(name, key, target.getFileStore().name(), target.getKey());
 	}
 
+	/**
+	 * @param attrs  
+	 */
 	public void createDirectory(String key, FileAttribute<?>[] attrs) {
+		if(bucket == null) {
+			// check if bucket exists.
+			if(getClient().doesBucketExist(name))
+				bucket = getBucket(name);
+			// ifnot try to create it.
+			if(bucket == null)
+				bucket = getClient().createBucket(name);
+		}
 		// FIXME: throw exception if the same key already exists at amazon s3
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
@@ -235,6 +237,9 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		}
 	}
 	
+	/**
+	 * @param options  
+	 */
 	public <A extends BasicFileAttributes> A readAttributes(String key, Class<A> type, LinkOption... options) throws IOException {
 		if (type == BasicFileAttributes.class) {
 			S3ObjectSummary objectSummary = getS3ObjectSummary(key);
@@ -262,6 +267,9 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
 	}
 
+	/**
+	 * @param attrs  
+	 */
 	public SeekableByteChannel newByteChannel(final String key, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
 		// we resolve to a file inside the temp folder with the s3path name
         final Path tempFile = fileSystem.createTempDir().resolve(key.replaceAll("/", "_"));
@@ -344,5 +352,46 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 				return seekable.position();
 			}
 		};
+	}
+
+	@Override
+	public int compareTo(S3FileStore o) {
+		if(this == o)
+			return 0;
+		// TODO: actually compare this S3FileStore with the o(ther).
+		return 0;
+	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((bucket == null) ? 0 : bucket.hashCode());
+		result = prime * result + ((fileSystem == null) ? 0 : fileSystem.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof S3FileStore))
+			return false;
+		S3FileStore other = (S3FileStore) obj;
+		
+		if (fileSystem == null) {
+			if (other.fileSystem != null)
+				return false;
+		} else if (!fileSystem.equals(other.fileSystem))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
 	}
 }
