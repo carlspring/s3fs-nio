@@ -17,7 +17,6 @@ import com.upplication.s3fs.util.S3KeyHelper;
  * in a incremental way when the #next() method is called.
  */
 public class S3Iterator implements Iterator<Path> {
-
     private S3FileSystem s3FileSystem;
     private S3FileStore fileStore;
     private String key;
@@ -52,9 +51,6 @@ public class S3Iterator implements Iterator<Path> {
     private Iterator<S3Path> getIterator() {
         if (it == null) {
             List<S3Path> listPath = Lists.newArrayList();;
-            // TODO: need revision for better performance!
-            // this request load objects that start with the key at all levels
-
             // iterator over this list
             ObjectListing current = s3FileSystem.getClient().listObjects(buildRequest());
 
@@ -76,7 +72,8 @@ public class S3Iterator implements Iterator<Path> {
     private ListObjectsRequest buildRequest(){
         ListObjectsRequest request = new ListObjectsRequest();
         request.setBucketName(fileStore.name());
-        request.setPrefix(key);
+		request.setPrefix(key);
+        request.setDelimiter("/");
         request.setMarker(key);
         return request;
     }
@@ -87,13 +84,19 @@ public class S3Iterator implements Iterator<Path> {
      * @param current ObjectListing to walk
      */
     private void parseObjectListing(List<S3Path> listPath, ObjectListing current) {
+    	for (String commonPrefix : current.getCommonPrefixes()) {
+    		listPath.add(new S3Path(s3FileSystem, fileStore, commonPrefix.split("/")));
+		}
         for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
             final String objectSummaryKey = objectSummary.getKey();
             // we only want the first level
-            String key = getInmediateDescendent(this.key, objectSummaryKey);
-            if (key != null){
-            	S3Path descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), S3KeyHelper.getParts(key));
-
+            String immediateDescendantKey = getImmediateDescendant(this.key, objectSummaryKey);
+            if (immediateDescendantKey != null){
+            	S3Path descendentPart;
+            	if(objectSummary.getBucketName().equals(fileStore.name()))
+            		descendentPart = new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(immediateDescendantKey));
+            	else
+            		descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), S3KeyHelper.getParts(immediateDescendantKey));
                 if (!listPath.contains(descendentPart)){
                     listPath.add(descendentPart);
                 }
@@ -110,7 +113,7 @@ public class S3Iterator implements Iterator<Path> {
      * @return String parsed
      *  or null when the keyChild and keyParent are the same and not have to be returned
      */
-    private String getInmediateDescendent(String keyParent, String keyChild){
+    private String getImmediateDescendant(String keyParent, String keyChild){
 
         keyParent = deleteExtraPath(keyParent);
         keyChild = deleteExtraPath(keyChild);
