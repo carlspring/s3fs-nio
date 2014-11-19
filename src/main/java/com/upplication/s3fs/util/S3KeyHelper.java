@@ -26,6 +26,9 @@ public class S3KeyHelper {
 	}
 
 	public static String getKey(List<String> parts) {
+		if (parts.isEmpty())
+			return "";
+		
 		ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
 		for (String part : parts) {
 			try {

@@ -53,8 +53,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		// 1º level: buckets
 		try (DirectoryStream<Path> dir = Files.newDirectoryStream(base)) {
 			for (final Path bucketPath : dir) {
-				BasicFileAttributes attr = Files.readAttributes(bucketPath,
-						BasicFileAttributes.class);
+				BasicFileAttributes attr = Files.readAttributes(bucketPath, BasicFileAttributes.class);
 				final Bucket bucket = new Bucket();
 				bucket.setCreationDate(new Date(attr.creationTime().toMillis()));
 				bucket.setName(bucketPath.getFileName().toString());
@@ -63,8 +62,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 				// all s3object
 				Files.walkFileTree(bucketPath, new SimpleFileVisitor<Path>() {
 					@Override
-					public FileVisitResult preVisitDirectory(Path dir,
-							BasicFileAttributes attrs) throws IOException {
+					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 						if (Files.newDirectoryStream(dir).iterator().hasNext()) {
 							// add only last elements
 							return FileVisitResult.CONTINUE;
@@ -78,8 +76,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 					}
 
 					@Override
-					public FileVisitResult visitFile(Path file,
-							BasicFileAttributes attrs) throws IOException {
+					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 						S3Element obj = parse(file, bucketPath);
 						elemnts.add(obj);
 						return FileVisitResult.CONTINUE;
@@ -289,7 +286,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	public PutObjectResult putObject(String bucket, String keyName,
 			InputStream inputStream, ObjectMetadata metadata) {
 		S3Element elem = parse(inputStream, bucket, keyName);
-
+		
         persist(bucket, elem);
 
 		PutObjectResult putObjectResult = new PutObjectResult();
@@ -309,6 +306,8 @@ public class AmazonS3ClientMock extends AmazonS3Client {
         if (list.contains(elem)){
             list.remove(elem);
         }
+        if(elem.getS3Object().getKey().endsWith("/"))
+        	elem.setDirectory(true);
         list.add(elem);
     }
 
@@ -355,18 +354,20 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 	}
 	
 	private S3Element parse(InputStream stream, String bucket, String key) {
-		
 		S3Object object = new S3Object();
-		
 		object.setBucketName(bucket);
 		object.setKey(key);
-
         byte[] content;
         try {
             content = IOUtils.toByteArray(stream);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new IllegalStateException("the stream is closed", e);
+        } finally {
+        	try {
+				object.close();
+			} catch (IOException e) {
+				// ignore
+			}
         }
 
 		ObjectMetadata metadata = new ObjectMetadata();
@@ -397,8 +398,7 @@ public class AmazonS3ClientMock extends AmazonS3Client {
 		object.setKey(key);
 
 		ObjectMetadata metadata = new ObjectMetadata();
-		BasicFileAttributes attr = Files.readAttributes(elem,
-				BasicFileAttributes.class);
+		BasicFileAttributes attr = Files.readAttributes(elem, BasicFileAttributes.class);
 		metadata.setLastModified(new Date(attr.lastAccessTime().toMillis()));
 		if (dir) {
 			metadata.setContentLength(0);
@@ -541,4 +541,12 @@ public class AmazonS3ClientMock extends AmazonS3Client {
             return result;
         }
     }
+	
+	@Override
+	public ObjectMetadata getObjectMetadata(String bucketName, String key) {
+		S3Object object = getObject(bucketName, key);
+		if(object.getKey().equals(key))
+			return object.getObjectMetadata();
+		return null;
+	}
 }

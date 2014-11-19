@@ -41,11 +41,9 @@ public class S3ObjectSummaryLookupIT {
     private static final String bucket = EnvironmentBuilder.getBucket();
 
     private FileSystem fileSystemAmazon;
-    private S3ObjectSummaryLookup s3ObjectSummaryLookup;
 
     public void setup() throws IOException{
         fileSystemAmazon = build();
-        s3ObjectSummaryLookup = new S3ObjectSummaryLookup();
     }
 
     private static FileSystem build() throws IOException{
@@ -74,7 +72,7 @@ public class S3ObjectSummaryLookupIT {
         }
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = s3ObjectSummaryLookup.lookup(s3Path);
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
 
         assertEquals(s3Path.getKey(), result.getKey());
     }
@@ -92,7 +90,7 @@ public class S3ObjectSummaryLookupIT {
         }
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = s3ObjectSummaryLookup.lookup(s3Path);
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
 
         assertEquals(s3Path.getKey(), result.getKey());
     }
@@ -109,7 +107,7 @@ public class S3ObjectSummaryLookupIT {
 
         S3Path s3Path = (S3Path) path.resolve("dir");
 
-        S3ObjectSummary result = s3ObjectSummaryLookup.lookup(s3Path);
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
 
         assertEquals(s3Path.getKey() + "/", result.getKey());
     }
@@ -125,7 +123,7 @@ public class S3ObjectSummaryLookupIT {
 
 
         S3Path s3Path = (S3Path) s3FileSystem.getPath(bucket, startPath, "lib", "angular");
-        S3ObjectSummary result = s3ObjectSummaryLookup.lookup(s3Path);
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
 
         assertEquals(startPath + "lib/angular/", result.getKey());
     }
@@ -139,7 +137,7 @@ public class S3ObjectSummaryLookupIT {
         s3FileSystem.getClient().putObject(bucket.replace("/",""), key, new ByteArrayInputStream("contenido1".getBytes()), new ObjectMetadata());
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
-        S3ObjectSummary result = s3ObjectSummaryLookup.lookup(s3Path);
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
 
         assertEquals(key, result.getKey());
     }

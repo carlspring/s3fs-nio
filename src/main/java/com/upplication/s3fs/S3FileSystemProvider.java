@@ -3,17 +3,12 @@ package com.upplication.s3fs;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
@@ -22,14 +17,12 @@ import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.FileTime;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -37,25 +30,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.model.AccessControlList;
-import com.amazonaws.services.s3.model.Grant;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.Permission;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.upplication.s3fs.util.FileTypeDetector;
-import com.upplication.s3fs.util.IOUtils;
-import com.upplication.s3fs.util.S3ObjectSummaryLookup;
 
 /**
  * Spec:
@@ -102,9 +85,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public static final String USER_AGENT = "s3fs_user_agent";
 
 	final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
-
-    private final FileTypeDetector fileTypeDetector = new com.upplication.s3fs.util.FileTypeDetector();
-    private final S3ObjectSummaryLookup s3ObjectSummaryLookup = new S3ObjectSummaryLookup();
 
 	@Override
 	public String getScheme() {
@@ -162,13 +142,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public FileSystem getFileSystem(URI uri) {
 		FileSystem fileSystem = this.fileSystem.get();
-
-		if (fileSystem == null) {
-			throw new FileSystemNotFoundException(
-					String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
-		}
-
+		if (fileSystem == null)
+			throw new FileSystemNotFoundException(String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
 		return fileSystem;
+	}
+
+	private S3Path toS3Path(Path path) {
+		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
+		return (S3Path) path;
+	}
+
+	private void checkSupported(OpenOption... options) {
+		Preconditions.checkArgument(options.length == 0, "OpenOptions not yet supported: %s", ImmutableList.copyOf(options)); // TODO
 	}
 
 	/**
@@ -178,8 +163,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	@Override
 	public Path getPath(URI uri) {
-		Preconditions.checkArgument(uri.getScheme().equals(getScheme()),
-				"URI scheme must be %s", getScheme());
+		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "URI scheme must be %s", getScheme());
 		if(fileSystem.get() == null)
 			try {
 				fileSystem.set((S3FileSystem) newFileSystem(uri, null));
@@ -198,13 +182,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
     @Override
-    public DirectoryStream<Path> newDirectoryStream(Path dir,
-                                                    DirectoryStream.Filter<? super Path> filter) throws IOException {
-
-        Preconditions.checkArgument(dir instanceof S3Path,
-                "path must be an instance of %s", S3Path.class.getName());
-        final S3Path s3Path = (S3Path) dir;
-
+    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+        final S3Path s3Path = toS3Path(dir);
         return new DirectoryStream<Path>() {
             @Override
             public void close() throws IOException {
@@ -219,18 +198,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
 	@Override
-	public InputStream newInputStream(Path path, OpenOption... options)
-			throws IOException {
-		Preconditions.checkArgument(options.length == 0,
-				"OpenOptions not yet supported: %s",
-				ImmutableList.copyOf(options)); // TODO
+	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
+		checkSupported(options);
+		S3Path s3Path = toS3Path(path);
 
-		Preconditions.checkArgument(path instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
-		S3Path s3Path = (S3Path) path;
-
-		Preconditions.checkArgument(!s3Path.getKey().equals(""),
-				"cannot create InputStream for root directory: %s", s3Path);
+		Preconditions.checkArgument(!s3Path.getKey().equals(""), "cannot create InputStream for root directory: %s", s3Path);
 	
 		InputStream res = s3Path.getFileSystem().getClient()
 				.getObject(s3Path.getFileStore().name(), s3Path.getKey())
@@ -242,98 +214,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	@Override
-	public OutputStream newOutputStream(Path path, OpenOption... options) throws IOException {
-        Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
-        return super.newOutputStream(path, options);
-	}
-
-
-
-	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
-		final S3Path s3Path = (S3Path) path;
-		// we resolve to a file inside the temp folder with the s3path name
-        final Path tempFile = createTempDir().resolve(path.getFileName().toString());
-
-        if (Files.exists(path)){
-            InputStream is = s3Path.getFileSystem().getClient().getObject(s3Path.getFileStore().name(), s3Path.getKey()).getObjectContent();
-
-           Files.write(tempFile, IOUtils.toByteArray(is));
-        }
-        // and we can use the File SeekableByteChannel implementation
-		final SeekableByteChannel seekable = Files
-				.newByteChannel(tempFile, options);
-
-		return new SeekableByteChannel() {
-			@Override
-			public boolean isOpen() {
-				return seekable.isOpen();
-			}
-
-			@Override
-			public void close() throws IOException {
-
-                if (!seekable.isOpen()) {
-                    return;
-                }
-				seekable.close();
-				// upload the content where the seekable ends (close)
-                if (Files.exists(tempFile)) {
-                    ObjectMetadata metadata = new ObjectMetadata();
-                    metadata.setContentLength(Files.size(tempFile));
-                    // FIXME: #20 ServiceLoader cant load com.upplication.s3fs.util.FileTypeDetector when this library is used inside a ear :(
-                    metadata.setContentType(fileTypeDetector.probeContentType(tempFile));
-
-                    try (InputStream stream = Files.newInputStream(tempFile)) {
-                        /*
-                         FIXME: if the stream is {@link InputStream#markSupported()} i can reuse the same stream
-                         and evict the close and open methods of probeContentType. By this way:
-                         metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
-                        */
-                        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), s3Path.getKey(), stream, metadata);
-                    }
-                }
-                else {
-                    // delete: check option delete_on_close
-                    s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey());
-                }
-				// and delete the temp dir
-                Files.deleteIfExists(tempFile);
-                Files.deleteIfExists(tempFile.getParent());
-			}
-
-			@Override
-			public int write(ByteBuffer src) throws IOException {
-				return seekable.write(src);
-			}
-
-			@Override
-			public SeekableByteChannel truncate(long size) throws IOException {
-				return seekable.truncate(size);
-			}
-
-			@Override
-			public long size() throws IOException {
-				return seekable.size();
-			}
-
-			@Override
-			public int read(ByteBuffer dst) throws IOException {
-				return seekable.read(dst);
-			}
-
-			@Override
-			public SeekableByteChannel position(long newPosition)
-					throws IOException {
-				return seekable.position(newPosition);
-			}
-
-			@Override
-			public long position() throws IOException {
-				return seekable.position();
-			}
-		};
+		final S3Path s3Path = toS3Path(path);
+		return s3Path.newByteChannel(options, attrs);
 	}
 
 	/**
@@ -343,57 +226,23 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	@Override
 	public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
-		
-		// FIXME: throw exception if the same key already exists at amazon s3
-		
-		S3Path s3Path = (S3Path) dir;
-
-		Preconditions.checkArgument(attrs.length == 0,
-				"attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
-
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentLength(0);
-
-		String keyName = s3Path.getKey() + (s3Path.getKey().endsWith("/") ? "" : "/");
-
-		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), keyName, new ByteArrayInputStream(new byte[0]), metadata);
+		S3Path s3Path = toS3Path(dir);
+		Preconditions.checkArgument(attrs.length == 0, "attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
+		s3Path.createDirectory(attrs);
 	}
 
 	@Override
 	public void delete(Path path) throws IOException {
-		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
-		S3Path s3Path = (S3Path) path;
-        if (Files.notExists(path)){
-            throw new NoSuchFileException("the path: " + path + " not exists");
-        }
-
-        if (Files.isDirectory(path)){
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)){
-                if (stream.iterator().hasNext()){
-                    throw new DirectoryNotEmptyException("the path: " + path + " is a directory and is not empty");
-                }
-            }
-        }
-
-		// we delete the two objects (sometimes exists the key '/' and sometimes not)
-		s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey());
-		s3Path.getFileSystem().getClient().deleteObject(s3Path.getFileStore().name(), s3Path.getKey() + "/");
+		toS3Path(path).delete();
 	}
 
 	@Override
-	public void copy(Path source, Path target, CopyOption... options)
-			throws IOException {
-		Preconditions.checkArgument(source instanceof S3Path,
-				"source must be an instance of %s", S3Path.class.getName());
-		Preconditions.checkArgument(target instanceof S3Path,
-				"target must be an instance of %s", S3Path.class.getName());
-
-		if (isSameFile(source, target)) {
+	public void copy(Path source, Path target, CopyOption... options) throws IOException {
+		if (isSameFile(source, target))
 			return;
-		}
 
-		S3Path s3Source = (S3Path) source;
-		S3Path s3Target = (S3Path) target;
+		S3Path s3Source = toS3Path(source);
+		S3Path s3Target = toS3Path(target);
 		/*
 		 * Preconditions.checkArgument(!s3Source.isDirectory(),
 		 * "copying directories is not yet supported: %s", source); // TODO
@@ -401,22 +250,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		 * "copying directories is not yet supported: %s", target); // TODO
 		 */
 		ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
-		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING),
-				actualOptions);
+		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
 
-		if (!actualOptions.contains(StandardCopyOption.REPLACE_EXISTING)) {
-			if (exists(s3Target)) {
-				throw new FileAlreadyExistsException(format(
-						"target already exists: %s", target));
-			}
-		}
-
-		s3Source.getFileSystem().getClient().copyObject(s3Source.getFileStore().name(), s3Source.getKey(),s3Target.getFileStore().name(), s3Target.getKey());
+		if (exists(s3Target) && !actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
+			throw new FileAlreadyExistsException(format("target already exists: %s", target));
+		s3Source.copyTo(s3Target, options);
 	}
 
 	@Override
-	public void move(Path source, Path target, CopyOption... options)
-			throws IOException {
+	public void move(Path source, Path target, CopyOption... options) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
@@ -437,112 +279,29 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public void checkAccess(Path path, AccessMode... modes) throws IOException {
-		S3Path s3Path = (S3Path) path;
-		Preconditions.checkArgument(s3Path.isAbsolute(),
-				"path must be absolute: %s", s3Path);
-
-		AmazonS3Client client = s3Path.getFileSystem().getClient();
-
-		// get ACL and check if the file exists as a side-effect
-		AccessControlList acl = getAccessControl(s3Path);
-
-		for (AccessMode accessMode : modes) {
-			switch (accessMode) {
-			case EXECUTE:
-				throw new AccessDeniedException(s3Path.toString(), null, "file is not executable");
-			case READ:
-				if (!hasPermissions(acl, client.getS3AccountOwner(), EnumSet.of(Permission.FullControl, Permission.Read))) {
-					throw new AccessDeniedException(s3Path.toString(), null,
-							"file is not readable");
-				}
-				break;
-			case WRITE:
-				if (!hasPermissions(acl, client.getS3AccountOwner(), EnumSet.of(Permission.FullControl, Permission.Write))) {
-					throw new AccessDeniedException(s3Path.toString(), null, format("bucket '%s' is not writable", s3Path.getFileStore().name()));
-				}
-				break;
-			}
-		}
-	}
-
-    /**
-     * check if the param acl has the same owner than the parameter owner and
-     * have almost one of the permission set in the parameter permissions
-     * @param acl
-     * @param owner
-     * @param permissions almost one
-     * @return
-     */
-	private boolean hasPermissions(AccessControlList acl, Owner owner,
-			EnumSet<Permission> permissions) {
-		boolean result = false;
-		for (Grant grant : acl.getGrants()) {
-			if (grant.getGrantee().getIdentifier().equals(owner.getId())
-					&& permissions.contains(grant.getPermission())) {
-				result = true;
-				break;
-			}
-		}
-		return result;
+		S3Path s3Path = toS3Path(path);
+		Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
+		s3Path.checkAccess(modes);
 	}
 
 	@Override
-	public <V extends FileAttributeView> V getFileAttributeView(Path path,
-			Class<V> type, LinkOption... options) {
+	public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public <A extends BasicFileAttributes> A readAttributes(Path path,
-			Class<A> type, LinkOption... options) throws IOException {
-		Preconditions.checkArgument(path instanceof S3Path,
-				"path must be an instance of %s", S3Path.class.getName());
-		S3Path s3Path = (S3Path) path;
-
-		if (type == BasicFileAttributes.class) {
-
-			S3ObjectSummary objectSummary = s3ObjectSummaryLookup.lookup(s3Path);
-
-			// parse the data to BasicFileAttributes.
-			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(),
-					TimeUnit.MILLISECONDS);
-			long size =  objectSummary.getSize();
-			boolean directory = false;
-			boolean regularFile = false;
-			String key = objectSummary.getKey();
-            // check if is a directory and exists the key of this directory at amazon s3
-			if (objectSummary.getKey().equals(s3Path.getKey() + "/") && objectSummary.getKey().endsWith("/")) {
-				directory = true;
-			}
-			// is a directory but not exists at amazon s3
-			else if (!objectSummary.getKey().equals(s3Path.getKey()) && objectSummary.getKey().startsWith(s3Path.getKey())){
-				directory = true;
-				// no metadata, we fake one
-				size = 0;
-                // delete extra part
-                key = s3Path.getKey() + "/";
-			}
-			// is a file:
-			else {
-                regularFile = true;
-			}
-
-			return type.cast(new S3FileAttributes(key, lastModifiedTime, size, directory, regularFile));
-		}
-        else {
-            throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
-        }
+	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
+		S3Path s3Path = toS3Path(path);
+		return s3Path.readAttributes(type, options);
 	}
 
 	@Override
-	public Map<String, Object> readAttributes(Path path, String attributes,
-			LinkOption... options) throws IOException {
+	public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void setAttribute(Path path, String attribute, Object value,
-			LinkOption... options) throws IOException {
+	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -614,23 +373,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		// http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
 		// http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html
 		try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties")){
-			if (in != null){
+			if (in != null)
 				props.load(in);
-			}
-			
-		} catch (IOException e) {}
-		
+		} catch (IOException e) {
+			// If amazon.properties can't be loaded that's ok. 
+		}
 		return props;
 	}
 	
 	// ~~~
 
-	private <T> void verifySupportedOptions(Set<? extends T> allowedOptions,
-			Set<? extends T> actualOptions) {
-		Sets.SetView<? extends T> unsupported = difference(actualOptions,
-				allowedOptions);
-		Preconditions.checkArgument(unsupported.isEmpty(),
-				"the following options are not supported: %s", unsupported);
+	private <T> void verifySupportedOptions(Set<? extends T> allowedOptions, Set<? extends T> actualOptions) {
+		Sets.SetView<? extends T> unsupported = difference(actualOptions, allowedOptions);
+		Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
 	}
 	/**
 	 * check that the paths exists or not
@@ -638,28 +393,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return true if exists
 	 */
 	private boolean exists(S3Path path) {
-		try {
-            s3ObjectSummaryLookup.lookup(path);
-			return true;
-		}
-        catch(NoSuchFileException e) {
-			return false;
-		}
-	}
-
-	/**
-	 * Get the Control List, if the path not exists
-     * (because the path is a directory and this key isnt created at amazon s3)
-     * then return the ACL of the first child.
-     *
-	 * @param path {@link S3Path}
-	 * @return AccessControlList
-	 * @throws NoSuchFileException if not found the path and any child
-	 */
-	private AccessControlList getAccessControl(S3Path path) throws NoSuchFileException{
-		S3ObjectSummary obj = s3ObjectSummaryLookup.lookup(path);
-		// check first for file:
-        return path.getFileSystem().getClient().getObjectAcl(obj.getBucketName(), obj.getKey());
+		return path.exists();
 	}
 
     /**
@@ -667,7 +401,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
      * @return Path temporal folder
      * @throws IOException
      */
-    protected Path createTempDir() throws IOException {
-        return Files.createTempDirectory("temp-s3-");
-    }
+	public Path createTempDir() throws IOException {
+		return Files.createTempDirectory("temp-s3-");
+	}
 }

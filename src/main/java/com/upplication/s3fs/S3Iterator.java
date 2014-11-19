@@ -1,7 +1,6 @@
 package com.upplication.s3fs;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,6 +8,7 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.upplication.s3fs.util.S3KeyHelper;
 
 /**
@@ -51,7 +51,7 @@ public class S3Iterator implements Iterator<Path> {
 
     private Iterator<S3Path> getIterator() {
         if (it == null) {
-            List<S3Path> listPath = new ArrayList<>();
+            List<S3Path> listPath = Lists.newArrayList();;
             // TODO: need revision for better performance!
             // this request load objects that start with the key at all levels
 

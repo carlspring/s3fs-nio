@@ -124,4 +124,8 @@ public class S3FileSystem extends FileSystem {
 	public String getEndpoint() {
 		return endpoint;
 	}
+
+	public Path createTempDir() throws IOException {
+		return provider.createTempDir();
+	}
 }
