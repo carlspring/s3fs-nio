@@ -141,10 +141,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public FileSystem getFileSystem(URI uri) {
-		FileSystem fileSystem = this.fileSystem.get();
-		if (fileSystem == null)
+		FileSystem fs = this.fileSystem.get();
+		if (fs == null)
 			throw new FileSystemNotFoundException(String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
-		return fileSystem;
+		return fs;
 	}
 
 	private S3Path toS3Path(Path path) {
@@ -291,8 +291,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-		S3Path s3Path = toS3Path(path);
-		return s3Path.readAttributes(type, options);
+		return toS3Path(path).readAttributes(type, options);
 	}
 
 	@Override
@@ -387,6 +386,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Sets.SetView<? extends T> unsupported = difference(actualOptions, allowedOptions);
 		Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
 	}
+	
 	/**
 	 * check that the paths exists or not
 	 * @param path S3Path
