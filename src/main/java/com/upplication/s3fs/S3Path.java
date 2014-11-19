@@ -23,6 +23,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -75,33 +76,39 @@ public class S3Path implements Path {
      */
 	public S3Path(S3FileSystem fileSystem, String first, String ... more) {
         String bucket = null;
-        List<String> parts = Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(first));
+        List<String> pathParts = Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(first));
 
         if (first.endsWith(PATH_SEPARATOR))
-			parts.remove(parts.size()-1);
+			pathParts.remove(pathParts.size()-1);
 
         if (first.startsWith(PATH_SEPARATOR)) { // absolute path
-            Preconditions.checkArgument(parts.size() >= 1, "path must start with bucket name");
-            Preconditions.checkArgument(!parts.get(1).isEmpty(), "bucket name must be not empty");
-            bucket = parts.get(1);
-            if (!parts.isEmpty())
-				parts = parts.subList(2, parts.size());
+            Preconditions.checkArgument(pathParts.size() >= 1, "path must start with bucket name");
+            Preconditions.checkArgument(!pathParts.get(1).isEmpty(), "bucket name must be not empty");
+            bucket = pathParts.get(1);
+            if (!pathParts.isEmpty())
+				pathParts = pathParts.subList(2, pathParts.size());
         }
 
         List<String> moreSplitted = Lists.newArrayList();
         for (String part : more)
 			moreSplitted.addAll(Lists.newArrayList(Splitter.on(PATH_SEPARATOR).split(part)));
 
-        parts.addAll(moreSplitted);
+        pathParts.addAll(moreSplitted);
         if(bucket != null)
         	this.fileStore = fileSystem.getFileStore(bucket.replace("/", ""));
         else
         	this.fileStore = null;
-		this.parts = KeyParts.parse(parts);
+		this.parts = KeyParts.parse(pathParts);
 		this.fileSystem = fileSystem;
 	}
 
-    private S3Path(S3FileSystem fileSystem, S3FileStore fileStore, Iterable<String> keys){
+    S3Path(S3FileSystem fileSystem, S3FileStore fileStore, Iterable<String> keys){
+        this.fileStore = fileStore;
+        this.parts = KeyParts.parse(keys);
+        this.fileSystem = fileSystem;
+    }
+
+    S3Path(S3FileSystem fileSystem, S3FileStore fileStore, String... keys){
         this.fileStore = fileStore;
         this.parts = KeyParts.parse(keys);
         this.fileSystem = fileSystem;
@@ -145,13 +152,9 @@ public class S3Path implements Path {
 
 	@Override
 	public Path getFileName() {
-		if (!parts.isEmpty()) {
+		if (!parts.isEmpty())
 			return new S3Path(fileSystem, null, parts.subList(parts.size() - 1, parts.size()));
-		}
-        else {
-            // bucket dont have fileName
-            return null;
-        }
+        return null; // bucket dont have fileName
 	}
 
 	@Override
@@ -266,20 +269,19 @@ public class S3Path implements Path {
 
 	@Override
 	public Path resolve(Path other) {
-		Preconditions.checkArgument(other instanceof S3Path,
-				"other must be an instance of %s", S3Path.class.getName());
-
-		S3Path s3Path = (S3Path) other;
-
-		if (s3Path.isAbsolute()) {
-			return s3Path;
+		if(other.isAbsolute()) {
+			Preconditions.checkArgument(other instanceof S3Path, "other must be an instance of %s", S3Path.class.getName());
+			return other;
 		}
-
-		if (s3Path.parts.isEmpty()) { // other is relative and empty
+		
+		ImmutableList.Builder<String> builder = ImmutableList.builder();
+		for(int i=0; i<other.getNameCount(); i++)
+			builder.add(other.getName(i).toString());
+		ImmutableList<String> otherParts = builder.build();
+		if (otherParts.isEmpty()) // other is relative and empty
 			return this;
-		}
 
-		return new S3Path(fileSystem, fileStore, concat(parts, s3Path.parts));
+		return new S3Path(fileSystem, fileStore, concat(parts, otherParts));
 	}
 
 	@Override
@@ -438,6 +440,7 @@ public class S3Path implements Path {
 
 	private static Function<String, String> strip(final String ... strs) {
 		return new Function<String, String>() {
+			@Override
 			public String apply(String input) {
 				String res = input;
 				for (String str : strs) {
@@ -461,6 +464,10 @@ public class S3Path implements Path {
 	 * delete redundant "/" and empty parts
 	 */
 	private abstract static class KeyParts {
+		private static ImmutableList<String> parse(String[] parts) {
+			return ImmutableList.copyOf(filter(transform(Arrays.asList(parts), strip("/")), notEmpty()));
+		}
+		
 		private static ImmutableList<String> parse(List<String> parts) {
 			return ImmutableList.copyOf(filter(transform(parts, strip("/")), notEmpty()));
 		}
