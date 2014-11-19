@@ -19,8 +19,7 @@ public class S3FileSystem extends FileSystem {
 	private final AmazonS3Client client;
 	private final String endpoint;
 
-	public S3FileSystem(S3FileSystemProvider provider, AmazonS3Client client,
-			String endpoint) {
+	public S3FileSystem(S3FileSystemProvider provider, AmazonS3Client client, String endpoint) {
 		this.provider = provider;
 		this.client = client;
 		this.endpoint = endpoint;
@@ -54,11 +53,9 @@ public class S3FileSystem extends FileSystem {
 	@Override
 	public Iterable<Path> getRootDirectories() {
 		ImmutableList.Builder<Path> builder = ImmutableList.builder();
-
-		for (Bucket bucket : client.listBuckets()) {
-			builder.add(new S3Path(this, bucket.getName()));
+		for (FileStore fileStore : getFileStores()) {
+			builder.add(((S3FileStore)fileStore).getRootDirectory());
 		}
-
 		return builder.build();
 	}
 
