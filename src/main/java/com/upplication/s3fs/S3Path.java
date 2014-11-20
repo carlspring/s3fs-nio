@@ -154,7 +154,7 @@ public class S3Path implements Path {
 	public Path getFileName() {
 		if (!parts.isEmpty())
 			return new S3Path(fileSystem, null, parts.subList(parts.size() - 1, parts.size()));
-        return null; // bucket dont have fileName
+        return new S3Path(fileSystem, (S3FileStore) null, fileStore.name()); // bucket dont have fileName
 	}
 
 	@Override

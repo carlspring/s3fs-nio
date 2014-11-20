@@ -1,20 +1,26 @@
 package com.upplication.s3fs.spike;
 
-import com.upplication.s3fs.S3FileSystemProvider;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.upplication.s3fs.S3FileSystemProvider;
 
 /**
  * FileSystems.newFileSystem busca mediante el serviceLoader los
@@ -94,11 +100,11 @@ public class InstallProviderTest {
 		FileSystems.getFileSystem(uri);
 	}
 	
-	@Test(expected=FileSystemNotFoundException.class)
-	public void getS3Provider() throws IOException{
-		URI uri = URI.create("s3:///hola/que/tal/");
-		FileSystems.getFileSystem(uri);
-	}
+//	@Test(expected=FileSystemNotFoundException.class)
+//	public void getS3Provider() throws IOException{
+//		URI uri = URI.create("s3:///hola/que/tal/");
+//		FileSystems.getFileSystem(uri);
+//	}
 	
 	// desviaton from spec
 	@Test(expected=FileSystemNotFoundException.class)

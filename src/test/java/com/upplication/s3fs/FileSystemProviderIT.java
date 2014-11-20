@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.util.EnvironmentBuilder;
 
 public class FileSystemProviderIT {
 	S3FileSystemProvider provider;
@@ -35,9 +36,9 @@ public class FileSystemProviderIT {
 	@Test
 	public void createAuthenticatedByProperties() throws IOException{
 
-		URI uri = URI.create("s3:///");
+		URI uri = URI.create("s3://yadi/");
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = provider.newFileSystem(uri, null);
 		assertNotNull(fileSystem);
 		
 		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps("access key for test", "secret key for test")));
@@ -75,7 +76,7 @@ public class FileSystemProviderIT {
 		Properties props = new Properties();
 		props.setProperty(S3FileSystemProvider.ACCESS_KEY, access_key);
 		props.setProperty(S3FileSystemProvider.SECRET_KEY, secret_key);
-		props.setProperty("bucket_name","/your-bucket-name for test");
+		props.setProperty(EnvironmentBuilder.BUCKET_NAME_KEY,"/your-bucket-name for test");
 		return props;
 	}
 	

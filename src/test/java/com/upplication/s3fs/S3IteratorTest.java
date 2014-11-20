@@ -55,6 +55,7 @@ public class S3IteratorTest {
     @After
     public void closeMemory() throws IOException{
         fsMem.close();
+    	provider.getFileSystem(S3_GLOBAL_URI).close();
     }
 
     @Test
@@ -141,7 +142,7 @@ public class S3IteratorTest {
                 .withBucket("bucketA")
                 .withFile("dir2/dir2-file")
                 .build(provider);
-
+        
         S3FileSystem s3FileSystem = (S3FileSystem) provider.newFileSystem(S3_GLOBAL_URI, buildFakeEnv());
 
         new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir2");

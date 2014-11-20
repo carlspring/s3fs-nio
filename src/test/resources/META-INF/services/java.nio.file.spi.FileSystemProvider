@@ -1,2 +1,2 @@
-com.upplication.s3fs.S3FileSystemProvider
+com.upplication.s3fs.util.S3FileSystemProviderMock
 com.github.marschall.memoryfilesystem.MemoryFileSystemProvider

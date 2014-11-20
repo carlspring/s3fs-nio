@@ -30,7 +30,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
@@ -84,7 +85,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
 	public static final String USER_AGENT = "s3fs_user_agent";
 
-	final AtomicReference<S3FileSystem> fileSystem = new AtomicReference<>();
+	private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
 	@Override
 	public String getScheme() {
@@ -93,9 +94,30 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
-		Preconditions.checkNotNull(uri, "uri is null");
-		Preconditions.checkArgument(uri.getScheme().equals("s3"), "uri scheme must be 's3': '%s'", uri);
+		validateUri(uri);
 		// first try to load amazon props
+		Properties props = getProperties(uri, env);
+		validateProperties(props);
+		String key = this.getFileSystemKey(uri, props);
+		if(fileSystems.containsKey(key))
+			throw new FileSystemAlreadyExistsException("File system " + uri.getScheme() + ':' + key + " already exists");
+		S3FileSystem fileSystem = createFileSystem(uri, props);
+		fileSystems.put(fileSystem.getKey(), fileSystem);
+		return fileSystem;
+	}
+
+	private void validateProperties(Properties props) {
+		Preconditions.checkArgument((props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
+				|| (props.getProperty(ACCESS_KEY) != null && props.getProperty(SECRET_KEY) != null),
+				"%s and %s should both be provided or should both be omitted",
+				ACCESS_KEY, SECRET_KEY);
+	}
+	
+	private Properties getProperties(URI uri) {
+		return getProperties(uri, null);
+	}
+	
+	private Properties getProperties(URI uri, Map<String, ?> env) {
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
 		overloadProperties(props, env);
@@ -105,21 +127,22 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			props.setProperty(ACCESS_KEY, keys[0]);
 			props.setProperty(SECRET_KEY, keys[1]);
 		}
-		
-		Preconditions.checkArgument((props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
-				|| (props.getProperty(ACCESS_KEY) != null && props.getProperty(SECRET_KEY) != null),
-				"%s and %s should both be provided or should both be omitted",
-				ACCESS_KEY, SECRET_KEY);
+		return props;
+	}
 
-		S3FileSystem result = createFileSystem(uri, props);
-		// if this instance already has a S3FileSystem, throw exception
-		// otherwise set
-		if (!fileSystem.compareAndSet(null, result)) {
-			throw new FileSystemAlreadyExistsException(
-					"S3 filesystem already exists. Use getFileSystem() instead");
-		}
+	private String getFileSystemKey(URI uri) {
+		return getFileSystemKey(uri, getProperties(uri));
+	}
 
-		return result;
+	protected String getFileSystemKey(URI uri, Properties props) {
+		String host = uri.getHost();
+		String accessKey = (String) props.get(ACCESS_KEY);
+		return accessKey + "@" + host;
+	}
+	
+	protected void validateUri(URI uri) {
+		Preconditions.checkNotNull(uri, "uri is null");
+		Preconditions.checkArgument(uri.getScheme().equals("s3"), "uri scheme must be 's3': '%s'", uri);
 	}
 
 	private void overloadProperties(Properties props, Map<String, ?> env) {
@@ -141,10 +164,20 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public FileSystem getFileSystem(URI uri) {
-		FileSystem fs = this.fileSystem.get();
-		if (fs == null)
-			throw new FileSystemNotFoundException(String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
-		return fs;
+		validateUri(uri);
+		String key = this.getFileSystemKey(uri);
+		if(!fileSystems.containsKey(key)) {
+			try {
+				newFileSystem(uri, null);
+			} catch (IOException e) {
+				throw new FileSystemNotFoundException(e.getMessage());
+			}
+		}
+	    FileSystem fileSystem = fileSystems.get(key);
+	    if (fileSystem == null) {
+	      throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
+	    }
+	    return fileSystem;
 	}
 
 	private S3Path toS3Path(Path path) {
@@ -163,22 +196,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	@Override
 	public Path getPath(URI uri) {
-		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "URI scheme must be %s", getScheme());
-		if(fileSystem.get() == null)
-			try {
-				fileSystem.set((S3FileSystem) newFileSystem(uri, null));
-			} catch (IOException e) {
-				throw new S3FileSystemException(format("Unable to create new S3FileSystem for uri: %s", uri), e);
-			}
-		if (uri.getHost() != null && !uri.getHost().isEmpty() && !uri.getHost().equals(fileSystem.get().getEndpoint())) {
-			throw new IllegalArgumentException(format(
-					"only empty URI host or URI host that matching the current fileSystem: %s",
-					fileSystem.get().getEndpoint())); // TODO
-		}
+	    FileSystem fileSystem = getFileSystem(uri);
 		/**
 		 * TODO: set as a list. one s3FileSystem by region
 		 */
-		return getFileSystem(uri).getPath(uri.getPath());
+		return fileSystem.getPath(uri.getPath());
 	}
 
     @Override
@@ -313,6 +335,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return S3FileSystem never null
 	 */
 	protected S3FileSystem createFileSystem(URI uri, Properties props) {
+		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonClient(uri, props), uri.getHost());
+	}
+
+	protected AmazonS3Client getAmazonClient(URI uri, Properties props) {
 		AmazonS3Client client;
 		if (props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
 			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(getClientConfiguration(props)));
@@ -321,8 +347,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		if (uri.getHost() != null)
 			client.setEndpoint(uri.getHost());
-		
-		return new S3FileSystem(this, client, uri.getHost());
+		return client;
 	}
 
 	protected BasicAWSCredentials getAWSCredentials(Properties props) {
@@ -403,5 +428,13 @@ public class S3FileSystemProvider extends FileSystemProvider {
      */
 	public Path createTempDir() throws IOException {
 		return Files.createTempDirectory("temp-s3-");
+	}
+
+	public void close(S3FileSystem fileSystem) {
+		fileSystems.remove(fileSystem.getKey());
+	}
+
+	public boolean isOpen(S3FileSystem s3FileSystem) {
+		return fileSystems.containsKey(s3FileSystem.getKey());
 	}
 }

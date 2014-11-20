@@ -1,7 +1,6 @@
 package com.upplication.s3fs;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -26,12 +25,12 @@ public class AmazonS3ClientMockBuilder {
 
     /**
      * create the base bucket
-     * @param bucket
+     * @param buck
      * @return
      */
-    public AmazonS3ClientMockBuilder withBucket(String bucket){
+    public AmazonS3ClientMockBuilder withBucket(String buck){
         try {
-            this.bucket = Files.createDirectories(fs.getPath("/" + bucket));
+            this.bucket = Files.createDirectories(fs.getPath("/" + buck));
         }
         catch (IOException e) {
            throw new IllegalStateException(e);
@@ -93,18 +92,17 @@ public class AmazonS3ClientMockBuilder {
      * @param provider S3FileSystemProvider
      * @return AmazonS3ClientMock and ready to stub with mockito.
      */
-    public AmazonS3ClientMock build(S3FileSystemProvider provider){
+    public AmazonS3ClientMock build(final S3FileSystemProvider provider){
         try {
-            AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(fs.getPath("/")));
-            S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, clientMock, "endpoint");
-            doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), (Properties) anyObject());
+            final AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(fs.getPath("/")));
+            doReturn(clientMock).when(provider).getAmazonClient(any(URI.class), any(Properties.class));
             return clientMock;
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private Path prepareFile(String file) throws IOException {
+	private Path prepareFile(String file) throws IOException {
         Path filepath = this.bucket.resolve(file);
         if (filepath.getParent() != null){
             Files.createDirectories(filepath.getParent());

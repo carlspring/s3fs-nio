@@ -60,7 +60,7 @@ public class FileSystemProviderTest {
 
 	@Before
 	public void cleanup() throws IOException{
-		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
+		fsMem = MemoryFileSystemBuilder.newLinux().build("baseschema");
 		try{
 			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
@@ -78,13 +78,18 @@ public class FileSystemProviderTest {
 	@After
 	public void closeMemory() throws IOException{
 		fsMem.close();
+		try {
+			provider.getFileSystem(S3_GLOBAL_URI).close();
+		} catch (Exception e) {
+			//ignore
+		}
 	}
 	
 	
 	private AmazonS3ClientMock mockFileSystem(final Path memoryBucket){
 		try {
 			AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(memoryBucket));
-			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, clientMock, "endpoint");
+			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, "null@null", clientMock, "endpoint");
 			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), (Properties) anyObject());
 		    return clientMock;
         } catch (IOException e) {
@@ -106,15 +111,15 @@ public class FileSystemProviderTest {
 	@Test
 	public void createAuthenticatedByProperties() throws IOException{
 		Properties props = new Properties();
-		props.setProperty(S3FileSystemProvider.SECRET_KEY, "secret key");
-		props.setProperty(S3FileSystemProvider.ACCESS_KEY, "access key");
+		props.setProperty(S3FileSystemProvider.SECRET_KEY, "better secret key");
+		props.setProperty(S3FileSystemProvider.ACCESS_KEY, "better access key");
 		doReturn(props).when(provider).loadAmazonProperties();
 		URI uri = S3_GLOBAL_URI;
 		
 		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
 		
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps("access key", "secret key")));
+		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
 	}
 
 	@Test
@@ -146,11 +151,6 @@ public class FileSystemProviderTest {
 		assertSame(fileSystem, other);
 	}
 
-	@Test(expected = FileSystemNotFoundException.class)
-	public void getFailsIfNotYetCreated() {
-		provider.getFileSystem(S3_GLOBAL_URI);
-	}
-
 	@Test
 	public void getPathWithEmtpyEndpoint() throws IOException {
 		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI,
@@ -162,10 +162,9 @@ public class FileSystemProviderTest {
 	}
 	
 	@Test
-	public void getPath() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
-				ImmutableMap.<String, Object> of());
-		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
+	public void getPath() {
+		FileSystem fs = FileSystems.getFileSystem(URI.create("s3://endpoint1/"));
+		Path path = fs.provider().getPath(URI.create("s3://endpoint1/bucket/path/to/file"));
 
 		assertEquals(path, fs.getPath("/bucket/path/to/file"));
 		assertSame(path.getFileSystem(), fs);
@@ -182,16 +181,8 @@ public class FileSystemProviderTest {
 	}
 	
 	@Test(expected = IllegalArgumentException.class)
-	public void getPathWithInvalidEndpoint () throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
-				ImmutableMap.<String, Object> of());
-		fs.provider().getPath(URI.create("s3://endpoint2/bucket/path/to/file"));
-	}
-	
-	@Test(expected = IllegalArgumentException.class)
-	public void getPathWithEndpointAndWithoutBucket() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"),
-				ImmutableMap.<String, Object> of());
+	public void getPathWithEndpointAndWithoutBucket() {
+		FileSystem fs = FileSystems.getFileSystem(URI.create("s3://endpoint1/"));
 		fs.provider().getPath(URI.create("s3://endpoint1//falta-bucket"));
 	}
 	
@@ -1320,6 +1311,6 @@ public class FileSystemProviderTest {
      * @throws IOException
      */
     private FileSystem createNewS3FileSystem() throws IOException {
-        return provider.newFileSystem(S3_GLOBAL_URI, buildFakeEnv());
+        return provider.getFileSystem(S3_GLOBAL_URI);
     }
 }

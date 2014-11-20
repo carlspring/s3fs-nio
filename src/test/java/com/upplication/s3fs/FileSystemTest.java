@@ -1,23 +1,21 @@
 package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyObject;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -26,47 +24,54 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 
 public class FileSystemTest {
 	
 	private FileSystem fs;
-	private FileSystem fsMem;
+//	private FileSystem fsMem;
 	private S3FileSystemProvider provider;
 	
 	@Before
-	public void cleanup() throws IOException{
-		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
-		// close old
-		try{
-			FileSystems.getFileSystem(URI.create("s3:///")).close();
-		}
-		catch(FileSystemNotFoundException e){}
-		// create a new
-		provider = spy(new S3FileSystemProvider());
-		doReturn(new Properties()).when(provider).loadAmazonProperties();
-		// by default with two buckets
-		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
-		Path bucketB = Files.createDirectories(fsMem.getPath("/base", "bucketB"));
-		Files.createFile(bucketA.resolve("file1"));
-		Files.createFile(bucketB.resolve("file2"));
-		mockFileSystem(fsMem.getPath("/base"));
-		//
-		fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
+	public void setup() throws IOException{
+//		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
+//		// close old
+//		try{
+//			FileSystems.getFileSystem(URI.create("s3:///")).close();
+//		}
+//		catch(FileSystemNotFoundException e){}
+//		// create a new
+//		provider = spy(new S3FileSystemProvider());
+//		doReturn(new Properties()).when(provider).loadAmazonProperties();
+//		// by default with two buckets
+//		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
+//		Path bucketB = Files.createDirectories(fsMem.getPath("/base", "bucketB"));
+//		Files.createFile(bucketA.resolve("file1"));
+//		Files.createFile(bucketB.resolve("file2"));
+//		mockFileSystem(fsMem.getPath("/base"));
+//		//
+		fs = FileSystems.getFileSystem(URI.create("s3:///"));
+    	AmazonS3Client client = ((S3FileSystem)fs).getClient();
+    	doReturn(true).when(client).doesBucketExist("bucket");
+    	List<Bucket> buckets = new ArrayList<Bucket>();
+    	buckets.add(new Bucket("bucketA"));
+    	buckets.add(new Bucket("bucketB"));
+		doReturn(buckets).when(client).listBuckets();
+//		fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
 	}
 	
 	@After
 	public void closeMemory() throws IOException{
-		fsMem.close();
+//		fsMem.close();
 	}
 	
 	
 	private void mockFileSystem(final Path memoryBucket){
 		try {
 			AmazonS3ClientMock clientMock = new AmazonS3ClientMock(memoryBucket);
-			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, clientMock, "endpoint");
+			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, "mockS3Fs", clientMock, "endpoint");
 			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), (Properties) anyObject());
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -74,7 +79,7 @@ public class FileSystemTest {
 	}
 
     @Test
-    public void getPathFirst() throws IOException {
+    public void getPathFirst() {
         assertEquals(fs.getPath("/bucket"),
                 fs.getPath("/bucket"));
 
@@ -83,7 +88,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void getPathFirstWithMultiplesPaths() throws IOException {
+    public void getPathFirstWithMultiplesPaths() {
         assertEquals(fs.getPath("/bucket/path/to/file"),
             fs.getPath("/bucket/path/to/file"));
         assertNotEquals(fs.getPath("/bucket/path/other/file"),
@@ -96,7 +101,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void getPathFirstAndMore() throws IOException {
+    public void getPathFirstAndMore() {
         Path actualAbsolute = fs.getPath("/bucket", "dir", "file");
         assertEquals(fs.getPath("/bucket", "dir", "file"), actualAbsolute);
         assertEquals(fs.getPath("/bucket/dir/file"), actualAbsolute);
@@ -107,7 +112,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void getPathFirstAndMoreWithMultiplesPaths() throws IOException {
+    public void getPathFirstAndMoreWithMultiplesPaths() {
         Path actual = fs.getPath("/bucket", "dir/file");
         assertEquals(fs.getPath("/bucket", "dir/file"), actual);
         assertEquals(fs.getPath("/bucket/dir/file"), actual);
@@ -115,7 +120,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void getPathFirstWithMultiplesPathsAndMoreWithMultiplesPaths() throws IOException {
+    public void getPathFirstWithMultiplesPathsAndMoreWithMultiplesPaths() {
         Path actual = fs.getPath("/bucket/dir", "dir/file");
         assertEquals(fs.getPath("/bucket/dir", "dir/file"), actual);
         assertEquals(fs.getPath("/bucket/dir/dir/file"), actual);
@@ -124,7 +129,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void getPathRelativeAndAbsoulte() throws IOException {
+    public void getPathRelativeAndAbsoulte() {
         assertNotEquals(fs.getPath("/bucket"), fs.getPath("bucket"));
         assertNotEquals(fs.getPath("/bucket/dir"), fs.getPath("bucket/dir"));
         assertNotEquals(fs.getPath("/bucket", "dir"), fs.getPath("bucket", "dir"));
@@ -134,7 +139,7 @@ public class FileSystemTest {
     }
 
     @Test
-    public void duplicatedSlashesAreDeleted() throws IOException {
+    public void duplicatedSlashesAreDeleted() {
         Path actualFirst = fs.getPath("/bucket//file");
         assertEquals(fs.getPath("/bucket/file"), actualFirst);
         assertEquals(fs.getPath("/bucket", "file"), actualFirst);
@@ -186,9 +191,6 @@ public class FileSystemTest {
 		assertNotNull(iterator);
 		assertTrue(iterator.hasNext());
 		assertNotNull(iterator.next());
-		assertTrue(iterator.hasNext());
-		assertNotNull(iterator.next());
-		assertFalse(iterator.hasNext());
 	}
 	
 	@Test

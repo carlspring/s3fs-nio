@@ -4,47 +4,32 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.anyObject;
+import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.google.common.collect.ImmutableMap;
 
 public class S3PathTest {
-	
-	@Before
-	public void setup() throws IOException {
-        try {
-            FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
-        }
-        catch (FileSystemAlreadyExistsException e) {
-            // already exist. Only when all test are executed in parallel
-        }
+    public static final URI S3_GLOBAL_URI = URI.create("s3:///");
+
+	@BeforeClass
+	public static void prepareMockFs() throws Exception {
+ 		S3FileSystem fileSystem = (S3FileSystem)FileSystems.getFileSystem(URI.create("s3:///"));
+ 		AmazonS3Client client = fileSystem.getClient();
+ 		doReturn(true).when(client).doesBucketExist((String) anyObject());
 	}
-
-    @After
-    public void close() throws IOException {
-        try {
-            FileSystems.getFileSystem(URI.create("s3:///")).close();
-        }
-        catch (FileSystemNotFoundException e) {
-            // already closed
-        }
-    }
-
 	
     @Test
     public void createNoPath() {
@@ -223,9 +208,7 @@ public class S3PathTest {
 
     @Test
     public void toUriWithEndpoint() throws IOException {
-        FileSystems.getFileSystem(URI.create("s3:///")).close();
-
-        try(FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint/"), ImmutableMap.<String, Object>of())){
+        try(FileSystem fs = FileSystems.getFileSystem(URI.create("s3://endpoint/"))){
             Path path = fs.getPath("/bucket/path/to/file");
             URI uri = path.toUri();
             // the scheme is s3
@@ -463,7 +446,8 @@ public class S3PathTest {
  	
  	// toAbsolutePath
  	
- 	@Test(expected = IllegalStateException.class)
+ 	@SuppressWarnings("unused")
+	@Test(expected = IllegalStateException.class)
  	public void toAbsolutePathRelativePathThrowException() throws IOException{
  		forPath("file1").toAbsolutePath();
  	}
@@ -512,8 +496,7 @@ public class S3PathTest {
     public void getFileNameBucket(){
         Path path = forPath("/bucket");
         Path name = path.getFileName();
-
-        assertNull(name);
+        assertEquals(name.toString(), "bucket");
     }
 
     // equals
@@ -570,6 +553,7 @@ public class S3PathTest {
 
  	
  	private static S3Path forPath(String path) {
- 		return (S3Path) FileSystems.getFileSystem(URI.create("s3:///")).getPath(path);
+ 		FileSystem fileSystem = FileSystems.getFileSystem(URI.create("s3:///"));
+		return (S3Path) fileSystem.getPath(path);
  	}
 }
