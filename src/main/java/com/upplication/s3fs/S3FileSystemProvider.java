@@ -33,9 +33,15 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.internal.StaticCredentialsProvider;
+import com.amazonaws.metrics.RequestMetricCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -70,6 +76,7 @@ import com.google.common.collect.Sets;
 public class S3FileSystemProvider extends FileSystemProvider {
 	public static final String ACCESS_KEY = "access_key";
 	public static final String SECRET_KEY = "secret_key";
+	public static final String REQUEST_METRIC_COLLECTOR_CLASS = "request_metric_collector_class";
 	public static final String CONNECTION_TIMEOUT = "s3fs_connection_timeout";
 	public static final String MAX_CONNECTIONS = "s3fs_max_connections";
 	public static final String MAX_RETRY_ERROR = "s3fs_max_retry_error";
@@ -84,8 +91,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
 	public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
 	public static final String USER_AGENT = "s3fs_user_agent";
-
 	private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
 	public String getScheme() {
@@ -339,11 +346,19 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	protected AmazonS3Client getAmazonClient(URI uri, Properties props) {
+		RequestMetricCollector requestMetricCollector = null;
+		if(props.containsKey(REQUEST_METRIC_COLLECTOR_CLASS)) {
+			try {
+				requestMetricCollector = (RequestMetricCollector) Class.forName(props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS)).newInstance();
+			} catch (Throwable t) {
+				logger.warn("Can't instantiate REQUEST_METRIC_COLLECTOR_CLASS "+props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS), t);
+			}
+		}
 		AmazonS3Client client;
 		if (props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
-			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(getClientConfiguration(props)));
+			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(new DefaultAWSCredentialsProviderChain(), getClientConfiguration(props), requestMetricCollector));
 		else
-			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(getAWSCredentials(props), getClientConfiguration(props)));
+			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(new StaticCredentialsProvider(getAWSCredentials(props)), getClientConfiguration(props), requestMetricCollector));
 
 		if (uri.getHost() != null)
 			client.setEndpoint(uri.getHost());
