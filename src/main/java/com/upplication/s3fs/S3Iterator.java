@@ -50,7 +50,7 @@ public class S3Iterator implements Iterator<Path> {
 
     private Iterator<S3Path> getIterator() {
         if (it == null) {
-            List<S3Path> listPath = Lists.newArrayList();;
+            List<S3Path> listPath = Lists.newArrayList();
             // iterator over this list
             ObjectListing current = s3FileSystem.getClient().listObjects(buildRequest());
 
@@ -97,6 +97,7 @@ public class S3Iterator implements Iterator<Path> {
             		descendentPart = new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(immediateDescendantKey));
             	else
             		descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), S3KeyHelper.getParts(immediateDescendantKey));
+            	descendentPart.setObjectSummary(objectSummary);
                 if (!listPath.contains(descendentPart)){
                     listPath.add(descendentPart);
                 }

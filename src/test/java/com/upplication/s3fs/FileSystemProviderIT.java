@@ -1,5 +1,7 @@
 package com.upplication.s3fs;
-
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
@@ -24,8 +26,9 @@ public class FileSystemProviderIT {
 	
 	@Before
 	public void setup() throws IOException{
+		System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
 		try {
-			FileSystems.getFileSystem(URI.create("s3:///")).close();
+			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
 		catch(FileSystemNotFoundException e){}
 		
@@ -49,36 +52,30 @@ public class FileSystemProviderIT {
 	public void createsAuthenticatedByEnvOverridesProps() throws IOException {
 		
 		Map<String, ?> env = buildFakeEnv();
-		URI uri = URI.create("s3:///");
-		
-		FileSystem fileSystem = provider.newFileSystem(uri, env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps((String) env.get(S3FileSystemProvider.ACCESS_KEY), (String) env.get(S3FileSystemProvider.SECRET_KEY))));
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))));
 	}
 
 	@Test
 	public void createsAnonymousNotPossible() throws IOException {
-		URI uri = URI.create("s3:///");
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
-
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps("access key for test", "secret key for test")));
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps("access key for test", "secret key for test")));
 	}
 	
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
-				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
-				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+			.put(ACCESS_KEY, "access key")
+			.put(SECRET_KEY, "secret key").build();
 	}
 
 	private Properties buildFakeProps(String access_key, String secret_key) {
 		Properties props = new Properties();
-		props.setProperty(S3FileSystemProvider.ACCESS_KEY, access_key);
-		props.setProperty(S3FileSystemProvider.SECRET_KEY, secret_key);
+		props.setProperty(ACCESS_KEY, access_key);
+		props.setProperty(SECRET_KEY, secret_key);
 		props.setProperty(EnvironmentBuilder.BUCKET_NAME_KEY,"/your-bucket-name for test");
 		return props;
 	}
-	
-
 }

@@ -1,5 +1,6 @@
 package com.upplication.s3fs.spike;
 
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -35,7 +36,7 @@ public class InstallProviderTest {
 	public void cleanup(){
 		//clean resources
 		try{
-			FileSystems.getFileSystem(URI.create("s3:///")).close();
+			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
 		catch(FileSystemNotFoundException | IOException e){}
 	}
@@ -99,12 +100,6 @@ public class InstallProviderTest {
 		URI uri = URI.create("jar:file:/file.zip");
 		FileSystems.getFileSystem(uri);
 	}
-	
-//	@Test(expected=FileSystemNotFoundException.class)
-//	public void getS3Provider() throws IOException{
-//		URI uri = URI.create("s3:///hola/que/tal/");
-//		FileSystems.getFileSystem(uri);
-//	}
 	
 	// desviaton from spec
 	@Test(expected=FileSystemNotFoundException.class)

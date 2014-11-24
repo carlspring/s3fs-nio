@@ -22,12 +22,15 @@ import java.nio.file.attribute.FileTime;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Owner;
+import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.ImmutableList;
 import com.upplication.s3fs.util.FileTypeDetector;
@@ -129,7 +132,8 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return new S3Path(fileSystem, this, ImmutableList.<String> of());
 	}
 
-	public void delete(String key) {
+	public void delete(S3Path path) {
+		String key = path.getKey();
 		// we delete the two objects (sometimes exists the key '/' and sometimes not)
 		getClient().deleteObject(name, key);
 		getClient().deleteObject(name, key + "/");
@@ -163,12 +167,12 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		getClient().putObject(name, keyName.toString(), new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
-	public S3AccessControlList getAccessControlList(String key) throws NoSuchFileException {
-		key = getS3ObjectSummary(key).getKey();
+	public S3AccessControlList getAccessControlList(S3Path path) throws NoSuchFileException {
+		String key = getS3ObjectSummary(path).getKey();
         return new S3AccessControlList(name, key, getClient().getObjectAcl(name, key), getOwner());
 	}
 
-	private AmazonS3Client getClient() {
+	private AmazonS3 getClient() {
 		return fileSystem.getClient();
 	}
 
@@ -208,7 +212,8 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
      * @return {@link com.amazonaws.services.s3.model.S3ObjectSummary}
      * @throws java.nio.file.NoSuchFileException if not found the path and any child
      */
-	public S3ObjectSummary getS3ObjectSummary(String key) throws NoSuchFileException {
+	public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {
+		String key = s3Path.getKey();
 		ObjectMetadata metadata = getObjectMetadata(key);
 		if (metadata != null) {
             S3ObjectSummary result = new S3ObjectSummary();
@@ -227,9 +232,9 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
         throw new NoSuchFileException(name+S3Path.PATH_SEPARATOR+key);
 	}
 
-	public boolean exists(String key) {
+	public boolean exists(S3Path s3Path) {
 		try {
-			getS3ObjectSummary(key);
+			getS3ObjectSummary(s3Path);
 			return true;
 		}
         catch(NoSuchFileException e) {
@@ -240,15 +245,16 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	/**
 	 * @param options  
 	 */
-	public <A extends BasicFileAttributes> A readAttributes(String key, Class<A> type, LinkOption... options) throws IOException {
+	public <A extends BasicFileAttributes> A readAttributes(S3Path path, Class<A> type, LinkOption... options) throws IOException {
 		if (type == BasicFileAttributes.class) {
-			S3ObjectSummary objectSummary = getS3ObjectSummary(key);
+			S3ObjectSummary objectSummary = getS3ObjectSummary(path);
 			// parse the data to BasicFileAttributes.
 			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
 			long size =  objectSummary.getSize();
 			boolean directory = false;
 			boolean regularFile = false;
 			String resolvedKey = objectSummary.getKey();
+			String key = path.getKey();
             // check if is a directory and exists the key of this directory at amazon s3
 			if (objectSummary.getKey().equals(key + "/") && objectSummary.getKey().endsWith("/")) {
 				directory = true;
@@ -270,14 +276,17 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	/**
 	 * @param attrs  
 	 */
-	public SeekableByteChannel newByteChannel(final String key, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+	public SeekableByteChannel newByteChannel(final S3Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+		String key = path.getKey();
 		// we resolve to a file inside the temp folder with the s3path name
         final Path tempFile = fileSystem.createTempDir().resolve(key.replaceAll("/", "_"));
-        
-        if (exists(key)){
+        try (S3Object object = getClient().getObject(name, key)) {
+
         	InputStream is = getClient().getObject(name, key).getObjectContent();
             Files.write(tempFile, IOUtils.toByteArray(is));
-        }
+        } catch (AmazonServiceException e) {
+			// key doesn't exist on server. That's ok.
+		}
         // and we can use the File SeekableByteChannel implementation
 		final SeekableByteChannel seekable = Files.newByteChannel(tempFile, options);
 
@@ -306,10 +315,10 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	                         and evict the close and open methods of probeContentType. By this way:
 	                         metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
 	                        */
-	                        getClient().putObject(name, key, stream, metadata);
+	                        getClient().putObject(name, path.getKey(), stream, metadata);
 	                    }
 	                } else { // delete: check option delete_on_close
-	                	delete(key);
+	                	delete(path);
 	                }
 				} finally {
 					try {

@@ -1,6 +1,8 @@
 package com.upplication.s3fs;
 
-
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -31,7 +33,6 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
 
 public class S3IteratorTest {
-    public static final URI S3_GLOBAL_URI = URI.create("s3:///");
     S3FileSystemProvider provider;
     FileSystem fsMem;
 
@@ -229,8 +230,8 @@ public class S3IteratorTest {
 
     private Map<String, ?> buildFakeEnv(){
         return ImmutableMap.<String, Object> builder()
-                .put(S3FileSystemProvider.ACCESS_KEY, "access key")
-                .put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+                .put(ACCESS_KEY, "access key")
+                .put(SECRET_KEY, "secret key").build();
     }
 
     private void assertIterator(Iterator<Path> iterator, final String ... files) throws IOException {

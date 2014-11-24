@@ -10,6 +10,7 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Set;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -17,10 +18,10 @@ import com.google.common.collect.ImmutableSet;
 public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem> {
 	private final S3FileSystemProvider provider;
 	private final String key;
-	private final AmazonS3Client client;
+	private final AmazonS3 client;
 	private final String endpoint;
 
-	public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3Client client, String endpoint) {
+	public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint) {
 		this.provider = provider;
 		this.key = key;
 		this.client = client;
@@ -114,7 +115,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 		throw new UnsupportedOperationException();
 	}
 
-	public AmazonS3Client getClient() {
+	public AmazonS3 getClient() {
 		return client;
 	}
 

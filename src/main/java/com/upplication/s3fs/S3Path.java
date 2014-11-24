@@ -30,6 +30,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -53,6 +54,7 @@ public class S3Path implements Path {
 	 * actual filesystem
 	 */
 	private S3FileSystem fileSystem;
+	private S3ObjectSummary objectSummary;
 
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
@@ -71,7 +73,7 @@ public class S3Path implements Path {
 
     /**
      * Build an S3Path from path segments. '/' are stripped from each segment.
-     * @param first should be star with a '/' and the first element is the bucket
+     * @param first should be start with a '/' and is the bucket name
      * @param more directories and files
      */
 	public S3Path(S3FileSystem fileSystem, String first, String ... more) {
@@ -482,7 +484,7 @@ public class S3Path implements Path {
 			throw new NoSuchFileException("the path: " + this + " not exists");
         if (Files.isDirectory(this) && Files.newDirectoryStream(this).iterator().hasNext())
 			throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
-        getFileStore().delete(getKey());
+        getFileStore().delete(this);
 	}
 
 	public void copyTo(S3Path target, CopyOption[] options) {
@@ -494,6 +496,11 @@ public class S3Path implements Path {
 	}
 
 	public void checkAccess(AccessMode[] modes) throws AccessDeniedException, NoSuchFileException {
+		if(modes.length == 0) {
+			if(getFileStore().exists(this))
+				return;
+			throw new NoSuchFileException(toString());
+		}
 		// get ACL and check if the file exists as a side-effect
 		getAccessControlList().checkAccess(modes);
 	}
@@ -508,18 +515,22 @@ public class S3Path implements Path {
 	 * @throws NoSuchFileException if not found the path and any child
 	 */
 	private S3AccessControlList getAccessControlList() throws NoSuchFileException {
-		return getFileStore().getAccessControlList(getKey());
+		return getFileStore().getAccessControlList(this);
 	}
 
 	public boolean exists() {
-		return getFileStore().exists(getKey());
+		return getFileStore().exists(this);
 	}
 	
 	public <A extends BasicFileAttributes> A  readAttributes(Class<A> type, LinkOption... options) throws IOException {
-		return getFileStore().readAttributes(getKey(), type, options);
+		return getFileStore().readAttributes(this, type, options);
 	}
 
 	public SeekableByteChannel newByteChannel(Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		return getFileStore().newByteChannel(getKey(), options, attrs);
+		return getFileStore().newByteChannel(this, options, attrs);
+	}
+
+	public void setObjectSummary(S3ObjectSummary objectSummary) {
+		this.objectSummary = objectSummary;
 	}
 }

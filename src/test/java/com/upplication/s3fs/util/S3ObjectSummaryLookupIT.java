@@ -1,11 +1,10 @@
 package com.upplication.s3fs.util;
 
-
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -37,7 +36,6 @@ public class S3ObjectSummaryLookupIT {
     	lookup_S3Object_when_S3Path_is_a_directory_and_is_virtual();
 	}
     
-	private static final URI uri = URI.create("s3:///");
     private static final String bucket = EnvironmentBuilder.getBucket();
 
     private FileSystem fileSystemAmazon;
@@ -48,7 +46,7 @@ public class S3ObjectSummaryLookupIT {
 
     private static FileSystem build() throws IOException{
         try {
-            FileSystems.getFileSystem(uri).close();
+            FileSystems.getFileSystem(S3_GLOBAL_URI).close();
             return createNewFileSystem();
         } catch(FileSystemNotFoundException e){
             return createNewFileSystem();
@@ -56,7 +54,7 @@ public class S3ObjectSummaryLookupIT {
     }
 
     private static FileSystem createNewFileSystem() throws IOException {
-        return FileSystems.newFileSystem(uri, EnvironmentBuilder.getRealEnv());
+        return FileSystems.newFileSystem(S3_GLOBAL_URI, EnvironmentBuilder.getRealEnv());
     }
 
     public void lookup_S3Object_when_S3Path_is_file() throws IOException {
@@ -72,7 +70,7 @@ public class S3ObjectSummaryLookupIT {
         }
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(s3Path.getKey(), result.getKey());
     }
@@ -90,7 +88,7 @@ public class S3ObjectSummaryLookupIT {
         }
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(s3Path.getKey(), result.getKey());
     }
@@ -107,7 +105,7 @@ public class S3ObjectSummaryLookupIT {
 
         S3Path s3Path = (S3Path) path.resolve("dir");
 
-        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(s3Path.getKey() + "/", result.getKey());
     }
@@ -123,7 +121,7 @@ public class S3ObjectSummaryLookupIT {
 
 
         S3Path s3Path = (S3Path) s3FileSystem.getPath(bucket, startPath, "lib", "angular");
-        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(startPath + "lib/angular/", result.getKey());
     }
@@ -137,7 +135,7 @@ public class S3ObjectSummaryLookupIT {
         s3FileSystem.getClient().putObject(bucket.replace("/",""), key, new ByteArrayInputStream("contenido1".getBytes()), new ObjectMetadata());
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
-        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path.getKey());
+        S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(key, result.getKey());
     }

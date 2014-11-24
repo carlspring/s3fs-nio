@@ -1,5 +1,6 @@
 package com.upplication.s3fs.spike;
 
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getBucket;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static org.junit.Assert.assertEquals;
@@ -8,7 +9,6 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,8 +36,6 @@ public class AmazonDirIT {
     	testCreatedFromAmazonWebConsoleNotExistKeyForFolder();
 	}
     
-	private static final URI uri = URI.create("s3:///");
-
 	public void createDirWithoutEndSlash() throws IOException{
 		
 		S3FileSystemProvider provider = new S3FileSystemProvider(){
@@ -62,7 +60,7 @@ public class AmazonDirIT {
 			}
 		};
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, getRealEnv());
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, getRealEnv());
 		
 		String name = UUID.randomUUID().toString();
 		
@@ -89,7 +87,7 @@ public class AmazonDirIT {
 		String folder = UUID.randomUUID().toString();
 		String file1 = folder+"/file.html";
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, getRealEnv());
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, getRealEnv());
 		Path dir = fileSystem.getPath(getBucket(), folder);
 		
 		S3Path s3Path = (S3Path)dir;

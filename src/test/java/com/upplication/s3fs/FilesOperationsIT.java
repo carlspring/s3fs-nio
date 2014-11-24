@@ -1,5 +1,6 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -71,7 +72,6 @@ public class FilesOperationsIT {
 		seekableCloseTwice();
 	}
 
-	private static final URI uri = URI.create("s3:///");
 	private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
 	private static final String bucket = EnvironmentBuilder.getBucket();
 	
@@ -83,7 +83,7 @@ public class FilesOperationsIT {
 	
 	private static FileSystem build() throws IOException{
 		try {
-			FileSystems.getFileSystem(uri).close();
+			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 			return createNewFileSystem();
 		} catch(FileSystemNotFoundException e){
 			return createNewFileSystem();
@@ -91,11 +91,11 @@ public class FilesOperationsIT {
 	}
 	
 	private static FileSystem createNewFileSystem() throws IOException {
-		return FileSystems.newFileSystem(uri, EnvironmentBuilder.getRealEnv());
+		return FileSystems.newFileSystem(S3_GLOBAL_URI, EnvironmentBuilder.getRealEnv());
 	}
 	
 	public void buildEnv() throws IOException{
-		FileSystem fileSystem = FileSystems.getFileSystem(uri);
+		FileSystem fileSystem = FileSystems.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystemAmazon, fileSystem);
 	}
 	
@@ -106,7 +106,7 @@ public class FilesOperationsIT {
 	
 	public void buildEnvWithoutEndPointReturnSame() throws IOException{
 		FileSystem fileSystem = FileSystems.getFileSystem(uriEurope);
-		FileSystem fileSystem2 = FileSystems.getFileSystem(uri);
+		FileSystem fileSystem2 = FileSystems.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystem2, fileSystem);
 	}
 	

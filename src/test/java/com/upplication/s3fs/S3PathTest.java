@@ -19,15 +19,15 @@ import java.util.Iterator;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 
-public class S3PathTest {
-    public static final URI S3_GLOBAL_URI = URI.create("s3:///");
+public class S3PathTest extends S3UnitTest {
 
 	@BeforeClass
 	public static void prepareMockFs() throws Exception {
- 		S3FileSystem fileSystem = (S3FileSystem)FileSystems.getFileSystem(URI.create("s3:///"));
- 		AmazonS3Client client = fileSystem.getClient();
+ 		S3FileSystem fileSystem = (S3FileSystem)FileSystems.getFileSystem(S3_GLOBAL_URI);
+ 		AmazonS3 client = fileSystem.getClient();
  		doReturn(true).when(client).doesBucketExist((String) anyObject());
 	}
 	

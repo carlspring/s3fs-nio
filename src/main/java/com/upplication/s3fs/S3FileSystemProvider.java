@@ -1,6 +1,23 @@
 package com.upplication.s3fs;
 
 import static com.google.common.collect.Sets.difference;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.CONNECTION_TIMEOUT;
+import static com.upplication.s3fs.AmazonS3Factory.MAX_CONNECTIONS;
+import static com.upplication.s3fs.AmazonS3Factory.MAX_RETRY_ERROR;
+import static com.upplication.s3fs.AmazonS3Factory.PROTOCOL;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_DOMAIN;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_HOST;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_PASSWORD;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_PORT;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_USERNAME;
+import static com.upplication.s3fs.AmazonS3Factory.PROXY_WORKSTATION;
+import static com.upplication.s3fs.AmazonS3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
+import static com.upplication.s3fs.AmazonS3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
+import static com.upplication.s3fs.AmazonS3Factory.SOCKET_TIMEOUT;
+import static com.upplication.s3fs.AmazonS3Factory.USER_AGENT;
 import static java.lang.String.format;
 
 import java.io.IOException;
@@ -33,15 +50,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.Protocol;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.internal.StaticCredentialsProvider;
-import com.amazonaws.metrics.RequestMetricCollector;
+import com.amazonaws.services.s3.AmazonS3;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -74,25 +83,8 @@ import com.google.common.collect.Sets;
  * 
  */
 public class S3FileSystemProvider extends FileSystemProvider {
-	public static final String ACCESS_KEY = "access_key";
-	public static final String SECRET_KEY = "secret_key";
-	public static final String REQUEST_METRIC_COLLECTOR_CLASS = "request_metric_collector_class";
-	public static final String CONNECTION_TIMEOUT = "s3fs_connection_timeout";
-	public static final String MAX_CONNECTIONS = "s3fs_max_connections";
-	public static final String MAX_RETRY_ERROR = "s3fs_max_retry_error";
-	public static final String PROTOCOL = "s3fs_protocol";
-	public static final String PROXY_DOMAIN = "s3fs_proxy_domain";
-	public static final String PROXY_HOST = "s3fs_proxy_host";
-	public static final String PROXY_PASSWORD = "s3fs_proxy_password";
-	public static final String PROXY_PORT = "s3fs_proxy_port";
-	public static final String PROXY_USERNAME = "s3fs_proxy_username";
-	public static final String PROXY_WORKSTATION = "s3fs_proxy_workstation";
-	public static final String SOCKET_SEND_BUFFER_SIZE_HINT = "s3fs_socket_send_buffer_size_hint";
-	public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
-	public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
-	public static final String USER_AGENT = "s3fs_user_agent";
+	public static final String AMAZON_S3_FACTORY_CLASS = "amazon_s3_factory";
 	private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
-	private Logger logger = LoggerFactory.getLogger(getClass());
 
 	@Override
 	public String getScheme() {
@@ -120,10 +112,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				ACCESS_KEY, SECRET_KEY);
 	}
 	
-	private Properties getProperties(URI uri) {
-		return getProperties(uri, null);
-	}
-	
 	private Properties getProperties(URI uri, Map<String, ?> env) {
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
@@ -138,7 +126,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	private String getFileSystemKey(URI uri) {
-		return getFileSystemKey(uri, getProperties(uri));
+		return getFileSystemKey(uri, getProperties(uri, null));
 	}
 
 	protected String getFileSystemKey(URI uri, Properties props) {
@@ -149,14 +137,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	
 	protected void validateUri(URI uri) {
 		Preconditions.checkNotNull(uri, "uri is null");
-		Preconditions.checkArgument(uri.getScheme().equals("s3"), "uri scheme must be 's3': '%s'", uri);
+		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
 	}
 
 	private void overloadProperties(Properties props, Map<String, ?> env) {
 		if(env == null)
 			env = new HashMap<>();
-		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_RETRY_ERROR, PROTOCOL, PROXY_DOMAIN, PROXY_HOST, PROXY_PASSWORD,
-				PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT, USER_AGENT })
+		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_RETRY_ERROR, PROTOCOL, PROXY_DOMAIN, PROXY_HOST, PROXY_PASSWORD,
+				PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT, USER_AGENT, AMAZON_S3_FACTORY_CLASS })
 			overloadProperty(props, env, key);
 	}
 
@@ -342,65 +330,23 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return S3FileSystem never null
 	 */
 	protected S3FileSystem createFileSystem(URI uri, Properties props) {
-		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonClient(uri, props), uri.getHost());
+		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
 	}
 
-	protected AmazonS3Client getAmazonClient(URI uri, Properties props) {
-		RequestMetricCollector requestMetricCollector = null;
-		if(props.containsKey(REQUEST_METRIC_COLLECTOR_CLASS)) {
+	public AmazonS3 getAmazonS3(URI uri, Properties props) {
+		return getAmazonS3Factory(props).getAmazonS3(uri, props);
+	}
+
+	protected AmazonS3Factory getAmazonS3Factory(Properties props) {
+		if(props.containsKey(AMAZON_S3_FACTORY_CLASS)) {
+			String amazonS3FactoryClass = props.getProperty(AMAZON_S3_FACTORY_CLASS);
 			try {
-				requestMetricCollector = (RequestMetricCollector) Class.forName(props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS)).newInstance();
-			} catch (Throwable t) {
-				logger.warn("Can't instantiate REQUEST_METRIC_COLLECTOR_CLASS "+props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS), t);
+				return (AmazonS3Factory) Class.forName(amazonS3FactoryClass).newInstance();
+			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+				throw new S3FileSystemException("Configuration problem, couldn't instantiate AmazonS3Factory ("+amazonS3FactoryClass+"): ", e);
 			}
 		}
-		AmazonS3Client client;
-		if (props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
-			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(new DefaultAWSCredentialsProviderChain(), getClientConfiguration(props), requestMetricCollector));
-		else
-			client = new AmazonS3Client(new com.amazonaws.services.s3.AmazonS3Client(new StaticCredentialsProvider(getAWSCredentials(props)), getClientConfiguration(props), requestMetricCollector));
-
-		if (uri.getHost() != null)
-			client.setEndpoint(uri.getHost());
-		return client;
-	}
-
-	protected BasicAWSCredentials getAWSCredentials(Properties props) {
-		return new BasicAWSCredentials(props.getProperty(ACCESS_KEY), props.getProperty(SECRET_KEY));
-	}
-	
-	protected ClientConfiguration getClientConfiguration(Properties props) {
-		ClientConfiguration clientConfiguration = new ClientConfiguration();
-		if(props.getProperty(CONNECTION_TIMEOUT) != null)
-			clientConfiguration.setConnectionTimeout(Integer.parseInt(props.getProperty(CONNECTION_TIMEOUT)));
-		if(props.getProperty(MAX_CONNECTIONS) != null)
-			clientConfiguration.setMaxConnections(Integer.parseInt(props.getProperty(MAX_CONNECTIONS)));
-		if(props.getProperty(MAX_RETRY_ERROR) != null)
-			clientConfiguration.setMaxErrorRetry(Integer.parseInt(props.getProperty(MAX_RETRY_ERROR)));
-		if(props.getProperty(PROTOCOL) != null)
-			clientConfiguration.setProtocol(Protocol.valueOf(props.getProperty(PROTOCOL)));
-		if(props.getProperty(PROXY_DOMAIN) != null)
-			clientConfiguration.setProxyDomain(props.getProperty(PROXY_DOMAIN));
-		if(props.getProperty(PROXY_HOST) != null)
-			clientConfiguration.setProxyHost(props.getProperty(PROXY_HOST));
-		if(props.getProperty(PROXY_PASSWORD) != null)
-			clientConfiguration.setProxyPassword(props.getProperty(PROXY_PASSWORD));
-		if(props.getProperty(PROXY_PORT) != null)
-			clientConfiguration.setProxyPort(Integer.parseInt(props.getProperty(PROXY_PORT)));
-		if(props.getProperty(PROXY_USERNAME) != null)
-			clientConfiguration.setProxyUsername(props.getProperty(PROXY_USERNAME));
-		if(props.getProperty(PROXY_WORKSTATION) != null)
-			clientConfiguration.setProxyWorkstation(props.getProperty(PROXY_WORKSTATION));
-		if(props.getProperty(SOCKET_SEND_BUFFER_SIZE_HINT) != null || props.getProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT) != null) {
-			int socketSendBufferSizeHint = props.getProperty(SOCKET_SEND_BUFFER_SIZE_HINT) == null ? 0 : Integer.parseInt(props.getProperty(SOCKET_SEND_BUFFER_SIZE_HINT));
-			int socketReceiveBufferSizeHint = props.getProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT) == null ? 0 : Integer.parseInt(props.getProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT));
-			clientConfiguration.setSocketBufferSizeHints(socketSendBufferSizeHint, socketReceiveBufferSizeHint);
-		}
-		if(props.getProperty(SOCKET_TIMEOUT) != null)
-			clientConfiguration.setSocketTimeout(Integer.parseInt(props.getProperty(SOCKET_TIMEOUT)));
-		if(props.getProperty(USER_AGENT) != null)
-			clientConfiguration.setUserAgent(props.getProperty(USER_AGENT));
-		return clientConfiguration;
+		return new AmazonS3ClientFactory();
 	}
 
 	/**
@@ -451,5 +397,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	public boolean isOpen(S3FileSystem s3FileSystem) {
 		return fileSystems.containsKey(s3FileSystem.getKey());
+	}
+	
+	public static ConcurrentMap<String, S3FileSystem> getFilesystems() {
+		return fileSystems;
 	}
 }

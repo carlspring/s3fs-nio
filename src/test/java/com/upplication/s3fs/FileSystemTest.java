@@ -1,5 +1,8 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -24,6 +27,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
@@ -36,30 +40,13 @@ public class FileSystemTest {
 	
 	@Before
 	public void setup() throws IOException{
-//		fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
-//		// close old
-//		try{
-//			FileSystems.getFileSystem(URI.create("s3:///")).close();
-//		}
-//		catch(FileSystemNotFoundException e){}
-//		// create a new
-//		provider = spy(new S3FileSystemProvider());
-//		doReturn(new Properties()).when(provider).loadAmazonProperties();
-//		// by default with two buckets
-//		Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
-//		Path bucketB = Files.createDirectories(fsMem.getPath("/base", "bucketB"));
-//		Files.createFile(bucketA.resolve("file1"));
-//		Files.createFile(bucketB.resolve("file2"));
-//		mockFileSystem(fsMem.getPath("/base"));
-//		//
-		fs = FileSystems.getFileSystem(URI.create("s3:///"));
-    	AmazonS3Client client = ((S3FileSystem)fs).getClient();
+		fs = FileSystems.getFileSystem(S3_GLOBAL_URI);
+		AmazonS3 client = ((S3FileSystem)fs).getClient();
     	doReturn(true).when(client).doesBucketExist("bucket");
     	List<Bucket> buckets = new ArrayList<Bucket>();
     	buckets.add(new Bucket("bucketA"));
     	buckets.add(new Bucket("bucketB"));
 		doReturn(buckets).when(client).listBuckets();
-//		fs = provider.newFileSystem(URI.create("s3:///"), buildFakeEnv());
 	}
 	
 	@After
@@ -246,8 +233,8 @@ public class FileSystemTest {
 	
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
-				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
-				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+				.put(ACCESS_KEY, "access key")
+				.put(SECRET_KEY, "secret key").build();
 	}
 
     private static void assertNotEquals(Object a, Object b){

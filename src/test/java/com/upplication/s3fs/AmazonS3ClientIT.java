@@ -1,5 +1,7 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static java.util.UUID.randomUUID;
 import static org.junit.Assert.assertNotNull;
@@ -48,16 +50,16 @@ public class AmazonS3ClientIT {
 		putObjectByteArray();
 	}
 	
-	AmazonS3Client client;
+	S3Client client;
 	
 	@Before
 	public void setup() throws IOException{
 		// s3client
 		final Map<String, Object> credentials = getRealEnv();
-		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(S3FileSystemProvider.ACCESS_KEY).toString(), 
-				credentials.get(S3FileSystemProvider.SECRET_KEY).toString());
+		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), 
+				credentials.get(SECRET_KEY).toString());
 		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
-		client = new AmazonS3Client(s3);
+		client = new S3Client(s3);
 	}
 	
 	public void putObject() throws IOException{

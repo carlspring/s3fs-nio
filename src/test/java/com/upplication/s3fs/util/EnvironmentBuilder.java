@@ -1,14 +1,14 @@
 package com.upplication.s3fs.util;
 
-import com.google.common.collect.ImmutableMap;
-import com.upplication.s3fs.FilesOperationsIT;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
-import static com.upplication.s3fs.S3FileSystemProvider.ACCESS_KEY;
-import static com.upplication.s3fs.S3FileSystemProvider.SECRET_KEY;
+import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.FilesOperationsIT;
 /**
  * Test Helper
  */

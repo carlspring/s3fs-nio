@@ -18,12 +18,12 @@ import static org.mockito.Mockito.*;
 public class AmazonS3ClientTest {
 
     private AmazonS3 amazonS3;
-    private AmazonS3Client amazonS3Client;
+    private S3Client amazonS3Client;
 
     @Before
     public void setup(){
         amazonS3 = mock(AmazonS3.class);
-        amazonS3Client = spy(new AmazonS3Client(amazonS3));
+        amazonS3Client = spy(new S3Client(amazonS3));
     }
 
     @Test

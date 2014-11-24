@@ -1,5 +1,8 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,7 +28,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -40,48 +42,47 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.amazonaws.services.s3.model.AccessControlList;
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
+import com.upplication.s3fs.util.AmazonS3MockFactory;
 
-public class FileSystemProviderTest {
-
-    public static final URI S3_GLOBAL_URI = URI.create("s3:///");
-
-    S3FileSystemProvider provider;
-	FileSystem fsMem;
+public class FileSystemProviderTest extends S3UnitTest {
+    S3FileSystemProvider s3fsProvider;
+//	FileSystem fsMem;
 
 	@Before
 	public void cleanup() throws IOException{
-		fsMem = MemoryFileSystemBuilder.newLinux().build("baseschema");
-		try{
-			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
-		}
-		catch(FileSystemNotFoundException e){}
+//		fsMem = MemoryFileSystemBuilder.newLinux().build("baseschema");
+//		try{
+//			FileSystems.getFileSystem(S3UnitTest.S3_GLOBAL_URI).close();
+//		}
+//		catch(FileSystemNotFoundException e){}
 		
-		provider = spy(new S3FileSystemProvider());
+		s3fsProvider = spy(new S3FileSystemProvider());
         // TODO: we need some real temp dir with unique path when is called
-        doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-                .when(provider).createTempDir();
-		doReturn(new Properties()).when(provider).loadAmazonProperties();
+//        doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+//                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+//                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
+//                .when(provider).createTempDir();
+		
+		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
 	}
 	
 	@After
 	public void closeMemory() throws IOException{
-		fsMem.close();
-		try {
-			provider.getFileSystem(S3_GLOBAL_URI).close();
-		} catch (Exception e) {
-			//ignore
+//		fsMem.close();
+		for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values()) {
+			try {
+				s3FileSystem.close();
+			} catch (Exception e) {
+				//ignore
+			}
 		}
 	}
 	
@@ -89,8 +90,8 @@ public class FileSystemProviderTest {
 	private AmazonS3ClientMock mockFileSystem(final Path memoryBucket){
 		try {
 			AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(memoryBucket));
-			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, "null@null", clientMock, "endpoint");
-			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), (Properties) anyObject());
+			S3FileSystem s3ileS3FileSystem = new S3FileSystem(s3fsProvider, "null@null", clientMock, "endpoint");
+			doReturn(s3ileS3FileSystem).when(s3fsProvider).createFileSystem(any(URI.class), (Properties) anyObject());
 		    return clientMock;
         } catch (IOException e) {
 			throw new RuntimeException(e);
@@ -102,58 +103,56 @@ public class FileSystemProviderTest {
 		
 		Map<String, ?> env = buildFakeEnv();
 
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps((String)env.get(S3FileSystemProvider.ACCESS_KEY), (String)env.get(S3FileSystemProvider.SECRET_KEY))));
+		verify(s3fsProvider).createFileSystem(eq(S3UnitTest.S3_GLOBAL_URI), eq(buildFakeProps((String)env.get(ACCESS_KEY), (String)env.get(SECRET_KEY))));
 	}
 	
 	@Test
 	public void createAuthenticatedByProperties() throws IOException{
 		Properties props = new Properties();
-		props.setProperty(S3FileSystemProvider.SECRET_KEY, "better secret key");
-		props.setProperty(S3FileSystemProvider.ACCESS_KEY, "better access key");
-		doReturn(props).when(provider).loadAmazonProperties();
-		URI uri = S3_GLOBAL_URI;
+		props.setProperty(SECRET_KEY, "better secret key");
+		props.setProperty(ACCESS_KEY, "better access key");
+		doReturn(props).when(s3fsProvider).loadAmazonProperties();
+		URI uri = S3UnitTest.S3_GLOBAL_URI;
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
 		
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
+		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
 	}
 
 	@Test
 	public void createsAnonymous() throws IOException {
-		URI uri = S3_GLOBAL_URI;
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+		URI uri = S3UnitTest.S3_GLOBAL_URI;
+		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
+		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
 	}
 
 	@Test(expected = FileSystemAlreadyExistsException.class)
 	public void createFailsIfAlreadyCreated() throws IOException {
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI.create("s3:///"),
-                ImmutableMap.<String, Object>of());
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
 		assertNotNull(fileSystem);
 
-		provider.newFileSystem(S3_GLOBAL_URI,
-				ImmutableMap.<String, Object> of());
+		s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 	}
 
 	@Test
 	public void getFileSystem() throws IOException {
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI,
                 ImmutableMap.<String, Object>of());
 		assertNotNull(fileSystem);
 
-		FileSystem other = provider.getFileSystem(S3_GLOBAL_URI);
+		FileSystem other = s3fsProvider.getFileSystem(S3UnitTest.S3_GLOBAL_URI);
 		assertSame(fileSystem, other);
 	}
 
 	@Test
 	public void getPathWithEmtpyEndpoint() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI,
+		FileSystem fs = FileSystems.newFileSystem(S3UnitTest.S3_GLOBAL_URI,
                 ImmutableMap.<String, Object>of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
@@ -188,7 +187,7 @@ public class FileSystemProviderTest {
 	
 	@Test(expected = IllegalArgumentException.class)
 	public void getPathWithDefaultEndpointAndWithoutBucket() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI,
+		FileSystem fs = FileSystems.newFileSystem(S3UnitTest.S3_GLOBAL_URI,
                 ImmutableMap.<String, Object>of());
 		fs.provider().getPath(URI.create("s3:////falta-bucket"));
 	}
@@ -197,16 +196,10 @@ public class FileSystemProviderTest {
 	public void closeFileSystemReturnNewFileSystem() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
-
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
-                env);
+		FileSystem fileSystem = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
-
 		fileSystem.close();
-
-		FileSystem fileSystem2 = provider.newFileSystem(S3_GLOBAL_URI,
-				env);
-
+		FileSystem fileSystem2 = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
 		assertNotSame(fileSystem, fileSystem2);
 	}
 
@@ -214,24 +207,19 @@ public class FileSystemProviderTest {
 	public void createTwoFileSystemThrowError() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
-
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI,
-                env);
+		FileSystem fileSystem = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
-		provider.newFileSystem(S3_GLOBAL_URI, env);
-
+		provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
 	}
 	
 	// stream directory
 	
 	@Test
 	public void createStreamDirectoryReader() throws IOException{
-		
 		// fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("file1")
-                .build(provider);
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addFile(mocket, "file1");
 
 		// act
 		Path bucket = createNewS3FileSystem().getPath("/bucketA");
@@ -241,13 +229,11 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void createAnotherStreamDirectoryReader() throws IOException{
-		
 		// fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("file1")
-                .withFile("file2")
-                .build(provider);
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addFile(mocket, "file1");
+		client.addFile(mocket, "file2");
 
         // act
 		Path bucket = createNewS3FileSystem().getPath("/bucketA");
@@ -258,13 +244,12 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void createAnotherWithDirStreamDirectoryReader() throws IOException{
-		
 		// fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir1")
-                .withFile("file1")
-                .build(provider);
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir1");
+		client.addFile(mockDir, "file1");
+		
 		// act
 		Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
@@ -274,13 +259,12 @@ public class FileSystemProviderTest {
 
     @Test
     public void createStreamDirectoryFromDirectoryReader() throws IOException{
-
         // fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir/file2")
-                .withFile("dir/file1")
-                .build(provider);
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addDirectory(mockDir, "file2");
+		client.addFile(mockDir, "file1");
         // act
         Path dir = createNewS3FileSystem().getPath("/bucketA", "dir");
 
@@ -289,14 +273,13 @@ public class FileSystemProviderTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void removeIteratorStreamDirectoryReader() throws IOException{
-
+    public void removeIteratorStreamDirectoryReader() throws IOException {
         // fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir1")
-                .withFile("file1", "content")
-                .build(provider);
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir1");
+		client.addFile(mockDir, "file1", "content");
+
         // act
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
@@ -309,90 +292,69 @@ public class FileSystemProviderTest {
 
     @Test
     public void list999Paths() throws IOException {
-
         // fixtures
-        Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
-
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path bucketA = client.addBucket("bucketA");
         final int count999 = 999;
-
         for (int i = 0; i < count999; i++) {
             Path path = bucketA.resolve(i + "file");
-            Files.createFile(path);
+            if(!Files.exists(path))
+            	Files.createFile(path);
         }
-
-        mockFileSystem(fsMem.getPath("/base"));
-
-
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
-
         int count = 0;
-
         try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
             for(Path file : files) {
                 count++;
             }
         }
-
         assertEquals(count999, count);
-
     }
 
     @Test
     public void list1050Paths() throws IOException {
-
         // fixtures
-        Path bucketA = Files.createDirectories(fsMem.getPath("/base", "bucketA"));
-
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path bucketA = client.addBucket("bucketA");
         final int count1050 = 1050;
-
         for (int i = 0; i < count1050; i++) {
             Path path = bucketA.resolve(i + "file");
-            Files.createFile(path);
+            if(!Files.exists(path))
+            	Files.createFile(path);
         }
-
-        mockFileSystem(fsMem.getPath("/base"));
-
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
-
         int count = 0;
-
         try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
             for(Path file : files) {
                 count++;
             }
         }
-
         assertEquals(count1050, count);
-
     }
 	
 	// newInputStream
 	
 	@Test
-	public void inputStreamFile() throws IOException{
-		
-		// fixtures
-		String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("file1", content)
-                .build(provider);
+	public void inputStreamFile() throws IOException {
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path bucketA = client.addBucket("bucketA");
+		client.addFile(bucketA, "file1", "content");
 
 		Path file = createNewS3FileSystem().getPath("/bucketA/file1");
-		
 		byte[] buffer =  Files.readAllBytes(file);
 		// check
-		assertArrayEquals(content.getBytes(), buffer);
+		assertArrayEquals("content".getBytes(), buffer);
 	}
 	
 	@Test
 	public void anotherInputStreamFile() throws IOException{
-		// fixtures
 		String res = "another content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1", res)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path bucketA = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(bucketA, "dir");
+		client.addFile(mockDir, "file1", res);
 		// act
 		Path file = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		
@@ -407,7 +369,7 @@ public class FileSystemProviderTest {
 		// fixtures
         Path result = getS3Directory();
 		// act
-		provider.newInputStream(result);
+		s3fsProvider.newInputStream(result);
 	}
 	
 	// newOutputStream 
@@ -419,7 +381,7 @@ public class FileSystemProviderTest {
 		Path file = base.resolve("file1");
         final String content = "sample content";
 		
-		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+		try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
 			stream.write(content.getBytes());
 			stream.flush();
 		}
@@ -435,7 +397,8 @@ public class FileSystemProviderTest {
 
         Path file = Files.createFile(base.resolve("file1"));
 
-        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+        	//
         }
     }
 
@@ -448,7 +411,7 @@ public class FileSystemProviderTest {
 
         final String content = "sample content";
 
-        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE)){
+        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE)){
             stream.write(content.getBytes());
             stream.flush();
         }
@@ -464,7 +427,7 @@ public class FileSystemProviderTest {
 
         Path file = base.resolve("file1");
 
-        try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE)){
+        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE)){
             stream.write("sample content".getBytes());
             stream.flush();
         }
@@ -480,7 +443,7 @@ public class FileSystemProviderTest {
         final String content = "heyyyyyy";
 		Path file = base.resolve("file1");
 
-		try (OutputStream stream = provider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
+		try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
 			stream.write(content.getBytes());
 			stream.flush();
 		}
@@ -494,17 +457,17 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void seekable() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir1");
+		client.addFile(mockDir, "file1");
 
 		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         final String content = "content";
 		
-		try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+		try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
 			ByteBuffer buffer = ByteBuffer.wrap(content.getBytes());
 			seekable.write(buffer);
 			ByteBuffer bufferRead = ByteBuffer.allocate(7);
@@ -520,14 +483,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekableSize() throws IOException {
         final String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
 
             long size = seekable.size();
 
@@ -538,15 +502,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekableAnotherSize() throws IOException {
         final String content = "content-more-large";
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
 
             long size = seekable.size();
 
@@ -557,14 +521,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekablePosition() throws IOException {
         final String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             long position = seekable.position();
             assertEquals(0, position);
 
@@ -577,16 +542,17 @@ public class FileSystemProviderTest {
     @Test
     public void seekablePositionRead() throws IOException {
         final String content = "content-more-larger";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         ByteBuffer copy = ByteBuffer.allocate(3);
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.READ))){
             long position = seekable.position();
             assertEquals(0, position);
 
@@ -599,16 +565,17 @@ public class FileSystemProviderTest {
     @Test
     public void seekablePositionWrite() throws IOException {
         final String content = "content-more-larger";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         ByteBuffer copy = ByteBuffer.allocate(5);
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
             long position = seekable.position();
             assertEquals(0, position);
 
@@ -620,19 +587,19 @@ public class FileSystemProviderTest {
 
     @Test
     public void seekableIsOpen() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.of(StandardOpenOption.WRITE))){
             assertTrue(seekable.isOpen());
         }
 
-        SeekableByteChannel seekable = provider.newByteChannel(base.resolve("file"),EnumSet.of(StandardOpenOption.READ));
+        SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"),EnumSet.of(StandardOpenOption.READ));
         assertTrue(seekable.isOpen());
         seekable.close();
         assertTrue(!seekable.isOpen());
@@ -640,11 +607,10 @@ public class FileSystemProviderTest {
 
     @Test
     public void seekableRead() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
@@ -652,7 +618,7 @@ public class FileSystemProviderTest {
         Path file = Files.write(base.resolve("file"), content.getBytes());
 
         ByteBuffer bufferRead = ByteBuffer.allocate(7);
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
             seekable.position(0);
             seekable.read(bufferRead);
         }
@@ -663,10 +629,10 @@ public class FileSystemProviderTest {
 
     @Test
     public void seekableReadPartialContent() throws IOException{
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
@@ -674,7 +640,7 @@ public class FileSystemProviderTest {
         Path file = Files.write(base.resolve("file"), content.getBytes());
 
         ByteBuffer bufferRead = ByteBuffer.allocate(4);
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))){
             seekable.position(3);
             seekable.read(bufferRead);
         }
@@ -686,14 +652,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekableTruncate() throws IOException {
         final String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             // discard all content except the first c.
             seekable.truncate(1);
         }
@@ -704,14 +671,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekableAnotherTruncate() throws IOException {
         final String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             // discard all content except the first three chars 'con'
             seekable.truncate(3);
         }
@@ -722,14 +690,15 @@ public class FileSystemProviderTest {
     @Test
     public void seekableruncateGreatherThanSize() throws IOException {
         final String content = "content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file", content);
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ))){
             seekable.truncate(10);
         }
 
@@ -739,17 +708,17 @@ public class FileSystemProviderTest {
     @Test
     public void seekableCreateEmpty() throws IOException{
 
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         Path file = base.resolve("file");
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.CREATE))){
-
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.CREATE))){
+        	//
         }
 
         assertTrue(Files.exists(file));
@@ -759,17 +728,17 @@ public class FileSystemProviderTest {
     @Test
     public void seekableDeleteOnClose() throws IOException{
 
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         Path file = Files.createFile(base.resolve("file"));
 
-        try (SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
-
+        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
+        	//
         }
 
         assertTrue(Files.notExists(file));
@@ -777,16 +746,15 @@ public class FileSystemProviderTest {
 
     @Test
     public void seekableCloseTwice() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
         Path file = Files.createFile(base.resolve("file"));
-        SeekableByteChannel seekable = provider.newByteChannel(file, EnumSet.noneOf(StandardOpenOption.class));
+        SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.noneOf(StandardOpenOption.class));
         seekable.close();
         seekable.close();
 
@@ -796,10 +764,9 @@ public class FileSystemProviderTest {
 	
 	@Test
 	public void createDirectory() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		client.addBucket("bucketA");
 
 		// act
 		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
@@ -815,13 +782,13 @@ public class FileSystemProviderTest {
 	@Test
 	public void deleteFile() throws IOException{
         // fixtures
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
         // act
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-		provider.delete(file);
+		s3fsProvider.delete(file);
 		// assert
 		assertTrue(Files.notExists(file));
 	}
@@ -829,33 +796,32 @@ public class FileSystemProviderTest {
     @Test
     public void deleteEmptyDirectory() throws IOException{
         Path base = getS3Directory();
-        provider.delete(base);
+        s3fsProvider.delete(base);
         // assert
         assertTrue(Files.notExists(base));
     }
 
     @Test(expected = DirectoryNotEmptyException.class)
     public void deleteDirectoryWithEntries() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-        provider.delete(file.getParent());
+        s3fsProvider.delete(file.getParent());
     }
 
     @Test(expected = NoSuchFileException.class)
     public void deleteFileNotExists() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-        provider.delete(file);
+        s3fsProvider.delete(file);
     }
 	
 	// copy
@@ -863,17 +829,18 @@ public class FileSystemProviderTest {
 	@Test
 	public void copy() throws IOException{
         final String content = "content-file-1";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1", content)
-                .withDirectory("dir2")
-                .build(provider);
-
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1", content);
+		client.addDirectory(mocket, "dir2");
+        
 		// act
 		FileSystem fs = createNewS3FileSystem();
 		Path file = fs.getPath("/bucketA/dir/file1");
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
-		provider.copy(file, fileDest);
+		s3fsProvider.copy(file, fileDest);
 		// assert
         assertTrue(Files.exists(fileDest));
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
@@ -882,15 +849,16 @@ public class FileSystemProviderTest {
     @Test
     public void copySameFile() throws IOException{
         final String content = "sample-content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1", content);
         // act
         FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file1");
-        provider.copy(file, fileDest);
+        s3fsProvider.copy(file, fileDest);
         // assert
         assertTrue(Files.exists(fileDest));
         assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
@@ -900,16 +868,17 @@ public class FileSystemProviderTest {
     @Test
     public void copyAlreadyExistsWithReplace() throws IOException{
         final String content = "sample-content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1", content)
-                .withFile("dir/file2")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1", content);
+		client.addFile(mockDir, "file2");
         // act
         FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
-        provider.copy(file, fileDest, StandardCopyOption.REPLACE_EXISTING);
+        s3fsProvider.copy(file, fileDest, StandardCopyOption.REPLACE_EXISTING);
         // assert
         assertTrue(Files.exists(fileDest));
         assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
@@ -918,116 +887,121 @@ public class FileSystemProviderTest {
     @Test(expected = FileAlreadyExistsException.class)
     public void copyAlreadyExists() throws IOException{
         final String content = "sample-content";
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1", content)
-                .withFile("dir/file2", content)
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1", content);
+		client.addFile(mockDir, "file2", content);
         // act
         FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
-        provider.copy(file, fileDest);
+        s3fsProvider.copy(file, fileDest);
     }
 
     // move
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void move() throws IOException{
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .withDirectory("dir2")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
+		client.addDirectory(mocket, "dir2");
 		// act
 		FileSystem fs = createNewS3FileSystem();
 		Path file = fs.getPath("/bucketA/dir/file1");
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
-		provider.move(file, fileDest);
+		s3fsProvider.move(file, fileDest);
 	}
 	
 	// isSameFile
 	
 	@Test
 	public void isSameFileTrue() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
 		// act
 		FileSystem fs = createNewS3FileSystem();
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir/file1");
 		// assert
-		assertTrue(provider.isSameFile(file1, fileCopy));
+		assertTrue(s3fsProvider.isSameFile(file1, fileCopy));
 	}
 	
 	@Test
 	public void isSameFileFalse() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .withFile("dir2/file2")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
+		Path mockDir2 = client.addDirectory(mocket, "dir2");
+		client.addFile(mockDir2, "file13");
 		// act
 		FileSystem fs = createNewS3FileSystem();
 		Path file1 = fs.getPath("/bucketA/dir/file1");
 		Path fileCopy = fs.getPath("/bucketA/dir2/file2");
 		// assert
-		assertTrue(!provider.isSameFile(file1, fileCopy));
+		assertTrue(!s3fsProvider.isSameFile(file1, fileCopy));
 	}
 	
 	// isHidden
 	
 	@Test
 	public void isHidden() throws IOException{
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
 		// act
 		Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		// assert
-		assertTrue(!provider.isHidden(file1));
+		assertTrue(!s3fsProvider.isHidden(file1));
 	}
 	
 	// getFileStore
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void getFileStore() throws IOException{
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
 
 		// act
 		Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 		// assert
-		provider.getFileStore(file1);
+		s3fsProvider.getFileStore(file1);
 	}
 	
 	// getFileAttributeView
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void getFileAttributeView(){
-		provider.getFileAttributeView(null, null, null);
+		s3fsProvider.getFileAttributeView(null, null, null);
 	}
 	
 	// readAttributes
 
     @Test
     public void readAttributesFileEmpty() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1");
 
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(file1, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(false, fileAttributes.isDirectory());
@@ -1039,19 +1013,20 @@ public class FileSystemProviderTest {
 
     @Test
     public void readAttributesFile() throws IOException {
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path dir = client.addDirectory(mocket, "dir");
 
-        Path dir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
         final String content = "sample";
         Path memoryFile = Files.write(dir.resolve("file"), content.getBytes());
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryFile,  BasicFileAttributes.class);
 
-        mockFileSystem(fsMem.getPath("/base"));
-
         FileSystem fs = createNewS3FileSystem();
         Path file = fs.getPath("/bucketA/dir/file");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(file, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(file, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(false, fileAttributes.isDirectory());
@@ -1068,16 +1043,17 @@ public class FileSystemProviderTest {
 
     @Test
     public void readAttributesDirectory() throws IOException {
-
-        Path memoryDir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path memoryDir = client.addDirectory(mocket, "dir");
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
         FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(dir, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(true, fileAttributes.isDirectory());
@@ -1096,33 +1072,33 @@ public class FileSystemProviderTest {
 
     @Test
     public void readAnotherAttributesDirectory() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/dir", "content")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addFile(mocket, "dir/dir", "content");
 
         FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(dir, BasicFileAttributes.class);
         assertNotNull(fileAttributes);
         assertEquals(true, fileAttributes.isDirectory());
     }
 
     @Test
     public void readAttributesDirectoryNotExistsAtAmazon() throws IOException {
-
-        Path memoryDir = Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir", "dir2"))
-                .getParent();
-        mockFileSystem(fsMem.getPath("/base"));
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		Path memoryDir = client.addDirectory(mockDir, "dir2");
 
         BasicFileAttributes expectedAttributes = Files.readAttributes(memoryDir,  BasicFileAttributes.class);
 
         FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
-        BasicFileAttributes fileAttributes = provider.readAttributes(dir, BasicFileAttributes.class);
+        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(dir, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
         assertEquals(true, fileAttributes.isDirectory());
@@ -1141,143 +1117,147 @@ public class FileSystemProviderTest {
 
     @Test(expected= NoSuchFileException.class)
     public void readAttributesFileNotExists() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file1");
 
-        provider.readAttributes(file1, BasicFileAttributes.class);
+        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
     }
 
     @Test(expected= NoSuchFileException.class)
     public void readAttributesFileNotExistsButExistsAnotherThatContainsTheKey() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file1hola", "content")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file1hola", "content");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file1");
 
-        provider.readAttributes(file1, BasicFileAttributes.class);
+        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
     }
 
     @Test(expected= UnsupportedOperationException.class)
     public void readAttributesNotAcceptedSubclass() throws IOException {
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withDirectory("dir")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
 
         FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
 
-        provider.readAttributes(dir, DosFileAttributes.class);
+        s3fsProvider.readAttributes(dir, DosFileAttributes.class);
     }
 
 	@Test(expected = UnsupportedOperationException.class)
 	public void readAttributesString() throws IOException{
-		provider.readAttributes(null, "", null);
+		s3fsProvider.readAttributes(null, "", null);
 	}
 	
 	// setAttribute
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void readAttributesObject() throws IOException{
-		provider.setAttribute(null, "", new Object(), null);
+		s3fsProvider.setAttribute(null, "", new Object(), null);
 	}
 
     // check access
 
     @Test
     public void checkAccessRead() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file");
 
-        provider.checkAccess(file1, AccessMode.READ);
+        s3fsProvider.checkAccess(file1, AccessMode.READ);
     }
 
     @Test(expected = AccessDeniedException.class)
     public void checkAccessReadWithoutPermission() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        AmazonS3ClientMock amazonS3ClientMock = mockFileSystem(fsMem.getPath("/base"));
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
+		
         // return empty list
-        doReturn(new AccessControlList()).when(amazonS3ClientMock).getObjectAcl("bucketA", "dir/");
+        doReturn(new AccessControlList()).when(client).getObjectAcl("bucketA", "dir/");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir");
 
-        provider.checkAccess(file1, AccessMode.READ);
+        s3fsProvider.checkAccess(file1, AccessMode.READ);
     }
 
     @Test
-    public void checkAccessWrite() throws IOException{
-
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+    public void checkAccessWrite() throws IOException {
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file");
 
-        provider.checkAccess(file1, AccessMode.WRITE);
+        s3fsProvider.checkAccess(file1, AccessMode.WRITE);
     }
 
     @Test(expected = AccessDeniedException.class)
     public void checkAccessWriteWithoutPermission() throws IOException{
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        AmazonS3ClientMock amazonS3ClientMock = mockFileSystem(fsMem.getPath("/base"));
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
         // return empty list
-        doReturn(new AccessControlList()).when(amazonS3ClientMock).getObjectAcl("bucketA", "dir/");
+        doReturn(new AccessControlList()).when(client).getObjectAcl("bucketA", "dir/");
 
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir");
 
-        provider.checkAccess(file1, AccessMode.WRITE);
+        s3fsProvider.checkAccess(file1, AccessMode.WRITE);
     }
 
     @Test(expected = AccessDeniedException.class)
     public void checkAccessExecute() throws IOException{
-        new AmazonS3ClientMockBuilder(fsMem)
-                .withBucket("bucketA")
-                .withFile("dir/file")
-                .build(provider);
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        provider.checkAccess(file1, AccessMode.EXECUTE);
+        s3fsProvider.checkAccess(file1, AccessMode.EXECUTE);
     }
 
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
-				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
-				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+				.put(ACCESS_KEY, "access key")
+				.put(SECRET_KEY, "secret key").build();
 	}
 
 	private Properties buildFakeProps(String access_key, String secret_key) {
 		Properties props = new Properties();
+		props.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.AmazonS3MockFactory");
 		if(access_key != null)
-			props.setProperty(S3FileSystemProvider.ACCESS_KEY, access_key);
+			props.setProperty(ACCESS_KEY, access_key);
 		if(secret_key != null)
-			props.setProperty(S3FileSystemProvider.SECRET_KEY, secret_key);
+			props.setProperty(SECRET_KEY, secret_key);
 		return props;
 	}
 	
 	private void assertNewDirectoryStream(Path base, final String ... files) throws IOException {
-		
-		try (DirectoryStream<Path> dir = provider.newDirectoryStream(base, new  DirectoryStream.Filter<Path>(){
+		try (DirectoryStream<Path> dir = Files.newDirectoryStream(base, new  DirectoryStream.Filter<Path>(){
 			@Override public boolean accept(Path entry) throws IOException {
 				return true;
 			}
@@ -1299,9 +1279,11 @@ public class FileSystemProviderTest {
 	}
 
     private Path getS3Directory() throws IOException {
-        Files.createDirectories(fsMem.getPath("/base", "bucketA", "dir"));
-        mockFileSystem(fsMem.getPath("/base"));
-        return provider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+        // fixtures
+    	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("bucketA");
+		client.addDirectory(mocket, "dir");
+        return s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
     }
 
     /**
@@ -1311,6 +1293,6 @@ public class FileSystemProviderTest {
      * @throws IOException
      */
     private FileSystem createNewS3FileSystem() throws IOException {
-        return provider.getFileSystem(S3_GLOBAL_URI);
+        return s3fsProvider.getFileSystem(S3UnitTest.S3_GLOBAL_URI);
     }
 }
