@@ -2,18 +2,17 @@ package com.upplication.s3fs;
 
 import static java.lang.String.format;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
+import java.io.OutputStream;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.CopyOption;
 import java.nio.file.FileStore;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
-import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
@@ -22,7 +21,6 @@ import java.nio.file.attribute.FileTime;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
@@ -30,14 +28,11 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.ImmutableList;
-import com.upplication.s3fs.util.FileTypeDetector;
-import com.upplication.s3fs.util.IOUtils;
 
 public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
-    private final FileTypeDetector fileTypeDetector = new com.upplication.s3fs.util.FileTypeDetector();
 	private S3FileSystem fileSystem;
 	private Bucket bucket;
 	private String name;
@@ -95,7 +90,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	}
 
 	@Override
-	public boolean supportsFileAttributeView(String name) {
+	public boolean supportsFileAttributeView(String attributeViewName) {
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -276,91 +271,8 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	/**
 	 * @param attrs  
 	 */
-	public SeekableByteChannel newByteChannel(final S3Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		String key = path.getKey();
-		// we resolve to a file inside the temp folder with the s3path name
-        final Path tempFile = fileSystem.createTempDir().resolve(key.replaceAll("/", "_"));
-        try (S3Object object = getClient().getObject(name, key)) {
-
-        	InputStream is = getClient().getObject(name, key).getObjectContent();
-            Files.write(tempFile, IOUtils.toByteArray(is));
-        } catch (AmazonServiceException e) {
-			// key doesn't exist on server. That's ok.
-		}
-        // and we can use the File SeekableByteChannel implementation
-		final SeekableByteChannel seekable = Files.newByteChannel(tempFile, options);
-
-		return new SeekableByteChannel() {
-			@Override
-			public boolean isOpen() {
-				return seekable.isOpen();
-			}
-
-			@Override
-			public void close() throws IOException {
-				try {
-	                if (!seekable.isOpen())
-						return;
-					seekable.close();
-					// upload the content where the seekable ends (close)
-	                if (Files.exists(tempFile)) {
-	                    ObjectMetadata metadata = new ObjectMetadata();
-	                    metadata.setContentLength(Files.size(tempFile));
-	                    // FIXME: #20 ServiceLoader cant load com.upplication.s3fs.util.FileTypeDetector when this library is used inside a ear :(
-	                    metadata.setContentType(fileTypeDetector.probeContentType(tempFile));
-	
-	                    try (InputStream stream = Files.newInputStream(tempFile)) {
-	                        /*
-	                         FIXME: if the stream is {@link InputStream#markSupported()} i can reuse the same stream
-	                         and evict the close and open methods of probeContentType. By this way:
-	                         metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
-	                        */
-	                        getClient().putObject(name, path.getKey(), stream, metadata);
-	                    }
-	                } else { // delete: check option delete_on_close
-	                	delete(path);
-	                }
-				} finally {
-					try {
-						// and delete the temp dir
-		                Files.deleteIfExists(tempFile);
-		                Files.deleteIfExists(tempFile.getParent());
-					} catch (Throwable t) {
-						// is ok.
-					}
-				}
-			}
-
-			@Override
-			public int write(ByteBuffer src) throws IOException {
-				return seekable.write(src);
-			}
-
-			@Override
-			public SeekableByteChannel truncate(long size) throws IOException {
-				return seekable.truncate(size);
-			}
-
-			@Override
-			public long size() throws IOException {
-				return seekable.size();
-			}
-
-			@Override
-			public int read(ByteBuffer dst) throws IOException {
-				return seekable.read(dst);
-			}
-
-			@Override
-			public SeekableByteChannel position(long newPosition) throws IOException {
-				return seekable.position(newPosition);
-			}
-
-			@Override
-			public long position() throws IOException {
-				return seekable.position();
-			}
-		};
+	public SeekableByteChannel newByteChannel(final S3Path path, final Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+		return new S3SeekableByteChannel(path, options, getClient(), name);
 	}
 
 	@Override
@@ -402,5 +314,23 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		} else if (!name.equals(other.name))
 			return false;
 		return true;
+	}
+
+	public byte[] readAllBytes(S3Path path) throws IOException {
+        S3ObjectInputStream objectContent = getClient().getObject(name, path.getKey()).getObjectContent();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+    	OutputStream outputStream = null;
+    	try {
+			outputStream = new BufferedOutputStream(out);
+	        byte[] buffer = new byte[1024*10];
+	        int bytesRead;
+			while ((bytesRead = objectContent.read(buffer)) > -1)
+				outputStream.write(buffer, 0, bytesRead);
+			outputStream.flush();
+	        return out.toByteArray();
+    	} finally {
+    		if(outputStream != null)
+    			outputStream.close();
+    	}
 	}
 }

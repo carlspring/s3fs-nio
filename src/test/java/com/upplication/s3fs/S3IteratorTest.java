@@ -1,8 +1,8 @@
 package com.upplication.s3fs;
 
-import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -11,7 +11,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -42,7 +41,9 @@ public class S3IteratorTest {
         try{
             FileSystems.getFileSystem(S3_GLOBAL_URI).close();
         }
-        catch(FileSystemNotFoundException e){}
+        catch(FileSystemNotFoundException e){
+			// ignore this
+        }
 
         provider = spy(new S3FileSystemProvider());
         // TODO: we need some real temp dir with unique path when is called
@@ -234,7 +235,7 @@ public class S3IteratorTest {
                 .put(SECRET_KEY, "secret key").build();
     }
 
-    private void assertIterator(Iterator<Path> iterator, final String ... files) throws IOException {
+    private void assertIterator(Iterator<Path> iterator, final String ... files) {
 
         assertNotNull(iterator);
         assertTrue(iterator.hasNext());

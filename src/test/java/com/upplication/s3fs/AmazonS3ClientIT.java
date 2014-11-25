@@ -53,11 +53,10 @@ public class AmazonS3ClientIT {
 	S3Client client;
 	
 	@Before
-	public void setup() throws IOException{
+	public void setup() {
 		// s3client
 		final Map<String, Object> credentials = getRealEnv();
-		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), 
-				credentials.get(SECRET_KEY).toString());
+		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), credentials.get(SECRET_KEY).toString());
 		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 		client = new S3Client(s3);
 	}
@@ -96,7 +95,7 @@ public class AmazonS3ClientIT {
 		assertNotNull(result);
 	}
 	
-	public void putObjectByteArray() throws IOException{
+	public void putObjectByteArray(){
 		
 		PutObjectResult result = client
 				.putObject(getBucket(), randomUUID().toString(), new ByteArrayInputStream("contenido1".getBytes()),

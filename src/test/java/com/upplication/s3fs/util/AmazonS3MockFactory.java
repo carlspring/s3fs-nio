@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.util.Properties;
+import java.util.UUID;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
@@ -23,18 +24,14 @@ public class AmazonS3MockFactory implements AmazonS3Factory {
 	
 	public static AmazonS3ClientMock getAmazonClientMock() {
 		if(amazonS3Client == null )
-			try {
-				amazonS3Client = spy(new AmazonS3ClientMock(getFsMem().getPath("/")));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
+			amazonS3Client = spy(new AmazonS3ClientMock(getFsMem().getPath("/")));
 		return amazonS3Client;
 	}
 	
 	private static FileSystem getFsMem() {
 		if(fsMem == null)
 			try {
-				fsMem = MemoryFileSystemBuilder.newLinux().build("basescheme");
+				fsMem = MemoryFileSystemBuilder.newEmpty().build(UUID.randomUUID().toString());
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

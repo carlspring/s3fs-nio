@@ -35,10 +35,12 @@ public class InstallProviderTest {
 	@Before
 	public void cleanup(){
 		//clean resources
-		try{
+		try {
 			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
-		catch(FileSystemNotFoundException | IOException e){}
+		catch (FileSystemNotFoundException | IOException e) {
+			// ignore this
+        }
 	}
 	
 	@Test
@@ -96,7 +98,7 @@ public class InstallProviderTest {
 	}
 	
 	@Test(expected=FileSystemNotFoundException.class)
-	public void getZipProvider() throws IOException{
+	public void getZipProvider(){
 		URI uri = URI.create("jar:file:/file.zip");
 		FileSystems.getFileSystem(uri);
 	}

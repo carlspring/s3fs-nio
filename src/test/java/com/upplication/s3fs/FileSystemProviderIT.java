@@ -30,9 +30,9 @@ public class FileSystemProviderIT {
 		try {
 			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
-		catch(FileSystemNotFoundException e){}
-		
-		
+		catch(FileSystemNotFoundException e){
+			// ignore this
+		}
 		provider = spy(new S3FileSystemProvider());
 	}
 	

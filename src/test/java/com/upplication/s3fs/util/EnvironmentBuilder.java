@@ -54,14 +54,12 @@ public abstract class EnvironmentBuilder {
 		if (bucketName != null){
 			return bucketName;
 		}
-		else{
-			final Properties props = new Properties();
-			try {
-				props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
-				return props.getProperty(BUCKET_NAME_KEY);
-			} catch (IOException e) {
-				throw new RuntimeException("needed /amazon-test.properties in the classpath");
-			}
+		final Properties props = new Properties();
+		try {
+			props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+			return props.getProperty(BUCKET_NAME_KEY);
+		} catch (IOException e) {
+			throw new RuntimeException("needed /amazon-test.properties in the classpath");
 		}
 	}
 }

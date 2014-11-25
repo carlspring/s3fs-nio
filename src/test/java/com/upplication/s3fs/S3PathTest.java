@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,21 +14,11 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 
 public class S3PathTest extends S3UnitTest {
-
-	@BeforeClass
-	public static void prepareMockFs() throws Exception {
- 		S3FileSystem fileSystem = (S3FileSystem)FileSystems.getFileSystem(S3_GLOBAL_URI);
- 		AmazonS3 client = fileSystem.getClient();
- 		doReturn(true).when(client).doesBucketExist((String) anyObject());
-	}
-	
     @Test
     public void createNoPath() {
         S3Path path = forPath("/bucket");
@@ -404,7 +392,7 @@ public class S3PathTest extends S3UnitTest {
  	
  	@Test(expected = UnsupportedOperationException.class)
  	public void registerWithEventsThrowException() throws IOException{
- 		forPath("file1").register(null, null);
+ 		forPath("file1").register(null);
  	}
  	
  	@Test(expected = UnsupportedOperationException.class)
@@ -414,7 +402,7 @@ public class S3PathTest extends S3UnitTest {
  	
  	@Test(expected = UnsupportedOperationException.class)
  	public void registerWithEventsAndModiferThrowException() throws IOException{
- 		forPath("file1").register(null, null, null);
+ 		forPath("file1").register(null);
  	}
  	
  	// to file
@@ -453,10 +441,9 @@ public class S3PathTest extends S3UnitTest {
  	}
  	
  	@Test
- 	public void toAbsolutePath() throws IOException{
+ 	public void toAbsolutePath() {
  		Path path = forPath("/file1");
  		Path other = path.toAbsolutePath();
- 		
  		assertEquals(path, other);
  	}
  	

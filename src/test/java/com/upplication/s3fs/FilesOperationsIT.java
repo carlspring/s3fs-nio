@@ -11,7 +11,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
@@ -94,28 +93,28 @@ public class FilesOperationsIT {
 		return FileSystems.newFileSystem(S3_GLOBAL_URI, EnvironmentBuilder.getRealEnv());
 	}
 	
-	public void buildEnv() throws IOException{
+	public void buildEnv(){
 		FileSystem fileSystem = FileSystems.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystemAmazon, fileSystem);
 	}
 	
-	public void buildEnvAnotherURIReturnSame() throws IOException{
+	public void buildEnvAnotherURIReturnSame(){
 		FileSystem fileSystem = FileSystems.getFileSystem(uriEurope);
 		assertSame(fileSystemAmazon, fileSystem);
 	}
 	
-	public void buildEnvWithoutEndPointReturnSame() throws IOException{
+	public void buildEnvWithoutEndPointReturnSame(){
 		FileSystem fileSystem = FileSystems.getFileSystem(uriEurope);
 		FileSystem fileSystem2 = FileSystems.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystem2, fileSystem);
 	}
 	
-	public void notExistsDir() throws IOException{
+	public void notExistsDir(){
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 		assertTrue(!Files.exists(dir));
 	}
 	
-	public void notExistsFile() throws IOException{
+	public void notExistsFile(){
 
 		Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 		assertTrue(!Files.exists(file));
@@ -181,17 +180,15 @@ public class FilesOperationsIT {
 		Files.notExists(dir);
 	}
 	
-	public void copyDir() throws IOException, URISyntaxException {
-
+	public void copyDir() throws IOException {
 		Path dir = uploadDir();
-
 		assertTrue(Files.exists(dir.resolve("assets1/")));
 		assertTrue(Files.exists(dir.resolve("assets1/").resolve("index.html")));
 		assertTrue(Files.exists(dir.resolve("assets1/").resolve("img").resolve("Penguins.jpg")));
 		assertTrue(Files.exists(dir.resolve("assets1/").resolve("js").resolve("main.js")));
 	}
 	
-	public void directoryStreamBaseBucketFindDirectoryTest() throws IOException, URISyntaxException{
+	public void directoryStreamBaseBucketFindDirectoryTest() throws IOException {
 		Path bucketPath = fileSystemAmazon.getPath(bucket);
 		String name = "01"+UUID.randomUUID().toString();
 		final Path fileToFind = Files.createDirectory(bucketPath.resolve(name));
@@ -210,7 +207,7 @@ public class FilesOperationsIT {
 		}
 	}
 	
-	public void directoryStreamBaseBucketFindFileTest() throws IOException, URISyntaxException{
+	public void directoryStreamBaseBucketFindFileTest() throws IOException {
 		Path bucketPath = fileSystemAmazon.getPath(bucket);
 		String name = "00"+UUID.randomUUID().toString();
 		final Path fileToFind = Files.createFile(bucketPath.resolve(name));
@@ -229,7 +226,7 @@ public class FilesOperationsIT {
 		}
 	}
 	
-	public void directoryStreamFirstDirTest() throws IOException, URISyntaxException{
+	public void directoryStreamFirstDirTest() throws IOException {
 		Path dir = uploadDir();
 		
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir)){
@@ -245,7 +242,7 @@ public class FilesOperationsIT {
 		}
 	}
 
-	public void virtualDirectoryStreamTest() throws IOException, URISyntaxException{
+	public void virtualDirectoryStreamTest() throws IOException {
 		
 		String folder = UUID.randomUUID().toString();
 		
@@ -293,8 +290,7 @@ public class FilesOperationsIT {
 		}
 	}
 	
-	public void virtualDirectoryStreamWithVirtualSubFolderTest() throws IOException, URISyntaxException{
-		
+	public void virtualDirectoryStreamWithVirtualSubFolderTest() throws IOException{
 		String folder = UUID.randomUUID().toString();
 		
 		String subfoler = folder+"/subfolder/file.html";
@@ -341,12 +337,9 @@ public class FilesOperationsIT {
 		}
 	}
 	
-	public void deleteFullDirTest() throws IOException, URISyntaxException {
-
+	public void deleteFullDirTest() throws IOException {
 		Path dir = uploadDir();
-		
 		Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
-
     	    @Override
     	    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
     	        Files.delete(file);
@@ -354,20 +347,18 @@ public class FilesOperationsIT {
     	    }
 
     	    @Override
-    	    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+    	    public FileVisitResult postVisitDirectory(Path directory, IOException exc) throws IOException {
     	        if(exc == null){
-    	            Files.delete(dir);
+    	            Files.delete(directory);
     	            return FileVisitResult.CONTINUE;
     	        }
     	        throw exc;
     	    }
     	});
-		
 		assertTrue(!Files.exists(dir));
-		
 	}
 	
-	public void copyUploadTest() throws URISyntaxException, IOException {
+	public void copyUploadTest() throws IOException {
         final String content = "sample content";
 		Path result = uploadSingleFile(content);
 		
@@ -375,7 +366,7 @@ public class FilesOperationsIT {
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
 	}
 	
-	public void copyDownloadTest() throws IOException, URISyntaxException{
+	public void copyDownloadTest() throws IOException {
 		Path result = uploadSingleFile(null);
 		
 		Path localResult = Files.createTempDirectory("temp-local-file");
@@ -508,7 +499,7 @@ public class FilesOperationsIT {
 		return file;
 	}
 	
-	private Path uploadSingleFile(String content) throws IOException, URISyntaxException {
+	private Path uploadSingleFile(String content) throws IOException {
 
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
 
@@ -526,7 +517,7 @@ public class FilesOperationsIT {
         }
 	}
 	
-	private Path uploadDir() throws IOException, URISyntaxException {
+	private Path uploadDir() throws IOException {
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")){
 
             Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));

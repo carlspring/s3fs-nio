@@ -72,7 +72,7 @@ public class S3Iterator implements Iterator<Path> {
     private ListObjectsRequest buildRequest(){
         ListObjectsRequest request = new ListObjectsRequest();
         request.setBucketName(fileStore.name());
-		request.setPrefix(key);
+    	request.setPrefix(key);
         request.setDelimiter("/");
         request.setMarker(key);
         return request;
@@ -125,12 +125,9 @@ public class S3Iterator implements Iterator<Path> {
 
         String[] parts = childWithoutParent.split("/");
 
-        if (parts.length > 0 && !parts[0].isEmpty()){
-            return keyParent + "/" + parts[0];
-        }
-        else {
-            return null;
-        }
+        if (parts.length > 0 && !parts[0].isEmpty())
+			return keyParent + "/" + parts[0];
+		return null;
 
     }
 

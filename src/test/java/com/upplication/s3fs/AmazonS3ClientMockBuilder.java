@@ -93,13 +93,9 @@ public class AmazonS3ClientMockBuilder {
      * @return AmazonS3ClientMock and ready to stub with mockito.
      */
     public AmazonS3ClientMock build(final S3FileSystemProvider provider){
-        try {
-            final AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(fs.getPath("/")));
-            doReturn(clientMock).when(provider).getAmazonS3(any(URI.class), any(Properties.class));
-            return clientMock;
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        final AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(fs.getPath("/")));
+        doReturn(clientMock).when(provider).getAmazonS3(any(URI.class), any(Properties.class));
+        return clientMock;
     }
 
 	private Path prepareFile(String file) throws IOException {

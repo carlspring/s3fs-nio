@@ -9,8 +9,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -39,11 +37,11 @@ import java.nio.file.attribute.DosFileAttributes;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,48 +52,11 @@ import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class FileSystemProviderTest extends S3UnitTest {
     S3FileSystemProvider s3fsProvider;
-//	FileSystem fsMem;
 
 	@Before
-	public void cleanup() throws IOException{
-//		fsMem = MemoryFileSystemBuilder.newLinux().build("baseschema");
-//		try{
-//			FileSystems.getFileSystem(S3UnitTest.S3_GLOBAL_URI).close();
-//		}
-//		catch(FileSystemNotFoundException e){}
-		
+	public void cleanup() {
 		s3fsProvider = spy(new S3FileSystemProvider());
-        // TODO: we need some real temp dir with unique path when is called
-//        doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-//                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-//                .doReturn(Files.createDirectory(fsMem.getPath("/"+UUID.randomUUID().toString())))
-//                .when(provider).createTempDir();
-		
 		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
-	}
-	
-	@After
-	public void closeMemory() throws IOException{
-//		fsMem.close();
-		for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values()) {
-			try {
-				s3FileSystem.close();
-			} catch (Exception e) {
-				//ignore
-			}
-		}
-	}
-	
-	
-	private AmazonS3ClientMock mockFileSystem(final Path memoryBucket){
-		try {
-			AmazonS3ClientMock clientMock = spy(new AmazonS3ClientMock(memoryBucket));
-			S3FileSystem s3ileS3FileSystem = new S3FileSystem(s3fsProvider, "null@null", clientMock, "endpoint");
-			doReturn(s3ileS3FileSystem).when(s3fsProvider).createFileSystem(any(URI.class), (Properties) anyObject());
-		    return clientMock;
-        } catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 	}
 	
 	@Test
@@ -247,8 +208,8 @@ public class FileSystemProviderTest extends S3UnitTest {
 		// fixtures
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		Path mocket = client.addBucket("bucketA");
-		Path mockDir = client.addDirectory(mocket, "dir1");
-		client.addFile(mockDir, "file1");
+		client.addDirectory(mocket, "dir1");
+		client.addFile(mocket, "file1");
 		
 		// act
 		Path bucket = createNewS3FileSystem().getPath("/bucketA");
@@ -259,6 +220,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 
     @Test
     public void createStreamDirectoryFromDirectoryReader() throws IOException{
+    	
         // fixtures
     	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		Path mocket = client.addBucket("bucketA");
@@ -304,9 +266,11 @@ public class FileSystemProviderTest extends S3UnitTest {
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
         int count = 0;
         try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
-            for(Path file : files) {
+        	Iterator<Path> iterator = files.iterator();
+        	while (iterator.hasNext()) {
+        		iterator.next();
                 count++;
-            }
+        	}
         }
         assertEquals(count999, count);
     }
@@ -325,7 +289,9 @@ public class FileSystemProviderTest extends S3UnitTest {
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
         int count = 0;
         try(DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
-            for(Path file : files) {
+        	Iterator<Path> iterator = files.iterator();
+        	while(iterator.hasNext()) {
+        		iterator.next();
                 count++;
             }
         }
@@ -394,12 +360,8 @@ public class FileSystemProviderTest extends S3UnitTest {
     @Test(expected = FileAlreadyExistsException.class)
     public void outputStreamWithCreateNewAndFileExists() throws IOException{
         Path base = getS3Directory();
-
         Path file = Files.createFile(base.resolve("file1"));
-
-        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW)){
-        	//
-        }
+        s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW);
     }
 
     @Test
@@ -408,12 +370,13 @@ public class FileSystemProviderTest extends S3UnitTest {
 
         Path file = base.resolve("file1");
         Files.createFile(file);
-
+        
         final String content = "sample content";
 
         try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE)){
             stream.write(content.getBytes());
             stream.flush();
+            stream.close();
         }
         // get the input
         byte[] buffer =  Files.readAllBytes(file);
@@ -460,8 +423,8 @@ public class FileSystemProviderTest extends S3UnitTest {
         // fixtures
     	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		Path mocket = client.addBucket("bucketA");
-		Path mockDir = client.addDirectory(mocket, "dir1");
-		client.addFile(mockDir, "file1");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addFile(mockDir, "file");
 
 		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
 
@@ -475,6 +438,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 			seekable.read(bufferRead);
 
 			assertArrayEquals(bufferRead.array(), buffer.array());
+			seekable.close();
 		}
 		
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
@@ -738,7 +702,7 @@ public class FileSystemProviderTest extends S3UnitTest {
         Path file = Files.createFile(base.resolve("file"));
 
         try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
-        	//
+        	seekable.close();
         }
 
         assertTrue(Files.notExists(file));
@@ -986,7 +950,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void getFileAttributeView(){
-		s3fsProvider.getFileAttributeView(null, null, null);
+		s3fsProvider.getFileAttributeView(null, null);
 	}
 	
 	// readAttributes
@@ -1075,7 +1039,8 @@ public class FileSystemProviderTest extends S3UnitTest {
         // fixtures
     	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "dir/dir", "content");
+		Path directory = client.addDirectory(mocket, "dir");
+		client.addFile(directory, "dir", "content");
 
         FileSystem fs = createNewS3FileSystem();
         Path dir = fs.getPath("/bucketA/dir");
@@ -1120,7 +1085,7 @@ public class FileSystemProviderTest extends S3UnitTest {
         // fixtures
     	AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		Path mocket = client.addBucket("bucketA");
-		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addDirectory(mocket, "dir");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir/file1");
@@ -1157,14 +1122,14 @@ public class FileSystemProviderTest extends S3UnitTest {
 
 	@Test(expected = UnsupportedOperationException.class)
 	public void readAttributesString() throws IOException{
-		s3fsProvider.readAttributes(null, "", null);
+		s3fsProvider.readAttributes(null, "");
 	}
 	
 	// setAttribute
 	
 	@Test(expected = UnsupportedOperationException.class)
 	public void readAttributesObject() throws IOException{
-		s3fsProvider.setAttribute(null, "", new Object(), null);
+		s3fsProvider.setAttribute(null, "", new Object());
 	}
 
     // check access
@@ -1191,7 +1156,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 		client.addDirectory(mocket, "dir");
 		
         // return empty list
-        doReturn(new AccessControlList()).when(client).getObjectAcl("bucketA", "dir/");
+//        doReturn(new AccessControlList()).when(client).getObjectAcl("bucketA", "dir/");
 
         FileSystem fs = createNewS3FileSystem();
         Path file1 = fs.getPath("/bucketA/dir");
@@ -1257,11 +1222,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 	}
 	
 	private void assertNewDirectoryStream(Path base, final String ... files) throws IOException {
-		try (DirectoryStream<Path> dir = Files.newDirectoryStream(base, new  DirectoryStream.Filter<Path>(){
-			@Override public boolean accept(Path entry) throws IOException {
-				return true;
-			}
-		})){
+		try (DirectoryStream<Path> dir = Files.newDirectoryStream(base)){
 			assertNotNull(dir);
 			assertNotNull(dir.iterator());
 			assertTrue(dir.iterator().hasNext());

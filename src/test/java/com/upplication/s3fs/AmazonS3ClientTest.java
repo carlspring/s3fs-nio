@@ -1,19 +1,32 @@
 package com.upplication.s3fs;
 
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.CopyObjectResult;
+import com.amazonaws.services.s3.model.ListObjectsRequest;
+import com.amazonaws.services.s3.model.ObjectListing;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.Owner;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.amazonaws.services.s3.model.S3Object;
 
 public class AmazonS3ClientTest {
 
@@ -154,14 +167,13 @@ public class AmazonS3ClientTest {
         assertEquals(expectedResult, actualResult);
     }
 
-    @Test
+    @SuppressWarnings("unchecked")
+	@Test
     public void listBuckets(){
-
         List<Bucket> expectedResult = mock(List.class);
         when(amazonS3.listBuckets()).thenReturn(expectedResult);
 
         List<Bucket> actualResult = amazonS3Client.listBuckets();
-
         verify(amazonS3).listBuckets();
         assertEquals(expectedResult, actualResult);
     }

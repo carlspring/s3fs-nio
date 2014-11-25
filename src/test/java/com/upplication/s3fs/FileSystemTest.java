@@ -1,77 +1,38 @@
 package com.upplication.s3fs;
 
-import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.S3UnitTest.S3_GLOBAL_URI;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
+import com.upplication.s3fs.util.AmazonS3MockFactory;
 
-public class FileSystemTest {
-	
+public class FileSystemTest extends S3UnitTest {
 	private FileSystem fs;
-//	private FileSystem fsMem;
-	private S3FileSystemProvider provider;
 	
 	@Before
 	public void setup() throws IOException{
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		client.addBucket("bucketA");
+		client.addBucket("bucketB");
 		fs = FileSystems.getFileSystem(S3_GLOBAL_URI);
-		AmazonS3 client = ((S3FileSystem)fs).getClient();
-    	doReturn(true).when(client).doesBucketExist("bucket");
-    	List<Bucket> buckets = new ArrayList<Bucket>();
-    	buckets.add(new Bucket("bucketA"));
-    	buckets.add(new Bucket("bucketB"));
-		doReturn(buckets).when(client).listBuckets();
 	}
 	
-	@After
-	public void closeMemory() throws IOException{
-//		fsMem.close();
-	}
-	
-	
-	private void mockFileSystem(final Path memoryBucket){
-		try {
-			AmazonS3ClientMock clientMock = new AmazonS3ClientMock(memoryBucket);
-			S3FileSystem s3ileS3FileSystem = new S3FileSystem(provider, "mockS3Fs", clientMock, "endpoint");
-			doReturn(s3ileS3FileSystem).when(provider).createFileSystem(any(URI.class), (Properties) anyObject());
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
     @Test
     public void getPathFirst() {
-        assertEquals(fs.getPath("/bucket"),
-                fs.getPath("/bucket"));
-
-        assertEquals(fs.getPath("file"),
-                fs.getPath("file"));
+        assertEquals(fs.getPath("/bucket"), fs.getPath("/bucket"));
+        assertEquals(fs.getPath("file"), fs.getPath("file"));
     }
 
     @Test
@@ -231,12 +192,6 @@ public class FileSystemTest {
 		assertTrue(!fs.isOpen());
 	}
 	
-	private Map<String, ?> buildFakeEnv(){
-		return ImmutableMap.<String, Object> builder()
-				.put(ACCESS_KEY, "access key")
-				.put(SECRET_KEY, "secret key").build();
-	}
-
     private static void assertNotEquals(Object a, Object b){
         assertTrue(a + " are not equal to: " + b, !a.equals(b));
     }

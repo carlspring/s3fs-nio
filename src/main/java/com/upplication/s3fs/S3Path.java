@@ -533,4 +533,8 @@ public class S3Path implements Path {
 	public void setObjectSummary(S3ObjectSummary objectSummary) {
 		this.objectSummary = objectSummary;
 	}
+
+	public byte[] readAllBytes() throws IOException {
+		return getFileStore().readAllBytes(this);
+	}
 }

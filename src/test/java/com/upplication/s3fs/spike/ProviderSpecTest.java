@@ -1,9 +1,7 @@
 package com.upplication.s3fs.spike;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -14,8 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 
 public class ProviderSpecTest {
 	FileSystem fs;
@@ -34,13 +35,10 @@ public class ProviderSpecTest {
     public void readNothing() throws IOException {
         //Path base = Files.createDirectories(fs.getPath("/dir"));
         Path base = Files.createTempDirectory("asdadadasd");
-
-        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")),
-                EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
+        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")), EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))){
+			// do nothing
         }
-
         assertTrue(Files.notExists(base.resolve("file1.html")));
-
     }
 
 	// FIXME @Test

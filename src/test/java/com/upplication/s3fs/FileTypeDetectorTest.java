@@ -1,26 +1,25 @@
 package com.upplication.s3fs;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.upplication.s3fs.util.FileTypeDetector;
-import org.apache.tika.Tika;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ServiceLoader;
-
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ServiceLoader;
+
+import org.apache.tika.Tika;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.upplication.s3fs.util.FileTypeDetector;
 
 public class FileTypeDetectorTest {
     private FileSystem fsMem;
@@ -47,7 +46,7 @@ public class FileTypeDetectorTest {
     }
 
     @Test
-    public void fileTypeDetectorDetectByServiceLocator() throws IOException {
+    public void fileTypeDetectorDetectByServiceLocator() {
         // act
         ServiceLoader<java.nio.file.spi.FileTypeDetector> loader = ServiceLoader
                 .load(java.nio.file.spi.FileTypeDetector.class, ClassLoader.getSystemClassLoader());
