@@ -30,7 +30,6 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -54,7 +53,6 @@ public class S3Path implements Path {
 	 * actual filesystem
 	 */
 	private S3FileSystem fileSystem;
-	private S3ObjectSummary objectSummary;
 
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
@@ -528,10 +526,6 @@ public class S3Path implements Path {
 
 	public SeekableByteChannel newByteChannel(Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
 		return getFileStore().newByteChannel(this, options, attrs);
-	}
-
-	public void setObjectSummary(S3ObjectSummary objectSummary) {
-		this.objectSummary = objectSummary;
 	}
 
 	public byte[] readAllBytes() throws IOException {

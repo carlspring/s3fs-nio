@@ -24,9 +24,7 @@ public class S3Iterator implements Iterator<Path> {
     private Iterator<S3Path> it;
 
     public S3Iterator(S3FileSystem s3FileSystem, S3FileStore fileStore, String key) {
-
         Preconditions.checkArgument(key != null && key.endsWith("/"), "key %s should be ended with slash '/'", key);
-
         this.fileStore = fileStore;
         // the only case i dont need the end slash is to list buckets content
         this.key = key.length() == 1 ? "" : key;
@@ -97,7 +95,6 @@ public class S3Iterator implements Iterator<Path> {
             		descendentPart = new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(immediateDescendantKey));
             	else
             		descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), S3KeyHelper.getParts(immediateDescendantKey));
-            	descendentPart.setObjectSummary(objectSummary);
                 if (!listPath.contains(descendentPart)){
                     listPath.add(descendentPart);
                 }
