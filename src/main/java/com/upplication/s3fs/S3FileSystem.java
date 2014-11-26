@@ -92,7 +92,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	}
 
 	@Override
-	public Path getPath(String first, String... more) {
+	public S3Path getPath(String first, String... more) {
 		if (more.length == 0) {
 			return new S3Path(this, first);
 		}

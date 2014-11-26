@@ -175,7 +175,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	@Override
-	public FileSystem getFileSystem(URI uri) {
+	public S3FileSystem getFileSystem(URI uri) {
 		validateUri(uri);
 		String key = this.getFileSystemKey(uri);
 		if(!fileSystems.containsKey(key)) {
@@ -185,7 +185,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 				throw new FileSystemNotFoundException(e.getMessage());
 			}
 		}
-	    FileSystem fileSystem = fileSystems.get(key);
+		S3FileSystem fileSystem = fileSystems.get(key);
 	    if (fileSystem == null) {
 	      throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
 	    }
@@ -195,10 +195,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	private S3Path toS3Path(Path path) {
 		Preconditions.checkArgument(path instanceof S3Path, "path must be an instance of %s", S3Path.class.getName());
 		return (S3Path) path;
-	}
-
-	private void checkSupported(OpenOption... options) {
-		Preconditions.checkArgument(options.length == 0, "OpenOptions not yet supported: %s", ImmutableList.copyOf(options)); // TODO
 	}
 
 	/**
@@ -223,28 +219,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
             public void close() throws IOException {
                 // nothing to do here
             }
-
             @Override
             public Iterator<Path> iterator() {
-                return new S3Iterator(s3Path.getFileSystem(), s3Path.getFileStore(), s3Path.getKey() + "/");
+                return new S3Iterator(s3Path);
             }
         };
     }
 
 	@Override
 	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
-		checkSupported(options);
-		S3Path s3Path = toS3Path(path);
-
-		Preconditions.checkArgument(!s3Path.getKey().equals(""), "cannot create InputStream for root directory: %s", s3Path);
-	
-		InputStream res = s3Path.getFileSystem().getClient()
-				.getObject(s3Path.getFileStore().name(), s3Path.getKey())
-				.getObjectContent();
-	
-		if (res == null)
-			throw new IOException("path is a directory");
-		return res;
+		return toS3Path(path).getInputStream(options);
 	}
 
 	@Override
@@ -349,7 +333,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
 	}
 
-	public AmazonS3 getAmazonS3(URI uri, Properties props) {
+	protected AmazonS3 getAmazonS3(URI uri, Properties props) {
 		return getAmazonS3Factory(props).getAmazonS3(uri, props);
 	}
 
@@ -358,8 +342,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			String amazonS3FactoryClass = props.getProperty(AMAZON_S3_FACTORY_CLASS);
 			try {
 				return (AmazonS3Factory) Class.forName(amazonS3FactoryClass).newInstance();
-			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-				throw new S3FileSystemException("Configuration problem, couldn't instantiate AmazonS3Factory ("+amazonS3FactoryClass+"): ", e);
+			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
+				throw new S3FileSystemConfigurationException("Configuration problem, couldn't instantiate AmazonS3Factory ("+amazonS3FactoryClass+"): ", e);
 			}
 		}
 		return new AmazonS3ClientFactory();

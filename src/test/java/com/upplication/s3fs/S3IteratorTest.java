@@ -39,8 +39,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(dir, "file1");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir/");
-
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+        S3Iterator iterator = new S3Iterator(path);
         assertIterator(iterator, "file1");
     }
 
@@ -55,8 +55,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(dir, "file2");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir2/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir2");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "file1", "file2");
     }
@@ -70,8 +70,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(mocket, "dir2-file2");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir2/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir2");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "dir2-file");
     }
@@ -91,8 +91,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(subdir3, "file3");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "file", "file2", "dir", "dir2");
     }
@@ -111,22 +111,22 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(subdir3, "file3");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "/");
+        S3Path path = s3FileSystem.getPath("/bucketA");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "file", "file2", "dir", "dir2");
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void iteratorKeyNotEndSlash() throws IOException {
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path subdir2 = client.addDirectory(mocket, "dir2");
-		client.addFile(subdir2, "dir2-file");
-        S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir2");
-    }
+//    @Test(expected = IllegalArgumentException.class)
+//    public void iteratorKeyNotEndSlash() throws IOException {
+//		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+//		Path mocket = client.addBucket("bucketA");
+//		Path subdir2 = client.addDirectory(mocket, "dir2");
+//		client.addFile(subdir2, "dir2-file");
+//        S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
+//        S3Path path = s3FileSystem.getPath("/bucketA", "dir2");
+//        new S3Iterator(path);
+//    }
 
     @Test
     public void iteratorFileReturnEmpty() throws IOException {
@@ -135,8 +135,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(mocket, "file1");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "file1/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "file1");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertFalse(iterator.hasNext());
     }
@@ -148,8 +148,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addDirectory(mocket, "dir");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertFalse(iterator.hasNext());
     }
@@ -163,8 +163,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(mocket, "file3");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "/");
+        S3Path path = s3FileSystem.getPath("/bucketA");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "file1", "file2", "file3");
     }
@@ -182,8 +182,8 @@ public class S3IteratorTest extends S3UnitTest {
         }
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "/");
+        S3Path path = s3FileSystem.getPath("/bucketA");
+        S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, filesNameExpected);
     }
@@ -196,8 +196,8 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(dir, "file1");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
-
-        S3Iterator iterator = new S3Iterator(s3FileSystem, s3FileSystem.getFileStore("bucketA"), "dir/");
+        S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+        S3Iterator iterator = new S3Iterator(path);
         iterator.remove();
     }
 

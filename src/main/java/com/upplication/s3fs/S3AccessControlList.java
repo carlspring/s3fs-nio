@@ -33,7 +33,7 @@ public class S3AccessControlList {
      * @param permissions almost one
      * @return
      */
-	public boolean hasPermission(EnumSet<Permission> permissions) {
+	private boolean hasPermission(EnumSet<Permission> permissions) {
 		for (Grant grant : acl.getGrants())
 			if (grant.getGrantee().getIdentifier().equals(owner.getId()) && permissions.contains(grant.getPermission()))
 				return true;

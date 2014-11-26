@@ -120,7 +120,7 @@ public class S3ObjectSummaryLookupIT {
         s3FileSystem.getClient().putObject(bucket.replace("/",""), startPath + "lib/angular-dynamic-locale/", new ByteArrayInputStream("".getBytes()), metadata);
 
 
-        S3Path s3Path = (S3Path) s3FileSystem.getPath(bucket, startPath, "lib", "angular");
+        S3Path s3Path = s3FileSystem.getPath(bucket, startPath, "lib", "angular");
         S3ObjectSummary result = s3Path.getFileStore().getS3ObjectSummary(s3Path);
 
         assertEquals(startPath + "lib/angular/", result.getKey());

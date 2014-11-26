@@ -14,7 +14,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
@@ -25,21 +24,19 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
     private final FileTypeDetector fileTypeDetector = new FileTypeDetector();
 	private S3Path path;
 	private Set<? extends OpenOption> options;
-	private AmazonS3 client;
-	private String bucketName;
+	private S3FileStore fileStore;
 	private SeekableByteChannel seekable;
 	private Path tempFile;
 
-	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options, AmazonS3 client, String bucketName) throws IOException {
+	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options, S3FileStore fileStore) throws IOException {
 		this.path = path;
 		this.options = options;
-		this.client = client;
-		this.bucketName = bucketName;
+		this.fileStore = fileStore;
 		String key = path.getKey();
 		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
         boolean existed = false;
-        try (S3Object object = client.getObject(bucketName, key)) {
-        	InputStream is = client.getObject(bucketName, key).getObjectContent();
+        try (S3Object object = fileStore.getObject(key)) {
+        	InputStream is = object.getObjectContent();
             Files.write(tempFile, IOUtils.toByteArray(is), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             existed = true;
         } catch (AmazonS3Exception e) {
@@ -80,7 +77,7 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
                      and evict the close and open methods of probeContentType. By this way:
                      metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
                     */
-                    client.putObject(bucketName, path.getKey(), stream, metadata);
+                	fileStore.putObject(path.getKey(), stream, metadata);
                 }
             }
             if(options.contains(StandardOpenOption.DELETE_ON_CLOSE)) {

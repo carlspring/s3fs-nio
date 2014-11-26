@@ -7,7 +7,6 @@ import java.util.List;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.upplication.s3fs.util.S3KeyHelper;
 
@@ -23,12 +22,10 @@ public class S3Iterator implements Iterator<Path> {
 
     private Iterator<S3Path> it;
 
-    public S3Iterator(S3FileSystem s3FileSystem, S3FileStore fileStore, String key) {
-        Preconditions.checkArgument(key != null && key.endsWith("/"), "key %s should be ended with slash '/'", key);
-        this.fileStore = fileStore;
-        // the only case i dont need the end slash is to list buckets content
-        this.key = key.length() == 1 ? "" : key;
-        this.s3FileSystem = s3FileSystem;
+    public S3Iterator(S3Path path) {
+        this.fileStore = path.getFileStore();
+        this.key = path.getKey().length() == 0 ? "" : path.getKey() + "/";
+        this.s3FileSystem = path.getFileSystem();
     }
 
     @Override

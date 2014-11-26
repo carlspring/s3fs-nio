@@ -7,6 +7,7 @@ import static java.lang.String.format;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.AccessDeniedException;
@@ -486,11 +487,11 @@ public class S3Path implements Path {
 	}
 
 	public void copyTo(S3Path target, CopyOption[] options) {
-		getFileStore().copy(getKey(), target, options);
+		getFileStore().copy(this, target, options);
 	}
 
 	public void createDirectory(FileAttribute<?>[] attrs) {
-		getFileStore().createDirectory(getKey(), attrs);
+		getFileStore().createDirectory(this, attrs);
 	}
 
 	public void checkAccess(AccessMode[] modes) throws AccessDeniedException, NoSuchFileException {
@@ -530,5 +531,9 @@ public class S3Path implements Path {
 
 	public byte[] readAllBytes() throws IOException {
 		return getFileStore().readAllBytes(this);
+	}
+
+	public InputStream getInputStream(OpenOption... options) throws IOException {
+		return getFileStore().getInputStream(this, options);
 	}
 }

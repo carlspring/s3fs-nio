@@ -30,24 +30,19 @@ public class S3FileStoreAttributeView implements FileStoreAttributeView {
 	}
 
 	public Object getAttribute(String attribute) {
-		AttrID attrID = AttrID.valueOf(attribute);
-		return getAttribute(attrID);
+		return getAttribute(AttrID.valueOf(attribute));
 	}
 
 	private Object getAttribute(AttrID attrID) {
 		switch (attrID) {
 		case creationDate:
 			return creationDate;
-		case name:
-			return name;
 		case ownerDisplayName:
 			return ownerDisplayName;
 		case ownerId:
 			return ownerId;
 		default:
-			break;
+			return name;
 		}
-		return null;
 	}
-
 }

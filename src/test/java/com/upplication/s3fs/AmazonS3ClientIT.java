@@ -50,15 +50,14 @@ public class AmazonS3ClientIT {
 		putObjectByteArray();
 	}
 	
-	S3Client client;
+	AmazonS3 client;
 	
 	@Before
 	public void setup() {
 		// s3client
 		final Map<String, Object> credentials = getRealEnv();
 		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), credentials.get(SECRET_KEY).toString());
-		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
-		client = new S3Client(s3);
+		client = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 	}
 	
 	public void putObject() throws IOException{
