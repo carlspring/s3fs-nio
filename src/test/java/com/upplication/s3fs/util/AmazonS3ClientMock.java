@@ -239,7 +239,7 @@ public class AmazonS3ClientMock extends S3Client {
 		}
 		return result;
 	}
-
+	 
 	@Override
 	public Bucket createBucket(CreateBucketRequest createBucketRequest) throws AmazonClientException, AmazonServiceException {
 		// TODO Auto-generated method stub
@@ -248,8 +248,16 @@ public class AmazonS3ClientMock extends S3Client {
 	
 	@Override
 	public Bucket createBucket(String bucketName) throws AmazonClientException, AmazonServiceException {
-		// TODO Auto-generated method stub
-		return super.createBucket(bucketName);
+		try {
+			String name = bucketName.replaceAll("//","");
+			Path path = Files.createDirectories(base.resolve(name));
+			Bucket bucket = new Bucket(name);
+			bucket.setOwner(getS3AccountOwner());
+			bucket.setCreationDate(new Date(Files.readAttributes(path, BasicFileAttributes.class).creationTime().toMillis()));
+			return bucket;
+		} catch (IOException e) {
+			throw new AmazonClientException(e);
+		}
 	}
 	
 	@Override
@@ -339,7 +347,8 @@ public class AmazonS3ClientMock extends S3Client {
 	        else {
 	        	Files.createFile(resolve);
 	        	S3ObjectInputStream objectContent = elem.getS3Object().getObjectContent();
-	        	Files.write(resolve, IOUtils.toByteArray(objectContent));
+	        	if(objectContent != null)
+	        		Files.write(resolve, IOUtils.toByteArray(objectContent));
 	        }
     	} catch (IOException e) {
     		throw new AmazonServiceException("Problem creating mock element: ", e);
@@ -622,5 +631,25 @@ public class AmazonS3ClientMock extends S3Client {
 
 	public Path addDirectory(Path parent, String directoryName) throws IOException {
 		return Files.createDirectories(parent.resolve(directoryName));
+	}
+
+	public void clear() {
+		try {
+			Files.walkFileTree(base, new SimpleFileVisitor<Path>(){
+				@Override
+				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+					if(dir != base)
+						Files.delete(dir);
+					return FileVisitResult.CONTINUE;
+				}
+				@Override
+				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+					Files.delete(file);
+					return FileVisitResult.CONTINUE;
+				}
+			});
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

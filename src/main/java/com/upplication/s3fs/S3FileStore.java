@@ -46,11 +46,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	public S3FileStore(S3FileSystem s3FileSystem, String name) {
 		this.fileSystem = s3FileSystem;
 		this.name = name;
-		if(getClient().doesBucketExist(name)) {
-			this.bucket = getBucket(name);
-		} else {
-			this.bucket = null;
-		}
+		this.bucket = getBucket(name);
 	}
 
 	@Override
@@ -85,13 +81,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	@Override
 	public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean supportsFileAttributeView(String attributeViewName) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -99,7 +93,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	@Override
 	public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
 		if(type != S3FileStoreAttributeView.class)
-			throw new FileStoreAttributeViewTypeNotSupportedException(type);
+			throw new IllegalArgumentException("FileStoreAttributeView of type '" + type.getName() + "' is not supported.");
 		Bucket buck = getBucket();
 		Owner owner = buck.getOwner();
 		return (V) new S3FileStoreAttributeView(buck.getCreationDate(), buck.getName(), owner.getId(), owner.getDisplayName());
@@ -147,9 +141,8 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	public void createDirectory(String key, FileAttribute<?>[] attrs) {
 		if(bucket == null) {
 			// check if bucket exists.
-			if(getClient().doesBucketExist(name))
-				bucket = getBucket(name);
-			// ifnot try to create it.
+			bucket = getBucket(name);
+			// if not try to create it.
 			if(bucket == null)
 				bucket = getClient().createBucket(name);
 		}

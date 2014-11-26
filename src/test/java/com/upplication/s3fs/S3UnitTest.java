@@ -6,8 +6,9 @@ import java.net.URI;
 
 import org.junit.After;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
+import org.junit.Test;
 
-import com.amazonaws.services.s3.model.Bucket;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 
@@ -18,17 +19,17 @@ public class S3UnitTest {
 	public static void setProperties() {
 		System.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.AmazonS3MockFactory");
 	}
+
+	@Ignore
+	@Test
+	public void ignoreMe(){
+		// this does nothing. But is needed because mvn thinks anything that begins or ends with Test is a UnitTest.
+	}
 	
 	@After
 	public void closeMemory() {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		for (Bucket bucket : client.listBuckets()) {
-			try {
-				client.deleteBucket(bucket.getName());
-			} catch (Throwable t) {
-				// intentional ignore.
-			}
-		}
+		client.clear();
 		for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values()) {
 			try {
 				s3FileSystem.close();

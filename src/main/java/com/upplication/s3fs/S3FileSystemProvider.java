@@ -4,7 +4,7 @@ import static com.google.common.collect.Sets.difference;
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.CONNECTION_TIMEOUT;
 import static com.upplication.s3fs.AmazonS3Factory.MAX_CONNECTIONS;
-import static com.upplication.s3fs.AmazonS3Factory.MAX_RETRY_ERROR;
+import static com.upplication.s3fs.AmazonS3Factory.MAX_ERROR_RETRY;
 import static com.upplication.s3fs.AmazonS3Factory.PROTOCOL;
 import static com.upplication.s3fs.AmazonS3Factory.PROXY_DOMAIN;
 import static com.upplication.s3fs.AmazonS3Factory.PROXY_HOST;
@@ -143,7 +143,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	private void overloadProperties(Properties props, Map<String, ?> env) {
 		if(env == null)
 			env = new HashMap<>();
-		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_RETRY_ERROR, PROTOCOL, PROXY_DOMAIN, PROXY_HOST, PROXY_PASSWORD,
+		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN, PROXY_HOST, PROXY_PASSWORD,
 				PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT, USER_AGENT, AMAZON_S3_FACTORY_CLASS })
 			overloadProperty(props, env, key);
 	}
@@ -155,6 +155,23 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			props.setProperty(key, System.getProperty(key));
 		else if(System.getenv(key) != null)
 			props.setProperty(key, System.getenv(key));
+	}
+
+	public FileSystem getFileSystem(URI uri, Map<String, ?> env) {
+		validateUri(uri);
+		String key = this.getFileSystemKey(uri);
+		if(!fileSystems.containsKey(key)) {
+			try {
+				newFileSystem(uri, env);
+			} catch (IOException e) {
+				throw new FileSystemNotFoundException(e.getMessage());
+			}
+		}
+	    FileSystem fileSystem = fileSystems.get(key);
+	    if (fileSystem == null) {
+	      throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
+	    }
+	    return fileSystem;
 	}
 
 	@Override

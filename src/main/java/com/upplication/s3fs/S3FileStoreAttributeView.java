@@ -10,7 +10,7 @@ public class S3FileStoreAttributeView implements FileStoreAttributeView {
 	private String ownerId;
 	private String ownerDisplayName;
 	
-	private static enum AttrID {
+	public static enum AttrID {
         creationDate,
         name,
         ownerId,
