@@ -5,8 +5,12 @@ import com.amazonaws.Response;
 import com.amazonaws.metrics.RequestMetricCollector;
 
 public class NoOpRequestMetricCollector extends RequestMetricCollector {
-    @Override public void collectMetrics(Request<?> request, Response<?> response) {
-    	//
-    }
-    @Override public boolean isEnabled() { return false; }
+	@Override
+	public void collectMetrics(Request<?> request, Response<?> response) {
+		//
+	}
+	@Override
+	public boolean isEnabled() {
+		return false;
+	}
 }

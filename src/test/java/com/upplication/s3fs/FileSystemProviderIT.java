@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.EnvironmentBuilder;
 
 public class FileSystemProviderIT {
-	S3FileSystemProvider provider;
+	private S3FileSystemProvider provider;
 	
 	@Before
 	public void setup() throws IOException{

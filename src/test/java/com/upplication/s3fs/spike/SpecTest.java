@@ -14,17 +14,17 @@ import com.upplication.s3fs.S3FileSystemProvider;
 
 public class SpecTest {
 	@Test
-	public void parentOfRelativeSinglePathIsNull(){
+	public void parentOfRelativeSinglePathIsNull() {
 		Path path = FileSystems.getDefault().getPath("relativo");
 		assertNull(path.getParent());
 	}
-	
+
 	@Test
-	public void installedFileSystemsLoadFromMetaInf(){
+	public void installedFileSystemsLoadFromMetaInf() {
 		List<FileSystemProvider> providers = FileSystemProvider.installedProviders();
 		boolean installed = false;
-		for (FileSystemProvider prov : providers){
-			if (prov instanceof S3FileSystemProvider){
+		for (FileSystemProvider prov : providers) {
+			if (prov instanceof S3FileSystemProvider) {
 				installed = true;
 				return;
 			}

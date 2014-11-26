@@ -116,13 +116,13 @@ import com.amazonaws.services.s3.model.UploadPartResult;
 import com.amazonaws.services.s3.model.VersionListing;
 
 public class AmazonS3ClientMock implements AmazonS3 {
-    /**
-     * max elements amazon aws
-     */
-    private static final int LIMIT_AWS_MAX_ELEMENTS = 1000;
+	/**
+	 * max elements amazon aws
+	 */
+	private static final int LIMIT_AWS_MAX_ELEMENTS = 1000;
 
 	// default owner
-    private Owner defaultOwner = new Owner() {
+	private Owner defaultOwner = new Owner() {
 		private static final long serialVersionUID = 5510838843790352879L;
 		{
 			setDisplayName("Mock");
@@ -137,88 +137,88 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		this.base = base;
 	}
 
-    /**
-     * list all objects without and return ObjectListing with all elements
-     * and with truncated to false
-     */
+	/**
+	 * list all objects without and return ObjectListing with all elements
+	 * and with truncated to false
+	 */
 	@Override
 	public ObjectListing listObjects(ListObjectsRequest listObjectsRequest) throws AmazonClientException {
-        ObjectListing objectListing = new ObjectListing();
-        objectListing.setBucketName(listObjectsRequest.getBucketName());
-        objectListing.setPrefix(listObjectsRequest.getPrefix());
-        objectListing.setMarker(listObjectsRequest.getMarker());
-        objectListing.setDelimiter(listObjectsRequest.getDelimiter());
+		ObjectListing objectListing = new ObjectListing();
+		objectListing.setBucketName(listObjectsRequest.getBucketName());
+		objectListing.setPrefix(listObjectsRequest.getPrefix());
+		objectListing.setMarker(listObjectsRequest.getMarker());
+		objectListing.setDelimiter(listObjectsRequest.getDelimiter());
 
-        final Path bucket = find(listObjectsRequest.getBucketName());
-        final Map<String, S3Element> elems = new HashMap<String, AmazonS3ClientMock.S3Element>();
+		final Path bucket = find(listObjectsRequest.getBucketName());
+		final Map<String, S3Element> elems = new HashMap<String, AmazonS3ClientMock.S3Element>();
 		try {
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 					S3Element element = parse(dir, bucket);
-					if(!elems.containsKey(element.getS3Object().getKey()))
+					if (!elems.containsKey(element.getS3Object().getKey()))
 						elems.put(element.getS3Object().getKey(), element);
 					return super.preVisitDirectory(dir, attrs);
 				}
+
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					S3Element element = parse(file, bucket);
-					if(!elems.containsKey(element.getS3Object().getKey()))
+					if (!elems.containsKey(element.getS3Object().getKey()))
 						elems.put(element.getS3Object().getKey(), element);
 					return super.visitFile(file, attrs);
 				}
 			});
 			for (Path elem : Files.newDirectoryStream(bucket)) {
 				S3Element element = parse(elem, bucket);
-				if(!elems.containsKey(element.getS3Object().getKey()))
+				if (!elems.containsKey(element.getS3Object().getKey()))
 					elems.put(element.getS3Object().getKey(), element);
 			}
 		} catch (IOException e) {
 			throw new AmazonClientException(e);
 		}
 		Iterator<S3Element> iterator = elems.values().iterator();
-        int i = 0;
-        while(iterator.hasNext()){
+		int i = 0;
+		while (iterator.hasNext()) {
 
-            S3Element elem = iterator.next();
-            if(elem.getS3Object().getKey().equals("/"))
-            	continue;
-            // TODO. add delimiter and marker support
-            if (listObjectsRequest.getPrefix() != null && elem.getS3Object().getKey().startsWith(listObjectsRequest.getPrefix())) {
+			S3Element elem = iterator.next();
+			if (elem.getS3Object().getKey().equals("/"))
+				continue;
+			// TODO. add delimiter and marker support
+			if (listObjectsRequest.getPrefix() != null && elem.getS3Object().getKey().startsWith(listObjectsRequest.getPrefix())) {
 
-                S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
-                objectListing.getObjectSummaries().add(s3ObjectSummary);
+				S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
+				objectListing.getObjectSummaries().add(s3ObjectSummary);
 
-                if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()){
-                    objectListing.setTruncated(true);
-                    objectListing.setNextMarker(iterator.next().getS3Object().getKey());
-                    return objectListing;
-                }
+				if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()) {
+					objectListing.setTruncated(true);
+					objectListing.setNextMarker(iterator.next().getS3Object().getKey());
+					return objectListing;
+				}
 				objectListing.setTruncated(false);
 
-                i++;
-            }
+				i++;
+			}
 
-        }
+		}
 
 		return objectListing;
 	}
 
-    @Override
-    public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
-        ObjectListing objectListing = new ObjectListing();
-        objectListing.setBucketName(previousObjectListing.getBucketName());
-        objectListing.setPrefix(previousObjectListing.getPrefix());
-        objectListing.setMarker(previousObjectListing.getMarker());
-        objectListing.setDelimiter(previousObjectListing.getDelimiter());
+	@Override
+	public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
+		ObjectListing objectListing = new ObjectListing();
+		objectListing.setBucketName(previousObjectListing.getBucketName());
+		objectListing.setPrefix(previousObjectListing.getPrefix());
+		objectListing.setMarker(previousObjectListing.getMarker());
+		objectListing.setDelimiter(previousObjectListing.getDelimiter());
 
-        if (!previousObjectListing.isTruncated() ||
-                previousObjectListing.getNextMarker() == null){
-            return objectListing;
-        }
+		if (!previousObjectListing.isTruncated() || previousObjectListing.getNextMarker() == null) {
+			return objectListing;
+		}
 
-        Path bucket = find(previousObjectListing.getBucketName());
-        List<S3Element> elems = new ArrayList<AmazonS3ClientMock.S3Element>();
+		Path bucket = find(previousObjectListing.getBucketName());
+		List<S3Element> elems = new ArrayList<AmazonS3ClientMock.S3Element>();
 		try {
 			for (Path elem : Files.newDirectoryStream(bucket)) {
 				elems.add(parse(elem, bucket));
@@ -227,61 +227,59 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			throw new AmazonClientException(e);
 		}
 		Iterator<S3Element> iterator = elems.iterator();
-		
-        int i = 0;
-        boolean continueElement = false;
 
-        while (iterator.hasNext()) {
+		int i = 0;
+		boolean continueElement = false;
 
-            S3Element elem = iterator.next();
+		while (iterator.hasNext()) {
 
-            if (!continueElement && elem.getS3Object().getKey().equals(previousObjectListing.getNextMarker())){
-                continueElement = true;
-            }
+			S3Element elem = iterator.next();
 
-            if (continueElement) {
-                // TODO. add delimiter and marker support
-                if (previousObjectListing.getPrefix() != null
-                        && elem.getS3Object().getKey()
-                        .startsWith(previousObjectListing.getPrefix())) {
+			if (!continueElement && elem.getS3Object().getKey().equals(previousObjectListing.getNextMarker())) {
+				continueElement = true;
+			}
 
-                    S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
-                    objectListing.getObjectSummaries().add(s3ObjectSummary);
-                    // max 1000 elements at same time.
-                    if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()){
-                        objectListing.setTruncated(true);
-                        objectListing.setNextMarker(iterator.next().getS3Object().getKey());
-                        return objectListing;
-                    }
+			if (continueElement) {
+				// TODO. add delimiter and marker support
+				if (previousObjectListing.getPrefix() != null && elem.getS3Object().getKey().startsWith(previousObjectListing.getPrefix())) {
+
+					S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
+					objectListing.getObjectSummaries().add(s3ObjectSummary);
+					// max 1000 elements at same time.
+					if (i + 1 == LIMIT_AWS_MAX_ELEMENTS && iterator.hasNext()) {
+						objectListing.setTruncated(true);
+						objectListing.setNextMarker(iterator.next().getS3Object().getKey());
+						return objectListing;
+					}
 					objectListing.setTruncated(false);
-                    i++;
-                }
-            }
-        }
+					i++;
+				}
+			}
+		}
 
-        return objectListing;
-    }
+		return objectListing;
+	}
 
-    /**
-     * create a new S3ObjectSummary using the S3Element
-     * @param elem S3Element to parse
-     * @return S3ObjectSummary
-     */
-    private S3ObjectSummary parseToS3ObjectSummary(S3Element elem) {
-        S3Object s3Object = elem.getS3Object();
-        ObjectMetadata objectMetadata = s3Object.getObjectMetadata();
-        S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
+	/**
+	 * create a new S3ObjectSummary using the S3Element
+	 * @param elem S3Element to parse
+	 * @return S3ObjectSummary
+	 */
+	private S3ObjectSummary parseToS3ObjectSummary(S3Element elem) {
+		S3Object s3Object = elem.getS3Object();
+		ObjectMetadata objectMetadata = s3Object.getObjectMetadata();
+		S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
 		s3ObjectSummary.setBucketName(s3Object.getBucketName());
-        s3ObjectSummary.setKey(s3Object.getKey());
+		s3ObjectSummary.setKey(s3Object.getKey());
 		s3ObjectSummary.setLastModified(objectMetadata.getLastModified());
-        s3ObjectSummary.setOwner(getOwner(s3Object.getBucketName()));
-        s3ObjectSummary.setETag(objectMetadata.getETag());
-        s3ObjectSummary.setSize(objectMetadata.getContentLength());
-        return s3ObjectSummary;
-    }
+		s3ObjectSummary.setOwner(getOwner(s3Object.getBucketName()));
+		s3ObjectSummary.setETag(objectMetadata.getETag());
+		s3ObjectSummary.setSize(objectMetadata.getContentLength());
+		return s3ObjectSummary;
+	}
 
-    private Owner getOwner(String bucketName) {
-		if(!bucketOwners.containsKey(bucketName))
+	private Owner getOwner(String bucketName) {
+		if (!bucketOwners.containsKey(bucketName))
 			return defaultOwner;
 		return bucketOwners.get(bucketName);
 	}
@@ -311,16 +309,16 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		}
 		return result;
 	}
-	 
+
 	@Override
 	public Bucket createBucket(CreateBucketRequest createBucketRequest) throws AmazonClientException, AmazonServiceException {
 		return createBucket(createBucketRequest.getBucketName());
 	}
-	
+
 	@Override
 	public Bucket createBucket(String bucketName) throws AmazonClientException, AmazonServiceException {
 		try {
-			String name = bucketName.replaceAll("//","");
+			String name = bucketName.replaceAll("//", "");
 			Path path = Files.createDirectories(base.resolve(name));
 			Bucket bucket = new Bucket(name);
 			bucket.setOwner(getOwner(name));
@@ -330,7 +328,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			throw new AmazonClientException(e);
 		}
 	}
-	
+
 	@Override
 	public AccessControlList getObjectAcl(String bucketName, String key) throws AmazonClientException {
 		Path elem = find(bucketName, key);
@@ -355,12 +353,12 @@ public class AmazonS3ClientMock implements AmazonS3 {
 
 	@Override
 	public S3Object getObject(String bucketName, String key) throws AmazonClientException {
-        Path result = find(bucketName, key);
-        if (result == null || !Files.exists(result)){
-            AmazonS3Exception amazonS3Exception = new AmazonS3Exception("not found with key: " + key);
-            amazonS3Exception.setStatusCode(404);
-            throw amazonS3Exception;
-        }
+		Path result = find(bucketName, key);
+		if (result == null || !Files.exists(result)) {
+			AmazonS3Exception amazonS3Exception = new AmazonS3Exception("not found with key: " + key);
+			amazonS3Exception.setStatusCode(404);
+			throw amazonS3Exception;
+		}
 		try {
 			return parse(result, find(bucketName)).getS3Object();
 		} catch (IOException e) {
@@ -374,66 +372,65 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			ByteArrayInputStream stream = new ByteArrayInputStream(Files.readAllBytes(file.toPath()));
 			S3Element elem = parse(stream, bucketName, key);
 
-            persist(bucketName, elem);
+			persist(bucketName, elem);
 
 			PutObjectResult putObjectResult = new PutObjectResult();
 			putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
 			return putObjectResult;
 		} catch (IOException e) {
-			throw new AmazonServiceException("",e);
+			throw new AmazonServiceException("", e);
 		}
 
 	}
-	
+
 	@Override
-	public PutObjectResult putObject(String bucket, String keyName,
-			InputStream inputStream, ObjectMetadata metadata) {
+	public PutObjectResult putObject(String bucket, String keyName, InputStream inputStream, ObjectMetadata metadata) {
 		S3Element elem = parse(inputStream, bucket, keyName);
-		
-        persist(bucket, elem);
+
+		persist(bucket, elem);
 
 		PutObjectResult putObjectResult = new PutObjectResult();
 		putObjectResult.setETag("3a5c8b1ad448bca04584ecb55b836264");
 		return putObjectResult;
-		
+
 	}
 
-    /**
-     * store in the memory map
-     * @param bucket bucket where persist
-     * @param elem
-     */
-    private void persist(String bucketName, S3Element elem) {
-    	Path bucket = find(bucketName);
-    	Path resolve = bucket.resolve(elem.getS3Object().getKey());
-    	if(Files.exists(resolve))
+	/**
+	 * store in the memory map
+	 * @param bucket bucket where persist
+	 * @param elem
+	 */
+	private void persist(String bucketName, S3Element elem) {
+		Path bucket = find(bucketName);
+		Path resolve = bucket.resolve(elem.getS3Object().getKey());
+		if (Files.exists(resolve))
 			try {
 				Files.delete(resolve);
 			} catch (IOException e1) {
 				// ignore
 			}
-    	try {
-	        if(elem.getS3Object().getKey().endsWith("/"))
-	        	Files.createDirectories(resolve);
-	        else {
-	        	Files.createFile(resolve);
-	        	S3ObjectInputStream objectContent = elem.getS3Object().getObjectContent();
-	        	if(objectContent != null)
-	        		Files.write(resolve, IOUtils.toByteArray(objectContent));
-	        }
-    	} catch (IOException e) {
-    		throw new AmazonServiceException("Problem creating mock element: ", e);
-    	}
-    }
+		try {
+			if (elem.getS3Object().getKey().endsWith("/"))
+				Files.createDirectories(resolve);
+			else {
+				Files.createFile(resolve);
+				S3ObjectInputStream objectContent = elem.getS3Object().getObjectContent();
+				if (objectContent != null)
+					Files.write(resolve, IOUtils.toByteArray(objectContent));
+			}
+		} catch (IOException e) {
+			throw new AmazonServiceException("Problem creating mock element: ", e);
+		}
+	}
 
-    @Override
+	@Override
 	public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey) throws AmazonClientException {
 
 		Path src = find(sourceBucketName, sourceKey);
 
 		if (src != null && Files.exists(src)) {
-            Path bucket = find(destinationBucketName);
-            Path dest = bucket.resolve(destinationKey);
+			Path bucket = find(destinationBucketName);
+			Path dest = bucket.resolve(destinationKey);
 			try {
 				Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
@@ -450,57 +447,57 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	public void deleteObject(String bucketName, String key) throws AmazonClientException {
 		Path bucket = find(bucketName);
 		Path resolve = bucket.resolve(key);
-		if(Files.exists(resolve))
+		if (Files.exists(resolve))
 			try {
 				Files.delete(resolve);
 			} catch (IOException e) {
 				throw new AmazonServiceException("Problem deleting mock object: ", e);
 			}
 	}
-	
+
 	private S3Element parse(InputStream stream, String bucketName, String key) {
 		S3Object object = new S3Object();
 		object.setBucketName(bucketName);
 		object.setKey(key);
-        byte[] content;
-        try {
-            content = IOUtils.toByteArray(stream);
-        } catch (IOException e) {
-            throw new IllegalStateException("the stream is closed", e);
-        } finally {
-        	try {
+		byte[] content;
+		try {
+			content = IOUtils.toByteArray(stream);
+		} catch (IOException e) {
+			throw new IllegalStateException("the stream is closed", e);
+		} finally {
+			try {
 				object.close();
 			} catch (IOException e) {
 				// ignore
 			}
-        }
+		}
 
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setLastModified(new Date());
-        metadata.setContentLength(content.length);
+		metadata.setContentLength(content.length);
 
-        object.setObjectContent(new ByteArrayInputStream(content));
+		object.setObjectContent(new ByteArrayInputStream(content));
 		object.setObjectMetadata(metadata);
 		// TODO: create converter between path permission and s3 permission
 		AccessControlList permission = createAllPermission(bucketName);
 		return new S3Element(object, permission, false);
 	}
-	
-	private S3Element parse(Path elem, Path bucket) throws IOException{
+
+	private S3Element parse(Path elem, Path bucket) throws IOException {
 		boolean dir = false;
 		if (Files.isDirectory(elem)) {
 			dir = true;
 		}
 
 		S3Object object = new S3Object();
-		
+
 		String bucketName = bucket.getFileName().toString();
 		object.setBucketName(bucketName);
-		
+
 		String key = bucket.relativize(elem).toString();
 		if (dir) {
 			key += "/";
-		}		
+		}
 		object.setKey(key);
 
 		ObjectMetadata metadata = new ObjectMetadata();
@@ -511,7 +508,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			object.setObjectContent(null);
 		} else {
 			metadata.setContentLength(attr.size());
-			object.setObjectContent( new ByteArrayInputStream(Files.readAllBytes(elem)));
+			object.setObjectContent(new ByteArrayInputStream(Files.readAllBytes(elem)));
 		}
 
 		object.setObjectMetadata(metadata);
@@ -582,20 +579,21 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-					if(bucket.relativize(dir).toString().equals(key)) {
+					if (bucket.relativize(dir).toString().equals(key)) {
 						matches.add(dir);
 					}
 					return super.preVisitDirectory(dir, attrs);
 				}
+
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					if(bucket.relativize(file).toString().equals(key)) {
+					if (bucket.relativize(file).toString().equals(key)) {
 						matches.add(file);
 					}
 					return super.visitFile(file, attrs);
 				}
 			});
-			if(!matches.isEmpty())
+			if (!matches.isEmpty())
 				return matches.iterator().next();
 		} catch (IOException e) {
 			throw new AmazonServiceException("Problem getting mock S3Element: ", e);
@@ -611,11 +609,10 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	public static class S3Element {
 
 		private S3Object s3Object;
-        private boolean directory;
+		private boolean directory;
 		private AccessControlList permission;
 
-		public S3Element(S3Object s3Object, AccessControlList permission,
-				boolean directory) {
+		public S3Element(S3Object s3Object, AccessControlList permission, boolean directory) {
 			this.s3Object = s3Object;
 			this.directory = directory;
 			this.permission = permission;
@@ -645,47 +642,45 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			this.permission = permission;
 		}
 
+		@Override
+		public boolean equals(Object object) {
 
-        @Override
-        public boolean equals(Object object){
+			if (object == null) {
+				return false;
+			}
 
-            if (object == null){
-                return false;
-            }
+			if (object instanceof S3Element) {
+				S3Element elem = (S3Element) object;
+				// only is the same if bucketname and key are not null and are the same
+				if (elem.getS3Object() != null && this.getS3Object() != null && elem.getS3Object().getBucketName() != null
+						&& elem.getS3Object().getBucketName().equals(this.getS3Object().getBucketName()) && elem.getS3Object().getKey() != null
+						&& elem.getS3Object().getKey().equals(this.getS3Object().getKey())) {
+					return true;
+				}
 
-            if (object instanceof S3Element){
-                S3Element elem = (S3Element)object;
-                // only is the same if bucketname and key are not null and are the same
-                if (elem.getS3Object() != null && this.getS3Object() != null &&
-                        elem.getS3Object().getBucketName() != null &&
-                        elem.getS3Object().getBucketName().equals(this.getS3Object().getBucketName()) &&
-                        elem.getS3Object().getKey() != null && elem.getS3Object().getKey().equals(this.getS3Object().getKey())){
-                    return true;
-                }
-
-                return false;
-            }
+				return false;
+			}
 			return false;
-        }
+		}
 
-        @Override
-        public int hashCode() {
-            int result = s3Object != null && s3Object.getBucketName() != null ? s3Object.getBucketName().hashCode() : 0;
-            result = 31 * result + (s3Object != null && s3Object.getKey() != null? s3Object.getKey().hashCode() : 0);
-            return result;
-        }
-    }
-	
+		@Override
+		public int hashCode() {
+			int result = s3Object != null && s3Object.getBucketName() != null ? s3Object.getBucketName().hashCode() : 0;
+			result = 31 * result + (s3Object != null && s3Object.getKey() != null ? s3Object.getKey().hashCode() : 0);
+			return result;
+		}
+	}
+
 	@Override
 	public ObjectMetadata getObjectMetadata(String bucketName, String key) {
 		S3Object object = getObject(bucketName, key);
-		if(object.getKey().equals(key))
+		if (object.getKey().equals(key))
 			return object.getObjectMetadata();
-		AmazonS3Exception exception = new AmazonS3Exception("Resource not available: "+bucketName+"/"+key);
+		AmazonS3Exception exception = new AmazonS3Exception("Resource not available: " + bucketName + "/" + key);
 		exception.setStatusCode(404);
 		throw exception;
 	}
-	
+
 	@Override
 	public boolean doesBucketExist(String bucketName) throws AmazonClientException, AmazonServiceException {
 		return Files.exists(base.resolve(bucketName));
@@ -699,18 +694,18 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		bucketOwners.put(bucketName, owner);
 		return Files.createDirectories(base.resolve(bucketName));
 	}
-	
+
 	@Override
 	public void deleteBucket(String bucketName) throws AmazonClientException, AmazonServiceException {
 		try {
 			Path bucket = base.resolve(bucketName);
-			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>(){
+			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
 					Files.delete(dir);
 					return FileVisitResult.CONTINUE;
 				}
-				
+
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					Files.delete(file);
@@ -739,13 +734,14 @@ public class AmazonS3ClientMock implements AmazonS3 {
 
 	public void clear() {
 		try {
-			Files.walkFileTree(base, new SimpleFileVisitor<Path>(){
+			Files.walkFileTree(base, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-					if(dir != base)
+					if (dir != base)
 						Files.delete(dir);
 					return FileVisitResult.CONTINUE;
 				}
+
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 					Files.delete(file);

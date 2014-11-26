@@ -61,15 +61,15 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	public Iterable<Path> getRootDirectories() {
 		ImmutableList.Builder<Path> builder = ImmutableList.builder();
 		for (FileStore fileStore : getFileStores()) {
-			builder.add(((S3FileStore)fileStore).getRootDirectory());
+			builder.add(((S3FileStore) fileStore).getRootDirectory());
 		}
 		return builder.build();
 	}
 
 	Bucket getBucket(String name) {
 		for (Bucket bucket : client.listBuckets())
-			if(bucket.getName().equals(name))
-			 return bucket;
+			if (bucket.getName().equals(name))
+				return bucket;
 		return null;
 	}
 

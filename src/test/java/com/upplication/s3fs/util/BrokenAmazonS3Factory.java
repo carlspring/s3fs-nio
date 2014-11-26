@@ -13,7 +13,7 @@ public class BrokenAmazonS3Factory extends AmazonS3Factory {
 	public BrokenAmazonS3Factory(String name) {
 		// only non default constructor
 	}
-	
+
 	@Override
 	protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
 		return null;

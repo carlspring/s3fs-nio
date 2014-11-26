@@ -16,13 +16,12 @@ public class ExposingAmazonS3Client extends AmazonS3Client {
 	public AWSCredentialsProvider getAWSCredentialsProvider() {
 		return awsCredentialsProvider;
 	}
-	
+
 	public ClientConfiguration getClientConfiguration() {
 		return clientConfiguration;
 	}
-	
+
 	public RequestMetricCollector getRequestMetricCollector() {
 		return super.requestMetricCollector();
 	}
-	
 }

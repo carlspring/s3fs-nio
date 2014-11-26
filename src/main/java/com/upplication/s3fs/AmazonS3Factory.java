@@ -34,9 +34,9 @@ public abstract class AmazonS3Factory {
 	public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
 	public static final String USER_AGENT = "s3fs_user_agent";
 	protected Logger logger = LoggerFactory.getLogger(getClass());
-	
+
 	protected abstract AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector);
-	
+
 	public AmazonS3 getAmazonS3(URI uri, Properties props) {
 		AmazonS3 client = createAmazonS3(getCredentialsProvider(props), getClientConfiguration(props), getRequestMetricsCollector(props));
 		if (uri.getHost() != null)
@@ -55,37 +55,37 @@ public abstract class AmazonS3Factory {
 
 	protected RequestMetricCollector getRequestMetricsCollector(Properties props) {
 		RequestMetricCollector requestMetricCollector = null;
-		if(props.containsKey(REQUEST_METRIC_COLLECTOR_CLASS)) {
+		if (props.containsKey(REQUEST_METRIC_COLLECTOR_CLASS)) {
 			try {
 				requestMetricCollector = (RequestMetricCollector) Class.forName(props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS)).newInstance();
 			} catch (Throwable t) {
-				throw new IllegalArgumentException("Can't instantiate REQUEST_METRIC_COLLECTOR_CLASS "+props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS), t);
+				throw new IllegalArgumentException("Can't instantiate REQUEST_METRIC_COLLECTOR_CLASS " + props.getProperty(REQUEST_METRIC_COLLECTOR_CLASS), t);
 			}
 		}
 		return requestMetricCollector;
 	}
-	
+
 	protected ClientConfiguration getClientConfiguration(Properties props) {
 		ClientConfiguration clientConfiguration = new ClientConfiguration();
-		if(props.getProperty(CONNECTION_TIMEOUT) != null)
+		if (props.getProperty(CONNECTION_TIMEOUT) != null)
 			clientConfiguration.setConnectionTimeout(Integer.parseInt(props.getProperty(CONNECTION_TIMEOUT)));
-		if(props.getProperty(MAX_CONNECTIONS) != null)
+		if (props.getProperty(MAX_CONNECTIONS) != null)
 			clientConfiguration.setMaxConnections(Integer.parseInt(props.getProperty(MAX_CONNECTIONS)));
-		if(props.getProperty(MAX_ERROR_RETRY) != null)
+		if (props.getProperty(MAX_ERROR_RETRY) != null)
 			clientConfiguration.setMaxErrorRetry(Integer.parseInt(props.getProperty(MAX_ERROR_RETRY)));
-		if(props.getProperty(PROTOCOL) != null)
+		if (props.getProperty(PROTOCOL) != null)
 			clientConfiguration.setProtocol(Protocol.valueOf(props.getProperty(PROTOCOL)));
-		if(props.getProperty(PROXY_DOMAIN) != null)
+		if (props.getProperty(PROXY_DOMAIN) != null)
 			clientConfiguration.setProxyDomain(props.getProperty(PROXY_DOMAIN));
-		if(props.getProperty(PROXY_HOST) != null)
+		if (props.getProperty(PROXY_HOST) != null)
 			clientConfiguration.setProxyHost(props.getProperty(PROXY_HOST));
-		if(props.getProperty(PROXY_PASSWORD) != null)
+		if (props.getProperty(PROXY_PASSWORD) != null)
 			clientConfiguration.setProxyPassword(props.getProperty(PROXY_PASSWORD));
-		if(props.getProperty(PROXY_PORT) != null)
+		if (props.getProperty(PROXY_PORT) != null)
 			clientConfiguration.setProxyPort(Integer.parseInt(props.getProperty(PROXY_PORT)));
-		if(props.getProperty(PROXY_USERNAME) != null)
+		if (props.getProperty(PROXY_USERNAME) != null)
 			clientConfiguration.setProxyUsername(props.getProperty(PROXY_USERNAME));
-		if(props.getProperty(PROXY_WORKSTATION) != null)
+		if (props.getProperty(PROXY_WORKSTATION) != null)
 			clientConfiguration.setProxyWorkstation(props.getProperty(PROXY_WORKSTATION));
 		int socketSendBufferSizeHint = 0;
 		if (props.getProperty(SOCKET_SEND_BUFFER_SIZE_HINT) != null)
@@ -94,9 +94,9 @@ public abstract class AmazonS3Factory {
 		if (props.getProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT) != null)
 			socketReceiveBufferSizeHint = Integer.parseInt(props.getProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT));
 		clientConfiguration.setSocketBufferSizeHints(socketSendBufferSizeHint, socketReceiveBufferSizeHint);
-		if(props.getProperty(SOCKET_TIMEOUT) != null)
+		if (props.getProperty(SOCKET_TIMEOUT) != null)
 			clientConfiguration.setSocketTimeout(Integer.parseInt(props.getProperty(SOCKET_TIMEOUT)));
-		if(props.getProperty(USER_AGENT) != null)
+		if (props.getProperty(USER_AGENT) != null)
 			clientConfiguration.setUserAgent(props.getProperty(USER_AGENT));
 		return clientConfiguration;
 	}

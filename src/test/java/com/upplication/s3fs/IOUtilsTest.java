@@ -8,10 +8,10 @@ import com.upplication.s3fs.util.IOUtils;
  * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods
  */
 public class IOUtilsTest {
-    @Test
-    public void just_to_silence_coverage(){
-        new IOUtils(){
+	@Test
+	public void just_to_silence_coverage() {
+		new IOUtils() {
 			// ignore this
-        };
-    }
+		};
+	}
 }

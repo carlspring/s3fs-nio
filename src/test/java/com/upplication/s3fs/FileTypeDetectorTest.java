@@ -22,42 +22,42 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import com.upplication.s3fs.util.FileTypeDetector;
 
 public class FileTypeDetectorTest {
-    private FileSystem fsMem;
-    @Before
-    public void cleanup() throws IOException {
-        fsMem = MemoryFileSystemBuilder.newLinux().build("linux");
-    }
+	private FileSystem fsMem;
 
-    @After
-    public void closeMemory() throws IOException{
-        fsMem.close();
-    }
+	@Before
+	public void cleanup() throws IOException {
+		fsMem = MemoryFileSystemBuilder.newLinux().build("linux");
+	}
 
-    @Test
-    public void fileTypeDetectorUseTike() throws IOException {
+	@After
+	public void closeMemory() throws IOException {
+		fsMem.close();
+	}
 
-        Tika tika = spy(new Tika());
-        FileTypeDetector detector = new FileTypeDetector(tika);
-        Path path = fsMem.getPath("/file.html");
-        Files.write(path, "<html><body>ey</body></html>".getBytes());
-        detector.probeContentType(path);
+	@Test
+	public void fileTypeDetectorUseTike() throws IOException {
 
-        verify(tika).detect(any(InputStream.class), eq(path.getFileName().toString()));
-    }
+		Tika tika = spy(new Tika());
+		FileTypeDetector detector = new FileTypeDetector(tika);
+		Path path = fsMem.getPath("/file.html");
+		Files.write(path, "<html><body>ey</body></html>".getBytes());
+		detector.probeContentType(path);
 
-    @Test
-    public void fileTypeDetectorDetectByServiceLocator() {
-        // act
-        ServiceLoader<java.nio.file.spi.FileTypeDetector> loader = ServiceLoader
-                .load(java.nio.file.spi.FileTypeDetector.class, ClassLoader.getSystemClassLoader());
-        // assert
-        boolean existsS3fsFileTypeDetector = false;
-        for (java.nio.file.spi.FileTypeDetector installed : loader) {
-            if (installed instanceof FileTypeDetector){
-                existsS3fsFileTypeDetector = true;
-            }
-        }
+		verify(tika).detect(any(InputStream.class), eq(path.getFileName().toString()));
+	}
 
-        assertTrue(existsS3fsFileTypeDetector);
-    }
+	@Test
+	public void fileTypeDetectorDetectByServiceLocator() {
+		// act
+		ServiceLoader<java.nio.file.spi.FileTypeDetector> loader = ServiceLoader.load(java.nio.file.spi.FileTypeDetector.class, ClassLoader.getSystemClassLoader());
+		// assert
+		boolean existsS3fsFileTypeDetector = false;
+		for (java.nio.file.spi.FileTypeDetector installed : loader) {
+			if (installed instanceof FileTypeDetector) {
+				existsS3fsFileTypeDetector = true;
+			}
+		}
+
+		assertTrue(existsS3fsFileTypeDetector);
+	}
 }

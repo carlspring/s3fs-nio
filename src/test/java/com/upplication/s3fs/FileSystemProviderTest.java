@@ -51,7 +51,7 @@ import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class FileSystemProviderTest extends S3UnitTest {
-	S3FileSystemProvider s3fsProvider;
+	private S3FileSystemProvider s3fsProvider;
 
 	@Before
 	public void cleanup() {

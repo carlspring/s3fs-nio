@@ -95,7 +95,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
-		if(type != S3FileStoreAttributeView.class)
+		if (type != S3FileStoreAttributeView.class)
 			throw new IllegalArgumentException("FileStoreAttributeView of type '" + type.getName() + "' is not supported.");
 		Bucket buck = getBucket(true);
 		Owner owner = buck.getOwner();
@@ -106,18 +106,18 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	public Object getAttribute(String attribute) throws IOException {
 		return getFileStoreAttributeView(S3FileStoreAttributeView.class).getAttribute(attribute);
 	}
-	
+
 	private Bucket getBucket(boolean force) {
-		if(bucket == null)
+		if (bucket == null)
 			bucket = fileSystem.getBucket(name);
-		if(bucket == null && force)
+		if (bucket == null && force)
 			bucket = createBucket();
 		return bucket;
 	}
 
 	private Bucket getBucket(String bucketName) {
 		for (Bucket buck : getClient().listBuckets())
-			if(buck.getName().equals(bucketName))
+			if (buck.getName().equals(bucketName))
 				return buck;
 		return null;
 	}
@@ -148,9 +148,9 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 * @param attrs  
 	 */
 	public void createDirectory(S3Path path, FileAttribute<?>... attrs) {
-		if(bucket == null) {
+		if (bucket == null) {
 			bucket = getBucket(name);
-			if(bucket == null)
+			if (bucket == null)
 				bucket = createBucket();
 		}
 		// FIXME: throw exception if the same key already exists at amazon s3
@@ -158,14 +158,14 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		metadata.setContentLength(0);
 		String key = path.getKey();
 		StringBuilder keyName = new StringBuilder(key);
-		if(!key.endsWith("/"))
+		if (!key.endsWith("/"))
 			keyName.append("/");
 		getClient().putObject(name, keyName.toString(), new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
 	public S3AccessControlList getAccessControlList(S3Path path) throws NoSuchFileException {
 		String key = getS3ObjectSummary(path).getKey();
-        return new S3AccessControlList(name, key, getClient().getObjectAcl(name, key), getOwner());
+		return new S3AccessControlList(name, key, getClient().getObjectAcl(name, key), getOwner());
 	}
 
 	private AmazonS3 getClient() {
@@ -174,17 +174,17 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	public Owner getOwner() {
 		Bucket buck = getBucket(false);
-		if(buck != null)
+		if (buck != null)
 			return buck.getOwner();
 		return fileSystem.getClient().getS3AccountOwner();
 	}
 
-    /**
-     * @param key String key
-     * @return ObjectMetadata
-     */
+	/**
+	 * @param key String key
+	 * @return ObjectMetadata
+	 */
 	private ObjectMetadata getObjectMetadata(String key) {
-    	return getClient().getObjectMetadata(name, key);
+		return getClient().getObjectMetadata(name, key);
 	}
 
 	public ObjectListing listObjects(String key) {
@@ -195,31 +195,30 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return getClient().listObjects(request);
 	}
 
-
-    /**
-     * Get the {@link com.amazonaws.services.s3.model.S3ObjectSummary} that represent this Path or her first child if this path not exists
-     * @param s3Path {@link com.upplication.s3fs.S3Path}
-     * @return {@link com.amazonaws.services.s3.model.S3ObjectSummary}
-     * @throws java.nio.file.NoSuchFileException if not found the path and any child
-     */
+	/**
+	 * Get the {@link com.amazonaws.services.s3.model.S3ObjectSummary} that represent this Path or her first child if this path not exists
+	 * @param s3Path {@link com.upplication.s3fs.S3Path}
+	 * @return {@link com.amazonaws.services.s3.model.S3ObjectSummary}
+	 * @throws java.nio.file.NoSuchFileException if not found the path and any child
+	 */
 	public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {
 		String key = s3Path.getKey();
 		try {
 			ObjectMetadata metadata = getObjectMetadata(key);
-            S3ObjectSummary result = new S3ObjectSummary();
-            result.setBucketName(name);
-            result.setETag(metadata.getETag());
-            result.setKey(key);
-            result.setLastModified(metadata.getLastModified());
-            result.setSize(metadata.getContentLength());
-            AccessControlList objectAcl = getClient().getObjectAcl(name, key);
-            result.setOwner(objectAcl.getOwner());
-            return result;
+			S3ObjectSummary result = new S3ObjectSummary();
+			result.setBucketName(name);
+			result.setETag(metadata.getETag());
+			result.setKey(key);
+			result.setLastModified(metadata.getLastModified());
+			result.setSize(metadata.getContentLength());
+			AccessControlList objectAcl = getClient().getObjectAcl(name, key);
+			result.setOwner(objectAcl.getOwner());
+			return result;
 		} catch (AmazonS3Exception e) {
-			if(e.getStatusCode() != 404)
+			if (e.getStatusCode() != 404)
 				throw e;
 		}
-		
+
 		try {
 			// is a virtual directory
 			ObjectListing current = listObjects(key + "/");
@@ -228,19 +227,18 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		} catch (Exception e) {
 			//
 		}
-        throw new NoSuchFileException(name+S3Path.PATH_SEPARATOR+key);
+		throw new NoSuchFileException(name + S3Path.PATH_SEPARATOR + key);
 	}
 
 	public boolean exists(S3Path s3Path) {
 		try {
 			getS3ObjectSummary(s3Path);
 			return true;
-		}
-        catch(NoSuchFileException e) {
+		} catch (NoSuchFileException e) {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * @param options  
 	 */
@@ -249,20 +247,20 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 			S3ObjectSummary objectSummary = getS3ObjectSummary(path);
 			// parse the data to BasicFileAttributes.
 			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
-			long size =  objectSummary.getSize();
+			long size = objectSummary.getSize();
 			boolean directory = false;
 			boolean regularFile = false;
 			String resolvedKey = objectSummary.getKey();
 			String key = path.getKey();
-            // check if is a directory and exists the key of this directory at amazon s3
+			// check if is a directory and exists the key of this directory at amazon s3
 			if (resolvedKey.equals(key + "/")) {
 				directory = true;
 			} else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
 				directory = true;
 				// no metadata, we fake one
 				size = 0;
-                // delete extra part
-                resolvedKey = key + "/";
+				// delete extra part
+				resolvedKey = key + "/";
 			} else
 				regularFile = true;
 			return type.cast(new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile));
@@ -278,19 +276,19 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	}
 
 	public byte[] readAllBytes(S3Path path) throws IOException {
-        S3ObjectInputStream objectContent = getClient().getObject(name, path.getKey()).getObjectContent();
+		S3ObjectInputStream objectContent = getClient().getObject(name, path.getKey()).getObjectContent();
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		BufferedOutputStream outputStream = new BufferedOutputStream(out);
-    	try {
-	        byte[] buffer = new byte[1024*10];
-	        int bytesRead;
+		try {
+			byte[] buffer = new byte[1024 * 10];
+			int bytesRead;
 			while ((bytesRead = objectContent.read(buffer)) > -1)
 				outputStream.write(buffer, 0, bytesRead);
 			outputStream.flush();
-	        return out.toByteArray();
-    	} finally {
-    		outputStream.close();
-    	}
+			return out.toByteArray();
+		} finally {
+			outputStream.close();
+		}
 	}
 
 	/**
@@ -321,11 +319,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	@Override
 	public int compareTo(S3FileStore o) {
-		if(this == o)
+		if (this == o)
 			return 0;
 		return o.name().compareTo(name);
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -353,7 +351,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		if (!(obj instanceof S3FileStore))
 			return false;
 		S3FileStore other = (S3FileStore) obj;
-		
+
 		if (fileSystem == null) {
 			if (other.fileSystem != null)
 				return false;

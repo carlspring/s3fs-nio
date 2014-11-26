@@ -1,16 +1,20 @@
 package com.upplication.s3fs.spike;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 
 public class PathSpecTest {
 
@@ -26,13 +30,13 @@ public class PathSpecTest {
 		fs.close();
 	}
 
-    // first and more
+	// first and more
 
-    @Test
-    public void firstAndMore(){
-        assertEquals(fs.getPath("/dir","dir", "file"), fs.getPath("/dir", "dir/file"));
-        assertEquals(fs.getPath("/dir/dir/file"), fs.getPath("/dir", "dir/file"));
-    }
+	@Test
+	public void firstAndMore() {
+		assertEquals(fs.getPath("/dir", "dir", "file"), fs.getPath("/dir", "dir/file"));
+		assertEquals(fs.getPath("/dir/dir/file"), fs.getPath("/dir", "dir/file"));
+	}
 
 	// absolute relative
 
@@ -57,12 +61,11 @@ public class PathSpecTest {
 	public void startsWithBlank() {
 		assertFalse(get("/file").startsWith(get("")));
 	}
-	
+
 	@Test
-   	public void startsWithBlankRelative(){
+	public void startsWithBlankRelative() {
 		assertFalse(get("file1").startsWith(get("")));
 	}
-      
 
 	@Test
 	public void startsWithBlankBlank() {
@@ -87,8 +90,7 @@ public class PathSpecTest {
 
 	@Test
 	public void startsWithNormalize() {
-		assertTrue(get("/file/file1/file2").startsWith(
-				get("/file/file1/../").normalize()));
+		assertTrue(get("/file/file1/file2").startsWith(get("/file/file1/../").normalize()));
 	}
 
 	@Test
@@ -132,7 +134,7 @@ public class PathSpecTest {
 	public void endsWithBlankRelativeAbsolute() {
 		assertFalse(get("").endsWith(get("/bucket")));
 	}
-	
+
 	@Test
 	public void endsWithBlankBlank() {
 		assertTrue(get("").endsWith(get("")));
@@ -142,24 +144,24 @@ public class PathSpecTest {
 	public void endsWithRelativeBlankAbsolute() {
 		assertFalse(get("/bucket/file1").endsWith(get("")));
 	}
-	
+
 	@Test
- 	public void endsWithRelativeBlankRelative(){
- 		assertFalse(get("file1").endsWith(get("")));
- 	}
+	public void endsWithRelativeBlankRelative() {
+		assertFalse(get("file1").endsWith(get("")));
+	}
 
-    // file name
+	// file name
 
-    @Test
-    public void getFileName() throws IOException {
-        try (FileSystem windows = MemoryFileSystemBuilder.newWindows().build("widows")){
-            Path fileName = windows.getPath("C:/file").getFileName();
-            Path rootName = windows.getPath("C:/").getFileName();
+	@Test
+	public void getFileName() throws IOException {
+		try (FileSystem windows = MemoryFileSystemBuilder.newWindows().build("widows")) {
+			Path fileName = windows.getPath("C:/file").getFileName();
+			Path rootName = windows.getPath("C:/").getFileName();
 
-            assertEquals(windows.getPath("file"), fileName);
-            assertNull(rootName);
-        }
-    }
+			assertEquals(windows.getPath("file"), fileName);
+			assertNull(rootName);
+		}
+	}
 
 	// ~ helpers methods
 

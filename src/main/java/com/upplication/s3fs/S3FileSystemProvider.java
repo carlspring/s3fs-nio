@@ -98,7 +98,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = getProperties(uri, env);
 		validateProperties(props);
 		String key = this.getFileSystemKey(uri, props);
-		if(fileSystems.containsKey(key))
+		if (fileSystems.containsKey(key))
 			throw new FileSystemAlreadyExistsException("File system " + uri.getScheme() + ':' + key + " already exists");
 		S3FileSystem fileSystem = createFileSystem(uri, props);
 		fileSystems.put(fileSystem.getKey(), fileSystem);
@@ -106,18 +106,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	private void validateProperties(Properties props) {
-		Preconditions.checkArgument((props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
-				|| (props.getProperty(ACCESS_KEY) != null && props.getProperty(SECRET_KEY) != null),
-				"%s and %s should both be provided or should both be omitted",
+		Preconditions.checkArgument(
+				(props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
+						|| (props.getProperty(ACCESS_KEY) != null && props.getProperty(SECRET_KEY) != null), "%s and %s should both be provided or should both be omitted",
 				ACCESS_KEY, SECRET_KEY);
 	}
-	
+
 	private Properties getProperties(URI uri, Map<String, ?> env) {
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
 		overloadProperties(props, env);
 		String userInfo = uri.getUserInfo();
-		if(userInfo != null) {
+		if (userInfo != null) {
 			String[] keys = userInfo.split(":");
 			props.setProperty(ACCESS_KEY, keys[0]);
 			props.setProperty(SECRET_KEY, keys[1]);
@@ -134,51 +134,52 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		String accessKey = (String) props.get(ACCESS_KEY);
 		return accessKey + "@" + host;
 	}
-	
+
 	protected void validateUri(URI uri) {
 		Preconditions.checkNotNull(uri, "uri is null");
 		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
 	}
 
 	private void overloadProperties(Properties props, Map<String, ?> env) {
-		if(env == null)
+		if (env == null)
 			env = new HashMap<>();
-		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN, PROXY_HOST, PROXY_PASSWORD,
-				PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT, USER_AGENT, AMAZON_S3_FACTORY_CLASS })
+		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
+				PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
+				USER_AGENT, AMAZON_S3_FACTORY_CLASS })
 			overloadProperty(props, env, key);
 	}
 
 	private void overloadProperty(Properties props, Map<String, ?> env, String key) {
 		if (env.get(key) != null && env.get(key) instanceof String)
 			props.setProperty(key, (String) env.get(key));
-		else if(System.getProperty(key) != null)
+		else if (System.getProperty(key) != null)
 			props.setProperty(key, System.getProperty(key));
-		else if(System.getenv(key) != null)
+		else if (System.getenv(key) != null)
 			props.setProperty(key, System.getenv(key));
 	}
 
 	public FileSystem getFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
 		String key = this.getFileSystemKey(uri);
-		if(!fileSystems.containsKey(key)) {
+		if (!fileSystems.containsKey(key)) {
 			try {
 				newFileSystem(uri, env);
 			} catch (IOException e) {
 				throw new FileSystemNotFoundException(e.getMessage());
 			}
 		}
-	    FileSystem fileSystem = fileSystems.get(key);
-	    if (fileSystem == null) {
-	      throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
-	    }
-	    return fileSystem;
+		FileSystem fileSystem = fileSystems.get(key);
+		if (fileSystem == null) {
+			throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
+		}
+		return fileSystem;
 	}
 
 	@Override
 	public S3FileSystem getFileSystem(URI uri) {
 		validateUri(uri);
 		String key = this.getFileSystemKey(uri);
-		if(!fileSystems.containsKey(key)) {
+		if (!fileSystems.containsKey(key)) {
 			try {
 				newFileSystem(uri, null);
 			} catch (IOException e) {
@@ -186,10 +187,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 			}
 		}
 		S3FileSystem fileSystem = fileSystems.get(key);
-	    if (fileSystem == null) {
-	      throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
-	    }
-	    return fileSystem;
+		if (fileSystem == null) {
+			throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
+		}
+		return fileSystem;
 	}
 
 	private S3Path toS3Path(Path path) {
@@ -204,27 +205,28 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 */
 	@Override
 	public Path getPath(URI uri) {
-	    FileSystem fileSystem = getFileSystem(uri);
+		FileSystem fileSystem = getFileSystem(uri);
 		/**
 		 * TODO: set as a list. one s3FileSystem by region
 		 */
 		return fileSystem.getPath(uri.getPath());
 	}
 
-    @Override
-    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
-        final S3Path s3Path = toS3Path(dir);
-        return new DirectoryStream<Path>() {
-            @Override
-            public void close() throws IOException {
-                // nothing to do here
-            }
-            @Override
-            public Iterator<Path> iterator() {
-                return new S3Iterator(s3Path);
-            }
-        };
-    }
+	@Override
+	public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+		final S3Path s3Path = toS3Path(dir);
+		return new DirectoryStream<Path>() {
+			@Override
+			public void close() throws IOException {
+				// nothing to do here
+			}
+
+			@Override
+			public Iterator<Path> iterator() {
+				return new S3Iterator(s3Path);
+			}
+		};
+	}
 
 	@Override
 	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
@@ -320,7 +322,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	// ~~
 	/**
 	 * Create the fileSystem
@@ -338,12 +340,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	protected AmazonS3Factory getAmazonS3Factory(Properties props) {
-		if(props.containsKey(AMAZON_S3_FACTORY_CLASS)) {
+		if (props.containsKey(AMAZON_S3_FACTORY_CLASS)) {
 			String amazonS3FactoryClass = props.getProperty(AMAZON_S3_FACTORY_CLASS);
 			try {
 				return (AmazonS3Factory) Class.forName(amazonS3FactoryClass).newInstance();
 			} catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e) {
-				throw new S3FileSystemConfigurationException("Configuration problem, couldn't instantiate AmazonS3Factory ("+amazonS3FactoryClass+"): ", e);
+				throw new S3FileSystemConfigurationException("Configuration problem, couldn't instantiate AmazonS3Factory (" + amazonS3FactoryClass + "): ", e);
 			}
 		}
 		return new AmazonS3ClientFactory();
@@ -357,7 +359,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = new Properties();
 		// http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
 		// http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html
-		try(InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties")){
+		try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties")) {
 			if (in != null)
 				props.load(in);
 		} catch (IOException e) {
@@ -365,14 +367,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		}
 		return props;
 	}
-	
+
 	// ~~~
 
 	private <T> void verifySupportedOptions(Set<? extends T> allowedOptions, Set<? extends T> actualOptions) {
 		Sets.SetView<? extends T> unsupported = difference(actualOptions, allowedOptions);
 		Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
 	}
-	
+
 	/**
 	 * check that the paths exists or not
 	 * @param path S3Path
@@ -382,11 +384,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return path.exists();
 	}
 
-    /**
-     * create a temporal directory to create streams
-     * @return Path temporal folder
-     * @throws IOException
-     */
+	/**
+	 * create a temporal directory to create streams
+	 * @return Path temporal folder
+	 * @throws IOException
+	 */
 	public Path createTempDir() throws IOException {
 		return Files.createTempDirectory("temp-s3-");
 	}
@@ -398,7 +400,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public boolean isOpen(S3FileSystem s3FileSystem) {
 		return fileSystems.containsKey(s3FileSystem.getKey());
 	}
-	
+
 	public static ConcurrentMap<String, S3FileSystem> getFilesystems() {
 		return fileSystems;
 	}

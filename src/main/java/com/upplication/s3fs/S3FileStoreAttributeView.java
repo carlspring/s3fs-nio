@@ -9,21 +9,18 @@ public class S3FileStoreAttributeView implements FileStoreAttributeView {
 	private String name;
 	private String ownerId;
 	private String ownerDisplayName;
-	
+
 	public static enum AttrID {
-        creationDate,
-        name,
-        ownerId,
-        ownerDisplayName
-    }
-    
-    public S3FileStoreAttributeView(Date creationDate, String name, String ownerId, String ownerDisplayName) {
+		creationDate, name, ownerId, ownerDisplayName
+	}
+
+	public S3FileStoreAttributeView(Date creationDate, String name, String ownerId, String ownerDisplayName) {
 		this.creationDate = creationDate;
 		this.name = name;
 		this.ownerId = ownerId;
 		this.ownerDisplayName = ownerDisplayName;
 	}
-    
+
 	@Override
 	public String name() {
 		return ATTRIBUTE_VIEW_NAME;

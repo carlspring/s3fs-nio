@@ -19,7 +19,9 @@ import static com.upplication.s3fs.AmazonS3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HI
 import static com.upplication.s3fs.AmazonS3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
 import static com.upplication.s3fs.AmazonS3Factory.SOCKET_TIMEOUT;
 import static com.upplication.s3fs.AmazonS3Factory.USER_AGENT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Properties;
 
@@ -33,7 +35,6 @@ import com.upplication.s3fs.util.ExposingAmazonS3Client;
 import com.upplication.s3fs.util.ExposingAmazonS3ClientFactory;
 
 public class AmazonS3ClientFactoryTest {
-
 	@Test
 	public void neverTrustTheDefaults() {
 		AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();

@@ -14,7 +14,7 @@ import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class S3UnitTest {
 	public static final URI S3_GLOBAL_URI = URI.create("s3:///");
-	
+
 	@BeforeClass
 	public static void setProperties() {
 		System.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.AmazonS3MockFactory");
@@ -22,10 +22,10 @@ public class S3UnitTest {
 
 	@Ignore
 	@Test
-	public void ignoreMe(){
+	public void ignoreMe() {
 		// this does nothing. But is needed because mvn thinks anything that begins or ends with Test is a UnitTest.
 	}
-	
+
 	@After
 	public void closeMemory() {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();

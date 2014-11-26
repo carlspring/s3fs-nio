@@ -16,9 +16,9 @@ public class EnvironmentIT {
 		new EnvironmentIT().couldCreateFileSystem();
 	}
 
-	public void couldCreateFileSystem(){
+	public void couldCreateFileSystem() {
 		Map<String, Object> res = EnvironmentBuilder.getRealEnv();
-		
+
 		assertNotNull(res);
 		assertNotNull(res.get(ACCESS_KEY));
 		assertNotNull(res.get(SECRET_KEY));

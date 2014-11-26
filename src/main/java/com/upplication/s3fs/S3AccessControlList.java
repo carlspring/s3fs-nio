@@ -27,19 +27,18 @@ public class S3AccessControlList {
 	public String getKey() {
 		return key;
 	}
-	
+
 	/**
-     * have almost one of the permission set in the parameter permissions
-     * @param permissions almost one
-     * @return
-     */
+	 * have almost one of the permission set in the parameter permissions
+	 * @param permissions almost one
+	 * @return
+	 */
 	private boolean hasPermission(EnumSet<Permission> permissions) {
 		for (Grant grant : acl.getGrants())
 			if (grant.getGrantee().getIdentifier().equals(owner.getId()) && permissions.contains(grant.getPermission()))
 				return true;
 		return false;
 	}
-
 
 	public void checkAccess(AccessMode[] modes) throws AccessDeniedException {
 		for (AccessMode accessMode : modes) {
