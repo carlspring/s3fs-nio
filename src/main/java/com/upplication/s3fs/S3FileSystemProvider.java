@@ -32,7 +32,6 @@ import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -132,7 +131,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	protected String getFileSystemKey(URI uri, Properties props) {
 		String host = uri.getHost();
 		String accessKey = (String) props.get(ACCESS_KEY);
-		return accessKey + "@" + host;
+		return (accessKey != null ? accessKey+"@" : "" ) + host;
 	}
 
 	protected void validateUri(URI uri) {
@@ -384,17 +383,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return path.exists();
 	}
 
-	/**
-	 * create a temporal directory to create streams
-	 * @return Path temporal folder
-	 * @throws IOException
-	 */
-	public Path createTempDir() throws IOException {
-		return Files.createTempDirectory("temp-s3-");
-	}
-
 	public void close(S3FileSystem fileSystem) {
-		fileSystems.remove(fileSystem.getKey());
+		if(fileSystem.getKey() != null && fileSystems.containsKey(fileSystem.getKey()))
+			fileSystems.remove(fileSystem.getKey());
 	}
 
 	public boolean isOpen(S3FileSystem s3FileSystem) {

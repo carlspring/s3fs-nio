@@ -1,5 +1,4 @@
 package com.upplication.s3fs;
-
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
@@ -9,13 +8,16 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -26,6 +28,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -35,46 +38,55 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.amazonaws.services.s3.model.AccessControlList;
+import com.amazonaws.services.s3.model.Owner;
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 
-public class FileSystemProviderTest extends S3UnitTest {
+public class S3FileSystemProviderTest extends S3UnitTest {
 	private S3FileSystemProvider s3fsProvider;
+	private Map<String, String> systemEnvBackup;
 
 	@Before
-	public void cleanup() {
+	public void setup() {
+		systemEnvBackup = System.getenv();
+		setEnv(new HashMap<String,String>());
 		s3fsProvider = spy(new S3FileSystemProvider());
 		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
+	}
+	
+	@After
+	public void cleanup() {
+		setEnv(systemEnvBackup);
 	}
 
 	@Test(expected = S3FileSystemConfigurationException.class)
 	public void missconfigure() {
 		Properties props = new Properties();
 		props.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.BrokenAmazonS3Factory");
-		s3fsProvider.createFileSystem(S3UnitTest.S3_GLOBAL_URI, props);
+		s3fsProvider.createFileSystem(S3_GLOBAL_URI, props);
 	}
 
 	@Test
 	public void createsAuthenticatedByEnv() throws IOException {
-
 		Map<String, ?> env = buildFakeEnv();
-
-		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
-
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
-		verify(s3fsProvider).createFileSystem(eq(S3UnitTest.S3_GLOBAL_URI), eq(buildFakeProps((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))));
+		verify(s3fsProvider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))));
 	}
 
 	@Test
@@ -83,7 +95,21 @@ public class FileSystemProviderTest extends S3UnitTest {
 		props.setProperty(SECRET_KEY, "better secret key");
 		props.setProperty(ACCESS_KEY, "better access key");
 		doReturn(props).when(s3fsProvider).loadAmazonProperties();
-		URI uri = S3UnitTest.S3_GLOBAL_URI;
+		URI uri = S3_GLOBAL_URI;
+
+		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+		assertNotNull(fileSystem);
+
+		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
+	}
+
+	@Test
+	public void createAuthenticatedBySystemEnvironment() throws IOException {
+		Map<String, String> newenv = new HashMap<String, String>();
+		newenv.put(ACCESS_KEY, "better access key");
+		newenv.put(SECRET_KEY, "better secret key");
+		setEnv(newenv);
+		URI uri = S3_GLOBAL_URI;
 
 		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
@@ -93,33 +119,63 @@ public class FileSystemProviderTest extends S3UnitTest {
 
 	@Test
 	public void createsAnonymous() throws IOException {
-		URI uri = S3UnitTest.S3_GLOBAL_URI;
+		URI uri = S3_GLOBAL_URI;
 		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
-
 		assertNotNull(fileSystem);
 		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithOnlyAccessKey() throws IOException {
+		Properties props = new Properties();
+		props.setProperty(ACCESS_KEY, "better access key");
+		doReturn(props).when(s3fsProvider).loadAmazonProperties();
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+	}
+	
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithOnlySecretKey() throws IOException {
+		Properties props = new Properties();
+		props.setProperty(SECRET_KEY, "better secret key");
+		doReturn(props).when(s3fsProvider).loadAmazonProperties();
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 	}
 
 	@Test(expected = FileSystemAlreadyExistsException.class)
 	public void createFailsIfAlreadyCreated() throws IOException {
-		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+	}
 
-		s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+	@Test(expected = IllegalArgumentException.class)
+	public void createWithWrongEnv() throws IOException {
+		Map<String, Object> env = ImmutableMap.<String, Object> builder().put(ACCESS_KEY, 1234).put(SECRET_KEY, "secret key").build();
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, env);
+		assertNotNull(fileSystem);
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 	}
 
 	@Test
 	public void getFileSystem() throws IOException {
-		FileSystem fileSystem = s3fsProvider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
-
-		FileSystem other = s3fsProvider.getFileSystem(S3UnitTest.S3_GLOBAL_URI);
+		fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		assertNotNull(fileSystem);
+		FileSystem other = s3fsProvider.getFileSystem(S3_GLOBAL_URI);
 		assertSame(fileSystem, other);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test(expected=FileSystemNotFoundException.class)
+	public void getUnknownFileSystem() throws IOException {
+		doThrow(new IOException("stoek")).when(s3fsProvider).newFileSystem(any(URI.class), any(Map.class));
+		s3fsProvider.getFileSystem(URI.create("s3://endpoint20/bucket/path/to/file"), ImmutableMap.<String, Object> of());
 	}
 
 	@Test
 	public void getPathWithEmtpyEndpoint() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 
 		assertEquals(path, fs.getPath("/bucket/path/to/file"));
@@ -152,7 +208,7 @@ public class FileSystemProviderTest extends S3UnitTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void getPathWithDefaultEndpointAndWithoutBucket() throws IOException {
-		FileSystem fs = FileSystems.newFileSystem(S3UnitTest.S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		FileSystem fs = FileSystems.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		fs.provider().getPath(URI.create("s3:////falta-bucket"));
 	}
 
@@ -160,10 +216,10 @@ public class FileSystemProviderTest extends S3UnitTest {
 	public void closeFileSystemReturnNewFileSystem() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
-		FileSystem fileSystem = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
 		fileSystem.close();
-		FileSystem fileSystem2 = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
+		FileSystem fileSystem2 = provider.newFileSystem(S3_GLOBAL_URI, env);
 		assertNotSame(fileSystem, fileSystem2);
 	}
 
@@ -171,9 +227,9 @@ public class FileSystemProviderTest extends S3UnitTest {
 	public void createTwoFileSystemThrowError() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		Map<String, ?> env = buildFakeEnv();
-		FileSystem fileSystem = provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
-		provider.newFileSystem(S3UnitTest.S3_GLOBAL_URI, env);
+		provider.newFileSystem(S3_GLOBAL_URI, env);
 	}
 
 	// stream directory
@@ -1172,8 +1228,10 @@ public class FileSystemProviderTest extends S3UnitTest {
 		Path mockDir = client.addDirectory(mocket, "dir");
 		client.addFile(mockDir, "file");
 
-		FileSystem fs = createNewS3FileSystem();
-		Path file1 = fs.getPath("/bucketA/dir/file");
+		S3FileSystem fs = createNewS3FileSystem();
+		S3Path file1 = fs.getPath("/bucketA/dir/file");
+		S3AccessControlList acl = file1.getAccessControlList();
+		assertEquals("dir/file", acl.getKey());
 
 		s3fsProvider.checkAccess(file1, AccessMode.WRITE);
 	}
@@ -1186,11 +1244,10 @@ public class FileSystemProviderTest extends S3UnitTest {
 		Path mockDir = client.addDirectory(mocket, "dir");
 		client.addFile(mockDir, "readOnly");
 		// return empty list
-		doReturn(client.createReadOnly("bucketA")).when(client).getObjectAcl("bucketA", "dir/readOnly");
+		doReturn(client.createReadOnly(new Owner("2", "Read Only"))).when(client).getObjectAcl("bucketA", "dir/readOnly");
 
 		S3FileSystem fs = createNewS3FileSystem();
 		S3Path file1 = fs.getPath("/bucketA/dir/readOnly");
-
 		s3fsProvider.checkAccess(file1, AccessMode.WRITE);
 	}
 
@@ -1268,6 +1325,40 @@ public class FileSystemProviderTest extends S3UnitTest {
 	 * @throws IOException
 	 */
 	private S3FileSystem createNewS3FileSystem() throws IOException {
-		return s3fsProvider.getFileSystem(S3UnitTest.S3_GLOBAL_URI);
+		return s3fsProvider.getFileSystem(S3_GLOBAL_URI);
+	}
+
+	@SuppressWarnings("unchecked")
+	protected static synchronized void setEnv(Map<String, String> newenv) {
+		try {
+			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+			theEnvironmentField.setAccessible(true);
+			Map<String, String> env = new HashMap<>((Map<String, String>) theEnvironmentField.get(null));
+			env.putAll(newenv);
+			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
+			theCaseInsensitiveEnvironmentField.setAccessible(true);
+			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
+			cienv.putAll(newenv);
+		} catch (NoSuchFieldException e) {
+			try {
+				Class<?>[] classes = Collections.class.getDeclaredClasses();
+				Map<String, String> env = System.getenv();
+				for (Class<?> cl : classes) {
+					if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
+						Field field = cl.getDeclaredField("m");
+						field.setAccessible(true);
+						Object obj = field.get(env);
+						Map<String, String> map = (Map<String, String>) obj;
+						map.clear();
+						map.putAll(newenv);
+					}
+				}
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 	}
 }

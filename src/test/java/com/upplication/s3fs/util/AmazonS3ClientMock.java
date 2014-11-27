@@ -544,10 +544,12 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		res.grantPermission(grant, Permission.Write);
 		return res;
 	}
-
 	public AccessControlList createReadOnly(String bucketName) {
+		return createReadOnly(getOwner(bucketName));
+	}
+	
+	public AccessControlList createReadOnly(final Owner owner) {
 		AccessControlList res = new AccessControlList();
-		final Owner owner = getOwner(bucketName);
 		res.setOwner(owner);
 		Grantee grant = new Grantee() {
 			@Override

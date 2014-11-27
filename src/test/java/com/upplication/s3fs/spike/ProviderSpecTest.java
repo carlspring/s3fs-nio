@@ -72,23 +72,12 @@ public class ProviderSpecTest {
 			//channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
 			ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-			System.out.println("File size: " + channel.size());
-
 			while (channel.read(buffer) > 0) {
 				buffer.rewind();
-
-				System.out.print(new String(buffer.array(), 0, buffer.remaining()));
-
 				buffer.flip();
-
-				System.out.println("Current position : " + channel.position());
 			}
 
 			/*
-			
-			
-			
-			
 			ByteBuffer buffer = ByteBuffer.allocate(1024);
 
 			  sbc.position(4);

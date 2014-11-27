@@ -109,7 +109,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	private Bucket getBucket(boolean force) {
 		if (bucket == null)
-			bucket = fileSystem.getBucket(name);
+			bucket = getBucket(name);
 		if (bucket == null && force)
 			bucket = createBucket();
 		return bucket;

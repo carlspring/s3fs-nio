@@ -505,7 +505,7 @@ public class S3Path implements Path {
 	 * @return AccessControlList
 	 * @throws NoSuchFileException if not found the path and any child
 	 */
-	private S3AccessControlList getAccessControlList() throws NoSuchFileException {
+	public S3AccessControlList getAccessControlList() throws NoSuchFileException {
 		return getFileStore().getAccessControlList(this);
 	}
 

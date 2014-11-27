@@ -1,10 +1,12 @@
 package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -18,7 +20,7 @@ import org.junit.Test;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 
-public class FileSystemTest extends S3UnitTest {
+public class S3FileSystemTest extends S3UnitTest {
 	private FileSystem fs;
 
 	@Before
@@ -188,5 +190,56 @@ public class FileSystemTest extends S3UnitTest {
 
 	private static void assertNotEquals(Object a, Object b) {
 		assertTrue(a + " are not equal to: " + b, !a.equals(b));
+	}
+	
+	@Test
+	public void comparables() throws IOException {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		S3FileSystem s3fs1 = provider.getFileSystem(URI.create("s3://mirror1.amazon.test/"));
+		S3FileSystem s3fs2 = provider.getFileSystem(URI.create("s3://mirror2.amazon.test/"));
+		S3FileSystem s3fs3 = provider.getFileSystem(URI.create("s3://accessKey:secretKey@mirror1.amazon.test/"));
+		S3FileSystem s3fs4 = provider.getFileSystem(URI.create("s3://accessKey:secretKey@mirror2.amazon.test"));
+		S3FileSystem s3fs5 = provider.getFileSystem(URI.create("s3://mirror1.amazon.test/"));
+		S3FileSystem s3fs6 = provider.getFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"));
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
+		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
+		S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null);
+		S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null);
+		S3FileSystem s3fs11 = new S3FileSystem(provider, "access key for test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
+		
+		assertEquals(-517310489, s3fs1.hashCode());
+		assertEquals(-1316272121, s3fs2.hashCode());
+		assertEquals(-636290468, s3fs3.hashCode());
+		assertEquals(-1435252100, s3fs4.hashCode());
+		assertEquals(-517310489, s3fs5.hashCode());
+		assertEquals(-1866959227, s3fs6.hashCode());
+		assertEquals(-82123487, s3fs7.hashCode());
+		
+		assertFalse(s3fs1.equals(s3fs2));
+		assertFalse(s3fs1.equals(s3fs3));
+		assertFalse(s3fs1.equals(s3fs4));
+		assertTrue(s3fs1.equals(s3fs5));
+		assertFalse(s3fs1.equals(s3fs6));
+		assertFalse(s3fs3.equals(s3fs4));
+		assertFalse(s3fs3.equals(s3fs6));
+		assertFalse(s3fs1.equals(s3fs6));
+		assertFalse(s3fs1.equals(new S3FileStore(s3fs1, "emmer")));
+		assertFalse(s3fs7.equals(s3fs8));
+		assertTrue(s3fs8.equals(s3fs8));
+		assertFalse(s3fs8.equals(s3fs1));
+		assertTrue(s3fs8.equals(s3fs9));
+		assertFalse(s3fs9.equals(s3fs10));
+		assertTrue(s3fs2.equals(s3fs11));
+
+		assertEquals(0, s3fs1.compareTo(s3fs5));
+		assertEquals(-1, s3fs1.compareTo(s3fs2));
+		assertEquals(1, s3fs2.compareTo(s3fs1));
+		assertEquals(-63, s3fs1.compareTo(s3fs6));
+		s3fs7.close();
+		s3fs8.close();
+		s3fs9.close();
+		s3fs10.close();
+		s3fs11.close();
 	}
 }

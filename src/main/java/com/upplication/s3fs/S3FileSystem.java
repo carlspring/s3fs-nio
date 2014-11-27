@@ -66,13 +66,6 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 		return builder.build();
 	}
 
-	Bucket getBucket(String name) {
-		for (Bucket bucket : client.listBuckets())
-			if (bucket.getName().equals(name))
-				return bucket;
-		return null;
-	}
-
 	@Override
 	public Iterable<FileStore> getFileStores() {
 		ImmutableList.Builder<FileStore> builder = ImmutableList.builder();
@@ -127,10 +120,6 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	 */
 	public String getEndpoint() {
 		return endpoint;
-	}
-
-	public Path createTempDir() throws IOException {
-		return provider.createTempDir();
 	}
 
 	@Override
