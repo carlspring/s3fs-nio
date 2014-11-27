@@ -80,7 +80,7 @@ public class S3Iterator implements Iterator<Path> {
 	 */
 	private void parseObjectListing(List<S3Path> listPath, ObjectListing current) {
 		for (String commonPrefix : current.getCommonPrefixes()) {
-			listPath.add(new S3Path(s3FileSystem, fileStore, commonPrefix.split("/")));
+			listPath.add(new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(commonPrefix)));
 		}
 		for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
 			final String objectSummaryKey = objectSummary.getKey();
