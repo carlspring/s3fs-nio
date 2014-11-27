@@ -102,17 +102,18 @@ public class S3IteratorTest extends S3UnitTest {
 		client.addFile(mocket, "file");
 		client.addFile(mocket, "file2");
 		Path dir = client.addDirectory(mocket, "dir");
-		client.addFile(dir, "file");
+		client.addFile(dir, "file3");
 		Path subdir2 = client.addDirectory(mocket, "dir2");
-		client.addFile(subdir2, "file");
+		client.addFile(subdir2, "file4");
 		Path subdir3 = client.addDirectory(subdir2, "dir3");
 		client.addFile(subdir3, "file3");
+		client.addDirectory(mocket, "dir4");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA");
 		S3Iterator iterator = new S3Iterator(path);
 
-		assertIterator(iterator, "file", "file2", "dir", "dir2");
+		assertIterator(iterator, "file", "file2", "dir", "dir2", "dir4");
 	}
 
 	//    @Test(expected = IllegalArgumentException.class)
@@ -200,19 +201,15 @@ public class S3IteratorTest extends S3UnitTest {
 	}
 
 	private void assertIterator(Iterator<Path> iterator, final String... files) {
-
 		assertNotNull(iterator);
 		assertTrue(iterator.hasNext());
-
 		Set<String> filesNamesExpected = new HashSet<>(Arrays.asList(files));
 		Set<String> filesNamesActual = new HashSet<>();
-
 		while (iterator.hasNext()) {
 			Path path = iterator.next();
 			String fileName = path.getFileName().toString();
 			filesNamesActual.add(fileName);
 		}
-
 		assertEquals(filesNamesExpected, filesNamesActual);
 	}
 }

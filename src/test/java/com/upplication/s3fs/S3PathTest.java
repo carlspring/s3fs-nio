@@ -11,6 +11,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.WatchEvent;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -538,8 +539,63 @@ public class S3PathTest extends S3UnitTest {
 		assertEquals("b", hashMap.get(forPath("/bucket/a")));
 	}
 
+	@Test(expected=IllegalArgumentException.class)
+	public void preconditions() {
+		S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3_GLOBAL_URI);
+		new S3Path(fileSystem, "/");
+	}
+
+	@Test
+	public void constructors() {
+		S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3_GLOBAL_URI);
+		S3Path path = new S3Path(fileSystem, "/buckname");
+		assertEquals("buckname", path.getFileStore().name());
+		assertEquals("buckname", path.getFileName().toString());
+		assertNull(path.getParent());
+		assertEquals("", path.getKey());
+		path = new S3Path(fileSystem, "/buckname/");
+		assertEquals("buckname", path.getFileStore().name());
+		assertEquals("buckname", path.getFileName().toString());
+		assertEquals("", path.getKey());
+		path = new S3Path(fileSystem, "/buckname/file");
+		assertEquals("buckname", path.getFileStore().name());
+		assertEquals("file", path.getFileName().toString());
+		assertEquals("file", path.getKey());
+		path = new S3Path(fileSystem, "/buckname/dir/file");
+		assertEquals("buckname", path.getFileStore().name());
+		assertEquals("file", path.getFileName().toString());
+		assertEquals("dir/file", path.getKey());
+		path = new S3Path(fileSystem, "dir/file");
+		assertNull(path.getFileStore());
+		assertEquals("file", path.getFileName().toString());
+		assertEquals("dir/file", path.getKey());
+		assertEquals("dir", path.getParent().toString());
+		path = new S3Path(fileSystem, "bla");
+		assertNull(path.getFileStore());
+		assertEquals("bla", path.getFileName().toString());
+		assertEquals("bla", path.getKey());
+		assertNull(path.getParent());
+		assertNull(path.toUri());
+		path = new S3Path(fileSystem, "");
+		assertNull(path.getFileStore());
+		assertEquals("", path.getFileName().toString());
+		assertEquals("", path.getKey());
+		assertNull(path.getParent());
+	}
+	
+	@Test(expected=UnsupportedOperationException.class)
+	public void register() throws IOException {
+		S3Path path = forPath("/buck/file");
+		path.register(null);
+	}
+	
+	@Test(expected=UnsupportedOperationException.class)
+	public void registerWatchService() throws IOException {
+		S3Path path = forPath("/buck/file");
+		path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
+	}
+
 	private static S3Path forPath(String path) {
-		FileSystem fileSystem = FileSystems.getFileSystem(URI.create("s3:///"));
-		return (S3Path) fileSystem.getPath(path);
+		return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath(path);
 	}
 }

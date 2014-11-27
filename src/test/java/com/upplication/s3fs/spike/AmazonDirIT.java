@@ -76,7 +76,7 @@ public class AmazonDirIT {
 		fileSystem.close();
 	}
 
-	public void testCreatedFromAmazonWebConsoleNotExistKeyForFolder() throws IOException {
+	public void testCreatedFromAmazonWebConsoleNotExistKeyForFolder() {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 
 		String folder = UUID.randomUUID().toString();

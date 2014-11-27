@@ -135,12 +135,6 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return (accessKey != null ? accessKey+"@" : "" ) + host;
 	}
 
-	private String getCharset(Properties props) {
-		if(!props.containsKey(CHARSET_KEY))
-			return DEFAULT_CHARSET;
-		return props.getProperty(CHARSET_KEY);
-	}
-
 	protected void validateUri(URI uri) {
 		Preconditions.checkNotNull(uri, "uri is null");
 		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
@@ -320,7 +314,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return S3FileSystem never null
 	 */
 	protected S3FileSystem createFileSystem(URI uri, Properties props) {
-		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost(), getCharset(props));
+		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
 	}
 
 	protected AmazonS3 getAmazonS3(URI uri, Properties props) {

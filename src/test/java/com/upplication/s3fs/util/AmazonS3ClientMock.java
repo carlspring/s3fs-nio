@@ -143,13 +143,18 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	 */
 	@Override
 	public ObjectListing listObjects(ListObjectsRequest listObjectsRequest) throws AmazonClientException {
+		String bucketName = listObjectsRequest.getBucketName();
+		String prefix = listObjectsRequest.getPrefix();
+		String marker = listObjectsRequest.getMarker();
+		String delimiter = listObjectsRequest.getDelimiter();
+		
 		ObjectListing objectListing = new ObjectListing();
-		objectListing.setBucketName(listObjectsRequest.getBucketName());
-		objectListing.setPrefix(listObjectsRequest.getPrefix());
-		objectListing.setMarker(listObjectsRequest.getMarker());
-		objectListing.setDelimiter(listObjectsRequest.getDelimiter());
+		objectListing.setBucketName(bucketName);
+		objectListing.setPrefix(prefix);
+		objectListing.setMarker(marker);
+		objectListing.setDelimiter(delimiter);
 
-		final Path bucket = find(listObjectsRequest.getBucketName());
+		final Path bucket = find(bucketName);
 		final Map<String, S3Element> elems = new HashMap<String, AmazonS3ClientMock.S3Element>();
 		try {
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
@@ -180,13 +185,19 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		Iterator<S3Element> iterator = elems.values().iterator();
 		int i = 0;
 		while (iterator.hasNext()) {
-
 			S3Element elem = iterator.next();
 			if (elem.getS3Object().getKey().equals("/"))
 				continue;
-			// TODO. add delimiter and marker support
-			if (listObjectsRequest.getPrefix() != null && elem.getS3Object().getKey().startsWith(listObjectsRequest.getPrefix())) {
-
+			// TODO. add marker support
+			String key = elem.getS3Object().getKey();
+			if (prefix != null && key.startsWith(prefix)) {
+				int beginIndex = key.indexOf(prefix) + prefix.length();
+				String rest = key.substring(beginIndex);
+				if(delimiter != null && delimiter.length() > 0 && rest.contains(delimiter)) {
+					String substring = key.substring(0, beginIndex + rest.indexOf(delimiter));
+					objectListing.getCommonPrefixes().add(substring);
+					continue;
+				}
 				S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
 				objectListing.getObjectSummaries().add(s3ObjectSummary);
 
@@ -201,7 +212,6 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			}
 
 		}
-
 		return objectListing;
 	}
 

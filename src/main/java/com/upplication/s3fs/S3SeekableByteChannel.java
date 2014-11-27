@@ -41,8 +41,6 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 			existed = true;
 		} catch (AmazonS3Exception e) {
 			// key doesn't exist on server. That's ok.
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
 		if (existed && options.contains(StandardOpenOption.CREATE_NEW))
 			throw new FileAlreadyExistsException(format("target already exists: %s", path));

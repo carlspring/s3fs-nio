@@ -37,7 +37,7 @@ public class FileSystemProviderIT {
 	}
 	
 	@Test
-	public void createAuthenticatedByProperties() throws IOException{
+	public void createAuthenticatedByProperties(){
 
 		URI uri = URI.create("s3://yadi/");
 		
@@ -49,7 +49,7 @@ public class FileSystemProviderIT {
 	
 	
 	@Test
-	public void createsAuthenticatedByEnvOverridesProps() throws IOException {
+	public void createsAuthenticatedByEnvOverridesProps() {
 		
 		Map<String, ?> env = buildFakeEnv();
 		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
@@ -59,7 +59,7 @@ public class FileSystemProviderIT {
 	}
 
 	@Test
-	public void createsAnonymousNotPossible() throws IOException {
+	public void createsAnonymousNotPossible() {
 		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
 		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps("access key for test", "secret key for test")));

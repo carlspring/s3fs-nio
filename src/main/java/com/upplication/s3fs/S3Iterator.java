@@ -87,10 +87,7 @@ public class S3Iterator implements Iterator<Path> {
 			String immediateDescendantKey = getImmediateDescendant(this.key, objectSummaryKey);
 			if (immediateDescendantKey != null) {
 				S3Path descendentPart;
-				if (objectSummary.getBucketName().equals(fileStore.name()))
-					descendentPart = new S3Path(s3FileSystem, fileStore, s3FileSystem.key2Parts(immediateDescendantKey));
-				else
-					descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), s3FileSystem.key2Parts(immediateDescendantKey));
+				descendentPart = new S3Path(s3FileSystem, fileStore, s3FileSystem.key2Parts(immediateDescendantKey));
 				if (!listPath.contains(descendentPart)) {
 					listPath.add(descendentPart);
 				}

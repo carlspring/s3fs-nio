@@ -82,11 +82,11 @@ public class S3Path implements Path {
 			pathParts.remove(pathParts.size() - 1);
 
 		if (first.startsWith(PATH_SEPARATOR)) { // absolute path
+			pathParts = pathParts.subList(1, pathParts.size());
 			Preconditions.checkArgument(pathParts.size() >= 1, "path must start with bucket name");
-			Preconditions.checkArgument(!pathParts.get(1).isEmpty(), "bucket name must be not empty");
-			bucket = pathParts.get(1);
-			if (!pathParts.isEmpty())
-				pathParts = pathParts.subList(2, pathParts.size());
+			Preconditions.checkArgument(!pathParts.get(0).isEmpty(), "bucket name must be not empty");
+			bucket = pathParts.get(0);
+			pathParts = pathParts.subList(1, pathParts.size());
 		}
 
 		List<String> moreSplitted = Lists.newArrayList();
@@ -95,7 +95,7 @@ public class S3Path implements Path {
 
 		pathParts.addAll(moreSplitted);
 		if (bucket != null)
-			this.fileStore = fileSystem.getFileStore(bucket.replace("/", ""));
+			this.fileStore = fileSystem.getFileStore(bucket);
 		else
 			this.fileStore = null;
 		this.parts = KeyParts.parse(pathParts);
@@ -116,10 +116,6 @@ public class S3Path implements Path {
 
 	public S3FileStore getFileStore() {
 		return fileStore;
-	}
-
-	List<String> getParts() {
-		return parts;
 	}
 
 	/**
@@ -153,7 +149,7 @@ public class S3Path implements Path {
 	public Path getFileName() {
 		if (!parts.isEmpty())
 			return new S3Path(fileSystem, null, parts.subList(parts.size() - 1, parts.size()));
-		return new S3Path(fileSystem, (S3FileStore) null, fileStore.name()); // bucket dont have fileName
+		return new S3Path(fileSystem, (S3FileStore) null, fileStore != null ? fileStore.name() : null); // bucket dont have fileName
 	}
 
 	@Override
@@ -334,16 +330,17 @@ public class S3Path implements Path {
 
 	@Override
 	public URI toUri() {
+		if (fileStore == null)
+			return null;
+		
 		StringBuilder builder = new StringBuilder();
 		builder.append("s3://");
 		if (fileSystem.getEndpoint() != null) {
 			builder.append(fileSystem.getEndpoint());
 		}
 		builder.append("/");
-		if (fileStore != null) {
-			builder.append(fileStore.name());
-			builder.append(PATH_SEPARATOR);
-		}
+		builder.append(fileStore.name());
+		builder.append(PATH_SEPARATOR);
 		builder.append(Joiner.on(PATH_SEPARATOR).join(parts));
 		return URI.create(builder.toString());
 	}
@@ -435,9 +432,9 @@ public class S3Path implements Path {
 			@Override
 			public String apply(String input) {
 				String res = input;
-				for (String str : strs) {
-					res = res.replace(str, "");
-				}
+				if(res != null)
+					for (String str : strs)
+						res = res.replace(str, "");
 				return res;
 			}
 		};
