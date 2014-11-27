@@ -31,7 +31,6 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.LinkOption;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
@@ -93,7 +92,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	@Override
-	public FileSystem newFileSystem(URI uri, Map<String, ?> env) throws IOException {
+	public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
 		// first try to load amazon props
 		Properties props = getProperties(uri, env);
@@ -168,36 +167,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public FileSystem getFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
 		String key = this.getFileSystemKey(uri);
-		if (!fileSystems.containsKey(key)) {
-			try {
-				newFileSystem(uri, env);
-			} catch (IOException e) {
-				throw new FileSystemNotFoundException(e.getMessage());
-			}
-		}
-		FileSystem fileSystem = fileSystems.get(key);
-		if (fileSystem == null) {
-			throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
-		}
-		return fileSystem;
+		if (fileSystems.containsKey(key))
+			return fileSystems.get(key);
+		return newFileSystem(uri, env);
 	}
 
 	@Override
 	public S3FileSystem getFileSystem(URI uri) {
 		validateUri(uri);
 		String key = this.getFileSystemKey(uri);
-		if (!fileSystems.containsKey(key)) {
-			try {
-				newFileSystem(uri, null);
-			} catch (IOException e) {
-				throw new FileSystemNotFoundException(e.getMessage());
-			}
-		}
-		S3FileSystem fileSystem = fileSystems.get(key);
-		if (fileSystem == null) {
-			throw new FileSystemNotFoundException("File system " + uri.getScheme() + ':' + key + " does not exist");
-		}
-		return fileSystem;
+		if (fileSystems.containsKey(key))
+			return fileSystems.get(key);
+		return (S3FileSystem) newFileSystem(uri, null);
 	}
 
 	private S3Path toS3Path(Path path) {

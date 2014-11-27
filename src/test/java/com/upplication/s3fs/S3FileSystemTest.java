@@ -11,7 +11,9 @@ import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
@@ -290,6 +292,64 @@ public class S3FileSystemTest extends S3UnitTest {
 		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
 		try {
 			assertEquals("/bucket/folder%20with%20spaces/file", s3fs.parts2Key(Arrays.asList("/bucket", "folder with spaces", "file")));
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+	
+	@Test
+	public void createDirectory() throws IOException {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
+		try {
+			S3Path folder = s3fs.getPath("/bucket", "folder");
+			provider.createDirectory(folder);
+			assertTrue(Files.exists(folder));
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void createDirectoryWithAttributes() throws IOException {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
+		try {
+			S3Path folder = s3fs.getPath("/bucket", "folder");
+			provider.createDirectory(folder, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrw")));
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+	
+	@Test
+	public void isSameFile() throws IOException {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
+		try {
+			S3Path folder = s3fs.getPath("/bucket", "folder");
+			S3Path sameFolder = s3fs.getPath("/bucket", "folder");
+			S3Path differentFolder = s3fs.getPath("/bucket", "folder2");
+			Path relativize = folder.getParent().relativize(folder);
+			assertTrue(provider.isSameFile(folder, sameFolder));
+			assertFalse(provider.isSameFile(folder, differentFolder));
+			assertFalse(provider.isSameFile(folder, relativize));
+			assertFalse(provider.isSameFile(relativize, folder));
 		} finally {
 			try {
 				s3fs.close();
