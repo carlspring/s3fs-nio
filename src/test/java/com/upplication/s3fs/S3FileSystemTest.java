@@ -6,11 +6,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -202,11 +204,11 @@ public class S3FileSystemTest extends S3UnitTest {
 		S3FileSystem s3fs5 = provider.getFileSystem(URI.create("s3://mirror1.amazon.test/"));
 		S3FileSystem s3fs6 = provider.getFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"));
 		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
-		S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
-		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
-		S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null);
-		S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null);
-		S3FileSystem s3fs11 = new S3FileSystem(provider, "access key for test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
+		S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", CHARSET);
+		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null, CHARSET);
+		S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null, CHARSET);
+		S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null, CHARSET);
+		S3FileSystem s3fs11 = new S3FileSystem(provider, "access key for test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test", CHARSET);
 		
 		assertEquals(-517310489, s3fs1.hashCode());
 		assertEquals(-1316272121, s3fs2.hashCode());
@@ -241,5 +243,59 @@ public class S3FileSystemTest extends S3UnitTest {
 		s3fs9.close();
 		s3fs10.close();
 		s3fs11.close();
+	}
+	
+	@Test(expected=UnsupportedEncodingException.class)
+	public void unknownCharsetKey2Parts() throws Throwable {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
+		try {
+			s3fs.key2Parts("/bucket/folder%20with%20spaces/file");
+		} catch(RuntimeException e) {
+			throw e.getCause();
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+	
+	@Test
+	public void key2Parts() {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "UTF-8");
+		try {
+			String[] parts = s3fs.key2Parts("/bucket/folder%20with%20spaces/file");
+			assertEquals("", parts[0]);
+			assertEquals("bucket", parts[1]);
+			assertEquals("folder with spaces", parts[2]);
+			assertEquals("file", parts[3]);
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
+	}
+	
+	@Test
+	public void parts2Key() {
+		S3FileSystemProvider provider = new S3FileSystemProvider();
+		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test", "unknown");
+		try {
+			assertEquals("/bucket/folder%20with%20spaces/file", s3fs.parts2Key(Arrays.asList("/bucket", "folder with spaces", "file")));
+		} finally {
+			try {
+				s3fs.close();
+			} catch (IOException e) {
+				// ignore
+			}
+		}
 	}
 }

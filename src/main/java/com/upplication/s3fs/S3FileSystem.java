@@ -1,6 +1,10 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.S3Path.PATH_SEPARATOR;
+
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
@@ -8,24 +12,30 @@ import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.nio.file.spi.FileSystemProvider;
+import java.util.List;
 import java.util.Set;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.escape.Escaper;
+import com.google.common.net.UrlEscapers;
 
 public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem> {
 	private final S3FileSystemProvider provider;
 	private final String key;
 	private final AmazonS3 client;
 	private final String endpoint;
+	private final String charset;
 
-	public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint) {
+	public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint, String charset) {
 		this.provider = provider;
 		this.key = key;
 		this.client = client;
 		this.endpoint = endpoint;
+		this.charset = charset;
 	}
 
 	@Override
@@ -120,6 +130,31 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	 */
 	public String getEndpoint() {
 		return endpoint;
+	}
+	
+	public String[] key2Parts(String keyParts) {
+		String[] parts = keyParts.split(PATH_SEPARATOR);
+		String[] split = new String[parts.length];
+		int i=0;
+		for (String part : parts) {
+			try {
+				split[i++] = URLDecoder.decode(part, charset);
+			} catch (UnsupportedEncodingException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		return split;
+	}
+
+	public String parts2Key(List<String> parts) {
+		if (parts.isEmpty())
+			return "";
+		Escaper escaper = UrlEscapers.urlFragmentEscaper();
+		ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
+		for (String part : parts) {
+			builder.add(escaper.escape(part));
+		}
+		return Joiner.on(PATH_SEPARATOR).join(builder.build());
 	}
 
 	@Override

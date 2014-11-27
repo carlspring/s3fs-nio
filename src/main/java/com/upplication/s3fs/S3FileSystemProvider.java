@@ -82,7 +82,9 @@ import com.google.common.collect.Sets;
  * 
  */
 public class S3FileSystemProvider extends FileSystemProvider {
-	public static final String AMAZON_S3_FACTORY_CLASS = "amazon_s3_factory";
+	public static final String DEFAULT_CHARSET = "UTF-8";
+	public static final String CHARSET_KEY = "s3fs_charset";
+	public static final String AMAZON_S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
 	private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
 	@Override
@@ -132,6 +134,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		String host = uri.getHost();
 		String accessKey = (String) props.get(ACCESS_KEY);
 		return (accessKey != null ? accessKey+"@" : "" ) + host;
+	}
+
+	private String getCharset(Properties props) {
+		if(!props.containsKey(CHARSET_KEY))
+			return DEFAULT_CHARSET;
+		return props.getProperty(CHARSET_KEY);
 	}
 
 	protected void validateUri(URI uri) {
@@ -331,7 +339,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return S3FileSystem never null
 	 */
 	protected S3FileSystem createFileSystem(URI uri, Properties props) {
-		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
+		return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost(), getCharset(props));
 	}
 
 	protected AmazonS3 getAmazonS3(URI uri, Properties props) {

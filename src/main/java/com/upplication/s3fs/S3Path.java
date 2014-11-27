@@ -38,7 +38,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.upplication.s3fs.util.S3KeyHelper;
 
 public class S3Path implements Path {
 	public static final String PATH_SEPARATOR = "/";
@@ -128,7 +127,7 @@ public class S3Path implements Path {
 	 * <b>note:</b> the final slash need to be added to save a directory (Amazon s3 spec)
 	 */
 	public String getKey() {
-		return S3KeyHelper.getKey(parts);
+		return fileSystem.parts2Key(parts);
 	}
 
 	@Override

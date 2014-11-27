@@ -14,6 +14,7 @@ import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class S3UnitTest {
 	public static final URI S3_GLOBAL_URI = URI.create("s3:///");
+	public static final String CHARSET = "UTF-8";
 
 	@BeforeClass
 	public static void setProperties() {

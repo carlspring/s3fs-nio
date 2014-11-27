@@ -8,7 +8,6 @@ import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.Lists;
-import com.upplication.s3fs.util.S3KeyHelper;
 
 /**
  * S3 iterator over folders at first level.
@@ -80,7 +79,7 @@ public class S3Iterator implements Iterator<Path> {
 	 */
 	private void parseObjectListing(List<S3Path> listPath, ObjectListing current) {
 		for (String commonPrefix : current.getCommonPrefixes()) {
-			listPath.add(new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(commonPrefix)));
+			listPath.add(new S3Path(s3FileSystem, fileStore, s3FileSystem.key2Parts(commonPrefix)));
 		}
 		for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
 			final String objectSummaryKey = objectSummary.getKey();
@@ -89,9 +88,9 @@ public class S3Iterator implements Iterator<Path> {
 			if (immediateDescendantKey != null) {
 				S3Path descendentPart;
 				if (objectSummary.getBucketName().equals(fileStore.name()))
-					descendentPart = new S3Path(s3FileSystem, fileStore, S3KeyHelper.getParts(immediateDescendantKey));
+					descendentPart = new S3Path(s3FileSystem, fileStore, s3FileSystem.key2Parts(immediateDescendantKey));
 				else
-					descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), S3KeyHelper.getParts(immediateDescendantKey));
+					descendentPart = new S3Path(s3FileSystem, "/" + objectSummary.getBucketName(), s3FileSystem.key2Parts(immediateDescendantKey));
 				if (!listPath.contains(descendentPart)) {
 					listPath.add(descendentPart);
 				}
