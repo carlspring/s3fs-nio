@@ -23,7 +23,7 @@ And add to your META-INF/java.nio.file.spi.FileSystemProvider (create if not exi
 
 You can add the accessKey and secretKey in the user-information component of the URI.
 
-```
+```java
 Paths.get(URI.create("s3://accessKey:secretKey@s3.amazonaws.com/bucketName/folder/file"))
 ```
 
