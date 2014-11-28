@@ -17,6 +17,11 @@
 	</licenses>
 	<developers>
 		<developer>
+			<id>sbeimin</id>
+			<name>Syte Beimin</name>
+            <email>syte.beimin@gmail.com</email>
+		</developer>
+		<developer>
 			<id>jarnaiz</id>
 			<name>Javier Arnáiz</name>
             <email>arnaix@gmail.com</email>
