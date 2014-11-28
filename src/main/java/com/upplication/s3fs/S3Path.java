@@ -14,6 +14,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -478,7 +479,7 @@ public class S3Path implements Path {
 		getFileStore().copy(this, target, options);
 	}
 
-	public void createDirectory(FileAttribute<?>[] attrs) {
+	public void createDirectory(FileAttribute<?>[] attrs) throws FileAlreadyExistsException {
 		getFileStore().createDirectory(this, attrs);
 	}
 
@@ -523,5 +524,13 @@ public class S3Path implements Path {
 
 	public InputStream getInputStream(OpenOption... options) throws IOException {
 		return getFileStore().getInputStream(this, options);
+	}
+
+	public boolean isDirectory() {
+		try {
+			return readAttributes(BasicFileAttributes.class).isDirectory();
+		} catch (IOException e) {
+			return false;
+		}
 	}
 }

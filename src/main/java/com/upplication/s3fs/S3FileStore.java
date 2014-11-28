@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.CopyOption;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -146,21 +147,15 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	/**
 	 * @param attrs  
+	 * @throws FileAlreadyExistsException 
 	 */
-	public void createDirectory(S3Path path, FileAttribute<?>... attrs) {
-		if (bucket == null) {
-			bucket = getBucket(name);
-			if (bucket == null)
-				bucket = createBucket();
-		}
-		// FIXME: throw exception if the same key already exists at amazon s3
+	public void createDirectory(S3Path path, FileAttribute<?>... attrs) throws FileAlreadyExistsException {
+		getBucket(true);
+		if(exists(path))
+			throw new FileAlreadyExistsException(format("target already exists: %s", path));
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
-		String key = path.getKey();
-		StringBuilder keyName = new StringBuilder(key);
-		if (!key.endsWith("/"))
-			keyName.append("/");
-		getClient().putObject(name, keyName.toString(), new ByteArrayInputStream(new byte[0]), metadata);
+		getClient().putObject(name, path.getKey() + "/", new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
 	public S3AccessControlList getAccessControlList(S3Path path) throws NoSuchFileException {

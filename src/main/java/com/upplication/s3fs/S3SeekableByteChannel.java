@@ -2,6 +2,7 @@ package com.upplication.s3fs;
 
 import static java.lang.String.format;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -14,14 +15,13 @@ import java.nio.file.StandardOpenOption;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
+import org.apache.tika.Tika;
+
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
-import com.upplication.s3fs.util.FileTypeDetector;
 import com.upplication.s3fs.util.IOUtils;
 
 public class S3SeekableByteChannel implements SeekableByteChannel {
-	private final FileTypeDetector fileTypeDetector = new FileTypeDetector();
 	private S3Path path;
 	private Set<? extends OpenOption> options;
 	private S3FileStore fileStore;
@@ -34,13 +34,11 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 		this.fileStore = fileStore;
 		String key = path.getKey();
 		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
-		boolean existed = false;
-		try (S3Object object = fileStore.getObject(key)) {
+		boolean existed = fileStore.exists(path);
+		if(existed) {
+			S3Object object = fileStore.getObject(key);
 			InputStream is = object.getObjectContent();
 			Files.write(tempFile, IOUtils.toByteArray(is), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-			existed = true;
-		} catch (AmazonS3Exception e) {
-			// key doesn't exist on server. That's ok.
 		}
 		if (existed && options.contains(StandardOpenOption.CREATE_NEW))
 			throw new FileAlreadyExistsException(format("target already exists: %s", path));
@@ -63,32 +61,24 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 			if (!seekable.isOpen())
 				return;
 			seekable.close();
-			// upload the content where the seekable ends (close)
-			if (Files.exists(tempFile)) {
-				ObjectMetadata metadata = new ObjectMetadata();
-				metadata.setContentLength(Files.size(tempFile));
-				// FIXME: #20 ServiceLoader cant load com.upplication.s3fs.util.FileTypeDetector when this library is used inside a ear :(
-				metadata.setContentType(fileTypeDetector.probeContentType(tempFile));
-
-				try (InputStream stream = Files.newInputStream(tempFile)) {
-					/*
-					 FIXME: if the stream is {@link InputStream#markSupported()} i can reuse the same stream
-					 and evict the close and open methods of probeContentType. By this way:
-					 metadata.setContentType(new Tika().detect(stream, tempFile.getFileName().toString()));
-					*/
-					fileStore.putObject(path.getKey(), stream, metadata);
-				}
-			}
 			if (options.contains(StandardOpenOption.DELETE_ON_CLOSE)) {
 				path.delete();
+				return;
+			}
+			// upload the content where the seekable ends (close)
+			InputStream stream = null;
+			try {
+				stream = new BufferedInputStream(Files.newInputStream(tempFile));
+				ObjectMetadata metadata = new ObjectMetadata();
+				metadata.setContentLength(Files.size(tempFile));
+				metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
+				fileStore.putObject(path.getKey(), stream, metadata);
+			} finally {
+				if(stream != null)
+					stream.close();
 			}
 		} finally {
-			try {
-				// and delete the temp dir
-				Files.deleteIfExists(tempFile);
-			} catch (Throwable t) {
-				// is ok.
-			}
+			Files.deleteIfExists(tempFile);
 		}
 	}
 

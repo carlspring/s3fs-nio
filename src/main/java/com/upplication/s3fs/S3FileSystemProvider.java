@@ -244,12 +244,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 		S3Path s3Source = toS3Path(source);
 		S3Path s3Target = toS3Path(target);
-		/*
-		 * Preconditions.checkArgument(!s3Source.isDirectory(),
-		 * "copying directories is not yet supported: %s", source); // TODO
-		 * Preconditions.checkArgument(!s3Target.isDirectory(),
-		 * "copying directories is not yet supported: %s", target); // TODO
-		 */
+		// TODO: implements support for copying directories
+		Preconditions.checkArgument(!s3Source.isDirectory(), "copying directories is not yet supported: %s", source);
+		Preconditions.checkArgument(!s3Target.isDirectory(), "copying directories is not yet supported: %s", target);
+		
 		ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
 		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
 

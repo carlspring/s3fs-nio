@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -82,6 +83,18 @@ public class S3FileStoreTest extends S3UnitTest {
 		fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
 	}
 
+	@Test(expected = IllegalArgumentException.class)
+	public void bucketInputStream() throws IOException {
+		S3Path bucket = fileSystem.getPath("/bucket");
+		fileStore.getInputStream(bucket, StandardOpenOption.APPEND);
+	}
+
+	@Test(expected = IllegalArgumentException.class)
+	public void optionsSupport() throws IOException {
+		S3Path placeholder = fileSystem.getPath("/bucket/placeholder");
+		fileStore.getInputStream(placeholder, StandardOpenOption.APPEND);
+	}
+
 	@Test
 	public void getAttributes() throws IOException {
 		assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
@@ -149,7 +162,14 @@ public class S3FileStoreTest extends S3UnitTest {
 	@Test
 	public void createDirectoryWithEndSlash() throws IOException {
 		S3Path root = fileSystem.getPath("/bucket");
-		S3Path path = (S3Path) Files.createDirectory(root.resolve("folder/"));
+		S3Path path = (S3Path) Files.createDirectory(root.resolve("nonexistingfolder/"));
+		assertEquals("/bucket/nonexistingfolder", path.toAbsolutePath().toString());
+	}
+
+	@Test(expected=FileAlreadyExistsException.class)
+	public void createAlreadyExistingDirectory() throws IOException {
+		S3Path root = fileSystem.getPath("/bucket");
+		S3Path path = (S3Path) Files.createDirectory(root.resolve("folder"));
 		path.getFileStore().createDirectory(path);
 		assertEquals("/bucket/folder", path.toAbsolutePath().toString());
 	}
