@@ -1,16 +1,19 @@
 package com.upplication.s3fs;
+
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
 import static com.upplication.s3fs.S3FileSystemProvider.CHARSET_KEY;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -62,11 +65,11 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 	@Before
 	public void setup() {
 		systemEnvBackup = System.getenv();
-		setEnv(new HashMap<String,String>());
+		setEnv(new HashMap<String, String>());
 		s3fsProvider = spy(new S3FileSystemProvider());
 		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
 	}
-	
+
 	@After
 	public void cleanup() {
 		setEnv(systemEnvBackup);
@@ -137,7 +140,7 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		assertNotNull(fileSystem);
 		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
 	}
-	
+
 	@Test(expected = IllegalArgumentException.class)
 	public void createWithOnlyAccessKey() {
 		Properties props = new Properties();
@@ -145,7 +148,7 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		doReturn(props).when(s3fsProvider).loadAmazonProperties();
 		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 	}
-	
+
 	@Test(expected = IllegalArgumentException.class)
 	public void createWithOnlySecretKey() {
 		Properties props = new Properties();
@@ -303,6 +306,27 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 
 		// assert
 		assertNewDirectoryStream(dir, "file1", "file2");
+	}
+
+	@Test
+	public void basicAttributesCaching() throws IOException {
+		// fixtures
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		RuntimeException failedError = new RuntimeException("ObjectMetadata call shouldn't have been done.");
+		doThrow(failedError).when(client).getObjectMetadata("bucketT", "dir/subdir/");
+		doThrow(failedError).when(client).getObjectMetadata("bucketT", "dir/file1");
+		Path mocket = client.addBucket("bucketT");
+		Path mockDir = client.addDirectory(mocket, "dir");
+		client.addDirectory(mockDir, "subdir");
+		client.addFile(mockDir, "file1");
+		// act
+		Path dir = createNewS3FileSystem().getPath("/bucketT", "dir");
+		DirectoryStream<Path> stream = Files.newDirectoryStream(dir);
+		Iterator<Path> iterator = stream.iterator();
+		S3Path directory = (S3Path) iterator.next();
+		assertTrue(directory.isDirectory());
+		S3Path file = (S3Path) iterator.next();
+		assertFalse(file.isDirectory());
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -875,7 +899,7 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		FileSystem fs = createNewS3FileSystem();
 		Path file = fs.getPath("/bucketA/dir/file1");
 		Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
-		s3fsProvider.copy(file, fileDest);
+		s3fsProvider.copy(file, fileDest, StandardCopyOption.REPLACE_EXISTING);
 		// assert
 		assertTrue(Files.exists(fileDest));
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
@@ -1293,7 +1317,7 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 	private Map<String, ?> buildFakeEnv() {
 		return ImmutableMap.<String, Object> builder().put(ACCESS_KEY, "access key").put(SECRET_KEY, "secret key").build();
 	}
-	
+
 	private Properties buildFakeProps(String access_key, String secret_key, String encoding) {
 		Properties props = buildFakeProps(access_key, secret_key);
 		props.setProperty(CHARSET_KEY, encoding);

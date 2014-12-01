@@ -54,6 +54,7 @@ public class S3Path implements Path {
 	 * actual filesystem
 	 */
 	private S3FileSystem fileSystem;
+	private BasicFileAttributes basicFileAttributes;
 
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
@@ -528,9 +529,19 @@ public class S3Path implements Path {
 
 	public boolean isDirectory() {
 		try {
+			if(getBasicFileAttributes() != null)
+				return getBasicFileAttributes().isDirectory();
 			return readAttributes(BasicFileAttributes.class).isDirectory();
 		} catch (IOException e) {
 			return false;
 		}
+	}
+
+	public BasicFileAttributes getBasicFileAttributes() {
+		return basicFileAttributes;
+	}
+	
+	public void setBasicFileAttributes(BasicFileAttributes basicFileAttributes) {
+		this.basicFileAttributes = basicFileAttributes;
 	}
 }

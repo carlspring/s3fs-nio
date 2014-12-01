@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doThrow;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -27,6 +28,19 @@ public class S3SeekableByteChannelTest extends S3UnitTest {
 		
 		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
 		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ), file1.getFileStore());
+		assertNotNull(channel);
+		channel.write(ByteBuffer.wrap("hoi".getBytes()));
+		channel.close();
+	}
+	
+	@Test(expected=FileAlreadyExistsException.class)
+	public void alreadyExists() throws IOException {
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		Path mocket = client.addBucket("buck");
+		client.addFile(mocket, "file1");
+		
+		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW), file1.getFileStore());
 		assertNotNull(channel);
 		channel.write(ByteBuffer.wrap("hoi".getBytes()));
 		channel.close();

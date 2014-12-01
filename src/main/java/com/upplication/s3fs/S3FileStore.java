@@ -19,6 +19,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -151,7 +152,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 */
 	public void createDirectory(S3Path path, FileAttribute<?>... attrs) throws FileAlreadyExistsException {
 		getBucket(true);
-		if(exists(path))
+		if (exists(path))
 			throw new FileAlreadyExistsException(format("target already exists: %s", path));
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
@@ -187,6 +188,10 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		request.setBucketName(name);
 		request.setPrefix(key);
 		request.setMaxKeys(1);
+		return listObjects(request);
+	}
+
+	ObjectListing listObjects(ListObjectsRequest request) {
 		return getClient().listObjects(request);
 	}
 
@@ -239,28 +244,32 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 */
 	public <A extends BasicFileAttributes> A readAttributes(S3Path path, Class<A> type, LinkOption... options) throws IOException {
 		if (type == BasicFileAttributes.class) {
-			S3ObjectSummary objectSummary = getS3ObjectSummary(path);
-			// parse the data to BasicFileAttributes.
-			FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
-			long size = objectSummary.getSize();
-			boolean directory = false;
-			boolean regularFile = false;
-			String resolvedKey = objectSummary.getKey();
 			String key = path.getKey();
-			// check if is a directory and exists the key of this directory at amazon s3
-			if (resolvedKey.equals(key + "/")) {
-				directory = true;
-			} else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
-				directory = true;
-				// no metadata, we fake one
-				size = 0;
-				// delete extra part
-				resolvedKey = key + "/";
-			} else
-				regularFile = true;
-			return type.cast(new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile));
+			S3ObjectSummary objectSummary = getS3ObjectSummary(path);
+			return type.cast(buildFileS3Attributes(key, objectSummary));
 		}
 		throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
+	}
+
+	protected S3FileAttributes buildFileS3Attributes(String key, S3ObjectSummary objectSummary) {
+		// parse the data to BasicFileAttributes.
+		FileTime lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
+		long size = objectSummary.getSize();
+		boolean directory = false;
+		boolean regularFile = false;
+		String resolvedKey = objectSummary.getKey();
+		// check if is a directory and exists the key of this directory at amazon s3
+		if (resolvedKey.equals(key + "/")) {
+			directory = true;
+		} else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
+			directory = true;
+			// no metadata, we fake one
+			size = 0;
+			// delete extra part
+			resolvedKey = key + "/";
+		} else
+			regularFile = true;
+		return new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
 	}
 
 	/**
@@ -310,6 +319,80 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	void putObject(String key, InputStream input, ObjectMetadata metadata) {
 		Bucket buck = getBucket(true);
 		getClient().putObject(buck.getName(), key, input, metadata);
+	}
+
+	/**
+	 * The current #buildRequest() get all subdirectories and her content.
+	 * This method filter the keyChild and check if is a inmediate
+	 * descendant of the keyParent parameter
+	 * @param keyParent String
+	 * @param keyChild String
+	 * @return String parsed
+	 *  or null when the keyChild and keyParent are the same and not have to be returned
+	 */
+	private String getImmediateDescendant(String keyParent, String keyChild) {
+
+		keyParent = deleteExtraPath(keyParent);
+		keyChild = deleteExtraPath(keyChild);
+
+		final int parentLen = keyParent.length();
+		final String childWithoutParent = deleteExtraPath(keyChild.substring(parentLen));
+
+		String[] parts = childWithoutParent.split("/");
+
+		if (parts.length > 0 && !parts[0].isEmpty())
+			return keyParent + "/" + parts[0];
+		return null;
+
+	}
+
+	private String deleteExtraPath(String keyChild) {
+		if (keyChild.startsWith("/")) {
+			keyChild = keyChild.substring(1);
+		}
+		if (keyChild.endsWith("/")) {
+			keyChild = keyChild.substring(0, keyChild.length() - 1);
+		}
+		return keyChild;
+	}
+
+	ListObjectsRequest buildRequest(String key) {
+		ListObjectsRequest request = new ListObjectsRequest();
+		request.setBucketName(name());
+		request.setPrefix(key);
+		request.setDelimiter("/");
+		request.setMarker(key);
+		return request;
+	}
+
+	/**
+	 * add to the listPath the elements at the same level that s3Path
+	 * @param s3Iterator TODO
+	 * @param listPath List not null list to add
+	 * @param current ObjectListing to walk
+	 */
+	void parseObjectListing(String key, List<S3Path> listPath, ObjectListing current) {
+		for (String commonPrefix : current.getCommonPrefixes()){
+			listPath.add(new S3Path(fileSystem, this, fileSystem.key2Parts(commonPrefix)));
+		}
+		// TODO: figure our a way to efficiently preprocess commonPrefix basicFileAttributes
+		for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
+			final String objectSummaryKey = objectSummary.getKey();
+			// we only want the first level
+			String immediateDescendantKey = getImmediateDescendant(key, objectSummaryKey);
+			if (immediateDescendantKey != null) {
+				S3Path descendentPart = new S3Path(fileSystem, this, fileSystem.key2Parts(immediateDescendantKey));
+				if (immediateDescendantKey.equals(objectSummaryKey))
+					descendentPart.setBasicFileAttributes(buildFileS3Attributes(objectSummaryKey, objectSummary));
+				if (!listPath.contains(descendentPart)) {
+					listPath.add(descendentPart);
+				}
+			}
+		}
+	}
+
+	public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
+		return getClient().listNextBatchOfObjects(previousObjectListing);
 	}
 
 	@Override
