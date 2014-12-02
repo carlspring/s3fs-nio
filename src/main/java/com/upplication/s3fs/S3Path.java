@@ -15,6 +15,7 @@ import java.nio.file.AccessMode;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
@@ -529,19 +530,28 @@ public class S3Path implements Path {
 
 	public boolean isDirectory() {
 		try {
-			if(getBasicFileAttributes() != null)
-				return getBasicFileAttributes().isDirectory();
-			return readAttributes(BasicFileAttributes.class).isDirectory();
+			return getBasicFileAttributes(true).isDirectory();
 		} catch (IOException e) {
 			return false;
 		}
 	}
 
-	public BasicFileAttributes getBasicFileAttributes() {
+	public BasicFileAttributes getBasicFileAttributes() throws IOException {
+		return getBasicFileAttributes(false);
+	}
+
+	public BasicFileAttributes getBasicFileAttributes(boolean force) throws IOException {
+		if(basicFileAttributes == null && force)
+			setBasicFileAttributes(readAttributes(BasicFileAttributes.class));
+		
 		return basicFileAttributes;
 	}
 	
 	public void setBasicFileAttributes(BasicFileAttributes basicFileAttributes) {
 		this.basicFileAttributes = basicFileAttributes;
+	}
+
+	public void walkFileTree(FileVisitor<Path> visitor) throws IOException {
+		getFileStore().walkFileTree(this, visitor);
 	}
 }

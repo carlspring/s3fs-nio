@@ -30,11 +30,14 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -155,7 +158,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		objectListing.setDelimiter(delimiter);
 
 		final Path bucket = find(bucketName);
-		final Map<String, S3Element> elems = new HashMap<String, AmazonS3ClientMock.S3Element>();
+		final TreeMap<String, S3Element> elems = new TreeMap<String, AmazonS3ClientMock.S3Element>();
 		try {
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
@@ -163,7 +166,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 					S3Element element = parse(dir, bucket);
 					if (!elems.containsKey(element.getS3Object().getKey()))
 						elems.put(element.getS3Object().getKey(), element);
-					return super.preVisitDirectory(dir, attrs);
+					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
@@ -171,7 +174,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 					S3Element element = parse(file, bucket);
 					if (!elems.containsKey(element.getS3Object().getKey()))
 						elems.put(element.getS3Object().getKey(), element);
-					return super.visitFile(file, attrs);
+					return FileVisitResult.CONTINUE;
 				}
 			});
 			for (Path elem : Files.newDirectoryStream(bucket)) {
@@ -195,7 +198,8 @@ public class AmazonS3ClientMock implements AmazonS3 {
 				String rest = key.substring(beginIndex);
 				if(delimiter != null && delimiter.length() > 0 && rest.contains(delimiter)) {
 					String substring = key.substring(0, beginIndex + rest.indexOf(delimiter));
-					objectListing.getCommonPrefixes().add(substring);
+					if(!objectListing.getCommonPrefixes().contains(substring))
+						objectListing.getCommonPrefixes().add(substring);
 					continue;
 				}
 				S3ObjectSummary s3ObjectSummary = parseToS3ObjectSummary(elem);
@@ -212,6 +216,12 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			}
 
 		}
+		Collections.sort(objectListing.getObjectSummaries(), new Comparator<S3ObjectSummary>() {
+			@Override
+			public int compare(S3ObjectSummary o1, S3ObjectSummary o2) {
+				return o1.getKey().compareTo(o2.getKey());
+			}
+		});
 		return objectListing;
 	}
 
@@ -236,6 +246,11 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		} catch (IOException e) {
 			throw new AmazonClientException(e);
 		}
+		Collections.sort(elems, new Comparator<S3Element>(){
+			@Override
+			public int compare(S3Element o1, S3Element o2) {
+				return o1.getS3Object().getKey().compareTo(o2.getS3Object().getKey());
+			}});
 		Iterator<S3Element> iterator = elems.iterator();
 
 		int i = 0;
@@ -412,13 +427,16 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	 */
 	private void persist(String bucketName, S3Element elem) {
 		Path bucket = find(bucketName);
-		Path resolve = bucket.resolve(elem.getS3Object().getKey());
+		String key = elem.getS3Object().getKey();
+		Path resolve = bucket.resolve(key); // .replaceAll("/", "%2F")
+		// FIXME: check if parent dirs exist. if they don't selectively replace / with %2F's
 		if (Files.exists(resolve))
 			try {
 				Files.delete(resolve);
 			} catch (IOException e1) {
 				// ignore
 			}
+		
 		try {
 			if (elem.getS3Object().getKey().endsWith("/"))
 				Files.createDirectories(resolve);
@@ -463,6 +481,15 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			} catch (IOException e) {
 				throw new AmazonServiceException("Problem deleting mock object: ", e);
 			}
+		else {
+			resolve = bucket.resolve(key.replaceAll("/", "%2F"));
+			if(Files.exists(resolve))
+				try {
+					Files.delete(resolve);
+				} catch (IOException e) {
+					throw new AmazonServiceException("Problem deleting mock object: ", e);
+				}
+		}
 	}
 
 	private S3Element parse(InputStream stream, String bucketName, String key) {
@@ -504,8 +531,8 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		String bucketName = bucket.getFileName().toString();
 		object.setBucketName(bucketName);
 
-		String key = bucket.relativize(elem).toString();
-		if (dir) {
+		String key = bucket.relativize(elem).toString().replaceAll("%2F", "/");
+		if (dir && !key.endsWith("/")) {
 			key += "/";
 		}
 		object.setKey(key);
@@ -591,18 +618,24 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-					if (bucket.relativize(dir).toString().equals(key)) {
+					Path relativize = bucket.relativize(dir);
+					if (relativize.toString().equals(key)) {
+						matches.add(dir);
+					} else if (relativize.toString().replaceAll("%2F", "/").equals(key)) {
 						matches.add(dir);
 					}
-					return super.preVisitDirectory(dir, attrs);
+					return FileVisitResult.CONTINUE;
 				}
 
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					if (bucket.relativize(file).toString().equals(key)) {
+					Path relativize = bucket.relativize(file);
+					if (relativize.toString().equals(key)) {
+						matches.add(file);
+					} else if (relativize.toString().replaceAll("%2F", "/").equals(key)) {
 						matches.add(file);
 					}
-					return super.visitFile(file, attrs);
+					return FileVisitResult.CONTINUE;
 				}
 			});
 			if (!matches.isEmpty())
@@ -730,7 +763,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	}
 
 	public Path addFile(Path parent, String fileName) throws IOException {
-		return Files.createFile(parent.resolve(fileName));
+		return Files.createFile(parent.resolve(fileName.replaceAll("/", "%2F")));
 	}
 
 	public void addFile(Path parent, String fileName, String content) throws IOException {

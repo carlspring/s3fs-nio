@@ -2,6 +2,7 @@ package com.upplication.s3fs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -9,12 +10,20 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
@@ -593,6 +602,110 @@ public class S3PathTest extends S3UnitTest {
 	public void registerWatchService() throws IOException {
 		S3Path path = forPath("/buck/file");
 		path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
+	}
+	
+	@Test(expected=NoSuchFileException.class)
+	public void getBasicFileAttributesNonExisting() throws IOException {
+		S3Path path = forPath("/buck/file");
+		Files.deleteIfExists(path);
+		BasicFileAttributes basicFileAttributes = path.getBasicFileAttributes();
+		assertNull(basicFileAttributes);
+		basicFileAttributes = path.getBasicFileAttributes(true);
+	}
+	
+	@Test
+	public void getBasicFileAttributes() throws IOException {
+		S3Path path = forPath("/buck/file");
+		Files.createFile(path);
+		BasicFileAttributes basicFileAttributes = path.getBasicFileAttributes();
+		assertNull(basicFileAttributes);
+		basicFileAttributes = path.getBasicFileAttributes(true);
+		assertNotNull(basicFileAttributes);
+		assertFalse(basicFileAttributes.isDirectory());
+		assertTrue(basicFileAttributes.isRegularFile());
+	}
+
+	@Ignore
+	@Test
+	public void walkFileTree() throws IOException {
+		S3FileSystem fileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
+		S3Path bucket = fileSystem.getPath("/tree");
+		Path fold = bucket.resolve("folder");
+		Files.createDirectory(fold);
+		Path subfolder1 = fold.resolve("subfolder1");
+		Files.createDirectory(subfolder1);
+		Files.createFile(subfolder1.resolve("file1.1"));
+		Files.createFile(subfolder1.resolve("file1.2"));
+		Files.createFile(subfolder1.resolve("file1.3"));
+		Files.createFile(subfolder1.resolve("file1.4"));
+//		Path subfolder2 = fold.resolve("subfolder2");
+//		Files.createDirectory(subfolder2);
+		Files.createFile(fold.resolve("subfolder2/file2.1"));
+		Files.createFile(fold.resolve("subfolder2/file2.2"));
+		Files.createFile(fold.resolve("subfolder2/file2.3"));
+		Files.createFile(fold.resolve("subfolder2/file2.4"));
+		
+		S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+		final List<String> visitOrder = new ArrayList<>();
+		FileVisitor<Path> visitor = new FileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				visitOrder.add("preVisitDirectory(" + dir.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				visitOrder.add("visitFile(" + file.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+				visitOrder.add("visitFileFailed(" + file.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+				visitOrder.add("postVisitDirectory(" + dir.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+		};
+		Files.walkFileTree(folder, visitor);
+
+		final Iterator<String> iterator = visitOrder.iterator();
+		FileVisitor<Path> checkVisitor = new FileVisitor<Path>() {
+			@Override
+			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+				assertTrue(iterator.hasNext());
+				assertEquals(iterator.next(), "preVisitDirectory(" + dir.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+				assertTrue(iterator.hasNext());
+				assertEquals(iterator.next(), "visitFile(" + file.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+				assertTrue(iterator.hasNext());
+				assertEquals(iterator.next(), "visitFileFailed(" + file.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+
+			@Override
+			public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+				assertTrue(iterator.hasNext());
+				assertEquals(iterator.next(), "postVisitDirectory(" + dir.toAbsolutePath().toString()+")");
+				return FileVisitResult.CONTINUE;
+			}
+		};
+		folder.walkFileTree(checkVisitor);
+		assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
 	}
 
 	private static S3Path forPath(String path) {

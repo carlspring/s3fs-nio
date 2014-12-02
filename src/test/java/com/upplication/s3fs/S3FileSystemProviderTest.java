@@ -520,7 +520,7 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		Path mockDir = client.addDirectory(mocket, "dir");
 		client.addFile(mockDir, "file");
 
-		Path base = createNewS3FileSystem().getPath("/bucketA/dir");
+		Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
 
 		final String content = "content";
 

@@ -11,14 +11,17 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.CopyOption;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileStore;
+import java.nio.file.FileVisitor;
 import java.nio.file.LinkOption;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
+import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -259,7 +262,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		boolean regularFile = false;
 		String resolvedKey = objectSummary.getKey();
 		// check if is a directory and exists the key of this directory at amazon s3
-		if (resolvedKey.equals(key + "/")) {
+		if (key.endsWith("/") && resolvedKey.equals(key) || resolvedKey.equals(key + "/")) {
 			directory = true;
 		} else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
 			directory = true;
@@ -331,15 +334,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 *  or null when the keyChild and keyParent are the same and not have to be returned
 	 */
 	private String getImmediateDescendant(String keyParent, String keyChild) {
-
 		keyParent = deleteExtraPath(keyParent);
 		keyChild = deleteExtraPath(keyChild);
-
 		final int parentLen = keyParent.length();
 		final String childWithoutParent = deleteExtraPath(keyChild.substring(parentLen));
-
 		String[] parts = childWithoutParent.split("/");
-
 		if (parts.length > 0 && !parts[0].isEmpty())
 			return keyParent + "/" + parts[0];
 		return null;
@@ -347,12 +346,10 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	}
 
 	private String deleteExtraPath(String keyChild) {
-		if (keyChild.startsWith("/")) {
+		if (keyChild.startsWith("/"))
 			keyChild = keyChild.substring(1);
-		}
-		if (keyChild.endsWith("/")) {
+		if (keyChild.endsWith("/"))
 			keyChild = keyChild.substring(0, keyChild.length() - 1);
-		}
 		return keyChild;
 	}
 
@@ -390,9 +387,46 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 			}
 		}
 	}
+	
+	void parseObjects(List<S3Path> listPath, ObjectListing current) {
+		for (String commonPrefix : current.getCommonPrefixes()){
+			listPath.add(new S3Path(fileSystem, this, fileSystem.key2Parts(commonPrefix)));
+		}
+		// TODO: figure our a way to efficiently preprocess commonPrefix basicFileAttributes
+		for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
+			final String objectSummaryKey = objectSummary.getKey();
+			String[] keyParts = fileSystem.key2Parts(objectSummaryKey);
+			addParentPaths(listPath, keyParts, objectSummary);
+			S3Path path = new S3Path(fileSystem, this, keyParts);
+			path.setBasicFileAttributes(buildFileS3Attributes(objectSummaryKey, objectSummary));
+			if (!listPath.contains(path)) {
+				listPath.add(path);
+			}
+		}
+	}
+
+	private void addParentPaths(List<S3Path> listPath, String[] keyParts, S3ObjectSummary objectSummary) {
+		if(keyParts.length <= 1)
+			return;
+		String[] subParts = Arrays.copyOf(keyParts, keyParts.length-1);
+		S3Path path = new S3Path(fileSystem, this, subParts);
+		if (listPath.contains(path))
+			return;
+		String key = path.getKey()+"/";
+		path.setBasicFileAttributes(buildFileS3Attributes(key, objectSummary));
+		listPath.add(path);
+	}
 
 	public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
 		return getClient().listNextBatchOfObjects(previousObjectListing);
+	}
+
+	public void walkFileTree(S3Path start, FileVisitor<Path> visitor) throws IOException {
+		walkFileTree(start, visitor, Integer.MAX_VALUE);
+	}
+
+	public void walkFileTree(S3Path start, FileVisitor<Path> visitor, int maxDepth) throws IOException {
+		new FileTreeWalker(this, visitor, maxDepth).walk(start);
 	}
 
 	@Override
