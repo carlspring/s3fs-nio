@@ -1004,12 +1004,12 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		assertEquals(false, fileAttributes.isOther());
 		assertEquals(0L, fileAttributes.size());
 		assertEquals("dir/", fileAttributes.fileKey());
-		assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.lastModifiedTime());
-		assertEquals(expectedAttributes.creationTime(), fileAttributes.creationTime());
-		assertEquals(expectedAttributes.lastAccessTime(), fileAttributes.lastAccessTime());
+		assertEquals(expectedAttributes.lastModifiedTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
+		assertEquals(expectedAttributes.creationTime().to(TimeUnit.SECONDS), fileAttributes.creationTime().to(TimeUnit.SECONDS));
+		assertEquals(expectedAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastAccessTime().to(TimeUnit.SECONDS));
 		// TODO: creation and access are the same that last modified time
-		assertEquals(fileAttributes.creationTime(), fileAttributes.lastModifiedTime());
-		assertEquals(fileAttributes.lastAccessTime(), fileAttributes.lastModifiedTime());
+		assertEquals(fileAttributes.creationTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
+		assertEquals(fileAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
 	}
 
 	@Test
@@ -1049,10 +1049,10 @@ public class S3FileSystemProviderTest extends S3UnitTest {
 		assertEquals("dir/", fileAttributes.fileKey());
 		assertEquals(expectedAttributes.lastModifiedTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
 		assertEquals(expectedAttributes.creationTime().to(TimeUnit.SECONDS), fileAttributes.creationTime().to(TimeUnit.SECONDS));
-		assertEquals(expectedAttributes.lastAccessTime(), fileAttributes.lastAccessTime());
+		assertEquals(expectedAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastAccessTime().to(TimeUnit.SECONDS));
 		// TODO: creation and access are the same that last modified time
-		assertEquals(fileAttributes.creationTime(), fileAttributes.lastModifiedTime());
-		assertEquals(fileAttributes.lastAccessTime(), fileAttributes.lastModifiedTime());
+		assertEquals(fileAttributes.creationTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
+		assertEquals(fileAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
 	}
 
 	@Test(expected = NoSuchFileException.class)

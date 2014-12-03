@@ -24,15 +24,15 @@ public class S3Iterator implements Iterator<Path> {
 	private boolean recursive;
 
 	public S3Iterator(S3Path path) {
-		this(path.getFileStore(), path.getKey().length() == 0 ? "" : path.getKey() + "/");
+		this(path, false);
+	}
+
+	public S3Iterator(S3Path path, boolean recursive) {
+		this(path.getFileStore(), path.getKey().length() == 0 ? "" : path.getKey() + "/", recursive);
 	}
 	
-	public S3Iterator(S3FileStore fileStore, String key) {
-		this(fileStore, key, fileStore.buildRequest(key));
-	}
-	
-	public S3Iterator(S3FileStore fileStore, String key, ListObjectsRequest listObjectsRequest) {
-		this(fileStore, key, listObjectsRequest, false);
+	public S3Iterator(S3FileStore fileStore, String key, boolean recursive) {
+		this(fileStore, key, fileStore.buildRequest(key, recursive), recursive);
 	}
 	
 	public S3Iterator(S3FileStore fileStore, String key, ListObjectsRequest listObjectsRequest, boolean recursive) {
@@ -44,11 +44,11 @@ public class S3Iterator implements Iterator<Path> {
 	}
 
 	private void loadObjects() {
-		this.items.clear();
 		if(recursive)
 			this.fileStore.parseObjects(items, current);
 		else
 			this.fileStore.parseObjectListing(key, items, current);
+		this.items = items.subList(this.size, items.size());
 		this.size = items.size();
 		this.cursor = 0;
 	}

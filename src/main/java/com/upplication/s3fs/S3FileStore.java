@@ -355,13 +355,10 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return keyChild;
 	}
 
-	ListObjectsRequest buildRequest(String key) {
-		ListObjectsRequest request = new ListObjectsRequest();
-		request.setBucketName(name());
-		request.setPrefix(key);
-		request.setDelimiter("/");
-		request.setMarker(key);
-		return request;
+	ListObjectsRequest buildRequest(String key, boolean recursive) {
+		if(recursive)
+			return new ListObjectsRequest(name(), key, null, null, Integer.MAX_VALUE);
+		return new ListObjectsRequest(name(), key, key, "/", Integer.MAX_VALUE);
 	}
 
 	/**
@@ -416,7 +413,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 			String parentKey = path.getKey();
 			if(prefix.length() > parentKey.length() && prefix.contains(parentKey))
 				break;
-			if (listPath.contains(path) || parentPaths.contains(path)) {
+			if (listPath.contains(path)) {
 				subParts = Arrays.copyOf(subParts, subParts.length-1);
 				continue;
 			}
