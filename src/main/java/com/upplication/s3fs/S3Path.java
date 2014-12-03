@@ -554,4 +554,8 @@ public class S3Path implements Path {
 	public void walkFileTree(FileVisitor<Path> visitor) throws IOException {
 		getFileStore().walkFileTree(this, visitor);
 	}
+
+	public void walkFileTree(FileVisitor<Path> visitor, int maxDepth) throws IOException {
+		getFileStore().walkFileTree(this, visitor, maxDepth);
+	}
 }

@@ -117,6 +117,7 @@ import com.amazonaws.services.s3.model.StorageClass;
 import com.amazonaws.services.s3.model.UploadPartRequest;
 import com.amazonaws.services.s3.model.UploadPartResult;
 import com.amazonaws.services.s3.model.VersionListing;
+import com.amazonaws.util.StringUtils;
 
 public class AmazonS3ClientMock implements AmazonS3 {
 	/**
@@ -160,23 +161,6 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		final Path bucket = find(bucketName);
 		final TreeMap<String, S3Element> elems = new TreeMap<String, AmazonS3ClientMock.S3Element>();
 		try {
-			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
-				@Override
-				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-					S3Element element = parse(dir, bucket);
-					if (!elems.containsKey(element.getS3Object().getKey()))
-						elems.put(element.getS3Object().getKey(), element);
-					return FileVisitResult.CONTINUE;
-				}
-
-				@Override
-				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					S3Element element = parse(file, bucket);
-					if (!elems.containsKey(element.getS3Object().getKey()))
-						elems.put(element.getS3Object().getKey(), element);
-					return FileVisitResult.CONTINUE;
-				}
-			});
 			for (Path elem : Files.newDirectoryStream(bucket)) {
 				S3Element element = parse(elem, bucket);
 				if (!elems.containsKey(element.getS3Object().getKey()))
@@ -187,12 +171,18 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		}
 		Iterator<S3Element> iterator = elems.values().iterator();
 		int i = 0;
+		boolean waitForMarker = !StringUtils.isNullOrEmpty(marker);
 		while (iterator.hasNext()) {
 			S3Element elem = iterator.next();
 			if (elem.getS3Object().getKey().equals("/"))
 				continue;
-			// TODO. add marker support
 			String key = elem.getS3Object().getKey();
+			if(waitForMarker) {
+				waitForMarker = !key.startsWith(marker);
+				if(waitForMarker)
+					continue;
+			}
+			
 			if (prefix != null && key.startsWith(prefix)) {
 				int beginIndex = key.indexOf(prefix) + prefix.length();
 				String rest = key.substring(beginIndex);
@@ -380,6 +370,9 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	public S3Object getObject(String bucketName, String key) throws AmazonClientException {
 		Path result = find(bucketName, key);
 		if (result == null || !Files.exists(result)) {
+			result = find(bucketName, key+"/");
+		}
+		if (result == null || !Files.exists(result)) {
 			AmazonS3Exception amazonS3Exception = new AmazonS3Exception("not found with key: " + key);
 			amazonS3Exception.setStatusCode(404);
 			throw amazonS3Exception;
@@ -427,9 +420,8 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	 */
 	private void persist(String bucketName, S3Element elem) {
 		Path bucket = find(bucketName);
-		String key = elem.getS3Object().getKey();
-		Path resolve = bucket.resolve(key); // .replaceAll("/", "%2F")
-		// FIXME: check if parent dirs exist. if they don't selectively replace / with %2F's
+		String key = elem.getS3Object().getKey().replaceAll("/", "%2F");
+		Path resolve = bucket.resolve(key);
 		if (Files.exists(resolve))
 			try {
 				Files.delete(resolve);
@@ -438,13 +430,11 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			}
 		
 		try {
-			if (elem.getS3Object().getKey().endsWith("/"))
-				Files.createDirectories(resolve);
-			else {
-				Files.createFile(resolve);
-				S3ObjectInputStream objectContent = elem.getS3Object().getObjectContent();
-				if (objectContent != null)
-					Files.write(resolve, IOUtils.toByteArray(objectContent));
+			Files.createFile(resolve);
+			S3ObjectInputStream objectContent = elem.getS3Object().getObjectContent();
+			if (objectContent != null) {
+				byte[] byteArray = IOUtils.toByteArray(objectContent);
+				Files.write(resolve, byteArray);
 			}
 		} catch (IOException e) {
 			throw new AmazonServiceException("Problem creating mock element: ", e);
@@ -453,12 +443,10 @@ public class AmazonS3ClientMock implements AmazonS3 {
 
 	@Override
 	public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey) throws AmazonClientException {
-
 		Path src = find(sourceBucketName, sourceKey);
-
 		if (src != null && Files.exists(src)) {
 			Path bucket = find(destinationBucketName);
-			Path dest = bucket.resolve(destinationKey);
+			Path dest = bucket.resolve(destinationKey.replaceAll("/", "%2F"));
 			try {
 				Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
 			} catch (IOException e) {
@@ -521,20 +509,13 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	}
 
 	private S3Element parse(Path elem, Path bucket) throws IOException {
-		boolean dir = false;
-		if (Files.isDirectory(elem)) {
-			dir = true;
-		}
-
 		S3Object object = new S3Object();
 
 		String bucketName = bucket.getFileName().toString();
 		object.setBucketName(bucketName);
 
 		String key = bucket.relativize(elem).toString().replaceAll("%2F", "/");
-		if (dir && !key.endsWith("/")) {
-			key += "/";
-		}
+		boolean dir = key.endsWith("/");
 		object.setKey(key);
 
 		ObjectMetadata metadata = new ObjectMetadata();
@@ -614,14 +595,13 @@ public class AmazonS3ClientMock implements AmazonS3 {
 			return null;
 		}
 		try {
+			final String fileKey = key.replaceAll("/", "%2F");
 			final List<Path> matches = new ArrayList<Path>();
 			Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
 				@Override
 				public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-					Path relativize = bucket.relativize(dir);
-					if (relativize.toString().equals(key)) {
-						matches.add(dir);
-					} else if (relativize.toString().replaceAll("%2F", "/").equals(key)) {
+					String relativize = bucket.relativize(dir).toString();
+					if (relativize.equals(fileKey)) {
 						matches.add(dir);
 					}
 					return FileVisitResult.CONTINUE;
@@ -629,10 +609,8 @@ public class AmazonS3ClientMock implements AmazonS3 {
 
 				@Override
 				public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-					Path relativize = bucket.relativize(file);
-					if (relativize.toString().equals(key)) {
-						matches.add(file);
-					} else if (relativize.toString().replaceAll("%2F", "/").equals(key)) {
+					String relativize = bucket.relativize(file).toString();
+					if (relativize.equals(fileKey)) {
 						matches.add(file);
 					}
 					return FileVisitResult.CONTINUE;
@@ -731,8 +709,8 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		return Files.exists(base.resolve(bucketName));
 	}
 
-	public Path addBucket(String bucketName) throws IOException {
-		return Files.createDirectories(base.resolve(bucketName));
+	public MockBucket addBucket(String bucketName) throws IOException {
+		return new MockBucket(this, Files.createDirectories(base.resolve(bucketName)));
 	}
 
 	public Path addBucket(String bucketName, Owner owner) throws IOException {
@@ -762,19 +740,25 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		}
 	}
 
-	public Path addFile(Path parent, String fileName) throws IOException {
-		return Files.createFile(parent.resolve(fileName.replaceAll("/", "%2F")));
+	public void addFile(Path bucket, String fileName) throws IOException {
+		if(fileName.endsWith("/"))
+			fileName.substring(0, fileName.length()-1);
+		Files.createFile(bucket.resolve(fileName.replaceAll("/", "%2F")));
 	}
 
-	public void addFile(Path parent, String fileName, String content) throws IOException {
-		Path file = Files.createFile(parent.resolve(fileName));
+	public void addFile(Path bucket, String fileName, byte[] content) throws IOException {
+		if(fileName.endsWith("/"))
+			fileName.substring(0, fileName.length()-1);
+		Path file = Files.createFile(bucket.resolve(fileName.replaceAll("/", "%2F")));
 		OutputStream outputStream = Files.newOutputStream(file);
-		outputStream.write(content.getBytes());
+		outputStream.write(content);
 		outputStream.close();
 	}
 
-	public Path addDirectory(Path parent, String directoryName) throws IOException {
-		return Files.createDirectories(parent.resolve(directoryName));
+	public void addDirectory(Path bucket, String directoryName) throws IOException {
+		if(!directoryName.endsWith("/"))
+			directoryName+="/";
+		Files.createFile(bucket.resolve(directoryName.replaceAll("/", "%2F")));
 	}
 
 	public void clear() {

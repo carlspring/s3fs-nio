@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
+import com.upplication.s3fs.util.MockBucket;
 
 public class S3IteratorTest extends S3UnitTest {
 	S3FileSystemProvider provider;
@@ -35,10 +36,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorDirectory() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path dir = client.addDirectory(mocket, "dir");
-		client.addFile(dir, "file1");
-
+		client.addBucket("bucketA").dir("dir").file("dir/file1");
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir");
 		S3Iterator iterator = new S3Iterator(path);
@@ -48,10 +46,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorAnotherDirectory() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path dir = client.addDirectory(mocket, "dir2");
-		client.addFile(dir, "file1");
-		client.addFile(dir, "file2");
+		client.addBucket("bucketA").dir("dir2").file("dir2/file1","dir2/file2");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir2");
@@ -63,10 +58,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorWithFileContainsDirectoryName() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path dir = client.addDirectory(mocket, "dir2");
-		client.addFile(dir, "dir2-file");
-		client.addFile(mocket, "dir2-file2");
+		client.addBucket("bucketA").dir("dir2").file("dir2/dir2-file", "dir2-file2");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir2");
@@ -78,16 +70,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorWithSubFolderAndSubFiles() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path dir = client.addDirectory(mocket, "dir");
-		client.addFile(dir, "file");
-		client.addFile(dir, "file2");
-		Path subdir = client.addDirectory(dir, "dir");
-		client.addFile(subdir, "file");
-		Path subdir2 = client.addDirectory(dir, "dir2");
-		client.addFile(subdir2, "file");
-		Path subdir3 = client.addDirectory(subdir2, "dir3");
-		client.addFile(subdir3, "file3");
+		client.addBucket("bucketA").dir("dir", "dir/dir", "dir/dir2", "dir/dir2/dir3").file("dir/file", "dir/file2", "dir/dir/file", "dir/dir2/file", "dir/dir2/dir3/file");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir");
@@ -99,16 +82,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorWithSubFolderAndSubFilesAtBucketLevel() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "file");
-		client.addFile(mocket, "file2");
-		Path dir = client.addDirectory(mocket, "dir");
-		client.addFile(dir, "file3");
-		Path subdir2 = client.addDirectory(mocket, "dir2");
-		client.addFile(subdir2, "file4");
-		Path subdir3 = client.addDirectory(subdir2, "dir3");
-		client.addFile(subdir3, "file3");
-		client.addDirectory(mocket, "dir4");
+		client.addBucket("bucketA").file("file", "file2", "dir/file3", "dir2/file4", "dir2/dir3/file3").dir("dir", "dir2", "dir2/dir3", "dir4");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA");
@@ -131,8 +105,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorFileReturnEmpty() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "file1");
+		client.addBucket("bucketA").file("file1");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "file1");
@@ -144,8 +117,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorEmptyDirectory() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addDirectory(mocket, "dir");
+		client.addBucket("bucketA").dir("dir");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir");
@@ -157,10 +129,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorBucket() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "file1");
-		client.addFile(mocket, "file2");
-		client.addFile(mocket, "file3");
+		client.addBucket("bucketA").file("file1", "file2", "file3");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA");
@@ -172,14 +141,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorDirs() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "file1");
-		client.addFile(mocket, "file2");
-		client.addFile(mocket, "file3");
-		Path directory1 = client.addDirectory(mocket, "directory1");
-		client.addFile(directory1, "file1.1");
-		client.addFile(directory1, "file1.2");
-		client.addFile(directory1, "file1.3");
+		client.addBucket("bucketA").file("file1", "file2", "file3", "directory1/file1.1", "directory1/file1.2", "directory1/file1.3").dir("directory1");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA");
@@ -191,11 +153,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void virtualDirs() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		client.addFile(mocket, "directory1/file1.1");
-		client.addFile(mocket, "directory1/file1.2");
-		client.addFile(mocket, "directory1/file1.3");
-		
+		client.addBucket("bucketA").file("directory1/file1.1", "directory1/file1.2", "directory1/file1.3");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA/directory1");
@@ -210,12 +168,12 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test
 	public void iteratorMoreThanAmazonS3ClientLimit() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
+		MockBucket mocket = client.addBucket("bucketA");
 
 		String filesNameExpected[] = new String[1050];
 		for (int i = 0; i < 1050; i++) {
 			final String name = "file-" + i;
-			client.addFile(mocket, name);
+			mocket.file(name);
 			filesNameExpected[i] = name;
 		}
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
@@ -228,9 +186,7 @@ public class S3IteratorTest extends S3UnitTest {
 	@Test(expected = UnsupportedOperationException.class)
 	public void remove() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		Path mocket = client.addBucket("bucketA");
-		Path dir = client.addDirectory(mocket, "dir");
-		client.addFile(dir, "file1");
+		client.addBucket("bucketA").dir("dir").file("dir/file1");
 
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA", "dir");

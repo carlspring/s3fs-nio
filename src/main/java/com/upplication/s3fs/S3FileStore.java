@@ -426,7 +426,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	}
 
 	public void walkFileTree(S3Path start, FileVisitor<Path> visitor, int maxDepth) throws IOException {
-		new FileTreeWalker(this, visitor, maxDepth).walk(start);
+		new S3Walker(this, visitor, maxDepth).walk(start);
 	}
 
 	@Override
