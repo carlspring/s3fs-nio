@@ -709,11 +709,11 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		return Files.exists(base.resolve(bucketName));
 	}
 
-	public MockBucket addBucket(String bucketName) throws IOException {
+	public MockBucket bucket(String bucketName) throws IOException {
 		return new MockBucket(this, Files.createDirectories(base.resolve(bucketName)));
 	}
 
-	public Path addBucket(String bucketName, Owner owner) throws IOException {
+	public Path bucket(String bucketName, Owner owner) throws IOException {
 		bucketOwners.put(bucketName, owner);
 		return Files.createDirectories(base.resolve(bucketName));
 	}

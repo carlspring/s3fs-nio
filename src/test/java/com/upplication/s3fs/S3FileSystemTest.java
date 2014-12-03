@@ -28,8 +28,8 @@ public class S3FileSystemTest extends S3UnitTest {
 	@Before
 	public void setup() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.addBucket("bucketA");
-		client.addBucket("bucketB");
+		client.bucket("bucketA");
+		client.bucket("bucketB");
 		fs = FileSystems.getFileSystem(S3_GLOBAL_URI);
 	}
 

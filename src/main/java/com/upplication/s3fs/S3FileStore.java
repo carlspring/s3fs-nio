@@ -21,7 +21,9 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.nio.file.attribute.FileTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -389,14 +391,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	}
 	
 	void parseObjects(List<S3Path> listPath, ObjectListing current) {
-		for (String commonPrefix : current.getCommonPrefixes()){
-			listPath.add(new S3Path(fileSystem, this, fileSystem.key2Parts(commonPrefix)));
-		}
 		// TODO: figure our a way to efficiently preprocess commonPrefix basicFileAttributes
 		for (final S3ObjectSummary objectSummary : current.getObjectSummaries()) {
 			final String objectSummaryKey = objectSummary.getKey();
 			String[] keyParts = fileSystem.key2Parts(objectSummaryKey);
-			addParentPaths(listPath, keyParts, objectSummary);
+			addParentPaths(listPath, current, keyParts, objectSummary);
 			S3Path path = new S3Path(fileSystem, this, keyParts);
 			path.setBasicFileAttributes(buildFileS3Attributes(objectSummaryKey, objectSummary));
 			if (!listPath.contains(path)) {
@@ -405,27 +404,40 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		}
 	}
 
-	private void addParentPaths(List<S3Path> listPath, String[] keyParts, S3ObjectSummary objectSummary) {
+	private void addParentPaths(List<S3Path> listPath, ObjectListing objectListing, String[] keyParts, S3ObjectSummary objectSummary) {
 		if(keyParts.length <= 1)
 			return;
 		String[] subParts = Arrays.copyOf(keyParts, keyParts.length-1);
-		S3Path path = new S3Path(fileSystem, this, subParts);
-		if (listPath.contains(path))
-			return;
-		String key = path.getKey()+"/";
-		path.setBasicFileAttributes(buildFileS3Attributes(key, objectSummary));
-		listPath.add(path);
+		List<S3Path> parentPaths = new ArrayList<S3Path>();
+		while (subParts.length > 0) {
+			S3Path path = new S3Path(fileSystem, this, subParts);
+			String prefix = objectListing.getPrefix();
+			
+			String parentKey = path.getKey();
+			if(prefix.length() > parentKey.length() && prefix.contains(parentKey))
+				break;
+			if (listPath.contains(path) || parentPaths.contains(path)) {
+				subParts = Arrays.copyOf(subParts, subParts.length-1);
+				continue;
+			}
+			String key = path.getKey()+"/";
+			path.setBasicFileAttributes(buildFileS3Attributes(key, objectSummary));
+			parentPaths.add(path);
+			subParts = Arrays.copyOf(subParts, subParts.length-1);
+		}
+		Collections.reverse(parentPaths);
+		listPath.addAll(parentPaths);
 	}
 
 	public ObjectListing listNextBatchOfObjects(ObjectListing previousObjectListing) {
 		return getClient().listNextBatchOfObjects(previousObjectListing);
 	}
 
-	public void walkFileTree(S3Path start, FileVisitor<Path> visitor) throws IOException {
+	public void walkFileTree(S3Path start, FileVisitor<? super Path> visitor) throws IOException {
 		walkFileTree(start, visitor, Integer.MAX_VALUE);
 	}
 
-	public void walkFileTree(S3Path start, FileVisitor<Path> visitor, int maxDepth) throws IOException {
+	public void walkFileTree(S3Path start, FileVisitor<? super Path> visitor, int maxDepth) throws IOException {
 		new S3Walker(this, visitor, maxDepth).walk(start);
 	}
 

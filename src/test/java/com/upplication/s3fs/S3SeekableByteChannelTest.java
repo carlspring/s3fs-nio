@@ -23,7 +23,7 @@ public class S3SeekableByteChannelTest extends S3UnitTest {
 	@Test
 	public void constructor() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.addBucket("buck").file("file1");
+		client.bucket("buck").file("file1");
 		
 		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
 		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ), file1.getFileStore());
@@ -35,7 +35,7 @@ public class S3SeekableByteChannelTest extends S3UnitTest {
 	@Test(expected=FileAlreadyExistsException.class)
 	public void alreadyExists() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.addBucket("buck").file("file1");
+		client.bucket("buck").file("file1");
 		
 		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
 		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW), file1.getFileStore());

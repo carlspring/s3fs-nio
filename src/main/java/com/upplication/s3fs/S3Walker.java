@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
@@ -35,9 +36,9 @@ class S3Walker {
 			Files.walkFileTree(start, visitor);
 			return;
 		}
-
 		List<S3Path> listPath = gatherResults(start);
-
+		if(listPath.isEmpty())
+			visitor.visitFileFailed(start, new NoSuchFileException(start.getFileStore().name()+"/"+start.getKey()));
 		FileVisitResult result = walk(Iterators.peekingIterator(listPath.iterator()));
 		Objects.requireNonNull(result, "FileVisitor returned null");
 	}
@@ -45,8 +46,7 @@ class S3Walker {
 	protected List<S3Path> gatherResults(S3Path start) {
 		List<S3Path> listPath = Lists.newArrayList();
 		// iterator over this list
-		ObjectListing current = fileStore.listObjects(new ListObjectsRequest(fileStore.name(), start.getKey(), start.getKey(), null, Integer.MAX_VALUE));
-
+		ObjectListing current = fileStore.listObjects(new ListObjectsRequest(fileStore.name(), start.getKey(), null, null, Integer.MAX_VALUE));
 		while (current.isTruncated()) {
 			fileStore.parseObjects(listPath, current);// parse the elements
 			current = fileStore.listNextBatchOfObjects(current);// continue

@@ -551,11 +551,11 @@ public class S3Path implements Path {
 		this.basicFileAttributes = basicFileAttributes;
 	}
 
-	public void walkFileTree(FileVisitor<Path> visitor) throws IOException {
+	public void walkFileTree(FileVisitor<? super Path> visitor) throws IOException {
 		getFileStore().walkFileTree(this, visitor);
 	}
 
-	public void walkFileTree(FileVisitor<Path> visitor, int maxDepth) throws IOException {
+	public void walkFileTree(FileVisitor<? super Path> visitor, int maxDepth) throws IOException {
 		getFileStore().walkFileTree(this, visitor, maxDepth);
 	}
 }
