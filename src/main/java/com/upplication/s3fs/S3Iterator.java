@@ -3,7 +3,9 @@ package com.upplication.s3fs;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
+import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.google.common.collect.Lists;
 
@@ -13,51 +15,62 @@ import com.google.common.collect.Lists;
  * in a incremental way when the #next() method is called.
  */
 public class S3Iterator implements Iterator<Path> {
-	S3FileSystem s3FileSystem;
 	private S3FileStore fileStore;
-	String key;
-
-	private Iterator<S3Path> it;
+	private String key;
+	private List<S3Path> items = Lists.newArrayList();
+	private ObjectListing current;
+	private int cursor; // index of next element to return
+	private int size;
+	private boolean recursive;
 
 	public S3Iterator(S3Path path) {
-		this.fileStore = path.getFileStore();
-		this.key = path.getKey().length() == 0 ? "" : path.getKey() + "/";
-		this.s3FileSystem = path.getFileSystem();
+		this(path.getFileStore(), path.getKey().length() == 0 ? "" : path.getKey() + "/");
+	}
+	
+	public S3Iterator(S3FileStore fileStore, String key) {
+		this(fileStore, key, fileStore.buildRequest(key));
+	}
+	
+	public S3Iterator(S3FileStore fileStore, String key, ListObjectsRequest listObjectsRequest) {
+		this(fileStore, key, listObjectsRequest, false);
+	}
+	
+	public S3Iterator(S3FileStore fileStore, String key, ListObjectsRequest listObjectsRequest, boolean recursive) {
+		this.fileStore = fileStore;
+		this.key = key;
+		this.current = fileStore.listObjects(listObjectsRequest);
+		this.recursive = recursive;
+		loadObjects();
+	}
+
+	private void loadObjects() {
+		this.items.clear();
+		if(recursive)
+			this.fileStore.parseObjects(items, current);
+		else
+			this.fileStore.parseObjectListing(key, items, current);
+		this.size = items.size();
+		this.cursor = 0;
+	}
+
+	@Override
+	public boolean hasNext() {
+		return cursor != size || current.isTruncated();
+	}
+
+	@Override
+	public S3Path next() {
+		if(cursor == size && current.isTruncated()) {
+			this.current = fileStore.listNextBatchOfObjects(current);
+			loadObjects();
+		}
+		if(cursor == size)
+			throw new NoSuchElementException();
+		return items.get(cursor++);
 	}
 
 	@Override
 	public void remove() {
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public S3Path next() {
-		return getIterator().next();
-	}
-
-	@Override
-	public boolean hasNext() {
-		return getIterator().hasNext();
-	}
-
-	private Iterator<S3Path> getIterator() {
-		if (it == null) {
-			List<S3Path> listPath = Lists.newArrayList();
-			// iterator over this list
-			ObjectListing current = fileStore.listObjects(fileStore.buildRequest(key));
-
-			while (current.isTruncated()) {
-				// parse the elements
-				fileStore.parseObjectListing(key, listPath, current);
-				// continue
-				current = fileStore.listNextBatchOfObjects(current);
-			}
-
-			fileStore.parseObjectListing(key, listPath, current);
-
-			it = listPath.iterator();
-		}
-
-		return it;
 	}
 }

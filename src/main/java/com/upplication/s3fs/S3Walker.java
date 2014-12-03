@@ -7,13 +7,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
 import java.util.Objects;
 
 import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
 import com.google.common.collect.PeekingIterator;
 
 class S3Walker {
@@ -36,29 +33,17 @@ class S3Walker {
 			Files.walkFileTree(start, visitor);
 			return;
 		}
-		List<S3Path> listPath = gatherResults(start);
-		if(listPath.isEmpty())
+		S3Iterator iter = new S3Iterator(fileStore, start.getKey(), new ListObjectsRequest(fileStore.name(), start.getKey(), null, null, Integer.MAX_VALUE), true);
+		if(!iter.hasNext())
 			visitor.visitFileFailed(start, new NoSuchFileException(start.getFileStore().name()+"/"+start.getKey()));
-		FileVisitResult result = walk(Iterators.peekingIterator(listPath.iterator()));
+		FileVisitResult result = walk(Iterators.peekingIterator(iter));
 		Objects.requireNonNull(result, "FileVisitor returned null");
 	}
 
-	protected List<S3Path> gatherResults(S3Path start) {
-		List<S3Path> listPath = Lists.newArrayList();
-		// iterator over this list
-		ObjectListing current = fileStore.listObjects(new ListObjectsRequest(fileStore.name(), start.getKey(), null, null, Integer.MAX_VALUE));
-		while (current.isTruncated()) {
-			fileStore.parseObjects(listPath, current);// parse the elements
-			current = fileStore.listNextBatchOfObjects(current);// continue
-		}
-		fileStore.parseObjects(listPath, current);
-		return listPath;
-	}
-
-	private FileVisitResult walk(PeekingIterator<S3Path> iterator) throws IOException {
+	private FileVisitResult walk(PeekingIterator<Path> iterator) throws IOException {
 		if(!iterator.hasNext())
 			return FileVisitResult.CONTINUE;
-		S3Path current = iterator.next();
+		S3Path current = (S3Path) iterator.next();
 		IOException exc = null;
 		BasicFileAttributes attrs;
 		try {
