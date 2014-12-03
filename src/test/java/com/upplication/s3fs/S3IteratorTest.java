@@ -176,7 +176,7 @@ public class S3IteratorTest extends S3UnitTest {
 		S3Path path = s3FileSystem.getPath("/bucketA/dir/subdir");
 		S3Iterator iterator = new S3Iterator(path, true);
 
-		assertIterator(iterator, "subberdir", "file1.1", "file1.2", "file1.3");
+		assertIterator(iterator, "subdir", "subberdir", "file1.1", "file1.2", "file1.3");
 	}
 
 	@Test

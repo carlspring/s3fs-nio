@@ -28,7 +28,7 @@ public class S3Iterator implements Iterator<Path> {
 	}
 
 	public S3Iterator(S3Path path, boolean recursive) {
-		this(path.getFileStore(), path.getKey().length() == 0 ? "" : path.getKey() + "/", recursive);
+		this(path.getFileStore(), path.getKey().length() == 0 ? "" : (path.getKey() + (recursive ? "" : "/")), recursive);
 	}
 	
 	public S3Iterator(S3FileStore fileStore, String key, boolean recursive) {

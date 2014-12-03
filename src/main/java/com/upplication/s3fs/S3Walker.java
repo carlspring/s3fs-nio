@@ -9,17 +9,14 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Objects;
 
-import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 
 class S3Walker {
-	private S3FileStore fileStore;
 	private FileVisitor<? super Path> visitor;
 	private int maxDepth;
 
-	public S3Walker(S3FileStore fileStore, FileVisitor<? super Path> visitor, int maxDepth) {
-		this.fileStore = fileStore;
+	public S3Walker(FileVisitor<? super Path> visitor, int maxDepth) {
 		this.visitor = visitor;
 		this.maxDepth = maxDepth;
 	}
@@ -29,19 +26,19 @@ class S3Walker {
 	 */
 	void walk(S3Path start) throws IOException {
 		// Limiting depth isn't supported at the moment. Call default walkFileTree for that.
-		if(maxDepth != Integer.MAX_VALUE) {
+		if (maxDepth != Integer.MAX_VALUE) {
 			Files.walkFileTree(start, visitor);
 			return;
 		}
-		S3Iterator iter = new S3Iterator(fileStore, start.getKey(), new ListObjectsRequest(fileStore.name(), start.getKey(), null, null, Integer.MAX_VALUE), true);
-		if(!iter.hasNext())
-			visitor.visitFileFailed(start, new NoSuchFileException(start.getFileStore().name()+"/"+start.getKey()));
+		S3Iterator iter = new S3Iterator(start, true);
+		if (!iter.hasNext())
+			visitor.visitFileFailed(start, new NoSuchFileException(start.getFileStore().name() + "/" + start.getKey()));
 		FileVisitResult result = walk(Iterators.peekingIterator(iter));
 		Objects.requireNonNull(result, "FileVisitor returned null");
 	}
 
 	private FileVisitResult walk(PeekingIterator<Path> iterator) throws IOException {
-		if(!iterator.hasNext())
+		if (!iterator.hasNext())
 			return FileVisitResult.CONTINUE;
 		S3Path current = (S3Path) iterator.next();
 		IOException exc = null;
@@ -55,11 +52,18 @@ class S3Walker {
 		if (attrs != null && !attrs.isDirectory())
 			return visitor.visitFile(current, attrs);
 		FileVisitResult result = visitor.preVisitDirectory(current, attrs);
-		if (result != FileVisitResult.CONTINUE)
+		if (result == FileVisitResult.TERMINATE)
 			return result;
 		// visit the 'directory'
-		while(iterator.hasNext() && iterator.peek().getParent().equals(current))
-			walk(iterator);
+		FileVisitResult subresult = null;
+		while (iterator.hasNext() && iterator.peek().getParent().equals(current)) {
+			if(subresult == FileVisitResult.TERMINATE)
+				return subresult;
+			if (result == FileVisitResult.SKIP_SUBTREE || (subresult != null && subresult == FileVisitResult.SKIP_SIBLINGS))
+				iterator.next();
+			else
+				subresult = walk(iterator);
+		}
 		return visitor.postVisitDirectory(current, exc);
 	}
 }
