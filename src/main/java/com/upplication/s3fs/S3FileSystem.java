@@ -13,6 +13,8 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
 import java.util.Set;
 
+import org.unbescape.uri.UriEscape;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.base.Joiner;
@@ -127,11 +129,21 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	}
 	
 	public String[] key2Parts(String keyParts) {
-		return keyParts.split(PATH_SEPARATOR);
+		String[] parts = keyParts.split(PATH_SEPARATOR);
+		String[] split = new String[parts.length];
+		int i=0;
+		for (String part : parts)
+			split[i++] = UriEscape.unescapeUriPathSegment(part);
+		return split;
 	}
 
 	public String parts2Key(List<String> parts) {
-		return Joiner.on(PATH_SEPARATOR).join(parts);
+		if (parts.isEmpty())
+			return "";
+		ImmutableList.Builder<String> builder = ImmutableList.<String> builder();
+		for (String part : parts)
+			builder.add(UriEscape.escapeUriPathSegment(part));
+		return Joiner.on(PATH_SEPARATOR).join(builder.build());
 	}
 
 	@Override

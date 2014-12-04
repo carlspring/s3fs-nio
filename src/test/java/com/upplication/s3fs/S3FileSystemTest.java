@@ -272,7 +272,7 @@ public class S3FileSystemTest extends S3UnitTest {
 		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 		S3Path path = s3fs.getPath("/bucket", "folder with spaces", "file");
 		try {
-			assertEquals("folder with spaces/file", path.getKey());
+			assertEquals("folder%20with%20spaces/file", path.getKey());
 		} finally {
 			try {
 				s3fs.close();
