@@ -4,8 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -20,6 +23,7 @@ import java.util.Properties;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.amazonaws.services.s3.model.ObjectListing;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 import com.upplication.s3fs.util.MockBucket;
@@ -168,7 +172,7 @@ public class S3IteratorTest extends S3UnitTest {
 	}
 
 	@Test
-	public void recursiveVirtualDirs() throws IOException {
+	public void incrementalVirtualDirs() throws IOException {
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 		client.bucket("bucketA").file("dir/subdir/subberdir/file1.1", "dir/subdir/subberdir/file1.2", "dir/subdir/subberdir/file1.3");
 
@@ -200,8 +204,8 @@ public class S3IteratorTest extends S3UnitTest {
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(S3_GLOBAL_URI);
 		S3Path path = s3FileSystem.getPath("/bucketA");
 		S3Iterator iterator = new S3Iterator(path);
-
 		assertIterator(iterator, filesNameExpected);
+		verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
