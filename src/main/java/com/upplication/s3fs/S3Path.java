@@ -402,7 +402,13 @@ public class S3Path implements Path {
 			builder.append(fileStore.name());
 			builder.append(PATH_SEPARATOR);
 		}
-		builder.append(getKey());
+		List<String> parts2 = parts;
+		for (Iterator<String> iterator = parts2.iterator(); iterator.hasNext();) {
+			String part = iterator.next();
+			builder.append(part);
+			if(iterator.hasNext())
+				builder.append(PATH_SEPARATOR);
+		}
 		return builder.toString();
 	}
 
