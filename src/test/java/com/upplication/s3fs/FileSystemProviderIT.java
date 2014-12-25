@@ -1,8 +1,11 @@
 package com.upplication.s3fs;
-
-import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URI;
@@ -10,65 +13,76 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.util.Map;
+import java.util.Properties;
 
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.util.EnvironmentBuilder;
 
 public class FileSystemProviderIT {
-	S3FileSystemProvider provider;
+
+	private S3FileSystemProvider provider;
 	
 	@Before
 	public void setup() throws IOException{
+		System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
 		try {
-			FileSystems.getFileSystem(URI.create("s3:///")).close();
+			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
-		catch(FileSystemNotFoundException e){}
-		
-		
+		catch(FileSystemNotFoundException e){
+			// ignore this
+		}
 		provider = spy(new S3FileSystemProvider());
 	}
 	
 	@Test
-	public void createAuthenticatedByProperties() throws IOException{
+	public void createAuthenticatedByProperties(){
 
-		URI uri = URI.create("s3:///");
+		URI uri = URI.create("s3://yadi/");
 		
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = provider.newFileSystem(uri, null);
 		assertNotNull(fileSystem);
 		
-		verify(provider).createFileSystem(eq(uri), eq("access key for test"), eq("secret key for test"));
+		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps()));
 	}
 	
 	
 	@Test
-	public void createsAuthenticatedByEnvOverridesProps() throws IOException {
+	public void createsAuthenticatedByEnvOverridesProps() {
 		
 		Map<String, ?> env = buildFakeEnv();
-		URI uri = URI.create("s3:///");
-		
-		FileSystem fileSystem = provider.newFileSystem(uri,
-				env);
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq(env.get(S3FileSystemProvider.ACCESS_KEY)), eq(env.get(S3FileSystemProvider.SECRET_KEY)));
+        Properties props = new Properties();
+        props.setProperty(EnvironmentBuilder.BUCKET_NAME_KEY, "/your-bucket-name");
+        props.putAll(env);
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(props));
 	}
 
 	@Test
-	public void createsAnonymousNotPossible() throws IOException {
-		URI uri = URI.create("s3:///");
-		FileSystem fileSystem = provider.newFileSystem(uri, ImmutableMap.<String, Object> of());
-
+	public void createsAnonymousNotPossible() {
+		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(uri), eq("access key for test"), eq("secret key for test"));
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps()));
 	}
 	
 	private Map<String, ?> buildFakeEnv(){
 		return ImmutableMap.<String, Object> builder()
-				.put(S3FileSystemProvider.ACCESS_KEY, "access key")
-				.put(S3FileSystemProvider.SECRET_KEY, "secret key").build();
+			.put(ACCESS_KEY, "access key")
+			.put(SECRET_KEY, "secret key").build();
 	}
-	
 
+	private Properties buildFakeProps() {
+        try {
+            Properties props = new Properties();
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties"));
+            return props;
+        }
+        catch (IOException e){
+            throw new RuntimeException("amazon.properties not present");
+        }
+	}
 }

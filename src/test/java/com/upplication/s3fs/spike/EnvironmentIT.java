@@ -1,21 +1,24 @@
 package com.upplication.s3fs.spike;
 
-import com.upplication.s3fs.S3FileSystemProvider;
-import com.upplication.s3fs.util.EnvironmentBuilder;
-import org.junit.Test;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertNotNull;
+import org.junit.Ignore;
+
+import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.junit.Test;
 
 public class EnvironmentIT {
 
-	@Test
-	public void couldCreateFileSystem(){
+    @Test
+	public void couldCreateFileSystem() {
 		Map<String, Object> res = EnvironmentBuilder.getRealEnv();
-		
+
 		assertNotNull(res);
-		assertNotNull(res.get(S3FileSystemProvider.ACCESS_KEY));
-		assertNotNull(res.get(S3FileSystemProvider.SECRET_KEY));
+		assertNotNull(res.get(ACCESS_KEY));
+		assertNotNull(res.get(SECRET_KEY));
 	}
 }

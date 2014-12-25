@@ -1,13 +1,11 @@
 package com.upplication.s3fs;
 
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectResult;
-import com.upplication.s3fs.util.EnvironmentBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static java.util.UUID.randomUUID;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,72 +14,71 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
-import static com.upplication.s3fs.util.EnvironmentBuilder.getRealEnv;
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNotNull;
+import org.junit.Before;
+import org.junit.Ignore;
+
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectResult;
+import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.junit.Test;
 
 public class AmazonS3ClientIT {
-	
-	AmazonS3Client client;
-	
+
+	AmazonS3 client;
+
 	@Before
-	public void setup() throws IOException{
+	public void setup() {
 		// s3client
 		final Map<String, Object> credentials = getRealEnv();
-		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(S3FileSystemProvider.ACCESS_KEY).toString(), 
-				credentials.get(S3FileSystemProvider.SECRET_KEY).toString());
-		AmazonS3 s3 = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
-		client = new AmazonS3Client(s3);
+		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), credentials.get(SECRET_KEY).toString());
+		client = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
 	}
-	
-	@Test
-	public void putObject() throws IOException{
+
+    @Test
+	public void putObject() throws IOException {
 		Path file = Files.createTempFile("file-se", "file");
 		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
-		
+
 		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), file.toFile());
-	
+
 		assertNotNull(result);
 	}
-	
-	@Test
-	public void putObjectWithEndSlash() throws IOException{
+    @Test
+	public void putObjectWithEndSlash() throws IOException {
 		Path file = Files.createTempFile("file-se", "file");
 		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
-		
+
 		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString() + "/", file.toFile());
-	
+
 		assertNotNull(result);
 	}
-	
-	@Test(expected = AmazonS3Exception.class)
-	public void putObjectWithStartSlash() throws IOException{
+    @Test
+	public void putObjectWithStartSlash() throws IOException {
 		Path file = Files.createTempFile("file-se", "file");
 		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
-		
+
 		client.putObject(getBucket(), "/" + randomUUID().toString(), file.toFile());
 	}
-	
-	@Test(expected = AmazonS3Exception.class)
-	public void putObjectWithBothSlash() throws IOException{
+    @Test
+	public void putObjectWithBothSlash() throws IOException {
 		Path file = Files.createTempFile("file-se", "file");
 		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
-		
+
 		PutObjectResult result = client.putObject(getBucket(), "/" + randomUUID().toString() + "/", file.toFile());
-	
+
 		assertNotNull(result);
 	}
-	
-	@Test
-	public void putObjectByteArray() throws IOException{
-		
-		PutObjectResult result = client
-				.putObject(getBucket(), randomUUID().toString(), new ByteArrayInputStream("contenido1".getBytes()),
-						new ObjectMetadata());
-	
+    @Test
+	public void putObjectByteArray() {
+
+		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), new ByteArrayInputStream("contenido1".getBytes()), new ObjectMetadata());
+
 		assertNotNull(result);
 	}
-	
+
 	private String getBucket() {
 		return EnvironmentBuilder.getBucket().replace("/", "");
 	}
