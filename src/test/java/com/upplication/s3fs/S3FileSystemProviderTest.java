@@ -49,6 +49,7 @@ import com.upplication.s3fs.util.AmazonS3MockFactory;
 import com.upplication.s3fs.util.MockBucket;
 
 public class S3FileSystemProviderTest extends S3UnitTestBase {
+
 	private S3FileSystemProvider s3fsProvider;
 	private Map<String, String> systemEnvBackup;
 
