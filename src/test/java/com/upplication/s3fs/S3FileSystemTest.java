@@ -208,16 +208,17 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
 		S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null);
 		S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null);
-		S3FileSystem s3fs11 = new S3FileSystem(provider, "access key for test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
+		S3FileSystem s3fs11 = new S3FileSystem(provider, "access-key-for-test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
 		
-		assertEquals(-517310489, s3fs1.hashCode());
-		assertEquals(-1316272121, s3fs2.hashCode());
-		assertEquals(-636290468, s3fs3.hashCode());
-		assertEquals(-1435252100, s3fs4.hashCode());
-		assertEquals(-517310489, s3fs5.hashCode());
-		assertEquals(-1866959227, s3fs6.hashCode());
+        // FIXME: review the hashcode creation.
+		assertEquals(346130318, s3fs1.hashCode());
+		assertEquals(-452831314, s3fs2.hashCode());
+		assertEquals(182977201, s3fs3.hashCode());
+		assertEquals(-615984431, s3fs4.hashCode());
+		assertEquals(346130318, s3fs5.hashCode());
+		assertEquals(-498271993, s3fs6.hashCode());
 		assertEquals(-82123487, s3fs7.hashCode());
-		
+
 		assertFalse(s3fs1.equals(s3fs2));
 		assertFalse(s3fs1.equals(s3fs3));
 		assertFalse(s3fs1.equals(s3fs4));
@@ -237,7 +238,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		assertEquals(0, s3fs1.compareTo(s3fs5));
 		assertEquals(-1, s3fs1.compareTo(s3fs2));
 		assertEquals(1, s3fs2.compareTo(s3fs1));
-		assertEquals(-63, s3fs1.compareTo(s3fs6));
+		assertEquals(-50, s3fs1.compareTo(s3fs6));
 		s3fs7.close();
 		s3fs8.close();
 		s3fs9.close();
