@@ -15,6 +15,7 @@ import com.upplication.s3fs.FilesOperationsIT;
  * Test Helper
  */
 public abstract class EnvironmentBuilder {
+
 	public static final String BUCKET_NAME_KEY = "bucket_name";
 
 	/**

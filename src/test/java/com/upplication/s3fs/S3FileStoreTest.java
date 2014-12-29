@@ -16,6 +16,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,12 +37,17 @@ public class S3FileStoreTest extends S3UnitTestBase {
 
 	@Before
 	public void prepareFileStore() throws IOException {
-		fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, buildFakeEnv());
+		fileSystem = (S3FileSystem) FileSystems.newFileSystem(URI.create("s3://s3.s3filestoretest.com/"), buildFakeEnv());
 		S3Path root = fileSystem.getPath("/bucket");
 		Files.createFile(root.resolve("placeholder"));
 		fileStore = root.getFileStore();
 		Files.createFile(fileSystem.getPath("/bucket2").resolve("placeholder"));
 	}
+
+    @After
+    public void close() throws IOException {
+        fileSystem.close();
+    }
 
 	@Test
 	public void bucketConstructor() {
@@ -114,7 +120,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		S3Path rootDirectory = fileStore.getRootDirectory();
 		assertEquals("bucket", rootDirectory.getFileName().toString());
 		assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
-		assertEquals("s3://access-key@s3.amazonaws.com/bucket/", rootDirectory.toUri().toString());
+		assertEquals("s3://access-key@s3.s3filestoretest.com/bucket/", rootDirectory.toUri().toString());
 	}
 
 	@Test
@@ -281,10 +287,10 @@ public class S3FileStoreTest extends S3UnitTestBase {
         assertEquals(0, noFs1.compareTo(noFsSameAs1));
         assertEquals(0, s3FileStore.compareTo(noFsSameAs1));
         // FIXME: review hashcode generation
-        assertEquals(-2128128794, store.hashCode());
-        assertEquals(1932376379, other.hashCode());
+        assertEquals(-322817882, store.hashCode());
+        assertEquals(-557280005, other.hashCode());
         assertEquals(193955226, differentHost.hashCode());
-        assertEquals(-2128128794, shouldBeTheSame.hashCode());
+        assertEquals(-322817882, shouldBeTheSame.hashCode());
         assertEquals(1342376576, noFs2.hashCode());
         assertEquals(459819936, noFsSameAs1.hashCode());
         assertEquals(953312, noFsNoName1.hashCode());

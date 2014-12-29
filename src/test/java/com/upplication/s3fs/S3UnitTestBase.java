@@ -13,6 +13,7 @@ import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class S3UnitTestBase {
+    
 	public static final URI S3_GLOBAL_URI = URI.create("s3://s3.amazonaws.com/");
 
 	@BeforeClass

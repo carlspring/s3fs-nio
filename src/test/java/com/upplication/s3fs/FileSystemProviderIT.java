@@ -2,7 +2,9 @@ package com.upplication.s3fs;
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -20,6 +22,7 @@ import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.mockito.ArgumentMatcher;
 
 public class FileSystemProviderIT {
 
@@ -52,14 +55,21 @@ public class FileSystemProviderIT {
 	@Test
 	public void createsAuthenticatedByEnvOverridesProps() {
 		
-		Map<String, ?> env = buildFakeEnv();
+		final Map<String, String> env = buildFakeEnv();
 		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
 
 		assertNotNull(fileSystem);
         Properties props = new Properties();
-        props.setProperty(EnvironmentBuilder.BUCKET_NAME_KEY, "/your-bucket-name");
         props.putAll(env);
-		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(props));
+		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+            @Override
+            public boolean matches(Object argument) {
+                Properties called = (Properties)argument;
+                assertEquals(env.get(ACCESS_KEY), called.get(ACCESS_KEY));
+                assertEquals(env.get(SECRET_KEY), called.get(SECRET_KEY));
+                return true;
+            }
+        }));
 	}
 
 	@Test
@@ -69,10 +79,10 @@ public class FileSystemProviderIT {
 		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps()));
 	}
 	
-	private Map<String, ?> buildFakeEnv(){
-		return ImmutableMap.<String, Object> builder()
-			.put(ACCESS_KEY, "access key")
-			.put(SECRET_KEY, "secret key").build();
+	private Map<String, String> buildFakeEnv(){
+		return ImmutableMap.<String, String> builder()
+			.put(ACCESS_KEY, "access-key")
+			.put(SECRET_KEY, "secret-key").build();
 	}
 
 	private Properties buildFakeProps() {

@@ -200,13 +200,14 @@ public class S3FileSystemTest extends S3UnitTestBase {
 	
 	@Test
 	public void comparables() throws IOException {
+        // crear other vars
+
 		S3FileSystemProvider provider = new S3FileSystemProvider();
 		S3FileSystem s3fs1 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), buildFakeEnv());
 		S3FileSystem s3fs2 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror2.amazon.test/"), buildFakeEnv());
-		S3FileSystem s3fs3 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
-		S3FileSystem s3fs4 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror2.amazon.test"), ImmutableMap.<String, Object> builder().build());
-		S3FileSystem s3fs5 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
-		S3FileSystem s3fs6 = (S3FileSystem) provider.newFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
+		S3FileSystem s3fs3 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror1.amazon.test/"), null);
+		S3FileSystem s3fs4 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror2.amazon.test"), null);
+		S3FileSystem s3fs6 = (S3FileSystem) provider.newFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"), null);
 		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
 		S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
@@ -219,14 +220,12 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		assertEquals(684416791, s3fs2.hashCode());
 		assertEquals(182977201, s3fs3.hashCode());
 		assertEquals(-615984431, s3fs4.hashCode());
-		assertEquals(346130318, s3fs5.hashCode());
 		assertEquals(-498271993, s3fs6.hashCode());
 		assertEquals(-82123487, s3fs7.hashCode());
 
 		assertFalse(s3fs1.equals(s3fs2));
 		assertFalse(s3fs1.equals(s3fs3));
 		assertFalse(s3fs1.equals(s3fs4));
-		assertFalse(s3fs1.equals(s3fs5));
 		assertFalse(s3fs1.equals(s3fs6));
 		assertFalse(s3fs3.equals(s3fs4));
 		assertFalse(s3fs3.equals(s3fs6));
@@ -239,7 +238,6 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		assertFalse(s3fs9.equals(s3fs10));
 		assertTrue(s3fs2.equals(s3fs11));
 
-		assertEquals(19, s3fs1.compareTo(s3fs5));
 		assertEquals(-1, s3fs1.compareTo(s3fs2));
 		assertEquals(1, s3fs2.compareTo(s3fs1));
 		assertEquals(-50, s3fs1.compareTo(s3fs6));

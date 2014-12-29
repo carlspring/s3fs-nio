@@ -369,7 +369,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	/**
 	 * add to the listPath the elements at the same level that s3Path
-	 * @param key TODO
+	 * @param key the uri to parse
 	 * @param listPath List not null list to add
 	 * @param current ObjectListing to walk
 	 */

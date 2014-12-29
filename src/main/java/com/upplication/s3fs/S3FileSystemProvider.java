@@ -108,6 +108,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
 		overloadProperties(props, env);
+
 		String userInfo = uri.getUserInfo();
 		if (userInfo != null) {
 			String[] keys = userInfo.split(":");
