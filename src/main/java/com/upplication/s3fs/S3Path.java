@@ -505,7 +505,6 @@ public class S3Path implements Path {
 	 * (because the path is a directory and this key isnt created at amazon s3)
 	 * then return the ACL of the first child.
 	 *
-	 * @param path {@link S3Path}
 	 * @return AccessControlList
 	 * @throws NoSuchFileException if not found the path and any child
 	 */

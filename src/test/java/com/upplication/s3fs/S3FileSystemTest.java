@@ -1,5 +1,7 @@
 package com.upplication.s3fs;
 
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -14,8 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -197,22 +201,22 @@ public class S3FileSystemTest extends S3UnitTestBase {
 	@Test
 	public void comparables() throws IOException {
 		S3FileSystemProvider provider = new S3FileSystemProvider();
-		S3FileSystem s3fs1 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), null);
-		S3FileSystem s3fs2 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror2.amazon.test/"), null);
-		S3FileSystem s3fs3 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror1.amazon.test/"), null);
-		S3FileSystem s3fs4 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror2.amazon.test"), null);
-		S3FileSystem s3fs5 = provider.getFileSystem(URI.create("s3://mirror1.amazon.test/"));
-		S3FileSystem s3fs6 = (S3FileSystem) provider.newFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"), null);
+		S3FileSystem s3fs1 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), buildFakeEnv());
+		S3FileSystem s3fs2 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror2.amazon.test/"), buildFakeEnv());
+		S3FileSystem s3fs3 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
+		S3FileSystem s3fs4 = (S3FileSystem) provider.newFileSystem(URI.create("s3://accessKey:secretKey@mirror2.amazon.test"), ImmutableMap.<String, Object> builder().build());
+		S3FileSystem s3fs5 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
+		S3FileSystem s3fs6 = (S3FileSystem) provider.newFileSystem(URI.create("s3://access_key:secret_key@mirror1.amazon.test/"), ImmutableMap.<String, Object> builder().build());
 		AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
 		S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 		S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
 		S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null);
 		S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null);
-		S3FileSystem s3fs11 = new S3FileSystem(provider, "access-key-for-test@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
+		S3FileSystem s3fs11 = new S3FileSystem(provider, "access-key@mirror2.amazon.test", amazonClientMock, "mirror2.amazon.test");
 		
         // FIXME: review the hashcode creation.
-		assertEquals(346130318, s3fs1.hashCode());
-		assertEquals(-452831314, s3fs2.hashCode());
+		assertEquals(1483378423, s3fs1.hashCode());
+		assertEquals(684416791, s3fs2.hashCode());
 		assertEquals(182977201, s3fs3.hashCode());
 		assertEquals(-615984431, s3fs4.hashCode());
 		assertEquals(346130318, s3fs5.hashCode());
@@ -222,7 +226,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		assertFalse(s3fs1.equals(s3fs2));
 		assertFalse(s3fs1.equals(s3fs3));
 		assertFalse(s3fs1.equals(s3fs4));
-		assertTrue(s3fs1.equals(s3fs5));
+		assertFalse(s3fs1.equals(s3fs5));
 		assertFalse(s3fs1.equals(s3fs6));
 		assertFalse(s3fs3.equals(s3fs4));
 		assertFalse(s3fs3.equals(s3fs6));
@@ -235,10 +239,11 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		assertFalse(s3fs9.equals(s3fs10));
 		assertTrue(s3fs2.equals(s3fs11));
 
-		assertEquals(0, s3fs1.compareTo(s3fs5));
+		assertEquals(19, s3fs1.compareTo(s3fs5));
 		assertEquals(-1, s3fs1.compareTo(s3fs2));
 		assertEquals(1, s3fs2.compareTo(s3fs1));
 		assertEquals(-50, s3fs1.compareTo(s3fs6));
+
 		s3fs7.close();
 		s3fs8.close();
 		s3fs9.close();
@@ -273,7 +278,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 		S3Path path = s3fs.getPath("/bucket", "folder with spaces", "file");
 		try {
-			assertEquals("folder with spaces/file", path.getKey());
+			assertEquals("folder%20with%20spaces/file", path.getKey());
 		} finally {
 			try {
 				s3fs.close();
@@ -340,4 +345,8 @@ public class S3FileSystemTest extends S3UnitTestBase {
 			}
 		}
 	}
+
+    private Map<String, ?> buildFakeEnv() {
+        return ImmutableMap.<String, Object> builder().put(ACCESS_KEY, "access-key").put(SECRET_KEY, "secret-key").build();
+    }
 }

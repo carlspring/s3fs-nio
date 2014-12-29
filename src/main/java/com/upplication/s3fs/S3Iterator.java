@@ -52,7 +52,7 @@ public class S3Iterator implements Iterator<Path> {
 
 	private void loadObjects() {
 		this.items.clear();
-		if(incremental)
+		if (incremental)
 			parseObjects();
 		else
 			this.fileStore.parseObjectListing(key, items, current);
@@ -79,7 +79,7 @@ public class S3Iterator implements Iterator<Path> {
 			return;
 		S3FileSystem fileSystem = fileStore.getFileSystem();
 		String[] subParts = Arrays.copyOf(keyParts, keyParts.length-1);
-		List<S3Path> parentPaths = new ArrayList<S3Path>();
+		List<S3Path> parentPaths = new ArrayList<>();
 		while (subParts.length > 0) {
 			S3Path path = new S3Path(fileSystem, fileStore, subParts);
 			String prefix = current.getPrefix();

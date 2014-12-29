@@ -18,6 +18,7 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.unbescape.uri.UriEscape;
 
 public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem> {
 	private final S3FileSystemProvider provider;
@@ -130,20 +131,20 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 		String[] parts = keyParts.split(PATH_SEPARATOR);
 		String[] split = new String[parts.length];
 		int i=0;
-		for (String part : parts){
-            split[i++] = part;
+		for (String part : parts) {
+			split[i++] = UriEscape.unescapeUriPathSegment(part);
         }
-		return split;
+        return split;
 	}
 
 	public String parts2Key(List<String> parts) {
 		if (parts.isEmpty())
 			return "";
 		ImmutableList.Builder<String> builder = ImmutableList.builder();
-		for (String part : parts){
-            builder.add(part);
+		for (String part : parts) {
+			builder.add(UriEscape.escapeUriPathSegment(part));
         }
-		return Joiner.on(PATH_SEPARATOR).join(builder.build());
+        return Joiner.on(PATH_SEPARATOR).join(builder.build());
 	}
 
 	@Override
