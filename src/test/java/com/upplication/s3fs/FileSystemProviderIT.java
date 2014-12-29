@@ -6,9 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URI;
@@ -22,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.google.common.collect.ImmutableMap;
-import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.mockito.ArgumentMatcher;
 
 public class FileSystemProviderIT {
@@ -30,16 +27,20 @@ public class FileSystemProviderIT {
 	private S3FileSystemProvider provider;
 	
 	@Before
-	public void setup() throws IOException{
+	public void setup() throws IOException {
 		System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
+        System.clearProperty(ACCESS_KEY);
+        System.clearProperty(SECRET_KEY);
 		try {
 			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
 		}
-		catch(FileSystemNotFoundException e){
+		catch(FileSystemNotFoundException e) {
 			// ignore this
 		}
 		provider = spy(new S3FileSystemProvider());
         doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
+        doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+        doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
 	}
 	
 	@Test
@@ -58,11 +59,8 @@ public class FileSystemProviderIT {
 	public void createsAuthenticatedByEnvOverridesProps() {
 		
 		final Map<String, String> env = buildFakeEnv();
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
+		provider.newFileSystem(S3_GLOBAL_URI, env);
 
-		assertNotNull(fileSystem);
-        Properties props = new Properties();
-        props.putAll(env);
 		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
@@ -73,6 +71,71 @@ public class FileSystemProviderIT {
             }
         }));
 	}
+
+    @Test
+    public void createsAuthenticatedBySystemProps() {
+
+        doCallRealMethod().when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+
+        final String propAccessKey = "env-access-key";
+        final String propSecretKey = "env-secret-key";
+        doReturn(propAccessKey).when(provider).systemGetEnv(eq(ACCESS_KEY));
+        doReturn(propSecretKey).when(provider).systemGetEnv(eq(SECRET_KEY));
+
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, null);
+        assertNotNull(fileSystem);
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+            @Override
+            public boolean matches(Object argument) {
+                Properties called = (Properties)argument;
+                assertEquals(propAccessKey, called.get(ACCESS_KEY));
+                assertEquals(propSecretKey, called.get(SECRET_KEY));
+                return true;
+            }
+        }));
+    }
+
+    @Test
+    public void createsAuthenticatedBySystemEnv() {
+
+        doCallRealMethod().when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
+
+        final String propAccessKey = "prop-access-key";
+        final String propSecretKey = "prop-secret-key";
+        System.setProperty(ACCESS_KEY, propAccessKey);
+        System.setProperty(SECRET_KEY, propSecretKey);
+
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, null);
+        assertNotNull(fileSystem);
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+            @Override
+            public boolean matches(Object argument) {
+                Properties called = (Properties)argument;
+                assertEquals(propAccessKey, called.get(ACCESS_KEY));
+                assertEquals(propSecretKey, called.get(SECRET_KEY));
+                return true;
+            }
+        }));
+    }
+
+    @Test
+    public void createsAuthenticatedByUri() {
+        final String accessKeyUri = "access-key-uri";
+        final String secretKeyUri = "secret-key-uri";
+        URI uri = URI.create("s3://" + accessKeyUri + ":" + secretKeyUri + "@s3.amazon.com");
+
+        provider.newFileSystem(uri, null);
+
+        verify(provider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>() {
+            @Override
+            public boolean matches(Object argument) {
+                Properties called = (Properties)argument;
+                assertEquals(accessKeyUri, called.get(ACCESS_KEY));
+                assertEquals(secretKeyUri, called.get(SECRET_KEY));
+                return true;
+            }
+        }));
+    }
 
 	@Test
 	public void createsAnonymousNotPossible() {

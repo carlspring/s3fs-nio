@@ -86,12 +86,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public FileSystem newFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
-		// first try to load amazon props
+		// get properties for the env or properties or system
 		Properties props = getProperties(uri, env);
 		validateProperties(props);
-		String key = this.getFileSystemKey(uri, props);
-		if (fileSystems.containsKey(key))
-			throw new FileSystemAlreadyExistsException("File system " + uri.getScheme() + ':' + key + " already exists");
+        // try to get the filesystem by the key
+		String key = getFileSystemKey(uri, props);
+		if (fileSystems.containsKey(key)) {
+            throw new FileSystemAlreadyExistsException("File system " + uri.getScheme() + ':' + key + " already exists");
+        }
+        // create the filesystem with the final properties, store and return
 		S3FileSystem fileSystem = createFileSystem(uri, props);
 		fileSystems.put(fileSystem.getKey(), fileSystem);
 		return fileSystem;
@@ -108,12 +111,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Properties props = loadAmazonProperties();
 		// but can be overloaded by envs vars
 		overloadProperties(props, env);
-
+        // and access key and secret key can be override
 		String userInfo = uri.getUserInfo();
 		if (userInfo != null) {
 			String[] keys = userInfo.split(":");
 			props.setProperty(ACCESS_KEY, keys[0]);
-            if (keys.length > 1){
+            if (keys.length > 1) {
                 props.setProperty(SECRET_KEY, keys[1]);
             }
 		}
@@ -124,13 +127,22 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return getFileSystemKey(uri, getProperties(uri, null));
 	}
 
+    /**
+     * get the file system key represented by: the access key @ endpoint.
+     * Example: access-key@s3.amazon.com
+     * @param uri URI with the endpoint
+     * @param props with the access key property
+     * @return String
+     */
 	protected String getFileSystemKey(URI uri, Properties props) {
         String uriString = uri.toString().replace("s3://", "");
         String authority = null;
         int authoritySeparator = uriString.indexOf("@");
+
         if (authoritySeparator > 0){
             authority = uriString.substring(0, authoritySeparator);
         }
+
         if (authority != null) {
             String host = uriString.substring(uriString.indexOf("@")+1, uriString.length());
             int lastPath = host.indexOf("/");
@@ -151,23 +163,66 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
 	}
 
-	private void overloadProperties(Properties props, Map<String, ?> env) {
+	protected void overloadProperties(Properties props, Map<String, ?> env) {
 		if (env == null)
 			env = new HashMap<>();
 		for (String key : new String[] { ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
 				PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
-				USER_AGENT, AMAZON_S3_FACTORY_CLASS })
-			overloadProperty(props, env, key);
+				USER_AGENT, AMAZON_S3_FACTORY_CLASS }){
+            overloadProperty(props, env, key);
+        }
 	}
 
+    /**
+     * try to override the properties props with:
+     * <ol>
+     * <li>the map or if not setted:</li>
+     * <li>the system property or if not setted:</li>
+     * <li>the system vars</li>
+     * </ol>
+     * @param props Properties to override
+     * @param env Map the first option
+     * @param key String the key
+     */
 	private void overloadProperty(Properties props, Map<String, ?> env, String key) {
-		if (env.get(key) != null && env.get(key) instanceof String)
-			props.setProperty(key, (String) env.get(key));
-		else if (System.getProperty(key) != null)
-			props.setProperty(key, System.getProperty(key));
-		else if (System.getenv(key) != null)
-			props.setProperty(key, System.getenv(key));
+        boolean overloaded = overloadPropertiesWithEnv(props, env, key);
+
+        if (!overloaded){
+            overloaded = overloadPropertiesWithSystemProps(props, key);
+        }
+
+        if (!overloaded){
+            overloadPropertiesWithSystemEnv(props, key);
+        }
 	}
+
+    protected boolean overloadPropertiesWithEnv(Properties props, Map<String, ?> env, String key){
+        if (env.get(key) != null && env.get(key) instanceof String) {
+            props.setProperty(key, (String) env.get(key));
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean overloadPropertiesWithSystemProps(Properties props, String key){
+        if (System.getProperty(key) != null) {
+            props.setProperty(key, System.getProperty(key));
+            return true;
+        }
+        return false;
+    }
+
+    protected boolean overloadPropertiesWithSystemEnv(Properties props, String key){
+        if (systemGetEnv(key) != null) {
+            props.setProperty(key, systemGetEnv(key));
+            return true;
+        }
+        return false;
+    }
+
+    protected String systemGetEnv(String key){
+        return System.getenv(key);
+    }
 
 	public FileSystem getFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
