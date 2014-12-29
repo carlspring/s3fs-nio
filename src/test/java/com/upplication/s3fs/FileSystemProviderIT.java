@@ -6,6 +6,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
@@ -38,6 +39,7 @@ public class FileSystemProviderIT {
 			// ignore this
 		}
 		provider = spy(new S3FileSystemProvider());
+        doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
 	}
 	
 	@Test
@@ -88,11 +90,11 @@ public class FileSystemProviderIT {
 	private Properties buildFakeProps() {
         try {
             Properties props = new Properties();
-            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon.properties"));
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test.properties"));
             return props;
         }
         catch (IOException e){
-            throw new RuntimeException("amazon.properties not present");
+            throw new RuntimeException("amazon-test.properties not present");
         }
 	}
 }
