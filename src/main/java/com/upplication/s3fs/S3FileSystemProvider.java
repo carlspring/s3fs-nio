@@ -176,9 +176,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
     /**
      * try to override the properties props with:
      * <ol>
-     * <li>the map or if not setted:</li>
-     * <li>the system property or if not setted:</li>
-     * <li>the system vars</li>
+     *  <li>the map or if not setted:</li>
+     *  <li>the system property or if not setted:</li>
+     *  <li>the system vars</li>
      * </ol>
      * @param props Properties to override
      * @param env Map the first option
@@ -196,6 +196,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
         }
 	}
 
+    /**
+     * @return true if the key are overloaded by the map parameter
+     */
     protected boolean overloadPropertiesWithEnv(Properties props, Map<String, ?> env, String key){
         if (env.get(key) != null && env.get(key) instanceof String) {
             props.setProperty(key, (String) env.get(key));
@@ -203,7 +206,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
         }
         return false;
     }
-
+    /**
+     * @return true if the key are overloaded by a system property
+     */
     protected boolean overloadPropertiesWithSystemProps(Properties props, String key){
         if (System.getProperty(key) != null) {
             props.setProperty(key, System.getProperty(key));
@@ -211,7 +216,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
         }
         return false;
     }
-
+    /**
+     * @return true if the key are overloaded by a system property
+     */
     protected boolean overloadPropertiesWithSystemEnv(Properties props, String key){
         if (systemGetEnv(key) != null) {
             props.setProperty(key, systemGetEnv(key));
@@ -366,7 +373,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
                 return;
             throw new NoSuchFileException(toString());
         }
-        s3Path.getFileStore().getAccessControlList(s3Path);
+        s3Path.getFileStore().getAccessControlList(s3Path).checkAccess(modes);
 	}
 
 	@Override

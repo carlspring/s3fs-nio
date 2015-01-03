@@ -12,10 +12,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -47,23 +44,17 @@ import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 import com.upplication.s3fs.util.MockBucket;
+import org.mockito.ArgumentMatcher;
 
 public class S3FileSystemProviderTest extends S3UnitTestBase {
 
 	private S3FileSystemProvider s3fsProvider;
-	private Map<String, String> systemEnvBackup;
 
 	@Before
 	public void setup() {
-		systemEnvBackup = System.getenv();
-		setEnv(new HashMap<String, String>());
 		s3fsProvider = spy(new S3FileSystemProvider());
+        doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
-	}
-
-	@After
-	public void cleanup() {
-		setEnv(systemEnvBackup);
 	}
 
 	@Test(expected = S3FileSystemConfigurationException.class)
@@ -112,16 +103,25 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 
 	@Test
 	public void createAuthenticatedBySystemEnvironment() {
-		Map<String, String> newenv = new HashMap<String, String>();
-		newenv.put(ACCESS_KEY, "better access key");
-		newenv.put(SECRET_KEY, "better secret key");
-		setEnv(newenv);
-		URI uri = S3_GLOBAL_URI;
 
-		FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
-		assertNotNull(fileSystem);
+        final String accessKey = "better-access-key";
+        final String secretKey = "better-secret-key";
 
-		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
+        doReturn(accessKey).when(s3fsProvider).systemGetEnv(ACCESS_KEY);
+        doReturn(secretKey).when(s3fsProvider).systemGetEnv(SECRET_KEY);
+        doCallRealMethod().when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+
+		verify(s3fsProvider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+            @Override
+            public boolean matches(Object argument) {
+                Properties called = (Properties)argument;
+                assertEquals(accessKey, called.getProperty(ACCESS_KEY));
+                assertEquals(secretKey, called.getProperty(SECRET_KEY));
+                return true;
+            }
+        }));
 	}
 
 	@Test
@@ -1241,39 +1241,5 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
             return (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
         }
 
-	}
-
-	@SuppressWarnings("unchecked")
-	protected static synchronized void setEnv(Map<String, String> newenv) {
-		try {
-			Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-			Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
-			theEnvironmentField.setAccessible(true);
-			Map<String, String> env = new HashMap<>((Map<String, String>) theEnvironmentField.get(null));
-			env.putAll(newenv);
-			Field theCaseInsensitiveEnvironmentField = processEnvironmentClass.getDeclaredField("theCaseInsensitiveEnvironment");
-			theCaseInsensitiveEnvironmentField.setAccessible(true);
-			Map<String, String> cienv = (Map<String, String>) theCaseInsensitiveEnvironmentField.get(null);
-			cienv.putAll(newenv);
-		} catch (NoSuchFieldException e) {
-			try {
-				Class<?>[] classes = Collections.class.getDeclaredClasses();
-				Map<String, String> env = System.getenv();
-				for (Class<?> cl : classes) {
-					if ("java.util.Collections$UnmodifiableMap".equals(cl.getName())) {
-						Field field = cl.getDeclaredField("m");
-						field.setAccessible(true);
-						Object obj = field.get(env);
-						Map<String, String> map = (Map<String, String>) obj;
-						map.clear();
-						map.putAll(newenv);
-					}
-				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
-			}
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
 	}
 }
