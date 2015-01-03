@@ -135,7 +135,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 	};
 
 	private Path base;
-	private Map<String, Owner> bucketOwners = new HashMap<String, Owner>();
+	private Map<String, Owner> bucketOwners = new HashMap<>();
 
 	public AmazonS3ClientMock(Path base) {
 		this.base = base;
@@ -228,7 +228,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		}
 
 		Path bucket = find(previousObjectListing.getBucketName());
-		List<S3Element> elems = new ArrayList<AmazonS3ClientMock.S3Element>();
+		List<S3Element> elems = new ArrayList<>();
 		try {
 			for (Path elem : Files.newDirectoryStream(bucket)) {
 				elems.add(parse(elem, bucket));

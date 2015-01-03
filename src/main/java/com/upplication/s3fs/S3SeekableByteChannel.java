@@ -62,7 +62,7 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 				return;
 			seekable.close();
 			if (options.contains(StandardOpenOption.DELETE_ON_CLOSE)) {
-				path.delete();
+                fileStore.delete(path);
 				return;
 			}
 			// upload the content where the seekable ends (close)

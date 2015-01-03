@@ -20,7 +20,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import org.unbescape.uri.UriEscape;
 
+/**
+ * S3FileSystem with a concrete client configured and ready to use.
+ * @see AmazonS3 configured by {@link AmazonS3Factory}
+ */
 public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem> {
+
 	private final S3FileSystemProvider provider;
 	private final String key;
 	private final AmazonS3 client;

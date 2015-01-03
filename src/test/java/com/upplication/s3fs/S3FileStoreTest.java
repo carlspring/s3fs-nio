@@ -208,7 +208,8 @@ public class S3FileStoreTest extends S3UnitTestBase {
             outputStream.write(contentString.getBytes());
         }
 		S3Path path = (S3Path) Paths.get(content.toUri());
-		byte[] bytes = path.readAllBytes();
+
+		byte[] bytes = Files.readAllBytes(path);
 		assertEquals(contentString, new String(bytes));
 	}
 
@@ -226,7 +227,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		toBeThrown.setStatusCode(500);
 		doThrow(toBeThrown).when(client).getObject("bucket4", "content");
 		S3Path path = (S3Path) Paths.get(content.toUri());
-		path.readAllBytes();
+        Files.readAllBytes(path);
 	}
 
 	@Test(expected = NoSuchFileException.class)
@@ -253,7 +254,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		S3Path root = fileSystem.getPath("/bucket4");
 		S3Path folder = (S3Path) root.resolve("folder/");
 		Files.createDirectory(folder);
-		BasicFileAttributes attributes = folder.readAttributes(BasicFileAttributes.class);
+		BasicFileAttributes attributes = Files.readAttributes(folder, BasicFileAttributes.class);
 		assertNotNull(attributes);
 		assertEquals("folder/", attributes.fileKey());
 		assertTrue(attributes.isDirectory());
@@ -313,7 +314,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		S3Path root = fileSystem.getPath("/bucket4");
 		Files.createDirectory(root.resolve("folder/subfolder"));
 		S3Path folder = (S3Path) root.resolve("folder");
-		BasicFileAttributes attributes = folder.readAttributes(BasicFileAttributes.class);
+		BasicFileAttributes attributes = Files.readAttributes(folder, BasicFileAttributes.class);
 		assertNotNull(attributes);
 		assertEquals("folder/", attributes.fileKey());
 		assertTrue(attributes.isDirectory());
@@ -330,7 +331,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		Files.createDirectory(root.resolve("folder/"));
 		Files.createFile(root.resolve("folder/file"));
 		S3Path file = (S3Path) root.resolve("folder/file");
-		BasicFileAttributes attributes = file.readAttributes(BasicFileAttributes.class);
+		BasicFileAttributes attributes = Files.readAttributes(file, BasicFileAttributes.class);
 		assertNotNull(attributes);
 		assertEquals("folder/file", attributes.fileKey());
 		assertFalse(attributes.isDirectory());

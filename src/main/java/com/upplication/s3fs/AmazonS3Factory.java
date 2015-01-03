@@ -15,7 +15,11 @@ import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
 
+/**
+ * Factory base class to create a new AmazonS3 instance.
+ */
 public abstract class AmazonS3Factory {
+
 	public static final String ACCESS_KEY = "s3fs_access_key";
 	public static final String SECRET_KEY = "s3fs_secret_key";
 	public static final String REQUEST_METRIC_COLLECTOR_CLASS = "s3fs_request_metric_collector_class";
@@ -33,8 +37,16 @@ public abstract class AmazonS3Factory {
 	public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
 	public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
 	public static final String USER_AGENT = "s3fs_user_agent";
+
 	protected Logger logger = LoggerFactory.getLogger(getClass());
 
+    /**
+     * should return a new AmazonS3
+     * @param credentialsProvider AWSCredentialsProvider mandatory
+     * @param clientConfiguration ClientConfiguration mandatory
+     * @param requestMetricsCollector RequestMetricCollector mandatory
+     * @return {@link com.amazonaws.services.s3.AmazonS3}
+     */
 	protected abstract AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector);
 
 	public AmazonS3 getAmazonS3(URI uri, Properties props) {

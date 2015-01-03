@@ -254,6 +254,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * Deviation from spec: throws FileSystemNotFoundException if FileSystem
 	 * hasn't yet been initialized. Call newFileSystem() first.
 	 * Need credentials. Maybe set credentials after? how?
+     * TODO: we can create a new one if the credentials are present by:
+     * s3://access-key:secret-key@endpoint.com/
 	 */
 	@Override
 	public Path getPath(URI uri) {
@@ -282,12 +284,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
-		return toS3Path(path).getInputStream(options);
+        S3Path s3Path = toS3Path(path);
+		return s3Path.getFileStore().getInputStream(s3Path, options);
 	}
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		return toS3Path(path).newByteChannel(options, attrs);
+        S3Path s3Path = toS3Path(path);
+        return s3Path.getFileStore().newByteChannel(s3Path, options, attrs);
 	}
 
 	/**
@@ -299,12 +303,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
 		S3Path s3Path = toS3Path(dir);
 		Preconditions.checkArgument(attrs.length == 0, "attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
-		s3Path.createDirectory(attrs);
+        s3Path.getFileStore().createDirectory(s3Path, attrs);
 	}
 
 	@Override
 	public void delete(Path path) throws IOException {
-		toS3Path(path).delete();
+        S3Path s3Path = toS3Path(path);
+        if (Files.notExists(s3Path))
+            throw new NoSuchFileException("the path: " + this + " not exists");
+        if (Files.isDirectory(s3Path) && Files.newDirectoryStream(s3Path).iterator().hasNext())
+            throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
+        s3Path.getFileStore().delete(s3Path);
 	}
 
 	@Override
@@ -321,9 +330,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
 		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
 
-		if (exists(s3Target) && !actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
-			throw new FileAlreadyExistsException(format("target already exists: %s", target));
-		s3Source.copyTo(s3Target, options);
+		if (exists(s3Target) && !actualOptions.contains(StandardCopyOption.REPLACE_EXISTING)){
+            throw new FileAlreadyExistsException(format("target already exists: %s", target));
+        }
+
+        s3Source.getFileStore().copy(s3Source, s3Target, options);
 	}
 
 	@Override
@@ -350,7 +361,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public void checkAccess(Path path, AccessMode... modes) throws IOException {
 		S3Path s3Path = toS3Path(path);
 		Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
-		s3Path.checkAccess(modes);
+        if (modes.length == 0) {
+            if (s3Path.getFileStore().exists(s3Path))
+                return;
+            throw new NoSuchFileException(toString());
+        }
+        s3Path.getFileStore().getAccessControlList(s3Path);
 	}
 
 	@Override
@@ -360,7 +376,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
-		return toS3Path(path).readAttributes(type, options);
+		S3Path s3Path = toS3Path(path);
+        return s3Path.getFileStore().readAttributes(s3Path, type, options);
 	}
 
 	@Override
@@ -374,6 +391,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	}
 
 	// ~~
+
 	/**
 	 * Create the fileSystem
 	 * @param uri URI
@@ -430,7 +448,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @return true if exists
 	 */
 	private boolean exists(S3Path path) {
-		return path.exists();
+        S3Path s3Path = toS3Path(path);
+        return s3Path.getFileStore().exists(s3Path);
 	}
 
 	public void close(S3FileSystem fileSystem) {
@@ -442,7 +461,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		return fileSystems.containsKey(s3FileSystem.getKey());
 	}
 
-	public static ConcurrentMap<String, S3FileSystem> getFilesystems() {
+    /**
+     * only 4 testing
+     * @return
+     */
+	protected static ConcurrentMap<String, S3FileSystem> getFilesystems() {
 		return fileSystems;
 	}
 }

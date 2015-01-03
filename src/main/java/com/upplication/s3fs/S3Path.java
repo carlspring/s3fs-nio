@@ -433,6 +433,38 @@ public class S3Path implements Path {
 		return result;
 	}
 
+
+    public boolean isDirectory() {
+        try {
+            return getBasicFileAttributes(true).isDirectory();
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    public BasicFileAttributes getBasicFileAttributes() throws IOException {
+        return getBasicFileAttributes(false);
+    }
+
+    public BasicFileAttributes getBasicFileAttributes(boolean force) throws IOException {
+        if(basicFileAttributes == null && force)
+            setBasicFileAttributes(fileStore.readAttributes(this, BasicFileAttributes.class));
+
+        return basicFileAttributes;
+    }
+
+    public void setBasicFileAttributes(BasicFileAttributes basicFileAttributes) {
+        this.basicFileAttributes = basicFileAttributes;
+    }
+
+    public void walkFileTree(FileVisitor<? super Path> visitor) throws IOException {
+        getFileStore().walkFileTree(this, visitor);
+    }
+
+    public void walkFileTree(FileVisitor<? super Path> visitor, int maxDepth) throws IOException {
+        getFileStore().walkFileTree(this, visitor, maxDepth);
+    }
+
 	// ~ helpers methods
 
 	private static Function<String, String> strip(final String... strs) {
@@ -474,92 +506,4 @@ public class S3Path implements Path {
 		}
 	}
 
-	public void delete() throws IOException {
-		if (Files.notExists(this))
-			throw new NoSuchFileException("the path: " + this + " not exists");
-		if (Files.isDirectory(this) && Files.newDirectoryStream(this).iterator().hasNext())
-			throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
-		getFileStore().delete(this);
-	}
-
-	public void copyTo(S3Path target, CopyOption[] options) {
-		getFileStore().copy(this, target, options);
-	}
-
-	public void createDirectory(FileAttribute<?>[] attrs) throws FileAlreadyExistsException {
-		getFileStore().createDirectory(this, attrs);
-	}
-
-	public void checkAccess(AccessMode[] modes) throws AccessDeniedException, NoSuchFileException {
-		if (modes.length == 0) {
-			if (getFileStore().exists(this))
-				return;
-			throw new NoSuchFileException(toString());
-		}
-		// get ACL and check if the file exists as a side-effect
-		getAccessControlList().checkAccess(modes);
-	}
-
-	/**
-	 * Get the Control List, if the path not exists
-	 * (because the path is a directory and this key isnt created at amazon s3)
-	 * then return the ACL of the first child.
-	 *
-	 * @return AccessControlList
-	 * @throws NoSuchFileException if not found the path and any child
-	 */
-	public S3AccessControlList getAccessControlList() throws NoSuchFileException {
-		return getFileStore().getAccessControlList(this);
-	}
-
-	public boolean exists() {
-		return getFileStore().exists(this);
-	}
-
-	public <A extends BasicFileAttributes> A readAttributes(Class<A> type, LinkOption... options) throws IOException {
-		return getFileStore().readAttributes(this, type, options);
-	}
-
-	public SeekableByteChannel newByteChannel(Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		return getFileStore().newByteChannel(this, options, attrs);
-	}
-
-	public byte[] readAllBytes() throws IOException {
-		return getFileStore().readAllBytes(this);
-	}
-
-	public InputStream getInputStream(OpenOption... options) throws IOException {
-		return getFileStore().getInputStream(this, options);
-	}
-
-	public boolean isDirectory() {
-		try {
-			return getBasicFileAttributes(true).isDirectory();
-		} catch (IOException e) {
-			return false;
-		}
-	}
-
-	public BasicFileAttributes getBasicFileAttributes() throws IOException {
-		return getBasicFileAttributes(false);
-	}
-
-	public BasicFileAttributes getBasicFileAttributes(boolean force) throws IOException {
-		if(basicFileAttributes == null && force)
-			setBasicFileAttributes(readAttributes(BasicFileAttributes.class));
-		
-		return basicFileAttributes;
-	}
-	
-	public void setBasicFileAttributes(BasicFileAttributes basicFileAttributes) {
-		this.basicFileAttributes = basicFileAttributes;
-	}
-
-	public void walkFileTree(FileVisitor<? super Path> visitor) throws IOException {
-		getFileStore().walkFileTree(this, visitor);
-	}
-
-	public void walkFileTree(FileVisitor<? super Path> visitor, int maxDepth) throws IOException {
-		getFileStore().walkFileTree(this, visitor, maxDepth);
-	}
 }
