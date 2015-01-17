@@ -139,14 +139,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return new S3Path(fileSystem, this, ImmutableList.<String> of());
 	}
 
-	/**
-	 * @param options  
-	 */
-	public void copy(S3Path src, S3Path target, CopyOption[] options) {
-		getClient().copyObject(name, src.getKey(), target.getFileStore().name(), target.getKey());
-	}
-
-	/**
+    /**
 	 * @param attrs  
 	 * @throws FileAlreadyExistsException 
 	 */
