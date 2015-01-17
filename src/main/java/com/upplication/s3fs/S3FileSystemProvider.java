@@ -42,6 +42,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -295,7 +296,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public InputStream newInputStream(Path path, OpenOption... options) throws IOException {
         S3Path s3Path = toS3Path(path);
-		return s3Path.getFileStore().getInputStream(s3Path, options);
+        String key = s3Path.getKey();
+
+        Preconditions.checkArgument(options.length == 0, "OpenOptions not yet supported: %s", ImmutableList.copyOf(options)); // TODO
+        Preconditions.checkArgument(!key.equals(""), "cannot create InputStream for root directory: %s", path);
+
+        S3Object object = s3Path.getFileSystem().getClient().getObject(s3Path.getFileStore().name(), key);
+        InputStream res = object.getObjectContent();
+
+        if (res == null)
+            throw new IOException("path is a directory");
+        
+        return res;
 	}
 
 	@Override

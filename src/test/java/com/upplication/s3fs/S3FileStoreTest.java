@@ -88,18 +88,6 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void bucketInputStream() throws IOException {
-		S3Path bucket = fileSystem.getPath("/bucket");
-		fileStore.getInputStream(bucket, StandardOpenOption.APPEND);
-	}
-
-	@Test(expected = IllegalArgumentException.class)
-	public void optionsSupport() throws IOException {
-		S3Path placeholder = fileSystem.getPath("/bucket/placeholder");
-		fileStore.getInputStream(placeholder, StandardOpenOption.APPEND);
-	}
-
 	@Test
 	public void getAttributes() throws IOException {
 		assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));

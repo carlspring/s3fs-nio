@@ -246,23 +246,6 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
 	}
 
-    /**
-	 * @param options  
-	 */
-	public InputStream getInputStream(S3Path path, OpenOption... options) throws IOException {
-		checkSupported(options);
-		Preconditions.checkArgument(!path.getKey().equals(""), "cannot create InputStream for root directory: %s", path);
-		S3Object object = getObject(path.getKey());
-		InputStream res = object.getObjectContent();
-		if (res == null)
-			throw new IOException("path is a directory");
-		return res;
-	}
-
-	private void checkSupported(OpenOption... options) {
-		Preconditions.checkArgument(options.length == 0, "OpenOptions not yet supported: %s", ImmutableList.copyOf(options)); // TODO
-	}
-
 	S3Object getObject(String key) {
 		return getClient().getObject(name, key);
 	}
