@@ -246,14 +246,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
 	}
 
-	/**
-	 * @param attrs  
-	 */
-	public SeekableByteChannel newByteChannel(final S3Path path, final Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-		return new S3SeekableByteChannel(path, options, this);
-	}
-
-	/**
+    /**
 	 * @param options  
 	 */
 	public InputStream getInputStream(S3Path path, OpenOption... options) throws IOException {

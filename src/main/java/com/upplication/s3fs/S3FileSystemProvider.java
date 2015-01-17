@@ -301,7 +301,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         S3Path s3Path = toS3Path(path);
-        return s3Path.getFileStore().newByteChannel(s3Path, options, attrs);
+        return new S3SeekableByteChannel(s3Path, options, s3Path.getFileStore());
 	}
 
 	/**
@@ -315,13 +315,13 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		Preconditions.checkArgument(attrs.length == 0, "attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
         if (exists(s3Path))
             throw new FileAlreadyExistsException(format("target already exists: %s", s3Path));
-        //
+        // create bucket if necesary
         Bucket bucket = s3Path.getFileStore().getBucket();
         String bucketName = s3Path.getFileStore().name();
         if (bucket == null){
             s3Path.getFileSystem().getClient().createBucket(bucketName);
         }
-
+        // create the object as directory
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(0);
         s3Path.getFileSystem().getClient().putObject(bucketName, s3Path.getKey() + "/", new ByteArrayInputStream(new byte[0]), metadata);
