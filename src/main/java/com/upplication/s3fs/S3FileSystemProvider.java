@@ -20,6 +20,7 @@ import static com.upplication.s3fs.AmazonS3Factory.SOCKET_TIMEOUT;
 import static com.upplication.s3fs.AmazonS3Factory.USER_AGENT;
 import static java.lang.String.format;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -39,6 +40,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -310,7 +313,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public void createDirectory(Path dir, FileAttribute<?>... attrs) throws IOException {
 		S3Path s3Path = toS3Path(dir);
 		Preconditions.checkArgument(attrs.length == 0, "attrs not yet supported: %s", ImmutableList.copyOf(attrs)); // TODO
-        s3Path.getFileStore().createDirectory(s3Path, attrs);
+        if (exists(s3Path))
+            throw new FileAlreadyExistsException(format("target already exists: %s", s3Path));
+        //
+        Bucket bucket = s3Path.getFileStore().getBucket();
+        String bucketName = s3Path.getFileStore().name();
+        if (bucket == null){
+            s3Path.getFileSystem().getClient().createBucket(bucketName);
+        }
+
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(0);
+        s3Path.getFileSystem().getClient().putObject(bucketName, s3Path.getKey() + "/", new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
 	@Override

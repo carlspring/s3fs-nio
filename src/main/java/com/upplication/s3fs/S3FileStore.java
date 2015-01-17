@@ -124,6 +124,10 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return bucket;
 	}
 
+    public Bucket getBucket(){
+        return getBucket(name);
+    }
+
 	private Bucket getBucket(String bucketName) {
 		for (Bucket buck : getClient().listBuckets())
 			if (buck.getName().equals(bucketName))
@@ -137,19 +141,6 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 	public S3Path getRootDirectory() {
 		return new S3Path(fileSystem, this, ImmutableList.<String> of());
-	}
-
-    /**
-	 * @param attrs  
-	 * @throws FileAlreadyExistsException 
-	 */
-	public void createDirectory(S3Path path, FileAttribute<?>... attrs) throws FileAlreadyExistsException {
-		getBucket(true);
-		if (exists(path))
-			throw new FileAlreadyExistsException(format("target already exists: %s", path));
-		ObjectMetadata metadata = new ObjectMetadata();
-		metadata.setContentLength(0);
-		getClient().putObject(name, path.getKey() + "/", new ByteArrayInputStream(new byte[0]), metadata);
 	}
 
 	public S3AccessControlList getAccessControlList(S3Path path) throws NoSuchFileException {

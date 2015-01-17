@@ -153,30 +153,12 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		assertEquals("/bucket/folder", path.toAbsolutePath().toString());
 	}
 
-	@Test
-	public void createDirectoryWithExistingBuckeNamet() throws IOException {
-		S3FileStore s3fs = new S3FileStore(fileSystem, "bucket5");
-		S3Path bucket5 = new S3Path(fileSystem, s3fs);
-		S3Path root = fileSystem.getPath("/bucket5");
-		S3Path folder2 = (S3Path) root.resolve("folder2");
-		folder2.getFileStore().createDirectory(folder2);
-		Path folder = Files.createDirectory(bucket5.resolve("folder"));
-		assertEquals("/bucket5/folder", folder.toAbsolutePath().toString());
-	}
 
 	@Test
 	public void createDirectoryWithEndSlash() throws IOException {
 		S3Path root = fileSystem.getPath("/bucket");
 		S3Path path = (S3Path) Files.createDirectory(root.resolve("nonexistingfolder/"));
 		assertEquals("/bucket/nonexistingfolder", path.toAbsolutePath().toString());
-	}
-
-	@Test(expected=FileAlreadyExistsException.class)
-	public void createAlreadyExistingDirectory() throws IOException {
-		S3Path root = fileSystem.getPath("/bucket");
-		S3Path path = (S3Path) Files.createDirectory(root.resolve("folder"));
-		path.getFileStore().createDirectory(path);
-		assertEquals("/bucket/folder", path.toAbsolutePath().toString());
 	}
 
 	@Test
