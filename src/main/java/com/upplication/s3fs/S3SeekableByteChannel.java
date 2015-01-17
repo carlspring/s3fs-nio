@@ -22,6 +22,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.upplication.s3fs.util.IOUtils;
 
 public class S3SeekableByteChannel implements SeekableByteChannel {
+
 	private S3Path path;
 	private Set<? extends OpenOption> options;
 	private S3FileStore fileStore;
@@ -62,7 +63,7 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 				return;
 			seekable.close();
 			if (options.contains(StandardOpenOption.DELETE_ON_CLOSE)) {
-                fileStore.delete(path);
+                path.getFileSystem().provider().delete(path);
 				return;
 			}
 			// upload the content where the seekable ends (close)

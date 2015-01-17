@@ -139,13 +139,6 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return new S3Path(fileSystem, this, ImmutableList.<String> of());
 	}
 
-	public void delete(S3Path path) {
-		String key = path.getKey();
-		// we delete the two objects (sometimes exists the key '/' and sometimes not)
-		getClient().deleteObject(name, key);
-		getClient().deleteObject(name, key + "/");
-	}
-
 	/**
 	 * @param options  
 	 */
@@ -182,21 +175,6 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 		return fileSystem.getClient().getS3AccountOwner();
 	}
 
-	/**
-	 * @param key String key
-	 * @return ObjectMetadata
-	 */
-	private ObjectMetadata getObjectMetadata(String key) {
-		return getClient().getObjectMetadata(name, key);
-	}
-
-	public ObjectListing listObjects(String key) {
-		ListObjectsRequest request = new ListObjectsRequest();
-		request.setBucketName(name);
-		request.setPrefix(key);
-		request.setMaxKeys(1);
-		return listObjects(request);
-	}
 
 	ObjectListing listObjects(ListObjectsRequest request) {
 		return getClient().listObjects(request);
@@ -210,15 +188,16 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 */
 	public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {
 		String key = s3Path.getKey();
+        AmazonS3 client = getClient();
 		try {
-			ObjectMetadata metadata = getObjectMetadata(key);
+			ObjectMetadata metadata = client.getObjectMetadata(name, key);
 			S3ObjectSummary result = new S3ObjectSummary();
 			result.setBucketName(name);
 			result.setETag(metadata.getETag());
 			result.setKey(key);
 			result.setLastModified(metadata.getLastModified());
 			result.setSize(metadata.getContentLength());
-			AccessControlList objectAcl = getClient().getObjectAcl(name, key);
+			AccessControlList objectAcl = client.getObjectAcl(name, key);
 			result.setOwner(objectAcl.getOwner());
 			return result;
 		} catch (AmazonS3Exception e) {
@@ -228,7 +207,11 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 
 		try {
 			// is a virtual directory
-			ObjectListing current = listObjects(key + "/");
+            ListObjectsRequest request = new ListObjectsRequest();
+            request.setBucketName(name);
+            request.setPrefix(key + "/");
+            request.setMaxKeys(1);
+            ObjectListing current = client.listObjects(request);
 			if (!current.getObjectSummaries().isEmpty())
 				return current.getObjectSummaries().get(0);
 		} catch (Exception e) {
@@ -284,22 +267,6 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
 	 */
 	public SeekableByteChannel newByteChannel(final S3Path path, final Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
 		return new S3SeekableByteChannel(path, options, this);
-	}
-
-	public byte[] readAllBytes(S3Path path) throws IOException {
-		S3ObjectInputStream objectContent = getClient().getObject(name, path.getKey()).getObjectContent();
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		BufferedOutputStream outputStream = new BufferedOutputStream(out);
-		try {
-			byte[] buffer = new byte[1024 * 10];
-			int bytesRead;
-			while ((bytesRead = objectContent.read(buffer)) > -1)
-				outputStream.write(buffer, 0, bytesRead);
-			outputStream.flush();
-			return out.toByteArray();
-		} finally {
-			outputStream.close();
-		}
 	}
 
 	/**

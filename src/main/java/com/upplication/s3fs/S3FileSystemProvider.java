@@ -320,7 +320,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
             throw new NoSuchFileException("the path: " + this + " not exists");
         if (Files.isDirectory(s3Path) && Files.newDirectoryStream(s3Path).iterator().hasNext())
             throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
-        s3Path.getFileStore().delete(s3Path);
+
+        String key = s3Path.getKey();
+        String bucketName = s3Path.getFileStore().name();
+        s3Path.getFileSystem().getClient().deleteObject(bucketName, key);
+        // we delete the two objects (sometimes exists the key '/' and sometimes not)
+        s3Path.getFileSystem().getClient().deleteObject(bucketName, key + "/");
 	}
 
 	@Override
@@ -373,8 +378,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
                 return;
             throw new NoSuchFileException(toString());
         }
+
         s3Path.getFileStore().getAccessControlList(s3Path).checkAccess(modes);
 	}
+
+
 
 	@Override
 	public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
