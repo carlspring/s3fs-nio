@@ -18,7 +18,7 @@ This project provides a first API implementation, little optimized, but "complet
 </dependency>
 ```
 
-And add to your meta-inf/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
+And add to your META-INF/services/java.nio.file.spi.FileSystemProvider (create if not exists yet) a new line like this: com.upplication.s3fs.S3FileSystemProvider.
 
 ### Using service locator and system vars
 
