@@ -88,6 +88,27 @@ For a complete list of available regions look at: http://docs.aws.amazon.com/gen
 
 * Watchers
 * FileStore
+* 
+## How to contribute
+
+Clone the github repository:
+
+```java
+git clone https://github.com/Upplication/Amazon-S3-FileSystem-NIO2.git
+```
+
+To run the tests:
+
+First, you must copy the file `src/test/resources/amazon-test-sample.properties` and paste in the same directory with the name amazon-test.properties. In your copy you must edit all the keys:
+
+```
+bucket_name=/your-bucket-name for test
+# http://docs.aws.amazon.com/general/latest/gr/rande.html 
+secret_key= your secret key for test
+access_key=your access key for test
+```
+
+Thats all, now you can run the test with the command: `mvn test` or `mvn integration-test`
 
 ## LICENSE:
 
