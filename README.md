@@ -88,7 +88,7 @@ For a complete list of available regions look at: http://docs.aws.amazon.com/gen
 
 * Watchers
 * FileStore
-* 
+
 ## How to contribute
 
 Clone the github repository:
