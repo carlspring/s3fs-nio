@@ -209,8 +209,8 @@ public class S3IteratorTest extends S3UnitTestBase {
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
 		S3Path path = s3FileSystem.getPath("/bucketD");
 		S3Iterator iterator = new S3Iterator(path);
-		assertIterator(iterator, filesNameExpected);
-		verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
+        verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
+        assertIterator(iterator, filesNameExpected);
 	}
 
 	@Test(expected = UnsupportedOperationException.class)
@@ -228,7 +228,6 @@ public class S3IteratorTest extends S3UnitTestBase {
 		assertNotNull(iterator);
 		assertTrue(iterator.hasNext());
 		List<String> filesNamesExpected = Arrays.asList(files);
-//		Collections.sort(filesNamesExpected);
 		List<String> filesNamesActual = new ArrayList<>();
 		while (iterator.hasNext()) {
 			Path path = iterator.next();

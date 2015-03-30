@@ -4,8 +4,10 @@ import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Date;
 
 public class S3FileStoreAttributeView implements FileStoreAttributeView {
+
 	public static final String ATTRIBUTE_VIEW_NAME = "S3FileStoreAttributeView";
-	private Date creationDate;
+
+    private Date creationDate;
 	private String name;
 	private String ownerId;
 	private String ownerDisplayName;

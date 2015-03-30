@@ -606,27 +606,6 @@ public class S3PathTest extends S3UnitTestBase {
 		S3Path path = forPath("/buck/file");
 		path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
 	}
-	
-	@Test(expected=NoSuchFileException.class)
-	public void getBasicFileAttributesNonExisting() throws IOException {
-		S3Path path = forPath("/buck/file");
-		Files.deleteIfExists(path);
-		BasicFileAttributes basicFileAttributes = path.getBasicFileAttributes();
-		assertNull(basicFileAttributes);
-		basicFileAttributes = path.getBasicFileAttributes(true);
-	}
-	
-	@Test
-	public void getBasicFileAttributes() throws IOException {
-		S3Path path = forPath("/buck/file");
-		Files.createFile(path);
-		BasicFileAttributes basicFileAttributes = path.getBasicFileAttributes();
-		assertNull(basicFileAttributes);
-		basicFileAttributes = path.getBasicFileAttributes(true);
-		assertNotNull(basicFileAttributes);
-		assertFalse(basicFileAttributes.isDirectory());
-		assertTrue(basicFileAttributes.isRegularFile());
-	}
 
 	private static S3Path forPath(String path) {
 		return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath(path);

@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -113,19 +110,18 @@ public class S3WalkerTest extends S3UnitTestBase {
 		reset(client);
 		RegisteringVisitor registrar = new RegisteringVisitor();
 		Files.walkFileTree(folder, registrar);
-		verify(client, times(6)).listObjects(any(ListObjectsRequest.class));
+        // 14: 2 for folders: one previst and one postvisit and 1 for files
+        assertEquals(14, registrar.getVisitOrder().size());
 
 		final Iterator<String> iterator = registrar.getVisitOrder().iterator();
 		reset(client);
-		folder.walkFileTree(new CheckVisitor(iterator));
+        Files.walkFileTree(folder, new CheckVisitor(iterator));
 		assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
-		verify(client, times(1)).listObjects(any(ListObjectsRequest.class));
 
 		reset(client);
 		Iterator<String> iter = registrar.getVisitOrder().iterator();
-		folder.walkFileTree(new CheckVisitor(iter), 20);
+        Files.walkFileTree(folder, Collections.<FileVisitOption>emptySet(), 20, new CheckVisitor(iter));
 		assertFalse("Iterator should have been  exhausted.", iter.hasNext());
-		verify(client, times(6)).listObjects(any(ListObjectsRequest.class));
 	}
 
 	@Test
@@ -135,21 +131,16 @@ public class S3WalkerTest extends S3UnitTestBase {
 
 		S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
 		RegisteringVisitor registrar = new RegisteringVisitor();
-		ObjectListing empty = new ObjectListing();
-		empty.setBucketName("tree");
-		empty.setPrefix("/tree/folder");
-		empty.getObjectSummaries().clear();
 
 		reset(client);
 		Files.walkFileTree(folder, registrar);
-		verify(client, times(2)).listObjects(any(ListObjectsRequest.class));
+        assertEquals(2, registrar.getVisitOrder().size());
 
 		final Iterator<String> iterator = registrar.getVisitOrder().iterator();
 		reset(client);
 
-		folder.walkFileTree(new CheckVisitor(iterator));
+        Files.walkFileTree(folder, new CheckVisitor(iterator));
 		assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
-		verify(client, times(1)).listObjects(any(ListObjectsRequest.class));
 	}
 
 	@Test
@@ -175,13 +166,11 @@ public class S3WalkerTest extends S3UnitTestBase {
 		RegisteringVisitor registrar = new RegisteringVisitor();
 		Files.walkFileTree(folder, registrar);
 		assertEquals(1094, registrar.getVisitOrder().size());
-		verify(client, times(44)).listObjects(any(ListObjectsRequest.class));
 
 		final Iterator<String> iterator = registrar.getVisitOrder().iterator();
 		reset(client);
-		folder.walkFileTree(new CheckVisitor(iterator));
+        Files.walkFileTree(folder, new CheckVisitor(iterator));
 		assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
-		verify(client, times(1)).listObjects(any(ListObjectsRequest.class));
 	}
 
 	@Test
@@ -193,13 +182,11 @@ public class S3WalkerTest extends S3UnitTestBase {
 		RegisteringVisitor registrar = new RegisteringVisitor();
 		Files.walkFileTree(folder, registrar);
 		assertEquals(1, registrar.getVisitOrder().size());
-		verify(client, times(1)).listObjects(any(ListObjectsRequest.class));
 
 		final Iterator<String> iterator = registrar.getVisitOrder().iterator();
 		reset(client);
-		folder.walkFileTree(new CheckVisitor(iterator));
+        Files.walkFileTree(folder, new CheckVisitor(iterator));
 		assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
-		verify(client, times(1)).listObjects(any(ListObjectsRequest.class));
 	}
 
 	@Test
@@ -249,7 +236,7 @@ public class S3WalkerTest extends S3UnitTestBase {
 		assertEquals(Arrays.asList("file1.1", "file1.2", "file3.1", "file4.1"), visitation);
 		
 		visitation.clear();
-		folder.walkFileTree(visitor);
+        Files.walkFileTree(folder, visitor);
 		assertEquals(Arrays.asList("file1.1", "file1.2", "file3.1", "file4.1"), visitation);
 	}
 }

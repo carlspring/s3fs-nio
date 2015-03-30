@@ -40,14 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
+import com.amazonaws.services.s3.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import org.apache.commons.codec.binary.Base64;
+import com.upplication.s3fs.util.S3Utils;
 
 /**
  * Spec:
@@ -81,6 +79,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public static final String AMAZON_S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
 
     private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
+
+    private S3Utils s3Utils = new S3Utils();
 
 	@Override
 	public String getScheme() {
@@ -306,14 +306,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
         if (res == null)
             throw new IOException("path is a directory");
-        
+
         return res;
 	}
 
 	@Override
 	public SeekableByteChannel newByteChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
         S3Path s3Path = toS3Path(path);
-        return new S3SeekableByteChannel(s3Path, options, s3Path.getFileStore());
+        return new S3SeekableByteChannel(s3Path, options);
 	}
 
 	/**
@@ -362,8 +362,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		S3Path s3Source = toS3Path(source);
 		S3Path s3Target = toS3Path(target);
 		// TODO: implements support for copying directories
-		Preconditions.checkArgument(!s3Source.isDirectory(), "copying directories is not yet supported: %s", source);
-		Preconditions.checkArgument(!s3Target.isDirectory(), "copying directories is not yet supported: %s", target);
+
+		Preconditions.checkArgument(!Files.isDirectory(source), "copying directories is not yet supported: %s", source);
+		Preconditions.checkArgument(!Files.isDirectory(target), "copying directories is not yet supported: %s", target);
 		
 		ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
 		verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
@@ -409,12 +410,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
 		S3Path s3Path = toS3Path(path);
 		Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
         if (modes.length == 0) {
-            if (s3Path.getFileStore().exists(s3Path))
+            if (exists(s3Path))
                 return;
             throw new NoSuchFileException(toString());
         }
 
-        s3Path.getFileStore().getAccessControlList(s3Path).checkAccess(modes);
+        String key = s3Utils.getS3ObjectSummary(s3Path).getKey();
+        S3AccessControlList accessControlList =
+                new S3AccessControlList(s3Path.getFileStore().name(), key, s3Path.getFileSystem().getClient().getObjectAcl(s3Path.getFileStore().name(), key), s3Path.getFileStore().getOwner());
+
+        accessControlList.checkAccess(modes);
 	}
 
 
@@ -427,7 +432,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	@Override
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
 		S3Path s3Path = toS3Path(path);
-        return s3Path.getFileStore().readAttributes(s3Path, type, options);
+        if (type == BasicFileAttributes.class) {
+            return type.cast(s3Utils.getS3FileAttributes(s3Path));
+        }
+        throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
 	}
 
 	@Override
@@ -497,9 +505,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	 * @param path S3Path
 	 * @return true if exists
 	 */
-	private boolean exists(S3Path path) {
+	boolean exists(S3Path path) {
         S3Path s3Path = toS3Path(path);
-        return s3Path.getFileStore().exists(s3Path);
+        try {
+            s3Utils.getS3ObjectSummary(s3Path);
+            return true;
+        } catch (NoSuchFileException e) {
+            return false;
+        }
 	}
 
 	public void close(S3FileSystem fileSystem) {

@@ -292,23 +292,6 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		assertNewDirectoryStream(dir, "file1", "file2");
 	}
 
-	@Test
-	public void basicAttributesCaching() throws IOException {
-		// fixtures
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		RuntimeException failedError = new RuntimeException("ObjectMetadata call shouldn't have been done.");
-		doThrow(failedError).when(client).getObjectMetadata("bucketT", "dir/subdir/");
-		doThrow(failedError).when(client).getObjectMetadata("bucketT", "dir/file1");
-		client.bucket("bucketT").dir("dir").dir("dir/subdir").file("dir/file1");
-		// act
-		Path dir = createNewS3FileSystem().getPath("/bucketT", "dir");
-		DirectoryStream<Path> stream = Files.newDirectoryStream(dir);
-		Iterator<Path> iterator = stream.iterator();
-		S3Path directory = (S3Path) iterator.next();
-		assertTrue(directory.isDirectory());
-		S3Path file = (S3Path) iterator.next();
-		assertFalse(file.isDirectory());
-	}
 
 	@Test(expected = UnsupportedOperationException.class)
 	public void removeIteratorStreamDirectoryReader() throws IOException {
@@ -746,6 +729,22 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		assertTrue(Files.isDirectory(base));
 		assertTrue(Files.exists(base));
 	}
+
+
+    @Test
+    public void createDirectoryInNewBucket() throws IOException {
+        S3Path root = createNewS3FileSystem().getPath("/newer-bucket");
+        Path resolve = root.resolve("folder");
+        Path path = Files.createDirectories(resolve);
+        assertEquals("/newer-bucket/folder", path.toAbsolutePath().toString());
+        // assert
+        assertTrue(Files.exists(root));
+        assertTrue(Files.isDirectory(root));
+        assertTrue(Files.exists(root));
+        assertTrue(Files.exists(resolve));
+        assertTrue(Files.isDirectory(resolve));
+        assertTrue(Files.exists(resolve));
+    }
 
     @Test
     public void createDirectoryWithSpace() throws IOException {

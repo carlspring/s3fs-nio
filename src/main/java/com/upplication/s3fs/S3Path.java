@@ -56,7 +56,6 @@ public class S3Path implements Path {
 	 * actual filesystem
 	 */
 	private S3FileSystem fileSystem;
-	private BasicFileAttributes basicFileAttributes;
 
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
@@ -99,7 +98,7 @@ public class S3Path implements Path {
 
 		pathParts.addAll(moreSplitted);
 		if (bucket != null)
-			this.fileStore = fileSystem.getFileStore(bucket);
+			this.fileStore = new S3FileStore(fileSystem, bucket);
 		else
 			this.fileStore = null;
 		this.parts = KeyParts.parse(pathParts);
@@ -432,38 +431,6 @@ public class S3Path implements Path {
 		result = 31 * result + parts.hashCode();
 		return result;
 	}
-
-
-    public boolean isDirectory() {
-        try {
-            return getBasicFileAttributes(true).isDirectory();
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public BasicFileAttributes getBasicFileAttributes() throws IOException {
-        return getBasicFileAttributes(false);
-    }
-
-    public BasicFileAttributes getBasicFileAttributes(boolean force) throws IOException {
-        if(basicFileAttributes == null && force)
-            setBasicFileAttributes(fileStore.readAttributes(this, BasicFileAttributes.class));
-
-        return basicFileAttributes;
-    }
-
-    public void setBasicFileAttributes(BasicFileAttributes basicFileAttributes) {
-        this.basicFileAttributes = basicFileAttributes;
-    }
-
-    public void walkFileTree(FileVisitor<? super Path> visitor) throws IOException {
-        getFileStore().walkFileTree(this, visitor);
-    }
-
-    public void walkFileTree(FileVisitor<? super Path> visitor, int maxDepth) throws IOException {
-        getFileStore().walkFileTree(this, visitor, maxDepth);
-    }
 
 	// ~ helpers methods
 

@@ -415,7 +415,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 
 	/**
 	 * store in the memory map
-	 * @param bucket bucket where persist
+	 * @param bucketName bucket where persist
 	 * @param elem
 	 */
 	private void persist(String bucketName, S3Element elem) {
@@ -515,7 +515,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
 		object.setBucketName(bucketName);
 
 		String key = bucket.relativize(elem).toString().replaceAll("%2F", "/");
-		boolean dir = key.endsWith("/");
+		boolean dir = key.endsWith("/") || key.isEmpty();
 		object.setKey(key);
 
 		ObjectMetadata metadata = new ObjectMetadata();

@@ -445,7 +445,28 @@ public class FilesOperationsIT {
 		assertTrue(Files.exists(file));
 	}
 
-	private Path createEmptyDir() throws IOException {
+    @Test
+    public void testBucketIsDirectory() throws IOException {
+
+        Path path = fileSystemAmazon.getPath(bucket, "/");
+        BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
+        System.out.printf("size    : %s\n", attrs.size());
+        System.out.printf("create  : %s\n", attrs.creationTime());
+        System.out.printf("access  : %s\n", attrs.lastAccessTime());
+        System.out.printf("modified: %s\n", attrs.lastModifiedTime());
+        System.out.printf("dir     : %s\n", Files.isDirectory(path));
+        assertEquals(0, attrs.size());
+        assertEquals(null, attrs.creationTime());
+        assertEquals(null, attrs.lastAccessTime());
+        assertEquals(null, attrs.lastModifiedTime());
+        assertTrue(attrs.isDirectory());
+
+    }
+
+
+
+
+    private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 
 		Files.createDirectory(dir);

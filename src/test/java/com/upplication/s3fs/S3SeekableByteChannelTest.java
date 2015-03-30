@@ -33,7 +33,7 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
 		client.bucket("buck").file("file1");
 		
 		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ), file1.getFileStore());
+		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
 		assertNotNull(channel);
 		channel.write(ByteBuffer.wrap("hoi".getBytes()));
 		channel.close();
@@ -45,7 +45,7 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
 		client.bucket("buck").file("file1");
 		
 		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW), file1.getFileStore());
+		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
 		assertNotNull(channel);
 		channel.write(ByteBuffer.wrap("hoi".getBytes()));
 		channel.close();
@@ -57,14 +57,14 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
 		doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
 		
 		S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ), file2.getFileStore());
+		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
 		channel.close();
 	}
 	
 	@Test(expected=NoSuchFileException.class)
 	public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
 		S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ), file2.getFileStore());
+		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
 		Field f = channel.getClass().getDeclaredField("tempFile");
 		f.setAccessible(true);
 		Path tempFile = (Path) f.get(channel);

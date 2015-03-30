@@ -25,25 +25,28 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 
 	private S3Path path;
 	private Set<? extends OpenOption> options;
-	private S3FileStore fileStore;
 	private SeekableByteChannel seekable;
 	private Path tempFile;
 
-	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options, S3FileStore fileStore) throws IOException {
+	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options) throws IOException {
 		this.path = path;
 		this.options = options;
-		this.fileStore = fileStore;
 		String key = path.getKey();
 		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
-		boolean existed = fileStore.exists(path);
+		boolean existed = ((S3FileSystemProvider)path.getFileSystem().provider()).exists(path);
+
 		if(existed) {
-			S3Object object = fileStore.getObject(key);
+			S3Object object = path.getFileSystem()
+                    .getClient()
+                    .getObject(path.getFileStore().getBucket().getName(), key);
 			InputStream is = object.getObjectContent();
 			Files.write(tempFile, IOUtils.toByteArray(is), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		}
+
 		if (existed && options.contains(StandardOpenOption.CREATE_NEW))
 			throw new FileAlreadyExistsException(format("target already exists: %s", path));
-		Set<OpenOption> opts = new HashSet<>();
+
+        Set<OpenOption> opts = new HashSet<>();
 		if (options.contains(StandardOpenOption.WRITE))
 			opts.add(StandardOpenOption.WRITE);
 		if (options.contains(StandardOpenOption.READ))
@@ -73,7 +76,10 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 				ObjectMetadata metadata = new ObjectMetadata();
 				metadata.setContentLength(Files.size(tempFile));
 				metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
-				fileStore.putObject(path.getKey(), stream, metadata);
+
+                String bucket = path.getFileStore().name();
+                String key = path.getKey();
+                path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
 			} finally {
 				if(stream != null)
 					stream.close();

@@ -80,13 +80,9 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	public Iterable<FileStore> getFileStores() {
 		ImmutableList.Builder<FileStore> builder = ImmutableList.builder();
 		for (Bucket bucket : client.listBuckets()) {
-			builder.add(new S3FileStore(this, bucket));
+			builder.add(new S3FileStore(this, bucket.getName()));
 		}
 		return builder.build();
-	}
-
-	public S3FileStore getFileStore(String bucket) {
-		return new S3FileStore(this, bucket);
 	}
 
 	@Override
