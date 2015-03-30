@@ -35,12 +35,10 @@ public class S3FileStoreTest extends S3UnitTestBase {
 
 	@Before
 	public void prepareFileStore() throws IOException {
-
-        S3FileSystemProvider s3fsProvider = spy(new S3FileSystemProvider());
-        doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
-        doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
-
-        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+        Map<String, Object> env = ImmutableMap.<String, Object> builder()
+                .put(ACCESS_KEY, "access-mocked")
+                .put(SECRET_KEY, "secret-mocked").build();
+        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, env);
 
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket").file("placeholder");
@@ -98,7 +96,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		S3Path rootDirectory = fileStore.getRootDirectory();
 		assertEquals("bucket", rootDirectory.getFileName().toString());
 		assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
-		assertEquals("s3://s3.amazonaws.com/bucket/", rootDirectory.toUri().toString());
+		assertEquals("s3://access-mocked@s3.amazonaws.com/bucket/", rootDirectory.toUri().toString());
 	}
 
 	@Test
