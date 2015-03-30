@@ -6,11 +6,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.Map;
+import java.util.Properties;
 
 import com.amazonaws.services.s3.model.*;
 import com.google.common.collect.ImmutableMap;
@@ -30,7 +35,13 @@ public class S3FileStoreTest extends S3UnitTestBase {
 
 	@Before
 	public void prepareFileStore() throws IOException {
-		fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+
+        S3FileSystemProvider s3fsProvider = spy(new S3FileSystemProvider());
+        doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+        doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
+
+        fileSystem = (S3FileSystem) s3fsProvider.newFileSystem(S3_GLOBAL_URI, null);
+
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket").file("placeholder");
         client.bucket("bucket2").file("placeholder");
