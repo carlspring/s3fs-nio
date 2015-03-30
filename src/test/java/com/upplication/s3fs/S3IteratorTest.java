@@ -212,8 +212,8 @@ public class S3IteratorTest extends S3UnitTestBase {
 		S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
 		S3Path path = s3FileSystem.getPath("/bucketD");
 		S3Iterator iterator = new S3Iterator(path);
-        verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
         assertIterator(iterator, filesNameExpected);
+        verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
 	}
 
 	@Test(expected = UnsupportedOperationException.class)

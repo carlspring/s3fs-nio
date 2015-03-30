@@ -40,7 +40,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
         doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
         doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
 
-        fileSystem = (S3FileSystem) s3fsProvider.newFileSystem(S3_GLOBAL_URI, null);
+        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
 
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket").file("placeholder");
