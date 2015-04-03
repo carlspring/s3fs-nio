@@ -131,8 +131,8 @@ First, you must copy the file `src/test/resources/amazon-test-sample.properties`
 ```
 bucket_name=/your-bucket-name for test
 # http://docs.aws.amazon.com/general/latest/gr/rande.html 
-secret_key= your secret key for test
-access_key=your access key for test
+s3fs_secret_key= your secret key for test
+s3fs_access_key=your access key for test
 ```
 
 Thats all, now you can run the test with the command: `mvn test` or `mvn integration-test -Pintegration-tests`
