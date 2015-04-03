@@ -4,10 +4,10 @@ jdk:
 - oraclejdk7
 env:
   global:
+  - secure: "cJdVQLH5yLcMiafZH1BRubHlsd/P8k4IqVToYQBK8GXx47brewSBb1PL+LlRqKiC83N5uFkkF6Md1gASf8twagg2HjJigfUaHZtlZmtVQw1aGAoLcsns0EZny26Gn29q/K+A3FAtydB9jCnJCt3ZKSD6aT/RT7x5v3nm8C7g7iU="
+  - secure: "peM3iQKIGKttf76uUs1vSm6L7A0+sk4it0WrhctQ5CWSFuSHl8pZUKhT+3ESkUL7FnNfG8USb/2EdlhwljH8Dg/e09jQ3OwhOPhbX8pgsn2k4SFJ1+IkB6iAcV/o5DlN87CTRcixInInQLXsSIswiUbhaPLI0dE6xJJG93XvSc8="
   - secure: tlMPSRwLNtMX6sAPle28uItIUoWuWet2EDaWZprKPJsY5u/AmjOigDH6dJCwYFi7t1eWeueYeNgzQjKiVGe1kia00WoEaUwPo+P3C1hCjkKSfjLwMxqLR4VvEj/8FDRBoncwryNWWCCxSxEXL6OCGCUqCqy0eye2KaEV9RJCNoA=
   - secure: bXjOngFzBAcI5uiJyxAx2S9rptFK+Sp0Pa0LQKsPz/lFxCPhgJdhHGqEvpkzxAi41jmR/nTFB/F//a7lWUK3QfHQV9zU39T+nA17wjmpds2+1xYNTAea5ow3bBVelBL0MoIs+sNlwQhIFR7daVpTfnVEJNXCipEzJmLrKptWs7E=
-  - secure: I1I4hrpOQ6ITx2LxmpQ4LgTsm6d2CTMu8NviUMDl9/7ozOojXxsPZI9pPieqB1BVGy9F+JgUs7SXi4v2Y4DHdqbh9DCCmtQviMJVUm3LDUEGjyTl650TtjnkfnU8J0Y0c31ThNUW2entDr4THNyNunXnX68mBaQjQqrZEuO9Jf0=
-  - secure: iFXZeCjomL9KCUzQ+BFuWO9w+/uuunMadta1v/9ifZUGJAWfqyQ6Cc2S/COmOrcbYjE3ViPrj7fYbRBqgRl2yV0fuvy5Y+OMDIMwcMnVMDxLdId77aXTAd7LZ8z+wbpDRNlXyfiKP75CSHiMsFacJyMWYGkab715GzEF5UYcSZw=
 before_install:
 - sudo sed -i 's/security.provider.9/#security.provider.9/g' $JAVA_HOME/jre/lib/security/java.security
 before_script:

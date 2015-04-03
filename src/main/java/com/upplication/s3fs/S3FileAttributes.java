@@ -1,20 +1,18 @@
 package com.upplication.s3fs;
 
+import static java.lang.String.format;
+
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
-import static java.lang.String.format;
-
 public class S3FileAttributes implements BasicFileAttributes {
-	
 	private final FileTime lastModifiedTime;
 	private final long size;
 	private final boolean directory;
 	private final boolean regularFile;
 	private final String key;
 
-	public S3FileAttributes(String key, FileTime lastModifiedTime, long size,
-			boolean isDirectory, boolean isRegularFile) {
+	public S3FileAttributes(String key, FileTime lastModifiedTime, long size, boolean isDirectory, boolean isRegularFile) {
 		this.key = key;
 		this.lastModifiedTime = lastModifiedTime;
 		this.size = size;
@@ -69,8 +67,6 @@ public class S3FileAttributes implements BasicFileAttributes {
 
 	@Override
 	public String toString() {
-		return format(
-				"[%s: lastModified=%s, size=%s, isDirectory=%s, isRegularFile=%s]",
-				key, lastModifiedTime, size, directory, regularFile);
+		return format("[%s: lastModified=%s, size=%s, isDirectory=%s, isRegularFile=%s]", key, lastModifiedTime, size, directory, regularFile);
 	}
 }

@@ -1,20 +1,21 @@
 package com.upplication.s3fs.util;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
-/**
- * Created by IntelliJ IDEA. User: bbejeck Date: 1/23/12 Time: 10:29 PM
- */
+
 public class CopyDirVisitor extends SimpleFileVisitor<Path> {
 
-	private Path fromPath;
+    private Path fromPath;
 	private Path toPath;
 	private StandardCopyOption copyOption;
 
-	public CopyDirVisitor(Path fromPath, Path toPath,
-			StandardCopyOption copyOption) {
+	public CopyDirVisitor(Path fromPath, Path toPath, StandardCopyOption copyOption) {
 		this.fromPath = fromPath;
 		this.toPath = toPath;
 		this.copyOption = copyOption;
@@ -25,14 +26,13 @@ public class CopyDirVisitor extends SimpleFileVisitor<Path> {
 	}
 
 	@Override
-	public FileVisitResult preVisitDirectory(Path dir,
-			BasicFileAttributes attrs) throws IOException {
+	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
 
 		// permitimos resolver entre distintos providers
 		Path targetPath = appendPath(dir);
 
 		if (!Files.exists(targetPath)) {
-			if (!targetPath.getFileName().toString().endsWith("/")){
+			if (!targetPath.getFileName().toString().endsWith("/")) {
 				targetPath = targetPath.getParent().resolve(targetPath.getFileName().toString() + "/");
 			}
 			Files.createDirectory(targetPath);
@@ -41,8 +41,7 @@ public class CopyDirVisitor extends SimpleFileVisitor<Path> {
 	}
 
 	@Override
-	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-			throws IOException {
+	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 
 		Path targetPath = appendPath(file);
 
@@ -54,21 +53,18 @@ public class CopyDirVisitor extends SimpleFileVisitor<Path> {
 	 * Obtenemos el path que corresponde en el parametro: {@link #fromPath}
 	 * relativo al parametro <code>Path to</code>
 	 * 
-	 * @param to
-	 *            Path
+	 * @param to Path
 	 * @return
 	 */
 	private Path appendPath(Path to) {
 		Path targetPath = toPath;
 		// sacamos el path relativo y lo recorremos para
 		// añadirlo al nuevo
-
 		for (Path path : fromPath.relativize(to)) {
 			// si utilizamos path en vez de string: lanza error por ser
 			// distintos paths
 			targetPath = targetPath.resolve(path.getFileName().toString());
 		}
-
 		return targetPath;
 	}
 }
