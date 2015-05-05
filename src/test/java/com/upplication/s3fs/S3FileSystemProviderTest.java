@@ -437,6 +437,29 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		assertArrayEquals(content.getBytes(), buffer);
 	}
 
+    @Test
+    public void outputStreamWithTruncate() throws IOException {
+        String initialContent = "Content line 1\n" +
+                "Content line 2\n" +
+                "Content line 3\n" +
+                "Content line 4";
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("bucketA").file("file1", initialContent.getBytes());
+        Path file = createNewS3FileSystem().getPath("/bucketA/file1");
+
+        String res = "only one line";
+
+        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.TRUNCATE_EXISTING)) {
+            stream.write(res.getBytes());
+            stream.flush();
+        }
+        // get the input
+        byte[] buffer = Files.readAllBytes(file);
+        // check
+        assertArrayEquals(res.getBytes(), buffer);
+    }
+
 	@Test(expected = FileAlreadyExistsException.class)
 	public void outputStreamWithCreateNewAndFileExists() throws IOException {
 		Path base = getS3Directory();

@@ -35,6 +35,9 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
 		boolean existed = ((S3FileSystemProvider)path.getFileSystem().provider()).exists(path);
 
+        if (existed && options.contains(StandardOpenOption.CREATE_NEW))
+            throw new FileAlreadyExistsException(format("target already exists: %s", path));
+
 		if(existed) {
 			S3Object object = path.getFileSystem()
                     .getClient()
@@ -43,15 +46,9 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 			Files.write(tempFile, IOUtils.toByteArray(is), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		}
 
-		if (existed && options.contains(StandardOpenOption.CREATE_NEW))
-			throw new FileAlreadyExistsException(format("target already exists: %s", path));
+        options.remove(StandardOpenOption.CREATE_NEW);
 
-        Set<OpenOption> opts = new HashSet<>();
-		if (options.contains(StandardOpenOption.WRITE))
-			opts.add(StandardOpenOption.WRITE);
-		if (options.contains(StandardOpenOption.READ))
-			opts.add(StandardOpenOption.READ);
-		seekable = Files.newByteChannel(tempFile, opts);
+		seekable = Files.newByteChannel(tempFile, options);
 	}
 
 	@Override
