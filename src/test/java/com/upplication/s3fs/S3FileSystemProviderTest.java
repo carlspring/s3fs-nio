@@ -129,6 +129,21 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
 	}
 
+    @Test
+    public void createWithDefaultEndpoint() {
+        Properties props = new Properties();
+        props.setProperty(SECRET_KEY, "better secret key");
+        props.setProperty(ACCESS_KEY, "better access key");
+        props.setProperty(CHARSET_KEY, "UTF-8");
+        doReturn(props).when(s3fsProvider).loadAmazonProperties();
+        URI uri = URI.create("s3:///");
+
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object> of());
+        assertNotNull(fileSystem);
+
+        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key", "UTF-8")));
+    }
+
 	@Test(expected = IllegalArgumentException.class)
 	public void createWithOnlyAccessKey() {
 		Properties props = new Properties();
