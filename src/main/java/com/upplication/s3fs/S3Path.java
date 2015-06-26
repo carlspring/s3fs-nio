@@ -379,8 +379,7 @@ public class S3Path implements Path {
 	public Iterator<Path> iterator() {
 		ImmutableList.Builder<Path> builder = ImmutableList.builder();
 
-		for (Iterator<String> iterator = parts.iterator(); iterator.hasNext();) {
-			String part = iterator.next();
+		for (String part : parts) {
 			builder.add(new S3Path(fileSystem, null, ImmutableList.of(part)));
 		}
 

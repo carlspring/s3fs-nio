@@ -11,7 +11,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,7 +21,6 @@ import org.apache.tika.Tika;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
-import com.upplication.s3fs.util.IOUtils;
 
 public class S3SeekableByteChannel implements SeekableByteChannel {
 
@@ -30,25 +31,33 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 
 	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options) throws IOException {
 		this.path = path;
-		this.options = options;
+		this.options = Collections.unmodifiableSet(new HashSet<>(options));
 		String key = path.getKey();
-		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
-		boolean existed = ((S3FileSystemProvider)path.getFileSystem().provider()).exists(path);
+		boolean existed = path.getFileSystem().provider().exists(path);
 
-        if (existed && options.contains(StandardOpenOption.CREATE_NEW))
+        if (existed && this.options.contains(StandardOpenOption.CREATE_NEW))
             throw new FileAlreadyExistsException(format("target already exists: %s", path));
 
-		if(existed) {
-			S3Object object = path.getFileSystem()
-                    .getClient()
-                    .getObject(path.getFileStore().getBucket().getName(), key);
-			InputStream is = object.getObjectContent();
-			Files.write(tempFile, IOUtils.toByteArray(is), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+		boolean removeTempFile = true;
+		try {
+			if (existed) {
+				try (S3Object object = path.getFileSystem()
+                                           .getClient()
+                                           .getObject(path.getFileStore().getBucket().getName(), key)) {
+					Files.copy(object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING); 
+				}
+			}
+
+			Set<? extends OpenOption> seekOptions = new HashSet<>(this.options);
+			seekOptions.remove(StandardOpenOption.CREATE_NEW);
+			seekable = Files.newByteChannel(tempFile, seekOptions);
+			removeTempFile = false;
+		} finally {
+			if (removeTempFile) {
+				Files.deleteIfExists(tempFile);
+			}
 		}
-
-        options.remove(StandardOpenOption.CREATE_NEW);
-
-		seekable = Files.newByteChannel(tempFile, options);
 	}
 
 	@Override
