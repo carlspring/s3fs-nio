@@ -39,7 +39,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	}
 
 	@Override
-	public FileSystemProvider provider() {
+	public S3FileSystemProvider provider() {
 		return provider;
 	}
 
