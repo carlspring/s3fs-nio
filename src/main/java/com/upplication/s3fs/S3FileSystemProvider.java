@@ -235,9 +235,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
         return System.getenv(key);
     }
 
+	/**
+	 * Get existing filesystem based on a combination of URI and env settings. Create new filesystem otherwise.
+	 * @param uri URI of existing, or to be created filesystem.
+	 * @param env environment settings.
+	 * @return new or existing filesystem.
+	 */
 	public FileSystem getFileSystem(URI uri, Map<String, ?> env) {
 		validateUri(uri);
-		String key = this.getFileSystemKey(uri);
+		Properties props = getProperties(uri, env);
+		String key = this.getFileSystemKey(uri, props); // s3fs_access_key is part of the key here.
 		if (fileSystems.containsKey(key))
 			return fileSystems.get(key);
 		return newFileSystem(uri, env);
