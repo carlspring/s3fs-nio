@@ -922,7 +922,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		s3fsProvider.copy(file, fileDest);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
+	@Test
 	public void move() throws IOException {
 		// fixtures
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();

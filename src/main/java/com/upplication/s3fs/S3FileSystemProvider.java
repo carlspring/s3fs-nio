@@ -395,7 +395,8 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public void move(Path source, Path target, CopyOption... options) throws IOException {
-		throw new UnsupportedOperationException();
+		copy(source, target, options);
+		delete(source);
 	}
 
 	@Override
