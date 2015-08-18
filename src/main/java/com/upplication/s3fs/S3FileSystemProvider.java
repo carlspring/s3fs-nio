@@ -45,6 +45,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.util.Cache;
 import com.upplication.s3fs.util.S3Utils;
 
 /**
@@ -81,6 +82,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
     private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
     private S3Utils s3Utils = new S3Utils();
+    private Cache cache = new Cache();
 
 	@Override
 	public String getScheme() {
@@ -441,8 +443,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
 	public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options) throws IOException {
 		S3Path s3Path = toS3Path(path);
         if (type == BasicFileAttributes.class) {
-            return type.cast(s3Utils.getS3FileAttributes(s3Path));
+            if (cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes())) {
+				A result = type.cast(s3Path.getFileAttributes());
+				s3Path.setFileAttributes(null);
+				return result;
+			} else {
+                S3FileAttributes attrs = s3Utils.getS3FileAttributes(s3Path);
+                s3Path.setFileAttributes(attrs);
+                return type.cast(attrs);
+            }
         }
+
         throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
 	}
 
@@ -534,9 +545,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
     /**
      * only 4 testing
-     * @return
      */
+
 	protected static ConcurrentMap<String, S3FileSystem> getFilesystems() {
 		return fileSystems;
 	}
+
+    public Cache getCache() {
+        return cache;
+    }
+
+    public void setCache(Cache cache) {
+        this.cache = cache;
+    }
 }

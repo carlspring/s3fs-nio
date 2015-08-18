@@ -3,10 +3,7 @@ package com.upplication.s3fs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URI;
@@ -17,8 +14,6 @@ import java.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
 import com.upplication.s3fs.util.MockBucket;
@@ -201,7 +196,7 @@ public class S3WalkerTest extends S3UnitTestBase {
 
 		S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
 		reset(client);
-		final List<String> visitation = new ArrayList<String>();
+		final List<String> visitation = new ArrayList<>();
 		FileVisitor<Path> visitor = new FileVisitor<Path>() {
 			@Override
 			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

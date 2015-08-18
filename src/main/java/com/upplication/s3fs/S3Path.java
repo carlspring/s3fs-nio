@@ -57,6 +57,11 @@ public class S3Path implements Path {
 	 */
 	private S3FileSystem fileSystem;
 
+    /**
+     * S3FileAttributes cache
+     */
+    private S3FileAttributes fileAttributes;
+
 	/**
 	 * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
 	 * "{key}".
@@ -431,6 +436,14 @@ public class S3Path implements Path {
 		return result;
 	}
 
+    public S3FileAttributes getFileAttributes() {
+        return fileAttributes;
+    }
+
+    public void setFileAttributes(S3FileAttributes fileAttributes) {
+        this.fileAttributes = fileAttributes;
+    }
+
 	// ~ helpers methods
 
 	private static Function<String, String> strip(final String... strs) {
@@ -455,9 +468,9 @@ public class S3Path implements Path {
 		};
 	}
 
-	/*
-	 * delete redundant "/" and empty parts
-	 */
+    /*
+     * delete redundant "/" and empty parts
+     */
 	private abstract static class KeyParts {
 		private static ImmutableList<String> parse(String[] parts) {
 			return ImmutableList.copyOf(filter(transform(Arrays.asList(parts), strip("/")), notEmpty()));

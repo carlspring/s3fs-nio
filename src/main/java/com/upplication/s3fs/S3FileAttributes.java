@@ -11,6 +11,7 @@ public class S3FileAttributes implements BasicFileAttributes {
 	private final boolean directory;
 	private final boolean regularFile;
 	private final String key;
+	private long cacheCreated;
 
 	public S3FileAttributes(String key, FileTime lastModifiedTime, long size, boolean isDirectory, boolean isRegularFile) {
 		this.key = key;
@@ -18,6 +19,8 @@ public class S3FileAttributes implements BasicFileAttributes {
 		this.size = size;
 		directory = isDirectory;
 		regularFile = isRegularFile;
+
+		cacheCreated = System.currentTimeMillis();
 	}
 
 	@Override
@@ -68,5 +71,15 @@ public class S3FileAttributes implements BasicFileAttributes {
 	@Override
 	public String toString() {
 		return format("[%s: lastModified=%s, size=%s, isDirectory=%s, isRegularFile=%s]", key, lastModifiedTime, size, directory, regularFile);
+	}
+
+	public long getCacheCreated() {
+		return cacheCreated;
+	}
+
+	// for testing
+
+	public void setCacheCreated(long time) {
+		this.cacheCreated = time;
 	}
 }

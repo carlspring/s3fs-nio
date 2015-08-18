@@ -14,7 +14,7 @@ public class MockBucket {
 	
 	public MockBucket file(String... file) throws IOException {
 		for (String string : file)
-			amazonS3ClientMock.addFile(mocketPath, string);
+			amazonS3ClientMock.addFile(mocketPath, string, "sample-content".getBytes());
 		return this;
 	}
 	

@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
 public class S3Utils {
 
     /**
-     * Get the {@link com.amazonaws.services.s3.model.S3ObjectSummary} that represent this Path or her first child if this path not exists
-     * @param s3Path {@link com.upplication.s3fs.S3Path}
-     * @return {@link com.amazonaws.services.s3.model.S3ObjectSummary}
-     * @throws java.nio.file.NoSuchFileException if not found the path and any child
+     * Get the {@link S3ObjectSummary} that represent this Path or her first child if this path not exists
+     * @param s3Path {@link S3Path}
+     * @return {@link S3ObjectSummary}
+     * @throws NoSuchFileException if not found the path and any child
      */
     public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {
         String key = s3Path.getKey();
@@ -61,9 +61,19 @@ public class S3Utils {
      * @return S3FileAttributes
      */
     public S3FileAttributes getS3FileAttributes(S3Path s3Path) throws NoSuchFileException {
-        String key = s3Path.getKey();
         S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+        return toS3FileAttributes(objectSummary, s3Path.getKey());
+    }
 
+    /**
+     * convert S3ObjectSummary to S3FileAttributes
+     * @param objectSummary S3ObjectSummary mandatory not null, the real objectSummary with
+     *                      exactly the same key than the key param or the immediate descendant
+     *                      if it is a virtual directory
+     * @param key String the real key that can be exactly equal than the objectSummary or
+     * @return S3FileAttributes
+     */
+    public S3FileAttributes toS3FileAttributes(S3ObjectSummary objectSummary, String key) {
         // parse the data to BasicFileAttributes.
         FileTime lastModifiedTime = null;
         if (objectSummary.getLastModified() != null){
@@ -77,8 +87,7 @@ public class S3Utils {
         if (key.endsWith("/") && resolvedKey.equals(key) ||
                 resolvedKey.equals(key + "/")) {
             directory = true;
-        }
-        else if (key.isEmpty()) { // is a bucket (no key)
+        } else if (key.isEmpty()) { // is a bucket (no key)
             directory = true;
             resolvedKey = "/";
         }
@@ -88,8 +97,9 @@ public class S3Utils {
             size = 0;
             // delete extra part
             resolvedKey = key + "/";
-        } else
+        } else {
             regularFile = true;
+        }
         return new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
     }
 }

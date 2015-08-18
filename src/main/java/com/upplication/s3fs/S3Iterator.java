@@ -1,5 +1,6 @@
 package com.upplication.s3fs;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,13 +9,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
-
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.util.S3Utils;
 
 /**
  * S3 iterator over folders at first level.
@@ -31,6 +31,8 @@ public class S3Iterator implements Iterator<Path> {
 	private int cursor; // index of next element to return
 	private int size;
 	private boolean incremental;
+
+    private S3Utils s3Utils = new S3Utils();
 
 	public S3Iterator(S3Path path) {
 		this(path, false);
@@ -138,7 +140,7 @@ public class S3Iterator implements Iterator<Path> {
             String immediateDescendantKey = getImmediateDescendant(key, objectSummaryKey);
             if (immediateDescendantKey != null) {
                 S3Path descendentPart = new S3Path(fileSystem, fileStore, fileSystem.key2Parts(immediateDescendantKey));
-
+                descendentPart.setFileAttributes(s3Utils.toS3FileAttributes(objectSummary, descendentPart.getKey()));
                 if (!listPath.contains(descendentPart)) {
                     listPath.add(descendentPart);
                 }
