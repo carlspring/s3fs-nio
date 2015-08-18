@@ -30,7 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import com.upplication.s3fs.util.IOUtils;
+import com.upplication.s3fs.util.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,9 +38,6 @@ import org.junit.Test;
 import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.Owner;
 import com.google.common.collect.ImmutableMap;
-import com.upplication.s3fs.util.AmazonS3ClientMock;
-import com.upplication.s3fs.util.AmazonS3MockFactory;
-import com.upplication.s3fs.util.MockBucket;
 import org.mockito.ArgumentMatcher;
 
 public class S3FileSystemProviderTest extends S3UnitTestBase {
@@ -525,7 +522,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 	public void seekable() throws IOException {
 		// fixtures
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.bucket("bucketA").dir("dir").file("dir/file");
+		client.bucket("bucketA").dir("dir").file("dir/file", "".getBytes());
 
 		Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
 
@@ -999,8 +996,9 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 	@Test
 	public void readAttributesFileEmpty() throws IOException {
 		// fixtures
+		final String content = "";
 		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.bucket("bucketA").dir("dir").file("dir/file1");
+		client.bucket("bucketA").dir("dir").file("dir/file1", content.getBytes());
 
 		Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
@@ -1114,6 +1112,25 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		assertEquals(fileAttributes.creationTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
 		assertEquals(fileAttributes.lastAccessTime().to(TimeUnit.SECONDS), fileAttributes.lastModifiedTime().to(TimeUnit.SECONDS));
 	}
+
+    @Test
+    public void readAttributesRegenerateCacheWhenNotExists() throws IOException {
+        // fixtures
+        final String content = "";
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("bucketA").dir("dir").file("dir/file1", content.getBytes());
+
+        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
+        // create the cache
+        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertNotNull(((S3Path) file1).getFileAttributes());
+
+        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertNull(((S3Path) file1).getFileAttributes());
+
+        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertNotNull(((S3Path) file1).getFileAttributes());
+    }
 
 	@Test(expected = NoSuchFileException.class)
 	public void readAttributesFileNotExists() throws IOException {

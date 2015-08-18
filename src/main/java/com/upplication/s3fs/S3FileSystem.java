@@ -30,12 +30,14 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	private final String key;
 	private final AmazonS3 client;
 	private final String endpoint;
+    private int cache;
 
-	public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint) {
+    public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint) {
 		this.provider = provider;
 		this.key = key;
 		this.client = client;
 		this.endpoint = endpoint;
+        this.cache = 60000; // 1 minute cache for the s3Path
 	}
 
 	@Override
@@ -183,4 +185,8 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 	public int compareTo(S3FileSystem o) {
 		return key.compareTo(o.getKey());
 	}
+
+    public int getCache() {
+        return cache;
+    }
 }
