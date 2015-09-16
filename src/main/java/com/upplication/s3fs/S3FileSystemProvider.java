@@ -30,12 +30,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -397,7 +392,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public void move(Path source, Path target, CopyOption... options) throws IOException {
-		throw new UnsupportedOperationException();
+		if (options != null && Arrays.asList(options).contains(StandardCopyOption.ATOMIC_MOVE))
+            throw new AtomicMoveNotSupportedException(source.toString(), target.toString(), "Atomic not supported");
+		copy(source, target, options);
+		delete(source);
 	}
 
 	@Override
