@@ -73,15 +73,15 @@ public class FilesOperationsIT {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 		assertTrue(!Files.exists(dir));
 	}
+
     @Test
 	public void notExistsFile() {
-
 		Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 		assertTrue(!Files.exists(file));
 	}
+
     @Test
 	public void existsFile() throws IOException {
-
 		Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 
 		EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
@@ -103,38 +103,38 @@ public class FilesOperationsIT {
 
     @Test
 	public void createEmptyDirTest() throws IOException {
-
 		Path dir = createEmptyDir();
 
 		assertTrue(Files.exists(dir));
 		assertTrue(Files.isDirectory(dir));
 	}
+
     @Test
 	public void createEmptyFileTest() throws IOException {
-
 		Path file = createEmptyFile();
 
 		assertTrue(Files.exists(file));
 		assertTrue(Files.isRegularFile(file));
 	}
+
     @Test
 	public void createTempFile() throws IOException {
-
 		Path dir = createEmptyDir();
 
 		Path file = Files.createTempFile(dir, "file", "temp");
 
 		assertTrue(Files.exists(file));
 	}
+
     @Test
 	public void createTempDir() throws IOException {
-
 		Path dir = createEmptyDir();
 
 		Path dir2 = Files.createTempDirectory(dir, "dir-temp");
 
 		assertTrue(Files.exists(dir2));
 	}
+
     @Test
 	public void deleteFile() throws IOException {
 		Path file = createEmptyFile();
@@ -142,6 +142,7 @@ public class FilesOperationsIT {
 
 		Files.notExists(file);
 	}
+
     @Test
 	public void deleteDir() throws IOException {
 		Path dir = createEmptyDir();
@@ -149,6 +150,7 @@ public class FilesOperationsIT {
 
 		Files.notExists(dir);
 	}
+
     @Test
 	public void copyDir() throws IOException {
 		Path dir = uploadDir();
@@ -157,6 +159,7 @@ public class FilesOperationsIT {
 		assertTrue(Files.exists(dir.resolve("assets1/").resolve("img").resolve("Penguins.jpg")));
 		assertTrue(Files.exists(dir.resolve("assets1/").resolve("js").resolve("main.js")));
 	}
+
     @Test
 	public void directoryStreamBaseBucketFindDirectoryTest() throws IOException {
 		Path bucketPath = fileSystemAmazon.getPath(bucket);
@@ -176,6 +179,7 @@ public class FilesOperationsIT {
 			assertTrue(find);
 		}
 	}
+
     @Test
 	public void directoryStreamBaseBucketFindFileTest() throws IOException {
 		Path bucketPath = fileSystemAmazon.getPath(bucket);
@@ -195,6 +199,7 @@ public class FilesOperationsIT {
 			assertTrue(find);
 		}
 	}
+
     @Test
 	public void directoryStreamFirstDirTest() throws IOException {
 		Path dir = uploadDir();
@@ -203,7 +208,7 @@ public class FilesOperationsIT {
 			int number = 0;
 			for (Path path : dirStream) {
 				number++;
-				// solo recorre ficheros del primer nivel
+				// only first level
 				assertEquals(dir, path.getParent());
 				assertEquals("assets1", path.getFileName().toString());
 			}
@@ -211,6 +216,7 @@ public class FilesOperationsIT {
 			assertEquals(1, number);
 		}
 	}
+
     @Test
 	public void virtualDirectoryStreamTest() throws IOException {
 
@@ -222,11 +228,11 @@ public class FilesOperationsIT {
 		Path dir = fileSystemAmazon.getPath(bucket, folder);
 
 		S3Path s3Path = (S3Path) dir;
-		// subimos un fichero sin sus paths
+		// upload file without paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
 		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file1, new ByteArrayInputStream(new byte[0]), metadata);
-		// subimos otro fichero sin sus paths
+		// another file without paths
 		ObjectMetadata metadata2 = new ObjectMetadata();
 		metadata.setContentLength(0);
 		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file2, new ByteArrayInputStream(new byte[0]), metadata2);
@@ -256,6 +262,7 @@ public class FilesOperationsIT {
 			assertEquals(2, number);
 		}
 	}
+
     @Test
 	public void virtualDirectoryStreamWithVirtualSubFolderTest() throws IOException {
 		String folder = UUID.randomUUID().toString();
@@ -266,11 +273,11 @@ public class FilesOperationsIT {
 		Path dir = fileSystemAmazon.getPath(bucket, folder);
 
 		S3Path s3Path = (S3Path) dir;
-		// subimos un fichero sin sus paths
+		// upload without paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
 		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), subfoler, new ByteArrayInputStream(new byte[0]), metadata);
-		// subimos otro fichero sin sus paths
+		// upload another file without paths
 		ObjectMetadata metadata2 = new ObjectMetadata();
 		metadata.setContentLength(0);
 		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), file2, new ByteArrayInputStream(new byte[0]), metadata2);
@@ -300,6 +307,7 @@ public class FilesOperationsIT {
 			assertEquals(2, number);
 		}
 	}
+
     @Test
 	public void deleteFullDirTest() throws IOException {
 		Path dir = uploadDir();
@@ -321,16 +329,18 @@ public class FilesOperationsIT {
         });
 		assertTrue(!Files.exists(dir));
 	}
+
     @Test
-	public void copyUploadTest() throws IOException {
+	public void copyUpload() throws IOException {
 		final String content = "sample content";
 		Path result = uploadSingleFile(content);
 
 		assertTrue(Files.exists(result));
 		assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
 	}
+
     @Test
-	public void copyDownloadTest() throws IOException {
+	public void copyDownload() throws IOException {
 		Path result = uploadSingleFile(null);
 
 		Path localResult = Files.createTempDirectory("temp-local-file");
@@ -339,9 +349,34 @@ public class FilesOperationsIT {
 		Files.copy(result, notExistLocalResult);
 
 		assertTrue(Files.exists(notExistLocalResult));
-
 		assertArrayEquals(Files.readAllBytes(result), Files.readAllBytes(notExistLocalResult));
 	}
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void moveFromDifferentProviders() throws IOException {
+        final String content = "sample content";
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
+
+            Path sourceLocal = Files.write(linux.getPath("/index.html"), content.getBytes());
+            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+
+            Files.move(sourceLocal, result);
+        }
+    }
+
+    @Test
+    public void move() throws IOException {
+        final String content = "sample content";
+        Path source = uploadSingleFile(content);
+        Path dest = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+
+        Files.move(source, dest);
+
+        assertTrue(Files.exists(dest));
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(dest));
+        Files.notExists(source);
+    }
+
     @Test
 	public void createFileWithFolderAndNotExistsFolders() {
 
@@ -350,15 +385,15 @@ public class FilesOperationsIT {
 		Path path = fileSystemAmazon.getPath(bucket, fileWithFolders.split("/"));
 
 		S3Path s3Path = (S3Path) path;
-		// subimos un fichero sin sus paths
+		// upload file without paths
 		ObjectMetadata metadata = new ObjectMetadata();
 		metadata.setContentLength(0);
 		s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(), fileWithFolders, new ByteArrayInputStream(new byte[0]), metadata);
 
 		assertTrue(Files.exists(path));
-		// debe ser true:
 		assertTrue(Files.exists(path.getParent()));
 	}
+
     @Test
 	public void amazonCopyDetectContentType() throws IOException {
 		try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
@@ -372,6 +407,7 @@ public class FilesOperationsIT {
 			assertEquals("text/html", metadata.getContentType());
 		}
 	}
+
     @Test
 	public void amazonCopyNotDetectContentTypeSetDefault() throws IOException {
 		final byte[] data = new byte[] { (byte) 0xe0, 0x4f, (byte) 0xd0, 0x20, (byte) 0xea, 0x3a, 0x69, 0x10, (byte) 0xa2, (byte) 0xd8, 0x08, 0x00, 0x2b, 0x30, 0x30, (byte) 0x9d };
@@ -386,6 +422,7 @@ public class FilesOperationsIT {
 			assertEquals("application/octet-stream", metadata.getContentType());
 		}
 	}
+
     @Test
 	public void amazonOutpuStreamDetectContentType() throws IOException {
 		try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
@@ -410,6 +447,7 @@ public class FilesOperationsIT {
 			assertEquals("text/html", metadata.getContentType());
 		}
 	}
+
     @Test
 	public void readAttributesDirectory() throws IOException {
 		Path dir;
@@ -446,15 +484,9 @@ public class FilesOperationsIT {
 	}
 
     @Test
-    public void testBucketIsDirectory() throws IOException {
-
+    public void bucketIsDirectory() throws IOException {
         Path path = fileSystemAmazon.getPath(bucket, "/");
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
-        System.out.printf("size    : %s\n", attrs.size());
-        System.out.printf("create  : %s\n", attrs.creationTime());
-        System.out.printf("access  : %s\n", attrs.lastAccessTime());
-        System.out.printf("modified: %s\n", attrs.lastModifiedTime());
-        System.out.printf("dir     : %s\n", Files.isDirectory(path));
         assertEquals(0, attrs.size());
         assertEquals(null, attrs.creationTime());
         assertEquals(null, attrs.lastAccessTime());
@@ -463,8 +495,7 @@ public class FilesOperationsIT {
 
     }
 
-
-
+    // helpers
 
     private Path createEmptyDir() throws IOException {
 		Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
@@ -481,7 +512,6 @@ public class FilesOperationsIT {
 	}
 
 	private Path uploadSingleFile(String content) throws IOException {
-
 		try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
 
 			if (content != null) {

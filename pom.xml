@@ -16,6 +16,11 @@
 		</license>
 	</licenses>
 	<developers>
+		<developer>
+			<id>heikkipora</id>
+			<name>Heikki Pora</name>
+			<email>heikki.pora@gmail.com</email>
+		</developer>
         <developer>
             <id>pditommaso</id>
             <name>Paolo Di Tommaso</name>
