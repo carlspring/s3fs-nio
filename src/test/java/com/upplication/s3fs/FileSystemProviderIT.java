@@ -40,6 +40,9 @@ public class FileSystemProviderIT {
 		}
 		provider = spy(new S3FileSystemProvider());
         doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
+        // dont override with system envs that we can have setted, like travis
+        doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+        doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
 	}
 	
 	@Test
