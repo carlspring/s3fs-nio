@@ -164,11 +164,11 @@ public class FileSystemProviderIT {
 	private Properties buildFakeProps() {
         try {
             Properties props = new Properties();
-            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test.properties"));
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test-sample.properties"));
             return props;
         }
         catch (IOException e){
-            throw new RuntimeException("amazon-test.properties not present");
+            throw new RuntimeException("amazon-test-sample.properties not present");
         }
 	}
 }
