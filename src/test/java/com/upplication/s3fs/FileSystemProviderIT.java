@@ -40,6 +40,9 @@ public class FileSystemProviderIT {
 		}
 		provider = spy(new S3FileSystemProvider());
         doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
+        // dont override with system envs that we can have setted, like travis
+        doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+        doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
 	}
 	
 	@Test
@@ -164,11 +167,11 @@ public class FileSystemProviderIT {
 	private Properties buildFakeProps() {
         try {
             Properties props = new Properties();
-            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test.properties"));
+            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test-sample.properties"));
             return props;
         }
         catch (IOException e){
-            throw new RuntimeException("amazon-test.properties not present");
+            throw new RuntimeException("amazon-test-sample.properties not present");
         }
 	}
 }
