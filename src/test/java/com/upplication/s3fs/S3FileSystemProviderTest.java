@@ -47,7 +47,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 	@Before
 	public void setup() {
 		s3fsProvider = spy(new S3FileSystemProvider());
-        doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
+        //doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 		doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
 	}
 
