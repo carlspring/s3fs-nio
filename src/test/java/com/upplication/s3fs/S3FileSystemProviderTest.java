@@ -30,6 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import com.amazonaws.services.s3.internal.Constants;
 import com.upplication.s3fs.util.*;
 import org.junit.After;
 import org.junit.Before;
@@ -57,6 +58,18 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		props.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.BrokenAmazonS3Factory");
 		s3fsProvider.createFileSystem(S3_GLOBAL_URI, props);
 	}
+
+    @Test
+    public void newS3FileSystemWithEmptyHostAndUserInfo() throws IOException {
+        FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3:///bucket/file"), ImmutableMap.<String, Object>of());
+        assertEquals(Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
+    }
+
+    @Test
+    public void newS3FileSystemWithEmptyHost() throws IOException {
+        FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@/bucket/file"), ImmutableMap.<String, Object>of());
+        assertEquals("access-key:secret-key@" + Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
+    }
 
 	@Test
 	public void createsAuthenticatedByEnv() {
@@ -105,12 +118,12 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         doReturn(secretKey).when(s3fsProvider).systemGetEnv(SECRET_KEY);
         doCallRealMethod().when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 
-		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
 
 		verify(s3fsProvider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
-                Properties called = (Properties)argument;
+                Properties called = (Properties) argument;
                 assertEquals(accessKey, called.getProperty(ACCESS_KEY));
                 assertEquals(secretKey, called.getProperty(SECRET_KEY));
                 return true;
@@ -146,7 +159,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		Properties props = new Properties();
 		props.setProperty(ACCESS_KEY, "better access key");
 		doReturn(props).when(s3fsProvider).loadAmazonProperties();
-		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -169,12 +182,12 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		Map<String, Object> env = ImmutableMap.<String, Object> builder().put(ACCESS_KEY, 1234).put(SECRET_KEY, "secret key").build();
 		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, env);
 		assertNotNull(fileSystem);
-		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
 	}
 
 	@Test
 	public void getFileSystem() {
-		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
+		FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
 		assertNotNull(fileSystem);
 		fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object> of());
 		assertNotNull(fileSystem);
