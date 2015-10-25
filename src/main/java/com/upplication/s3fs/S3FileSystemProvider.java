@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -35,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.internal.Constants;
 import com.amazonaws.services.s3.model.*;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -130,12 +132,15 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
     /**
      * get the file system key represented by: the access key @ endpoint.
-     * Example: access-key@s3.amazon.com
+     * Example: access-key@s3.amazonaws.com
+     * If uri host is empty then s3.amazonaws.com are used as host
      * @param uri URI with the endpoint
      * @param props with the access key property
      * @return String
      */
 	protected String getFileSystemKey(URI uri, Properties props) {
+        // we don`t use uri.getUserInfo and uri.getHost because secret key and access key have special chars
+        // and dont return the correct strings
         String uriString = uri.toString().replace("s3://", "");
         String authority = null;
         int authoritySeparator = uriString.indexOf("@");
@@ -150,12 +155,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
             if (lastPath > 0){
                 host = host.substring(0, lastPath);
             }
+            else {
+                host = Constants.S3_HOSTNAME;
+            }
             return authority + "@" + host;
         }
         else {
             String accessKey = (String) props.get(ACCESS_KEY);
 
-            return (accessKey != null ? accessKey+"@" : "" ) + uri.getHost();
+            return (accessKey != null ? accessKey+"@" : "" ) +
+                    (uri.getHost() != null ? uri.getHost() : Constants.S3_HOSTNAME);
         }
 	}
 
@@ -255,8 +264,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
             return fileSystems.get(key);
         }
         else{
-            throw new FileSystemNotFoundException(
-                    String.format("S3 filesystem not yet created. Use newFileSystem() instead"));
+            throw new FileSystemNotFoundException("S3 filesystem not yet created. Use newFileSystem() instead");
         }
 	}
 
