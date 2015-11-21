@@ -4,7 +4,7 @@
 	<groupId>com.upplication</groupId>
 	<artifactId>s3fs</artifactId>
 	<packaging>jar</packaging>
-	<version>1.1.2</version>
+	<version>1.2.0</version>
 	<name>s3fs</name>
 	<description>S3 filesystem provider for Java 7</description>
 	<url>https://github.com/Upplication/Amazon-S3-FileSystem-NIO2</url>
@@ -70,11 +70,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>18.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.unbescape</groupId>
-			<artifactId>unbescape</artifactId>
-			<version>1.1.0.RELEASE</version>
 		</dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
