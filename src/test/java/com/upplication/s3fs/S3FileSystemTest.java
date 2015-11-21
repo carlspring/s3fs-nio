@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
@@ -276,7 +277,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
 		S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 		S3Path path = s3fs.getPath("/bucket", "folder with spaces", "file");
 		try {
-			assertEquals("folder%20with%20spaces/file", path.getKey());
+			assertEquals("folder with spaces/file", path.getKey());
 		} finally {
 			try {
 				s3fs.close();
@@ -285,6 +286,34 @@ public class S3FileSystemTest extends S3UnitTestBase {
 			}
 		}
 	}
+
+	@Test
+	public void urlWithSpecialCharacters() throws IOException {
+		String fileName = "βeta.png";
+		String expected = "https://bucket.s3.amazonaws.com/%CE%B2eta.png";
+
+		AmazonS3Client amazonS3Client = new AmazonS3Client();
+		S3FileSystem s3FileSystem = new S3FileSystem(null, null, amazonS3Client, "mirror");
+		S3Path path = new S3Path(s3FileSystem, fileName);
+
+		String url = amazonS3Client.getResourceUrl("bucket", path.getKey());
+
+		assertEquals(expected, url);
+	}
+
+    @Test
+    public void urlWithSpaceCharacters() throws IOException {
+        String fileName = "beta gaming.png";
+        String expected = "https://bucket.s3.amazonaws.com/beta%20gaming.png";
+
+        AmazonS3Client amazonS3Client = new AmazonS3Client();
+        S3FileSystem s3FileSystem = new S3FileSystem(null, null, amazonS3Client, "mirror");
+        S3Path path = new S3Path(s3FileSystem, fileName);
+
+        String url = amazonS3Client.getResourceUrl("bucket", path.getKey());
+
+        assertEquals(expected, url);
+    }
 	
 	@Test
 	public void createDirectory() throws IOException {

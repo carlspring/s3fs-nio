@@ -21,6 +21,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.UUID;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import org.junit.Before;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
