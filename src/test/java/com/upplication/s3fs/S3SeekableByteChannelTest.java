@@ -1,7 +1,7 @@
 package com.upplication.s3fs;
 
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -38,6 +38,34 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
 		channel.write(ByteBuffer.wrap("hoi".getBytes()));
 		channel.close();
 	}
+
+	@Test
+	public void readDontNeedToSyncTempFile() throws IOException {
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		client.bucket("buck").file("file1");
+
+		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+		S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ)));
+		assertNotNull(channel);
+		channel.close();
+
+        verify(channel, never()).sync();
+	}
+
+    @Test
+    public void writeNeedToSyncTempFile() throws IOException {
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("buck").file("file1");
+
+        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE)));
+
+        channel.write(ByteBuffer.wrap("hoi".getBytes()));
+        channel.close();
+
+        verify(channel, times(1)).sync();
+    }
 	
 	@Test(expected=FileAlreadyExistsException.class)
 	public void alreadyExists() throws IOException {
