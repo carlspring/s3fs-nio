@@ -29,6 +29,12 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 	private SeekableByteChannel seekable;
 	private Path tempFile;
 
+    /**
+     * Open or creates a file, returning a seekable byte channel
+     * @param path the path open or create
+     * @param options options specifying how the file is opened
+     * @throws IOException if an I/O error occurs
+     */
 	public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options) throws IOException {
 		this.path = path;
 		this.options = Collections.unmodifiableSet(new HashSet<>(options));
@@ -70,30 +76,40 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 		try {
 			if (!seekable.isOpen())
 				return;
+
 			seekable.close();
+
 			if (options.contains(StandardOpenOption.DELETE_ON_CLOSE)) {
                 path.getFileSystem().provider().delete(path);
 				return;
 			}
-			// upload the content where the seekable ends (close)
-			InputStream stream = null;
-			try {
-				stream = new BufferedInputStream(Files.newInputStream(tempFile));
-				ObjectMetadata metadata = new ObjectMetadata();
-				metadata.setContentLength(Files.size(tempFile));
-				metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
 
-                String bucket = path.getFileStore().name();
-                String key = path.getKey();
-                path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
-			} finally {
-				if(stream != null)
-					stream.close();
+			if (options.contains(StandardOpenOption.READ) && options.size() == 1) {
+				return;
 			}
+
+            sync();
+
 		} finally {
 			Files.deleteIfExists(tempFile);
 		}
 	}
+
+    /**
+     * try to sync the temp file with the remote s3 path.
+     * @throws IOException
+     */
+    protected void sync() throws IOException {
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(tempFile))) {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(Files.size(tempFile));
+            metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
+
+            String bucket = path.getFileStore().name();
+            String key = path.getKey();
+            path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
+        }
+    }
 
 	@Override
 	public int write(ByteBuffer src) throws IOException {
