@@ -12,24 +12,24 @@ import static org.junit.Assert.assertEquals;
 
 
 public class AttributesUtilsTest {
-	/**
-	 * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods
-	 */
-	@Test
-	public void just_to_silence_coverage() {
-		new AttributesUtils() {
-			// ignore this
-		};
-	}
+    /**
+     * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods
+     */
+    @Test
+    public void just_to_silence_coverage() {
+        new AttributesUtils() {
+            // ignore this
+        };
+    }
 
-	@Test
-	public void filterAll() {
-		final String key = "key";
-		final FileTime fileTime = FileTime.from(10L, TimeUnit.DAYS);
-		final long size = 10L;
-		final boolean isDirectory = true;
+    @Test
+    public void filterAll() {
+        final String key = "key";
+        final FileTime fileTime = FileTime.from(10L, TimeUnit.DAYS);
+        final long size = 10L;
+        final boolean isDirectory = true;
         final String[] filters = new String[]{"isDirectory", "isRegularFile", "isOther", "creationTime", "fileKey", "isSymbolicLink", "lastAccessTime", "lastModifiedTime", "size"};
-		BasicFileAttributes attrs = new S3FileAttributes(key, fileTime, size, isDirectory, !isDirectory);
+        BasicFileAttributes attrs = new S3FileAttributes(key, fileTime, size, isDirectory, !isDirectory);
 
         Map<String, Object> map = AttributesUtils.fileAttributeToMap(attrs, filters);
 
@@ -43,5 +43,5 @@ public class AttributesUtilsTest {
         assertEquals(fileTime, map.get("lastAccessTime"));
         assertEquals(fileTime, map.get("lastModifiedTime"));
         assertEquals(size, map.get("size"));
-	}
+    }
 }

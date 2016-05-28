@@ -27,59 +27,63 @@ import org.junit.Test;
 
 public class AmazonS3ClientIT {
 
-	AmazonS3 client;
+    AmazonS3 client;
 
-	@Before
-	public void setup() {
-		// s3client
-		final Map<String, Object> credentials = getRealEnv();
-		BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), credentials.get(SECRET_KEY).toString());
-		client = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
-	}
+    @Before
+    public void setup() {
+        // s3client
+        final Map<String, Object> credentials = getRealEnv();
+        BasicAWSCredentials credentialsS3 = new BasicAWSCredentials(credentials.get(ACCESS_KEY).toString(), credentials.get(SECRET_KEY).toString());
+        client = new com.amazonaws.services.s3.AmazonS3Client(credentialsS3);
+    }
 
     @Test
-	public void putObject() throws IOException {
-		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
+    public void putObject() throws IOException {
+        Path file = Files.createTempFile("file-se", "file");
+        Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), file.toFile());
+        PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), file.toFile());
 
-		assertNotNull(result);
-	}
+        assertNotNull(result);
+    }
+
     @Test
-	public void putObjectWithEndSlash() throws IOException {
-		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
+    public void putObjectWithEndSlash() throws IOException {
+        Path file = Files.createTempFile("file-se", "file");
+        Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString() + "/", file.toFile());
+        PutObjectResult result = client.putObject(getBucket(), randomUUID().toString() + "/", file.toFile());
 
-		assertNotNull(result);
-	}
+        assertNotNull(result);
+    }
+
     @Test
-	public void putObjectWithStartSlash() throws IOException {
-		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
+    public void putObjectWithStartSlash() throws IOException {
+        Path file = Files.createTempFile("file-se", "file");
+        Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-		client.putObject(getBucket(), "/" + randomUUID().toString(), file.toFile());
-	}
+        client.putObject(getBucket(), "/" + randomUUID().toString(), file.toFile());
+    }
+
     @Test
-	public void putObjectWithBothSlash() throws IOException {
-		Path file = Files.createTempFile("file-se", "file");
-		Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
+    public void putObjectWithBothSlash() throws IOException {
+        Path file = Files.createTempFile("file-se", "file");
+        Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-		PutObjectResult result = client.putObject(getBucket(), "/" + randomUUID().toString() + "/", file.toFile());
+        PutObjectResult result = client.putObject(getBucket(), "/" + randomUUID().toString() + "/", file.toFile());
 
-		assertNotNull(result);
-	}
+        assertNotNull(result);
+    }
+
     @Test
-	public void putObjectByteArray() {
+    public void putObjectByteArray() {
 
-		PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), new ByteArrayInputStream("contenido1".getBytes()), new ObjectMetadata());
+        PutObjectResult result = client.putObject(getBucket(), randomUUID().toString(), new ByteArrayInputStream("contenido1".getBytes()), new ObjectMetadata());
 
-		assertNotNull(result);
-	}
+        assertNotNull(result);
+    }
 
-	private String getBucket() {
-		return EnvironmentBuilder.getBucket().replace("/", "");
-	}
+    private String getBucket() {
+        return EnvironmentBuilder.getBucket().replace("/", "");
+    }
 }

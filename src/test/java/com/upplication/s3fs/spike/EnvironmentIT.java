@@ -14,11 +14,11 @@ import org.junit.Test;
 public class EnvironmentIT {
 
     @Test
-	public void couldCreateFileSystem() {
-		Map<String, Object> res = EnvironmentBuilder.getRealEnv();
+    public void couldCreateFileSystem() {
+        Map<String, Object> res = EnvironmentBuilder.getRealEnv();
 
-		assertNotNull(res);
-		assertNotNull(res.get(ACCESS_KEY));
-		assertNotNull(res.get(SECRET_KEY));
-	}
+        assertNotNull(res);
+        assertNotNull(res.get(ACCESS_KEY));
+        assertNotNull(res.get(SECRET_KEY));
+    }
 }

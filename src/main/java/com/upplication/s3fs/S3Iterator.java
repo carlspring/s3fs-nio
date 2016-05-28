@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
@@ -22,26 +23,26 @@ import com.upplication.s3fs.util.S3Utils;
  */
 public class S3Iterator implements Iterator<Path> {
     private S3FileSystem fileSystem;
-	private S3FileStore fileStore;
-	private String key;
-	private List<S3Path> items = Lists.newArrayList();
-	private Set<S3Path> addedVirtualDirectories = Sets.newHashSet();
-	private ObjectListing current;
-	private int cursor; // index of next element to return
-	private int size;
-	private boolean incremental;
+    private S3FileStore fileStore;
+    private String key;
+    private List<S3Path> items = Lists.newArrayList();
+    private Set<S3Path> addedVirtualDirectories = Sets.newHashSet();
+    private ObjectListing current;
+    private int cursor; // index of next element to return
+    private int size;
+    private boolean incremental;
 
     private S3Utils s3Utils = new S3Utils();
 
-	public S3Iterator(S3Path path) {
-		this(path, false);
-	}
+    public S3Iterator(S3Path path) {
+        this(path, false);
+    }
 
-	public S3Iterator(S3Path path, boolean incremental) {
-		this(path.getFileStore(), path.getKey().length() == 0 ? "" : (path.getKey() + (incremental ? "" : "/")), incremental);
-	}
-	
-	public S3Iterator(S3FileStore fileStore, String key, boolean incremental) {
+    public S3Iterator(S3Path path, boolean incremental) {
+        this(path.getFileStore(), path.getKey().length() == 0 ? "" : (path.getKey() + (incremental ? "" : "/")), incremental);
+    }
+
+    public S3Iterator(S3FileStore fileStore, String key, boolean incremental) {
         ListObjectsRequest listObjectsRequest = buildRequest(fileStore.name(), key, incremental);
 
         this.fileStore = fileStore;
@@ -50,28 +51,28 @@ public class S3Iterator implements Iterator<Path> {
         this.current = fileSystem.getClient().listObjects(listObjectsRequest);
         this.incremental = incremental;
         loadObjects();
-	}
-	
-	@Override
-	public boolean hasNext() {
-		return cursor != size || current.isTruncated();
-	}
+    }
 
-	@Override
-	public S3Path next() {
-		if(cursor == size && current.isTruncated()) {
-            this.current =  fileSystem.getClient().listNextBatchOfObjects(current);
-			loadObjects();
-		}
-		if(cursor == size)
-			throw new NoSuchElementException();
-		return items.get(cursor++);
-	}
+    @Override
+    public boolean hasNext() {
+        return cursor != size || current.isTruncated();
+    }
 
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public S3Path next() {
+        if (cursor == size && current.isTruncated()) {
+            this.current = fileSystem.getClient().listNextBatchOfObjects(current);
+            loadObjects();
+        }
+        if (cursor == size)
+            throw new NoSuchElementException();
+        return items.get(cursor++);
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
 
     private void loadObjects() {
         this.items.clear();
@@ -96,24 +97,24 @@ public class S3Iterator implements Iterator<Path> {
     }
 
     private void addParentPaths(String[] keyParts) {
-        if(keyParts.length <= 1)
+        if (keyParts.length <= 1)
             return;
-        String[] subParts = Arrays.copyOf(keyParts, keyParts.length-1);
+        String[] subParts = Arrays.copyOf(keyParts, keyParts.length - 1);
         List<S3Path> parentPaths = new ArrayList<>();
         while (subParts.length > 0) {
             S3Path path = new S3Path(fileSystem, fileStore, subParts);
             String prefix = current.getPrefix();
 
             String parentKey = path.getKey();
-            if(prefix.length() > parentKey.length() && prefix.contains(parentKey))
+            if (prefix.length() > parentKey.length() && prefix.contains(parentKey))
                 break;
             if (items.contains(path) || addedVirtualDirectories.contains(path)) {
-                subParts = Arrays.copyOf(subParts, subParts.length-1);
+                subParts = Arrays.copyOf(subParts, subParts.length - 1);
                 continue;
             }
             parentPaths.add(path);
             addedVirtualDirectories.add(path);
-            subParts = Arrays.copyOf(subParts, subParts.length-1);
+            subParts = Arrays.copyOf(subParts, subParts.length - 1);
         }
         Collections.reverse(parentPaths);
         items.addAll(parentPaths);
@@ -122,13 +123,14 @@ public class S3Iterator implements Iterator<Path> {
 
     /**
      * add to the listPath the elements at the same level that s3Path
-     * @param key the uri to parse
+     *
+     * @param key      the uri to parse
      * @param listPath List not null list to add
-     * @param current ObjectListing to walk
+     * @param current  ObjectListing to walk
      */
     private void parseObjectListing(String key, List<S3Path> listPath, ObjectListing current) {
-        for (String commonPrefix : current.getCommonPrefixes()){
-            if (!commonPrefix.equals("/")){
+        for (String commonPrefix : current.getCommonPrefixes()) {
+            if (!commonPrefix.equals("/")) {
                 listPath.add(new S3Path(fileSystem, fileStore, fileSystem.key2Parts(commonPrefix)));
             }
         }
@@ -151,10 +153,11 @@ public class S3Iterator implements Iterator<Path> {
      * The current #buildRequest() get all subdirectories and her content.
      * This method filter the keyChild and check if is a inmediate
      * descendant of the keyParent parameter
+     *
      * @param keyParent String
-     * @param keyChild String
+     * @param keyChild  String
      * @return String parsed
-     *  or null when the keyChild and keyParent are the same and not have to be returned
+     * or null when the keyChild and keyParent are the same and not have to be returned
      */
     private String getImmediateDescendant(String keyParent, String keyChild) {
         keyParent = deleteExtraPath(keyParent);
@@ -177,13 +180,12 @@ public class S3Iterator implements Iterator<Path> {
     }
 
 
-
     ListObjectsRequest buildRequest(String bucketName, String key, boolean incremental) {
         return buildRequest(bucketName, key, incremental, null);
     }
 
     ListObjectsRequest buildRequest(String bucketName, String key, boolean incremental, Integer maxKeys) {
-        if(incremental)
+        if (incremental)
             return new ListObjectsRequest(bucketName, key, null, null, maxKeys);
         return new ListObjectsRequest(bucketName, key, key, "/", maxKeys);
     }

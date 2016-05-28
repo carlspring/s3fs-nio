@@ -27,30 +27,30 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
         FileSystems.newFileSystem(S3_GLOBAL_URI, null);
     }
 
-	@Test
-	public void constructor() throws IOException {
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.bucket("buck").file("file1");
-		
-		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
-		assertNotNull(channel);
-		channel.write(ByteBuffer.wrap("hoi".getBytes()));
-		channel.close();
-	}
+    @Test
+    public void constructor() throws IOException {
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("buck").file("file1");
 
-	@Test
-	public void readDontNeedToSyncTempFile() throws IOException {
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.bucket("buck").file("file1");
+        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+        S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
+        assertNotNull(channel);
+        channel.write(ByteBuffer.wrap("hoi".getBytes()));
+        channel.close();
+    }
 
-		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
-		S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ)));
-		assertNotNull(channel);
-		channel.close();
+    @Test
+    public void readDontNeedToSyncTempFile() throws IOException {
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("buck").file("file1");
+
+        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ)));
+        assertNotNull(channel);
+        channel.close();
 
         verify(channel, never()).sync();
-	}
+    }
 
     @Test
     public void writeNeedToSyncTempFile() throws IOException {
@@ -66,37 +66,37 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
 
         verify(channel, times(1)).sync();
     }
-	
-	@Test(expected=FileAlreadyExistsException.class)
-	public void alreadyExists() throws IOException {
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		client.bucket("buck").file("file1");
-		
-		S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
-		assertNotNull(channel);
-		channel.write(ByteBuffer.wrap("hoi".getBytes()));
-		channel.close();
-	}
-	
-	@Test(expected=RuntimeException.class)
-	public void brokenNetwork() throws IOException {
-		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-		doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
-		
-		S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
-		channel.close();
-	}
-	
-	@Test(expected=NoSuchFileException.class)
-	public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
-		S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
-		S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
-		Field f = channel.getClass().getDeclaredField("tempFile");
-		f.setAccessible(true);
-		Path tempFile = (Path) f.get(channel);
-		Files.delete(tempFile);
-		channel.close();
-	}
+
+    @Test(expected = FileAlreadyExistsException.class)
+    public void alreadyExists() throws IOException {
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("buck").file("file1");
+
+        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file1");
+        S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
+        assertNotNull(channel);
+        channel.write(ByteBuffer.wrap("hoi".getBytes()));
+        channel.close();
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void brokenNetwork() throws IOException {
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
+
+        S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
+        S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
+        channel.close();
+    }
+
+    @Test(expected = NoSuchFileException.class)
+    public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+        S3Path file2 = (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath("/buck/file2");
+        S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
+        Field f = channel.getClass().getDeclaredField("tempFile");
+        f.setAccessible(true);
+        Path tempFile = (Path) f.get(channel);
+        Files.delete(tempFile);
+        channel.close();
+    }
 }

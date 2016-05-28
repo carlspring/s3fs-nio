@@ -14,6 +14,7 @@ public abstract class AttributesUtils {
      * Given a BasicFileAttributes not null then return a Map
      * with the keys as the fields of the BasicFileAttributes and the values
      * with the content of the fields
+     *
      * @param attr BasicFileAttributes
      * @return Map String Object never null
      */
@@ -34,7 +35,8 @@ public abstract class AttributesUtils {
     /**
      * transform the BasicFileAttributes to Map filtering by the keys
      * given in the filters param
-     * @param attr BasicFileAttributes not null to tranform to map
+     *
+     * @param attr    BasicFileAttributes not null to tranform to map
      * @param filters String[] filters
      * @return Map String Object with the same keys as the filters
      */
@@ -43,7 +45,7 @@ public abstract class AttributesUtils {
 
         for (String filter : filters) {
             filter = filter.replace("basic:", "");
-            switch (filter){
+            switch (filter) {
                 case "creationTime":
                     result.put("creationTime", attr.creationTime());
                     break;
