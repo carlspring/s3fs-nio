@@ -7,15 +7,15 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.upplication.s3fs.AmazonS3Factory;
 
 public class BrokenAmazonS3Factory extends AmazonS3Factory {
-	/**
-	 * @param name to make the constructor non default
-	 */
-	public BrokenAmazonS3Factory(String name) {
-		// only non default constructor
-	}
+    /**
+     * @param name to make the constructor non default
+     */
+    public BrokenAmazonS3Factory(String name) {
+        // only non default constructor
+    }
 
-	@Override
-	protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
-		return null;
-	}
+    @Override
+    protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
+        return null;
+    }
 }

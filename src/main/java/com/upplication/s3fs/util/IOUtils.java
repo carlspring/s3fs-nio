@@ -10,6 +10,7 @@ import java.io.InputStream;
 public abstract class IOUtils {
     /**
      * get the stream content and return as a byte array
+     *
      * @param is InputStream
      * @return byte array
      * @throws IOException if the stream is closed

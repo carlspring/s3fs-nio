@@ -17,32 +17,32 @@ import com.upplication.s3fs.AmazonS3Factory;
 
 public class AmazonS3MockFactory extends AmazonS3Factory {
 
-	private static FileSystem fsMem;
-	private static AmazonS3ClientMock amazonS3Client;
+    private static FileSystem fsMem;
+    private static AmazonS3ClientMock amazonS3Client;
 
-	@Override
-	public AmazonS3 getAmazonS3(URI uri, Properties props) {
-		return getAmazonClientMock();
-	}
+    @Override
+    public AmazonS3 getAmazonS3(URI uri, Properties props) {
+        return getAmazonClientMock();
+    }
 
-	@Override
-	protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
-		return getAmazonClientMock();
-	}
+    @Override
+    protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
+        return getAmazonClientMock();
+    }
 
-	public static AmazonS3ClientMock getAmazonClientMock() {
-		if (amazonS3Client == null)
-			amazonS3Client = spy(new AmazonS3ClientMock(getFsMem().getPath("/")));
-		return amazonS3Client;
-	}
+    public static AmazonS3ClientMock getAmazonClientMock() {
+        if (amazonS3Client == null)
+            amazonS3Client = spy(new AmazonS3ClientMock(getFsMem().getPath("/")));
+        return amazonS3Client;
+    }
 
-	private static FileSystem getFsMem() {
-		if (fsMem == null)
-			try {
-				fsMem = MemoryFileSystemBuilder.newEmpty().build(UUID.randomUUID().toString());
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		return fsMem;
-	}
+    private static FileSystem getFsMem() {
+        if (fsMem == null)
+            try {
+                fsMem = MemoryFileSystemBuilder.newEmpty().build(UUID.randomUUID().toString());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        return fsMem;
+    }
 }

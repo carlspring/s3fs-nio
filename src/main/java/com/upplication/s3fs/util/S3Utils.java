@@ -16,6 +16,7 @@ public class S3Utils {
 
     /**
      * Get the {@link S3ObjectSummary} that represent this Path or her first child if this path not exists
+     *
      * @param s3Path {@link S3Path}
      * @return {@link S3ObjectSummary}
      * @throws NoSuchFileException if not found the path and any child
@@ -57,6 +58,7 @@ public class S3Utils {
 
     /**
      * getS3FileAttributes for the s3Path
+     *
      * @param s3Path S3Path mandatory not null
      * @return S3FileAttributes
      */
@@ -67,16 +69,17 @@ public class S3Utils {
 
     /**
      * convert S3ObjectSummary to S3FileAttributes
+     *
      * @param objectSummary S3ObjectSummary mandatory not null, the real objectSummary with
      *                      exactly the same key than the key param or the immediate descendant
      *                      if it is a virtual directory
-     * @param key String the real key that can be exactly equal than the objectSummary or
+     * @param key           String the real key that can be exactly equal than the objectSummary or
      * @return S3FileAttributes
      */
     public S3FileAttributes toS3FileAttributes(S3ObjectSummary objectSummary, String key) {
         // parse the data to BasicFileAttributes.
         FileTime lastModifiedTime = null;
-        if (objectSummary.getLastModified() != null){
+        if (objectSummary.getLastModified() != null) {
             lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
         }
         long size = objectSummary.getSize();
@@ -90,8 +93,7 @@ public class S3Utils {
         } else if (key.isEmpty()) { // is a bucket (no key)
             directory = true;
             resolvedKey = "/";
-        }
-        else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
+        } else if (!resolvedKey.equals(key) && resolvedKey.startsWith(key)) { // is a directory but not exists at amazon s3
             directory = true;
             // no metadata, we fake one
             size = 0;

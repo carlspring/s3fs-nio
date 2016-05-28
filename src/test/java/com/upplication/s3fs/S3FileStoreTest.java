@@ -30,12 +30,12 @@ import com.upplication.s3fs.util.UnsupportedFileStoreAttributeView;
 
 public class S3FileStoreTest extends S3UnitTestBase {
 
-	private S3FileSystem fileSystem;
-	private S3FileStore fileStore;
+    private S3FileSystem fileSystem;
+    private S3FileStore fileStore;
 
-	@Before
-	public void prepareFileStore() throws IOException {
-        Map<String, Object> env = ImmutableMap.<String, Object> builder()
+    @Before
+    public void prepareFileStore() throws IOException {
+        Map<String, Object> env = ImmutableMap.<String, Object>builder()
                 .put(ACCESS_KEY, "access-mocked")
                 .put(SECRET_KEY, "secret-mocked").build();
         fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, env);
@@ -45,74 +45,74 @@ public class S3FileStoreTest extends S3UnitTestBase {
         client.bucket("bucket2").file("placeholder");
         S3Path path = fileSystem.getPath("/bucket");
         fileStore = path.getFileStore();
-	}
+    }
 
-	@Test
-	public void bucketConstructor() {
-		S3FileStore s3FileStore = new S3FileStore(fileSystem, "name");
-		assertEquals("name", s3FileStore.name());
-		assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
-	}
+    @Test
+    public void bucketConstructor() {
+        S3FileStore s3FileStore = new S3FileStore(fileSystem, "name");
+        assertEquals("name", s3FileStore.name());
+        assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
+    }
 
-	@Test
-	public void nameConstructorAlreadyExists() {
-		S3FileStore s3FileStore = new S3FileStore(fileSystem, "bucket2");
-		assertEquals("bucket2", s3FileStore.name());
-		assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
-	}
+    @Test
+    public void nameConstructorAlreadyExists() {
+        S3FileStore s3FileStore = new S3FileStore(fileSystem, "bucket2");
+        assertEquals("bucket2", s3FileStore.name());
+        assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
+    }
 
-	@Test
-	public void getFileStoreAttributeView() {
-		S3FileStoreAttributeView fileStoreAttributeView = fileStore.getFileStoreAttributeView(S3FileStoreAttributeView.class);
-		assertEquals("S3FileStoreAttributeView", fileStoreAttributeView.name());
-		assertEquals("bucket", fileStoreAttributeView.getAttribute(AttrID.name.name()));
-		assertNotNull(fileStoreAttributeView.getAttribute(AttrID.creationDate.name()));
-		assertEquals("Mock", fileStoreAttributeView.getAttribute(AttrID.ownerDisplayName.name()));
-		assertEquals("1", fileStoreAttributeView.getAttribute(AttrID.ownerId.name()));
-	}
+    @Test
+    public void getFileStoreAttributeView() {
+        S3FileStoreAttributeView fileStoreAttributeView = fileStore.getFileStoreAttributeView(S3FileStoreAttributeView.class);
+        assertEquals("S3FileStoreAttributeView", fileStoreAttributeView.name());
+        assertEquals("bucket", fileStoreAttributeView.getAttribute(AttrID.name.name()));
+        assertNotNull(fileStoreAttributeView.getAttribute(AttrID.creationDate.name()));
+        assertEquals("Mock", fileStoreAttributeView.getAttribute(AttrID.ownerDisplayName.name()));
+        assertEquals("1", fileStoreAttributeView.getAttribute(AttrID.ownerId.name()));
+    }
 
-	@Test(expected = IllegalArgumentException.class)
-	public void getUnsupportedFileStoreAttributeView() {
-		fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void getUnsupportedFileStoreAttributeView() {
+        fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
+    }
 
-	@Test
-	public void getAttributes() throws IOException {
-		assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
-		assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
-		assertEquals("Mock", fileStore.getAttribute(AttrID.ownerDisplayName.name()));
-		assertEquals("1", fileStore.getAttribute(AttrID.ownerId.name()));
-	}
+    @Test
+    public void getAttributes() throws IOException {
+        assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
+        assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
+        assertEquals("Mock", fileStore.getAttribute(AttrID.ownerDisplayName.name()));
+        assertEquals("1", fileStore.getAttribute(AttrID.ownerId.name()));
+    }
 
-	@Test
-	public void getOwner() {
-		Owner owner = fileStore.getOwner();
-		assertEquals("Mock", owner.getDisplayName());
-		assertEquals("1", owner.getId());
-	}
+    @Test
+    public void getOwner() {
+        Owner owner = fileStore.getOwner();
+        assertEquals("Mock", owner.getDisplayName());
+        assertEquals("1", owner.getId());
+    }
 
-	@Test
-	public void getRootDirectory() {
-		S3Path rootDirectory = fileStore.getRootDirectory();
-		assertEquals("bucket", rootDirectory.getFileName().toString());
-		assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
-		assertEquals("s3://access-mocked@s3.amazonaws.com/bucket/", rootDirectory.toUri().toString());
-	}
+    @Test
+    public void getRootDirectory() {
+        S3Path rootDirectory = fileStore.getRootDirectory();
+        assertEquals("bucket", rootDirectory.getFileName().toString());
+        assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
+        assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toUri().toString());
+    }
 
-	@Test
-	public void getSpaces() throws IOException {
-		S3Path root = fileSystem.getPath("/newbucket");
-		Files.createFile(root);
-		S3FileStore newFileStore = root.getFileStore();
-		assertEquals("newbucket", newFileStore.name());
-		assertEquals("S3Bucket", newFileStore.type());
-		assertEquals(false, newFileStore.isReadOnly());
-		assertEquals(Long.MAX_VALUE, newFileStore.getTotalSpace());
-		assertEquals(Long.MAX_VALUE, newFileStore.getUsableSpace());
-		assertEquals(Long.MAX_VALUE, newFileStore.getUnallocatedSpace());
-		assertFalse(newFileStore.supportsFileAttributeView(ZipFileAttributeView.class));
-		assertFalse(newFileStore.supportsFileAttributeView("zip"));
-	}
+    @Test
+    public void getSpaces() throws IOException {
+        S3Path root = fileSystem.getPath("/newbucket");
+        Files.createFile(root);
+        S3FileStore newFileStore = root.getFileStore();
+        assertEquals("newbucket", newFileStore.name());
+        assertEquals("S3Bucket", newFileStore.type());
+        assertEquals(false, newFileStore.isReadOnly());
+        assertEquals(Long.MAX_VALUE, newFileStore.getTotalSpace());
+        assertEquals(Long.MAX_VALUE, newFileStore.getUsableSpace());
+        assertEquals(Long.MAX_VALUE, newFileStore.getUnallocatedSpace());
+        assertFalse(newFileStore.supportsFileAttributeView(ZipFileAttributeView.class));
+        assertFalse(newFileStore.supportsFileAttributeView("zip"));
+    }
 
     @Test
     public void comparable() throws IOException {
@@ -150,6 +150,6 @@ public class S3FileStoreTest extends S3UnitTestBase {
     }
 
     private Map<String, ?> buildFakeEnv() {
-        return ImmutableMap.<String, Object> builder().put(ACCESS_KEY, "access-key").put(SECRET_KEY, "secret-key").build();
+        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access-key").put(SECRET_KEY, "secret-key").build();
     }
 }

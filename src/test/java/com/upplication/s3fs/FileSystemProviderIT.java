@@ -1,4 +1,5 @@
 package com.upplication.s3fs;
+
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
@@ -25,45 +26,44 @@ import org.mockito.ArgumentMatcher;
 
 public class FileSystemProviderIT {
 
-	private S3FileSystemProvider provider;
-	
-	@Before
-	public void setup() throws IOException {
-		System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
+    private S3FileSystemProvider provider;
+
+    @Before
+    public void setup() throws IOException {
+        System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);
-		try {
-			FileSystems.getFileSystem(S3_GLOBAL_URI).close();
-		}
-		catch(FileSystemNotFoundException e) {
-			// ignore this
-		}
-		provider = spy(new S3FileSystemProvider());
+        try {
+            FileSystems.getFileSystem(S3_GLOBAL_URI).close();
+        } catch (FileSystemNotFoundException e) {
+            // ignore this
+        }
+        provider = spy(new S3FileSystemProvider());
         doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
         // dont override with system envs that we can have setted, like travis
         doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
         doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
-	}
-	
-	@Test
-	public void createAuthenticatedByProperties(){
+    }
 
-		URI uri = URI.create("s3://yadi/");
-		
-		FileSystem fileSystem = provider.newFileSystem(uri, null);
-		assertNotNull(fileSystem);
-		
-		verify(provider).createFileSystem(eq(uri), eq(buildFakeProps()));
-	}
-	
-	
-	@Test
-	public void createsAuthenticatedByEnvOverridesProps() {
-		
-		final Map<String, String> env = buildFakeEnv();
-		provider.newFileSystem(S3_GLOBAL_URI, env);
+    @Test
+    public void createAuthenticatedByProperties() {
 
-		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+        URI uri = URI.create("s3://yadi/");
+
+        FileSystem fileSystem = provider.newFileSystem(uri, null);
+        assertNotNull(fileSystem);
+
+        verify(provider).createFileSystem(eq(uri), eq(buildFakeProps()));
+    }
+
+
+    @Test
+    public void createsAuthenticatedByEnvOverridesProps() {
+
+        final Map<String, String> env = buildFakeEnv();
+        provider.newFileSystem(S3_GLOBAL_URI, env);
+
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
                 Properties called = (Properties) argument;
@@ -72,7 +72,7 @@ public class FileSystemProviderIT {
                 return true;
             }
         }));
-	}
+    }
 
     @Test
     public void createsAuthenticatedBySystemProps() {
@@ -89,7 +89,7 @@ public class FileSystemProviderIT {
         verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
-                Properties called = (Properties)argument;
+                Properties called = (Properties) argument;
                 assertEquals(propAccessKey, called.get(ACCESS_KEY));
                 assertEquals(propSecretKey, called.get(SECRET_KEY));
                 return true;
@@ -112,7 +112,7 @@ public class FileSystemProviderIT {
         verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
-                Properties called = (Properties)argument;
+                Properties called = (Properties) argument;
                 assertEquals(propAccessKey, called.get(ACCESS_KEY));
                 assertEquals(propSecretKey, called.get(SECRET_KEY));
                 return true;
@@ -131,7 +131,7 @@ public class FileSystemProviderIT {
         verify(provider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
-                Properties called = (Properties)argument;
+                Properties called = (Properties) argument;
                 assertEquals(accessKeyUri, called.get(ACCESS_KEY));
                 assertEquals(secretKeyUri, called.get(SECRET_KEY));
                 return true;
@@ -139,39 +139,38 @@ public class FileSystemProviderIT {
         }));
     }
 
-	@Test
-	public void createsAnonymousNotPossible() {
-		FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
-		assertNotNull(fileSystem);
-		verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps()));
-	}
+    @Test
+    public void createsAnonymousNotPossible() {
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        assertNotNull(fileSystem);
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps()));
+    }
 
     @Test
     public void getFileSystemWithSameEnvReturnSameFileSystem() {
         doCallRealMethod().when(provider).loadAmazonProperties();
 
-        Map<String, Object> env = ImmutableMap.<String, Object> of("s3fs_access_key", "a", "s3fs_secret_key", "b");
+        Map<String, Object> env = ImmutableMap.<String, Object>of("s3fs_access_key", "a", "s3fs_secret_key", "b");
         FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI, env);
         assertNotNull(fileSystem);
 
         FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI, env);
         assertSame(fileSystem, sameFileSystem);
     }
-	
-	private Map<String, String> buildFakeEnv(){
-		return ImmutableMap.<String, String> builder()
-			.put(ACCESS_KEY, "access-key")
-			.put(SECRET_KEY, "secret-key").build();
-	}
 
-	private Properties buildFakeProps() {
+    private Map<String, String> buildFakeEnv() {
+        return ImmutableMap.<String, String>builder()
+                .put(ACCESS_KEY, "access-key")
+                .put(SECRET_KEY, "secret-key").build();
+    }
+
+    private Properties buildFakeProps() {
         try {
             Properties props = new Properties();
             props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test-sample.properties"));
             return props;
-        }
-        catch (IOException e){
+        } catch (IOException e) {
             throw new RuntimeException("amazon-test-sample.properties not present");
         }
-	}
+    }
 }

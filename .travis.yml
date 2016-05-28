@@ -18,5 +18,5 @@ before_script:
 - chmod a+x ./print_surefire_reports.sh
 script: mvn clean install
 after_success:
-- mvn jacoco:report coveralls:jacoco
+- mvn jacoco:report coveralls:report
 after_failure: ./print_surefire_reports.sh

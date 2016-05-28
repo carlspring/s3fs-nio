@@ -14,7 +14,7 @@ This project provides a first API implementation, little optimized, but "complet
 <dependency>
 	<groupId>com.upplication</groupId>
 	<artifactId>s3fs</artifactId>
-	<version>1.2.3</version>
+	<version>1.3.0</version>
 </dependency>
 ```
 

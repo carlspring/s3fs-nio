@@ -19,63 +19,63 @@ import org.junit.Test;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 
 public class ProviderSpecTest {
-	FileSystem fs;
+    FileSystem fs;
 
-	@Before
-	public void setup() throws IOException {
-		fs = MemoryFileSystemBuilder.newLinux().build("linux");
-	}
+    @Before
+    public void setup() throws IOException {
+        fs = MemoryFileSystemBuilder.newLinux().build("linux");
+    }
 
-	@After
-	public void close() throws IOException {
-		fs.close();
-	}
+    @After
+    public void close() throws IOException {
+        fs.close();
+    }
 
-	@Test
-	public void readNothing() throws IOException {
-		//Path base = Files.createDirectories(fs.getPath("/dir"));
-		Path base = Files.createTempDirectory("asdadadasd");
-		try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")), EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))) {
-			// do nothing
-		}
-		assertTrue(Files.notExists(base.resolve("file1.html")));
-	}
+    @Test
+    public void readNothing() throws IOException {
+        //Path base = Files.createDirectories(fs.getPath("/dir"));
+        Path base = Files.createTempDirectory("asdadadasd");
+        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")), EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))) {
+            // do nothing
+        }
+        assertTrue(Files.notExists(base.resolve("file1.html")));
+    }
 
-	// FIXME @Test
-	public void seekable() throws IOException {
-		Path base = Files.createDirectories(fs.getPath("/dir"));
-		// in windows throw exception
-		try (SeekableByteChannel seekable = Files.newByteChannel(base.resolve("file1.html"),
-				EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ))) {
+    // FIXME @Test
+    public void seekable() throws IOException {
+        Path base = Files.createDirectories(fs.getPath("/dir"));
+        // in windows throw exception
+        try (SeekableByteChannel seekable = Files.newByteChannel(base.resolve("file1.html"),
+                EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ))) {
 
-			ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
-			seekable.position(7);
-			seekable.write(buffer);
+            ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
+            seekable.position(7);
+            seekable.write(buffer);
 
-			ByteBuffer bufferRead = ByteBuffer.allocate(7);
-			bufferRead.clear();
-			seekable.read(bufferRead);
+            ByteBuffer bufferRead = ByteBuffer.allocate(7);
+            bufferRead.clear();
+            seekable.read(bufferRead);
 
-			assertArrayEquals(bufferRead.array(), buffer.array());
-		}
-	}
+            assertArrayEquals(bufferRead.array(), buffer.array());
+        }
+    }
 
-	@Test
-	public void seekableRead() throws IOException {
-		/*
-		Path base = Files.createDirectories(fs.getPath("/dir"));
+    @Test
+    public void seekableRead() throws IOException {
+        /*
+        Path base = Files.createDirectories(fs.getPath("/dir"));
 		Path path = Files.write(base.resolve("file"), "contenido yuhu".getBytes(), StandardOpenOption.CREATE_NEW);
 		*/
-		Path path = Files.write(Files.createTempFile("asdas", "asdsadad"), "contenido uyuhu".getBytes(), StandardOpenOption.APPEND);
-		try (SeekableByteChannel channel = Files.newByteChannel(path)) {
+        Path path = Files.write(Files.createTempFile("asdas", "asdsadad"), "contenido uyuhu".getBytes(), StandardOpenOption.APPEND);
+        try (SeekableByteChannel channel = Files.newByteChannel(path)) {
 
-			//channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
-			ByteBuffer buffer = ByteBuffer.allocate(4096);
+            //channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
+            ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-			while (channel.read(buffer) > 0) {
-				buffer.rewind();
-				buffer.flip();
-			}
+            while (channel.read(buffer) > 0) {
+                buffer.rewind();
+                buffer.flip();
+            }
 
 			/*
 			ByteBuffer buffer = ByteBuffer.allocate(1024);
@@ -105,6 +105,6 @@ public class ProviderSpecTest {
 			    System.out.println("\nNumber of bytes read: " + numberOfBytesRead);
 			  }
 			*/
-		}
-	}
+        }
+    }
 }
