@@ -57,6 +57,9 @@ public class S3Path implements Path {
      * <li> "//{key}" error, missing bucket</li>
      * <li> "/" error, missing bucket </li>
      * </ul>
+     *
+     * @param fileSystem
+     * @param path
      */
     public S3Path(S3FileSystem fileSystem, String path) {
         this(fileSystem, path, "");
@@ -65,6 +68,7 @@ public class S3Path implements Path {
     /**
      * Build an S3Path from path segments. '/' are stripped from each segment.
      *
+     * @param fileSystem
      * @param first should be start with a '/' and is the bucket name
      * @param more  directories and files
      */

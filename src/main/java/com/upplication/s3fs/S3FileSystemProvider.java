@@ -47,27 +47,31 @@ import com.upplication.s3fs.util.S3Utils;
 
 /**
  * Spec:
- * <p/>
+ * <p>
  * URI: s3://[endpoint]/{bucket}/{key} If endpoint is missing, it's assumed to
  * be the default S3 endpoint (s3.amazonaws.com)
- * <p/>
+ * </p>
+ * <p>
  * FileSystem roots: /{bucket}/
- * <p/>
+ * </p>
+ * <p>
  * Treatment of S3 objects: - If a key ends in "/" it's considered a directory
  * *and* a regular file. Otherwise, it's just a regular file. - It is legal for
  * a key "xyz" and "xyz/" to exist at the same time. The latter is treated as a
  * directory. - If a file "a/b/c" exists but there's no "a" or "a/b/", these are
  * considered "implicit" directories. They can be listed, traversed and deleted.
- * <p/>
+ * </p>
+ * <p>
  * Deviations from FileSystem provider API: - Deleting a file or directory
  * always succeeds, regardless of whether the file/directory existed before the
  * operation was issued i.e. Files.delete() and Files.deleteIfExists() are
  * equivalent.
- * <p/>
- * <p/>
+ * </p>
+ * <p>
  * Future versions of this provider might allow for a strict mode that mimics
  * the semantics of the FileSystem provider API on a best effort basis, at an
  * increased processing cost.
+ * </p>
  */
 public class S3FileSystemProvider extends FileSystemProvider {
 

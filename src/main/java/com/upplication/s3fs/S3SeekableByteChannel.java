@@ -99,7 +99,7 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
     /**
      * try to sync the temp file with the remote s3 path.
      *
-     * @throws IOException
+     * @throws IOException if the tempFile fails to open a newInputStream
      */
     protected void sync() throws IOException {
         try (InputStream stream = new BufferedInputStream(Files.newInputStream(tempFile))) {
