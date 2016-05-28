@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.util.AttributesUtil;
 import com.upplication.s3fs.util.Cache;
 import com.upplication.s3fs.util.S3Utils;
 
@@ -471,6 +472,23 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
 	@Override
 	public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options) throws IOException {
+		if (attributes == null){
+            throw new IllegalArgumentException("Attributes null");
+        }
+
+        if (attributes.contains(":") && !attributes.contains("basic:")) {
+            throw new UnsupportedOperationException(format("attributes %s are not supported, only basic are supported", attributes));
+        }
+
+        if (attributes.equals("*") || attributes.equals("basic:*")) {
+			BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
+            return AttributesUtil.fileAttributeToMap(attr);
+		} else if (attributes.contains(",")) {
+            String[] filters = attributes.split(",");
+            BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
+            return AttributesUtil.fileAttributeToMap(attr, filters);
+        }
+
 		throw new UnsupportedOperationException();
 	}
 

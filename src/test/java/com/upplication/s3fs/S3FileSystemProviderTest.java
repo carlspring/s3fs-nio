@@ -1232,10 +1232,132 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 		s3fsProvider.readAttributes(dir, DosFileAttributes.class);
 	}
 
-	@Test(expected = UnsupportedOperationException.class)
-	public void readAttributesString() throws IOException {
-		s3fsProvider.readAttributes(null, "");
+	@Test
+	public void readAttributesAll() throws IOException {
+		// fixtures
+		AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+		final String content = "sample";
+		Path memoryFile = Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), content.getBytes());
+
+		BasicFileAttributes expectedAttributes = Files.readAttributes(memoryFile, BasicFileAttributes.class);
+
+		FileSystem fs = createNewS3FileSystem();
+		Path file = fs.getPath("/bucketA/dir/file");
+
+		Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "*");
+
+		assertNotNull(fileAttributes);
+		assertEquals(false, fileAttributes.get("isDirectory"));
+		assertEquals(true, fileAttributes.get("isRegularFile"));
+		assertEquals(false, fileAttributes.get("isSymbolicLink"));
+		assertEquals(false, fileAttributes.get("isOther"));
+		assertEquals((long)content.getBytes().length, fileAttributes.get("size"));
+		assertEquals("dir/file", fileAttributes.get("fileKey"));
+		assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.get("lastModifiedTime"));
+		assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.get("creationTime"));
+		assertEquals(expectedAttributes.lastModifiedTime(), fileAttributes.get("lastAccessTime"));
 	}
+
+    @Test
+    public void readAttributesAllBasic() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "basic:*");
+        Map<String, Object> fileAttributes2 = s3fsProvider.readAttributes(file, "*");
+
+        assertArrayEquals(fileAttributes.values().toArray(new Object[]{}),
+                fileAttributes2.values().toArray(new Object[]{}));
+        assertArrayEquals(fileAttributes.keySet().toArray(new String[]{}),
+                fileAttributes2.keySet().toArray(new String[]{}));
+    }
+
+    @Test
+    public void readAttributesPartial() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "isDirectory,isRegularFile");
+
+        assertNotNull(fileAttributes);
+        assertEquals(false, fileAttributes.get("isDirectory"));
+        assertEquals(true, fileAttributes.get("isRegularFile"));
+        assertEquals(2, fileAttributes.size());
+    }
+
+    @Test
+    public void readAttributesPartialBasic() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "basic:isOther,basic:creationTime");
+        Map<String, Object> fileAttributes2 = s3fsProvider.readAttributes(file, "isOther,creationTime");
+
+        assertArrayEquals(fileAttributes.values().toArray(new Object[]{}),
+                fileAttributes2.values().toArray(new Object[]{}));
+        assertArrayEquals(fileAttributes.keySet().toArray(new String[]{}),
+                fileAttributes2.keySet().toArray(new String[]{}));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void readAttributesNullAttrs() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        s3fsProvider.readAttributes(file, (String)null);
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void readAttributesPosixNotSupported() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        s3fsProvider.readAttributes(file, "posix:*");
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void readAttributesDosNotSupported() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        s3fsProvider.readAttributes(file, "dos:*");
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void readAttributesUnknowNotSupported() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        s3fsProvider.readAttributes(file, "lelel:*");
+    }
 
 	// setAttribute
 

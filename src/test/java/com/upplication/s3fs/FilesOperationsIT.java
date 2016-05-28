@@ -19,6 +19,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.Map;
 import java.util.UUID;
 
 import com.amazonaws.services.s3.AmazonS3;
@@ -169,16 +170,7 @@ public class FilesOperationsIT {
 		final Path fileToFind = Files.createDirectory(bucketPath.resolve(name));
 
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)) {
-			boolean find = false;
-			for (Path path : dirStream) {
-				// only first level
-				assertEquals(bucketPath, path.getParent());
-				if (path.equals(fileToFind)) {
-					find = true;
-					break;
-				}
-			}
-			assertTrue(find);
+			findFileInDirectoryStream(bucketPath, fileToFind, dirStream);
 		}
 	}
 
@@ -189,20 +181,11 @@ public class FilesOperationsIT {
 		final Path fileToFind = Files.createFile(bucketPath.resolve(name));
 
 		try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(bucketPath)) {
-			boolean find = false;
-			for (Path path : dirStream) {
-				// check parent at first level
-				assertEquals(bucketPath, path.getParent());
-				if (path.equals(fileToFind)) {
-					find = true;
-					break;
-				}
-			}
-			assertTrue(find);
+			findFileInDirectoryStream(bucketPath, fileToFind, dirStream);
 		}
 	}
 
-    @Test
+	@Test
 	public void directoryStreamFirstDirTest() throws IOException {
 		Path dir = uploadDir();
 
@@ -450,6 +433,36 @@ public class FilesOperationsIT {
 		}
 	}
 
+	@Test
+	public void readAttributesFile() throws IOException {
+		final String content = "sample content";
+		Path file = uploadSingleFile(content);
+
+		BasicFileAttributes fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
+		assertNotNull(fileAttributes);
+		assertEquals(true, fileAttributes.isRegularFile());
+		assertEquals(false, fileAttributes.isDirectory());
+		assertEquals(false, fileAttributes.isSymbolicLink());
+		assertEquals(false, fileAttributes.isOther());
+		assertEquals(content.length(), fileAttributes.size());
+	}
+
+    @Test
+    public void readAttributesString() throws IOException {
+        final String content = "sample content";
+        Path file = uploadSingleFile(content);
+
+        BasicFileAttributes fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
+        Map<String, Object> fileAttributesMap = Files.readAttributes(file, "*");
+        assertNotNull(fileAttributes);
+        assertNotNull(fileAttributesMap);
+        assertEquals(fileAttributes.isRegularFile(), fileAttributesMap.get("isRegularFile"));
+        assertEquals(fileAttributes.isDirectory(), fileAttributesMap.get("isDirectory"));
+        assertEquals(fileAttributes.creationTime(), fileAttributesMap.get("creationTime"));
+        assertEquals(fileAttributes.lastModifiedTime(), fileAttributesMap.get("lastModifiedTime"));
+        assertEquals(9, fileAttributesMap.size());
+    }
+
     @Test
 	public void readAttributesDirectory() throws IOException {
 		Path dir;
@@ -474,6 +487,7 @@ public class FilesOperationsIT {
 		assertEquals(true, fileAttributes.isDirectory());
 		assertEquals(startPath + "lib/angular/", fileAttributes.fileKey());
 	}
+
     @Test
 	public void seekableCloseTwice() throws IOException {
 		Path file = createEmptyFile();
@@ -546,5 +560,18 @@ public class FilesOperationsIT {
 			Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));
 			return dir;
 		}
+	}
+
+	private void findFileInDirectoryStream(Path bucketPath, Path fileToFind, DirectoryStream<Path> dirStream) {
+		boolean find = false;
+		for (Path path : dirStream) {
+			// check parent at first level
+			assertEquals(bucketPath, path.getParent());
+			if (path.equals(fileToFind)) {
+				find = true;
+				break;
+			}
+		}
+		assertTrue(find);
 	}
 }

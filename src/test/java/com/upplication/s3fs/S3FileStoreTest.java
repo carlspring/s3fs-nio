@@ -96,7 +96,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
 		S3Path rootDirectory = fileStore.getRootDirectory();
 		assertEquals("bucket", rootDirectory.getFileName().toString());
 		assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
-		assertEquals("s3://access-mocked@s3.amazonaws.com/bucket/", rootDirectory.toUri().toString());
+		assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toUri().toString());
 	}
 
 	@Test
