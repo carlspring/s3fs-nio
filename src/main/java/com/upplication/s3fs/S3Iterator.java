@@ -1,6 +1,5 @@
 package com.upplication.s3fs;
 
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;

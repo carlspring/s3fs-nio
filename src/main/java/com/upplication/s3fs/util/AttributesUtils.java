@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Utilities to help transforming BasicFileAttributes to Map
  */
-public abstract class AttributesUtil {
+public abstract class AttributesUtils {
 
     /**
      * Given a BasicFileAttributes not null then return a Map
@@ -54,7 +54,7 @@ public abstract class AttributesUtil {
                     result.put("isDirectory", attr.isDirectory());
                     break;
                 case "isOther":
-                    result.put("isOther", attr.isDirectory());
+                    result.put("isOther", attr.isOther());
                     break;
                 case "isRegularFile":
                     result.put("isRegularFile", attr.isRegularFile());

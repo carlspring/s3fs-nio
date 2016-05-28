@@ -41,7 +41,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.upplication.s3fs.util.AttributesUtil;
+import com.upplication.s3fs.util.AttributesUtils;
 import com.upplication.s3fs.util.Cache;
 import com.upplication.s3fs.util.S3Utils;
 
@@ -482,11 +482,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
         if (attributes.equals("*") || attributes.equals("basic:*")) {
 			BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
-            return AttributesUtil.fileAttributeToMap(attr);
+            return AttributesUtils.fileAttributeToMap(attr);
 		} else if (attributes.contains(",")) {
             String[] filters = attributes.split(",");
             BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
-            return AttributesUtil.fileAttributeToMap(attr, filters);
+            return AttributesUtils.fileAttributeToMap(attr, filters);
         }
 
 		throw new UnsupportedOperationException();

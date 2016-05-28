@@ -17,10 +17,10 @@ public class S3FileAttributes implements BasicFileAttributes {
 		this.key = key;
 		this.lastModifiedTime = lastModifiedTime;
 		this.size = size;
-		directory = isDirectory;
-		regularFile = isRegularFile;
+		this.directory = isDirectory;
+		this.regularFile = isRegularFile;
 
-		cacheCreated = System.currentTimeMillis();
+		this.cacheCreated = System.currentTimeMillis();
 	}
 
 	@Override
