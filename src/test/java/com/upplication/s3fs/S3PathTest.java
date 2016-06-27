@@ -10,15 +10,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.WatchEvent;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,7 +27,7 @@ public class S3PathTest extends S3UnitTestBase {
     @Before
     public void setup() throws IOException {
         FileSystems
-                .newFileSystem(S3_GLOBAL_URI, null);
+                .newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -553,13 +551,13 @@ public class S3PathTest extends S3UnitTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void preconditions() {
-        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3_GLOBAL_URI);
+        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         new S3Path(fileSystem, "/");
     }
 
     @Test
     public void constructors() {
-        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3_GLOBAL_URI);
+        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         S3Path path = new S3Path(fileSystem, "/buckname");
         assertEquals("buckname", path.getFileStore().name());
         assertEquals("buckname", path.getFileName().toString());
@@ -608,6 +606,6 @@ public class S3PathTest extends S3UnitTestBase {
     }
 
     private static S3Path forPath(String path) {
-        return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI).getPath(path);
+        return (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath(path);
     }
 }

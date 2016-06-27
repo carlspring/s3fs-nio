@@ -2,7 +2,7 @@ package com.upplication.s3fs;
 
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayInputStream;
@@ -11,7 +11,6 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.upplication.s3fs.util.CopyDirVisitor;
 import com.upplication.s3fs.util.EnvironmentBuilder;
@@ -19,15 +18,13 @@ import com.upplication.s3fs.util.S3Utils;
 import org.junit.Before;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.upplication.s3fs.S3FileSystem;
-import com.upplication.s3fs.S3Path;
 import org.junit.Test;
 
 
 public class S3UtilsIT {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI);
+    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
     private FileSystem fileSystemAmazon;
 

@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Properties;
 
+import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Test;
 
 import com.amazonaws.ClientConfiguration;
@@ -56,7 +57,7 @@ public class AmazonS3ClientFactoryTest {
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "49000");
         props.setProperty(SOCKET_TIMEOUT, "30");
         props.setProperty(USER_AGENT, "I-am-Groot");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
         AWSCredentialsProvider credentialsProvider = client.getAWSCredentialsProvider();
         AWSCredentials credentials = credentialsProvider.getCredentials();
         assertEquals("some_access_key", credentials.getAWSAccessKeyId());
@@ -85,7 +86,7 @@ public class AmazonS3ClientFactoryTest {
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "giev.ma.access!");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
         Properties props = new Properties();
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
         AWSCredentialsProvider credentialsProvider = client.getAWSCredentialsProvider();
         AWSCredentials credentials = credentialsProvider.getCredentials();
         assertEquals("giev.ma.access!", credentials.getAWSAccessKeyId());
@@ -114,7 +115,7 @@ public class AmazonS3ClientFactoryTest {
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "I want access");
-        clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -123,7 +124,7 @@ public class AmazonS3ClientFactoryTest {
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "I want access");
         Properties props = new Properties();
         props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
-        clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -133,7 +134,7 @@ public class AmazonS3ClientFactoryTest {
         props.setProperty(ACCESS_KEY, "I want access");
         props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
         props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS, "com.upplication.s3fs.util.WrongRequestMetricCollector");
-        clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test
@@ -143,7 +144,7 @@ public class AmazonS3ClientFactoryTest {
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
         Properties props = new Properties();
         props.setProperty(SOCKET_SEND_BUFFER_SIZE_HINT, "12345");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
         assertEquals(12345, clientConfiguration.getSocketBufferSizeHints()[0]);
         assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[1]);
@@ -156,7 +157,7 @@ public class AmazonS3ClientFactoryTest {
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
         Properties props = new Properties();
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "54321");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3UnitTestBase.S3_GLOBAL_URI, props);
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
         assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[0]);
         assertEquals(54321, clientConfiguration.getSocketBufferSizeHints()[1]);

@@ -2,7 +2,7 @@ package com.upplication.s3fs;
 
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
@@ -34,7 +34,7 @@ public class FileSystemProviderIT {
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);
         try {
-            FileSystems.getFileSystem(S3_GLOBAL_URI).close();
+            FileSystems.getFileSystem(S3_GLOBAL_URI_IT).close();
         } catch (FileSystemNotFoundException e) {
             // ignore this
         }
@@ -61,9 +61,9 @@ public class FileSystemProviderIT {
     public void createsAuthenticatedByEnvOverridesProps() {
 
         final Map<String, String> env = buildFakeEnv();
-        provider.newFileSystem(S3_GLOBAL_URI, env);
+        provider.newFileSystem(S3_GLOBAL_URI_IT, env);
 
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
                 Properties called = (Properties) argument;
@@ -84,9 +84,9 @@ public class FileSystemProviderIT {
         doReturn(propAccessKey).when(provider).systemGetEnv(eq(ACCESS_KEY));
         doReturn(propSecretKey).when(provider).systemGetEnv(eq(SECRET_KEY));
 
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, null);
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, null);
         assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
                 Properties called = (Properties) argument;
@@ -107,9 +107,9 @@ public class FileSystemProviderIT {
         System.setProperty(ACCESS_KEY, propAccessKey);
         System.setProperty(SECRET_KEY, propSecretKey);
 
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, null);
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, null);
         assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
                 Properties called = (Properties) argument;
@@ -141,9 +141,9 @@ public class FileSystemProviderIT {
 
     @Test
     public void createsAnonymousNotPossible() {
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps()));
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), eq(buildFakeProps()));
     }
 
     @Test
@@ -151,10 +151,10 @@ public class FileSystemProviderIT {
         doCallRealMethod().when(provider).loadAmazonProperties();
 
         Map<String, Object> env = ImmutableMap.<String, Object>of("s3fs_access_key", "a", "s3fs_secret_key", "b");
-        FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
         assertNotNull(fileSystem);
 
-        FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI, env);
+        FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
         assertSame(fileSystem, sameFileSystem);
     }
 

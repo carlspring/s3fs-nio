@@ -5,11 +5,13 @@ import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.FilesOperationsIT;
+import org.apache.http.client.utils.URIBuilder;
 
 /**
  * Test Helper
@@ -64,10 +66,18 @@ public abstract class EnvironmentBuilder {
         }
     }
 
+    /**
+     * get the URI with the access key and secret key as authority (plain text)
+     * @param s3GlobalUri URI a valid s3 endpoint, look at http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region
+     * @return URI never null
+     */
     public static URI getS3URI(URI s3GlobalUri) {
         Map<String, Object> env = getRealEnv();
-        return URI.create(s3GlobalUri.getScheme() + "://" +
-                env.get(ACCESS_KEY) + ":" + env.get(SECRET_KEY) +
-                "@" + s3GlobalUri.getHost());
+        try {
+            return new URIBuilder(s3GlobalUri)
+                    .setUserInfo((String)env.get(ACCESS_KEY), (String)env.get(SECRET_KEY)).build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException("Error building uri with the env: " + env);
+        }
     }
 }

@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
+import com.upplication.s3fs.util.S3EndpointConstant;
 import com.upplication.s3fs.util.S3Utils;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +27,7 @@ public class S3UtilsTest extends S3UnitTestBase {
 
     @Before
     public void setup() throws IOException {
-        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket");
     }

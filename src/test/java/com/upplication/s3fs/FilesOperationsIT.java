@@ -1,6 +1,6 @@
 package com.upplication.s3fs;
 
-import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
@@ -22,8 +22,6 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import org.junit.Before;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -36,7 +34,7 @@ public class FilesOperationsIT {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
     private static final String bucket = EnvironmentBuilder.getBucket();
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI);
+    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
     private FileSystem fileSystemAmazon;
 

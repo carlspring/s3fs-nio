@@ -1,6 +1,6 @@
 package com.upplication.s3fs.spike;
 
-import static com.upplication.s3fs.S3UnitTestBase.S3_GLOBAL_URI;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -36,7 +36,7 @@ public class InstallProviderTest {
     public void cleanup() {
         //clean resources
         try {
-            FileSystems.getFileSystem(S3_GLOBAL_URI).close();
+            FileSystems.getFileSystem(S3_GLOBAL_URI_TEST).close();
         } catch (FileSystemNotFoundException | IOException e) {
             // ignore this
         }

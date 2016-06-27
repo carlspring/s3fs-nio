@@ -12,7 +12,6 @@ import static org.mockito.Mockito.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -20,9 +19,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -32,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.amazonaws.services.s3.internal.Constants;
 import com.upplication.s3fs.util.*;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -56,7 +52,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     public void missconfigure() {
         Properties props = new Properties();
         props.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.BrokenAmazonS3Factory");
-        s3fsProvider.createFileSystem(S3_GLOBAL_URI, props);
+        s3fsProvider.createFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test
@@ -74,9 +70,9 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     @Test
     public void createsAuthenticatedByEnv() {
         Map<String, ?> env = buildFakeEnv();
-        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
         assertNotNull(fileSystem);
-        verify(s3fsProvider).createFileSystem(eq(S3_GLOBAL_URI), eq(buildFakeProps((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))));
+        verify(s3fsProvider).createFileSystem(eq(S3EndpointConstant.S3_GLOBAL_URI_TEST), eq(buildFakeProps((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))));
     }
 
     @Test
@@ -86,7 +82,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         props.setProperty(ACCESS_KEY, "better access key");
         props.setProperty(CHARSET_KEY, "UTF-8");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
-        URI uri = S3_GLOBAL_URI;
+        URI uri = S3EndpointConstant.S3_GLOBAL_URI_TEST;
 
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
@@ -100,7 +96,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         props.setProperty(SECRET_KEY, "better secret key");
         props.setProperty(ACCESS_KEY, "better access key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
-        URI uri = S3_GLOBAL_URI;
+        URI uri = S3EndpointConstant.S3_GLOBAL_URI_TEST;
 
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
@@ -118,9 +114,9 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         doReturn(secretKey).when(s3fsProvider).systemGetEnv(SECRET_KEY);
         doCallRealMethod().when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 
-        s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
 
-        verify(s3fsProvider).createFileSystem(eq(S3_GLOBAL_URI), argThat(new ArgumentMatcher<Properties>() {
+        verify(s3fsProvider).createFileSystem(eq(S3EndpointConstant.S3_GLOBAL_URI_TEST), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
                 Properties called = (Properties) argument;
@@ -133,7 +129,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
 
     @Test
     public void createsAnonymous() {
-        URI uri = S3_GLOBAL_URI;
+        URI uri = S3EndpointConstant.S3_GLOBAL_URI_TEST;
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
         verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps(null, null)));
@@ -159,7 +155,7 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "better access key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
-        s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -167,31 +163,31 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
         Properties props = new Properties();
         props.setProperty(SECRET_KEY, "better secret key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
-        s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
 
     @Test(expected = FileSystemAlreadyExistsException.class)
     public void createFailsIfAlreadyCreated() {
-        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
-        s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithWrongEnv() {
         Map<String, Object> env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, 1234).put(SECRET_KEY, "secret key").build();
-        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
         assertNotNull(fileSystem);
-        s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
 
     @Test
     public void getFileSystem() {
-        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
-        fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI, ImmutableMap.<String, Object>of());
+        fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
-        FileSystem other = s3fsProvider.getFileSystem(S3_GLOBAL_URI);
+        FileSystem other = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         assertSame(fileSystem, other);
     }
 
@@ -245,10 +241,10 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     public void closeFileSystemReturnNewFileSystem() throws IOException {
         S3FileSystemProvider provider = new S3FileSystemProvider();
         Map<String, ?> env = buildFakeEnv();
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem = provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
         assertNotNull(fileSystem);
         fileSystem.close();
-        FileSystem fileSystem2 = provider.newFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem2 = provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
         assertNotSame(fileSystem, fileSystem2);
     }
 
@@ -256,9 +252,9 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     public void createTwoFileSystemThrowError() {
         S3FileSystemProvider provider = new S3FileSystemProvider();
         Map<String, ?> env = buildFakeEnv();
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI, env);
+        FileSystem fileSystem = provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
         assertNotNull(fileSystem);
-        provider.newFileSystem(S3_GLOBAL_URI, env);
+        provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
     }
 
     // stream directory
@@ -1277,6 +1273,22 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     }
 
     @Test
+    public void readAttributesOnlyOne() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "isDirectory");
+
+        assertNotNull(fileAttributes);
+        assertEquals(false, fileAttributes.get("isDirectory"));
+        assertEquals(1, fileAttributes.size());
+    }
+
+    @Test
     public void readAttributesPartial() throws IOException {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
@@ -1493,9 +1505,9 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
      */
     private S3FileSystem createNewS3FileSystem() throws IOException {
         try {
-            return s3fsProvider.getFileSystem(S3_GLOBAL_URI);
+            return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         } catch (FileSystemNotFoundException e) {
-            return (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+            return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
 
     }
