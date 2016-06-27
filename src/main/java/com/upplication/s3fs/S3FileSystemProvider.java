@@ -485,13 +485,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
         if (attributes.equals("*") || attributes.equals("basic:*")) {
             BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
             return AttributesUtils.fileAttributeToMap(attr);
-        } else if (attributes.contains(",")) {
-            String[] filters = attributes.split(",");
+        } else {
+            String[] filters = new String[]{attributes};
+            if (attributes.contains(",")){
+                filters = attributes.split(",");
+            }
             BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
             return AttributesUtils.fileAttributeToMap(attr, filters);
         }
-
-        throw new UnsupportedOperationException();
     }
 
     @Override

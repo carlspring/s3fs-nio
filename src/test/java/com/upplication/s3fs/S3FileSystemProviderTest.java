@@ -1277,6 +1277,22 @@ public class S3FileSystemProviderTest extends S3UnitTestBase {
     }
 
     @Test
+    public void readAttributesOnlyOne() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        Files.write(client.bucket("bucketA").dir("dir").resolve("dir/file"), "sample".getBytes());
+
+        FileSystem fs = createNewS3FileSystem();
+        Path file = fs.getPath("/bucketA/dir/file");
+
+        Map<String, Object> fileAttributes = s3fsProvider.readAttributes(file, "isDirectory");
+
+        assertNotNull(fileAttributes);
+        assertEquals(false, fileAttributes.get("isDirectory"));
+        assertEquals(1, fileAttributes.size());
+    }
+
+    @Test
     public void readAttributesPartial() throws IOException {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
