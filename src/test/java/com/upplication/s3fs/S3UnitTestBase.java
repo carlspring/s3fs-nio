@@ -14,8 +14,6 @@ import com.upplication.s3fs.util.AmazonS3MockFactory;
 
 public class S3UnitTestBase {
 
-    public static final URI S3_GLOBAL_URI = URI.create("s3://s3.test.amazonaws.com/");
-
     @BeforeClass
     public static void setProperties() {
         System.setProperty(AMAZON_S3_FACTORY_CLASS, "com.upplication.s3fs.util.AmazonS3MockFactory");

@@ -11,6 +11,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
+import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -90,7 +91,7 @@ public class S3WalkerTest extends S3UnitTestBase {
 
     @Before
     public void setup() throws IOException {
-        FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+        FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -101,7 +102,7 @@ public class S3WalkerTest extends S3UnitTestBase {
         mocket.file("folder/subfolder1/file1.1", "folder/subfolder1/file1.2", "folder/subfolder1/file1.3", "folder/subfolder1/file1.4");
         mocket.file("folder/subfolder2/file2.1", "folder/subfolder2/file2.2", "folder/subfolder2/file2.3", "folder/subfolder2/file2.4");
 
-        S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+        S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
         reset(client);
         RegisteringVisitor registrar = new RegisteringVisitor();
         Files.walkFileTree(folder, registrar);
@@ -124,7 +125,7 @@ public class S3WalkerTest extends S3UnitTestBase {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("tree").dir("folder");
 
-        S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+        S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
         RegisteringVisitor registrar = new RegisteringVisitor();
 
         reset(client);
@@ -155,7 +156,7 @@ public class S3WalkerTest extends S3UnitTestBase {
                 mocket.file(filename.toString());
             }
         }
-        S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+        S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
 
         reset(client);
         RegisteringVisitor registrar = new RegisteringVisitor();
@@ -172,7 +173,7 @@ public class S3WalkerTest extends S3UnitTestBase {
     public void noSuchElementTreeWalk() throws IOException {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("/tree");
-        S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+        S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
         reset(client);
         RegisteringVisitor registrar = new RegisteringVisitor();
         Files.walkFileTree(folder, registrar);
@@ -194,7 +195,7 @@ public class S3WalkerTest extends S3UnitTestBase {
         mocket.file("folder/subfolder3/file3.1", "folder/subfolder3/file3.2");
         mocket.file("folder/subfolder4/file4.1", "folder/subfolder4/file4.2");
 
-        S3Path folder = (S3Path) Paths.get(URI.create(S3_GLOBAL_URI + "tree/folder"));
+        S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
         reset(client);
         final List<String> visitation = new ArrayList<>();
         FileVisitor<Path> visitor = new FileVisitor<Path>() {

@@ -7,18 +7,15 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
 import java.util.Map;
-import java.util.Properties;
 
 import com.amazonaws.services.s3.model.*;
 import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,7 +35,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
         Map<String, Object> env = ImmutableMap.<String, Object>builder()
                 .put(ACCESS_KEY, "access-mocked")
                 .put(SECRET_KEY, "secret-mocked").build();
-        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3_GLOBAL_URI, env);
+        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
 
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket").file("placeholder");

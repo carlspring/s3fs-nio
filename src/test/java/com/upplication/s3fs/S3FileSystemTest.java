@@ -21,6 +21,7 @@ import java.util.Set;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,7 +36,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA");
         client.bucket("bucketB");
-        fs = FileSystems.newFileSystem(S3_GLOBAL_URI, null);
+        fs = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
