@@ -2,6 +2,8 @@ package com.upplication.s3fs.util;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
 
 public class MockBucket {
     private AmazonS3ClientMock amazonS3ClientMock;
@@ -20,6 +22,11 @@ public class MockBucket {
 
     public MockBucket file(String file, byte[] content) throws IOException {
         amazonS3ClientMock.addFile(mocketPath, file, content);
+        return this;
+    }
+
+    public MockBucket file(String file, byte[] content, FileAttribute<?> ... attrs) throws IOException {
+        amazonS3ClientMock.addFile(mocketPath, file, content, attrs);
         return this;
     }
 

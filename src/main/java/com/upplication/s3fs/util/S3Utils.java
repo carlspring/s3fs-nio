@@ -2,11 +2,17 @@ package com.upplication.s3fs.util;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import com.upplication.s3fs.S3FileAttributes;
+import com.google.common.collect.Sets;
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 import com.upplication.s3fs.S3Path;
+import com.upplication.s3fs.attribute.S3PosixFileAttributes;
+import com.upplication.s3fs.attribute.S3UserPrincipal;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.FileTime;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,15 +66,81 @@ public class S3Utils {
      * getS3FileAttributes for the s3Path
      *
      * @param s3Path S3Path mandatory not null
-     * @return S3FileAttributes
+     * @return S3FileAttributes never null
      */
-    public S3FileAttributes getS3FileAttributes(S3Path s3Path) throws NoSuchFileException {
+    public S3BasicFileAttributes getS3FileAttributes(S3Path s3Path) throws NoSuchFileException {
         S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
         return toS3FileAttributes(objectSummary, s3Path.getKey());
     }
 
     /**
-     * convert S3ObjectSummary to S3FileAttributes
+     * get the S3PosixFileAttributes for a S3Path
+     * @param s3Path Path mandatory not null
+     * @return S3PosixFileAttributes never null
+     * @throws NoSuchFileException if the Path doesnt exists
+     */
+    public S3PosixFileAttributes getS3PosixFileAttributes(S3Path s3Path) throws NoSuchFileException {
+        S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+
+        String key = s3Path.getKey();
+        String bucketName = s3Path.getFileStore().name();
+        AmazonS3 client = s3Path.getFileSystem().getClient();
+
+        AccessControlList acl = client.getObjectAcl(bucketName, key);
+        Owner owner = acl.getOwner();
+
+        S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
+        Set<PosixFilePermission> permissions = toPosixFilePermissions(acl.getGrants());
+
+        S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
+        return new S3PosixFileAttributes((String)attrs.fileKey(), attrs.lastModifiedTime(),
+                attrs.size(), attrs.isDirectory(), attrs.isRegularFile(), userPrincipal, null, permissions);
+    }
+
+
+    /**
+     * transform com.amazonaws.services.s3.model.Grant to java.nio.file.attribute.PosixFilePermission
+     * @see #toPosixFilePermission(Permission)
+     * @param grants Set grants mandatory, must be not null
+     * @return Set PosixFilePermission never null
+     */
+    public Set<PosixFilePermission> toPosixFilePermissions(Set<Grant> grants) {
+        Set<PosixFilePermission> filePermissions = new HashSet<>();
+        for (Grant grant : grants) {
+            filePermissions.addAll(toPosixFilePermission(grant.getPermission()));
+        }
+
+        return filePermissions;
+    }
+
+    /**
+     * transform a com.amazonaws.services.s3.model.Permission to a java.nio.file.attribute.PosixFilePermission
+     * We use the follow rules:
+     * - transform only to the Owner permission, S3 doesnt have concepts like owner, group or other so we map only to owner.
+     * - ACP is a special permission: WriteAcp are mapped to Owner execute permission and ReadAcp are mapped to owner read
+     * @param permission Permission to map, mandatory must be not null
+     * @return Set PosixFilePermission never null
+     */
+    public Set<PosixFilePermission> toPosixFilePermission(Permission permission){
+        switch (permission) {
+            case FullControl:
+                return Sets.newHashSet(PosixFilePermission.OWNER_EXECUTE,
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE);
+            case Write:
+                return Sets.newHashSet(PosixFilePermission.OWNER_WRITE);
+            case Read:
+                return Sets.newHashSet(PosixFilePermission.OWNER_READ);
+            case ReadAcp:
+                return Sets.newHashSet(PosixFilePermission.OWNER_READ);
+            case WriteAcp:
+                return Sets.newHashSet(PosixFilePermission.OWNER_EXECUTE);
+        }
+        throw new IllegalStateException("Unknown Permission: " + permission);
+    }
+
+    /**
+     * transform S3ObjectSummary to S3FileAttributes
      *
      * @param objectSummary S3ObjectSummary mandatory not null, the real objectSummary with
      *                      exactly the same key than the key param or the immediate descendant
@@ -76,7 +148,7 @@ public class S3Utils {
      * @param key           String the real key that can be exactly equal than the objectSummary or
      * @return S3FileAttributes
      */
-    public S3FileAttributes toS3FileAttributes(S3ObjectSummary objectSummary, String key) {
+    public S3BasicFileAttributes toS3FileAttributes(S3ObjectSummary objectSummary, String key) {
         // parse the data to BasicFileAttributes.
         FileTime lastModifiedTime = null;
         if (objectSummary.getLastModified() != null) {
@@ -102,6 +174,6 @@ public class S3Utils {
         } else {
             regularFile = true;
         }
-        return new S3FileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
+        return new S3BasicFileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
     }
 }

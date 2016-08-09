@@ -1,11 +1,11 @@
-package com.upplication.s3fs;
+package com.upplication.s3fs.attribute;
 
 import static java.lang.String.format;
 
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
-public class S3FileAttributes implements BasicFileAttributes {
+public class S3BasicFileAttributes implements BasicFileAttributes {
     private final FileTime lastModifiedTime;
     private final long size;
     private final boolean directory;
@@ -13,7 +13,7 @@ public class S3FileAttributes implements BasicFileAttributes {
     private final String key;
     private long cacheCreated;
 
-    public S3FileAttributes(String key, FileTime lastModifiedTime, long size, boolean isDirectory, boolean isRegularFile) {
+    public S3BasicFileAttributes(String key, FileTime lastModifiedTime, long size, boolean isDirectory, boolean isRegularFile) {
         this.key = key;
         this.lastModifiedTime = lastModifiedTime;
         this.size = size;

@@ -39,7 +39,7 @@ public class AmazonS3MockFactory extends AmazonS3Factory {
     private static FileSystem getFsMem() {
         if (fsMem == null)
             try {
-                fsMem = MemoryFileSystemBuilder.newEmpty().build(UUID.randomUUID().toString());
+                fsMem = MemoryFileSystemBuilder.newLinux().build(UUID.randomUUID().toString());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -26,6 +26,7 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 
 public class S3Path implements Path {
 
@@ -44,9 +45,9 @@ public class S3Path implements Path {
     private S3FileSystem fileSystem;
 
     /**
-     * S3FileAttributes cache
+     * S3BasicFileAttributes cache
      */
-    private S3FileAttributes fileAttributes;
+    private S3BasicFileAttributes fileAttributes;
 
     /**
      * path must be a string of the form "/{bucket}", "/{bucket}/{key}" or just
@@ -68,7 +69,7 @@ public class S3Path implements Path {
     /**
      * Build an S3Path from path segments. '/' are stripped from each segment.
      *
-     * @param fileSystem
+     * @param fileSystem S3FileSystem
      * @param first should be start with a '/' and is the bucket name
      * @param more  directories and files
      */
@@ -426,11 +427,11 @@ public class S3Path implements Path {
         return result;
     }
 
-    public S3FileAttributes getFileAttributes() {
+    public S3BasicFileAttributes getFileAttributes() {
         return fileAttributes;
     }
 
-    public void setFileAttributes(S3FileAttributes fileAttributes) {
+    public void setFileAttributes(S3BasicFileAttributes fileAttributes) {
         this.fileAttributes = fileAttributes;
     }
 

@@ -29,6 +29,7 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
+import com.upplication.s3fs.attribute.S3PosixFileAttributes;
 import com.upplication.s3fs.util.AttributesUtils;
 import com.upplication.s3fs.util.Cache;
 import com.upplication.s3fs.util.S3Utils;
@@ -233,7 +236,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
     /**
      * @return true if the key are overloaded by a system property
      */
-    protected boolean overloadPropertiesWithSystemEnv(Properties props, String key) {
+    public boolean overloadPropertiesWithSystemEnv(Properties props, String key) {
         if (systemGetEnv(key) != null) {
             props.setProperty(key, systemGetEnv(key));
             return true;
@@ -463,13 +466,24 @@ public class S3FileSystemProvider extends FileSystemProvider {
                 s3Path.setFileAttributes(null);
                 return result;
             } else {
-                S3FileAttributes attrs = s3Utils.getS3FileAttributes(s3Path);
+                S3BasicFileAttributes attrs = s3Utils.getS3FileAttributes(s3Path);
                 s3Path.setFileAttributes(attrs);
                 return type.cast(attrs);
             }
+        } else if (type == PosixFileAttributes.class) {
+            if (s3Path.getFileAttributes() instanceof PosixFileAttributes &&
+                    cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes())) {
+                A result = type.cast(s3Path.getFileAttributes());
+                s3Path.setFileAttributes(null);
+                return result;
+            }
+
+            S3PosixFileAttributes attrs = s3Utils.getS3PosixFileAttributes(s3Path);
+            s3Path.setFileAttributes(attrs);
+            return type.cast(attrs);
         }
 
-        throw new UnsupportedOperationException(format("only %s supported", BasicFileAttributes.class));
+        throw new UnsupportedOperationException(format("only %s or %s supported", BasicFileAttributes.class, PosixFileAttributes.class));
     }
 
     @Override
@@ -478,20 +492,28 @@ public class S3FileSystemProvider extends FileSystemProvider {
             throw new IllegalArgumentException("Attributes null");
         }
 
-        if (attributes.contains(":") && !attributes.contains("basic:")) {
-            throw new UnsupportedOperationException(format("attributes %s are not supported, only basic are supported", attributes));
+        if (attributes.contains(":") && !attributes.contains("basic:") && !attributes.contains("posix:")) {
+            throw new UnsupportedOperationException(format("attributes %s are not supported, only basic / posix are supported", attributes));
         }
 
         if (attributes.equals("*") || attributes.equals("basic:*")) {
             BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
             return AttributesUtils.fileAttributeToMap(attr);
-        } else {
+        }
+        else if (attributes.equals("posix:*")) {
+            PosixFileAttributes attr = readAttributes(path, PosixFileAttributes.class, options);
+            return AttributesUtils.fileAttributeToMap(attr);
+        }
+        else {
             String[] filters = new String[]{attributes};
             if (attributes.contains(",")){
                 filters = attributes.split(",");
             }
-            BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
-            return AttributesUtils.fileAttributeToMap(attr, filters);
+            Class<? extends BasicFileAttributes> filter = BasicFileAttributes.class;
+            if (attributes.startsWith("posix:")) {
+                filter = PosixFileAttributes.class;
+            }
+            return AttributesUtils.fileAttributeToMap(readAttributes(path, filter, options), filters);
         }
     }
 
@@ -534,7 +556,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
      *
      * @return Properties amazon.properties
      */
-    protected Properties loadAmazonProperties() {
+    public Properties loadAmazonProperties() {
         Properties props = new Properties();
         // http://www.javaworld.com/javaworld/javaqa/2003-06/01-qa-0606-load.html
         // http://www.javaworld.com/javaqa/2003-08/01-qa-0808-property.html

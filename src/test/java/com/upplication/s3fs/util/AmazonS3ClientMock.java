@@ -28,16 +28,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.nio.file.attribute.*;
+import java.util.*;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -365,7 +357,7 @@ public class AmazonS3ClientMock implements AmazonS3 {
         if (bucket == null) {
             throw new AmazonServiceException("bucket not found, " + bucketName);
         }
-        return createAllPermission(bucketName);
+        return createAclPermission(bucket, bucketName);
     }
 
     @Override
@@ -483,31 +475,23 @@ public class AmazonS3ClientMock implements AmazonS3 {
     }
 
     private S3Element parse(InputStream stream, String bucketName, String key) {
-        S3Object object = new S3Object();
-        object.setBucketName(bucketName);
-        object.setKey(key);
-        byte[] content;
-        try {
-            content = IOUtils.toByteArray(stream);
+        try (S3Object object = new S3Object()){
+            object.setBucketName(bucketName);
+            object.setKey(key);
+            byte[] content = IOUtils.toByteArray(stream);
+
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setLastModified(new Date());
+            metadata.setContentLength(content.length);
+
+            object.setObjectContent(new ByteArrayInputStream(content));
+            object.setObjectMetadata(metadata);
+            // TODO: create converter between path permission and s3 permission
+            AccessControlList permission = createAllPermission(bucketName);
+            return new S3Element(object, permission, false);
         } catch (IOException e) {
             throw new IllegalStateException("the stream is closed", e);
-        } finally {
-            try {
-                object.close();
-            } catch (IOException e) {
-                // ignore
-            }
         }
-
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setLastModified(new Date());
-        metadata.setContentLength(content.length);
-
-        object.setObjectContent(new ByteArrayInputStream(content));
-        object.setObjectMetadata(metadata);
-        // TODO: create converter between path permission and s3 permission
-        AccessControlList permission = createAllPermission(bucketName);
-        return new S3Element(object, permission, false);
     }
 
     private S3Element parse(Path elem, Path bucket) throws IOException {
@@ -532,10 +516,67 @@ public class AmazonS3ClientMock implements AmazonS3 {
         }
 
         object.setObjectMetadata(metadata);
-        // TODO: create converter between path permission and s3 permission
-        AccessControlList permission = createAllPermission(bucketName);
+        AccessControlList permission = createAclPermission(elem, bucketName);
 
         return new S3Element(object, permission, dir);
+    }
+
+    /**
+     * create the com.amazonaws.services.s3.model.AccessControlList from a Path
+     *
+     * @param elem Path
+     * @param bucketName String
+     * @return AccessControlList never null
+     */
+    private AccessControlList createAclPermission(Path elem, String bucketName) {
+        AccessControlList res = new AccessControlList();
+        final Owner owner = getOwner(bucketName);
+        res.setOwner(owner);
+        Grantee grant = new Grantee() {
+            @Override
+            public void setIdentifier(String id) {
+                //
+            }
+
+            @Override
+            public String getTypeIdentifier() {
+                return owner.getId();
+            }
+
+            @Override
+            public String getIdentifier() {
+                return owner.getId();
+            }
+        };
+
+        try {
+            Set<PosixFilePermission> permission = Files.readAttributes(elem, PosixFileAttributes.class).permissions();
+            for (PosixFilePermission posixFilePermission : permission) {
+                switch (posixFilePermission) {
+                    case GROUP_READ:
+                    case OTHERS_READ:
+                    case OWNER_READ:
+                        res.grantPermission(grant, Permission.Read);
+                        break;
+                    case OWNER_WRITE:
+                    case GROUP_WRITE:
+                    case OTHERS_WRITE:
+                        res.grantPermission(grant, Permission.Write);
+                        break;
+                    case OWNER_EXECUTE:
+                    case GROUP_EXECUTE:
+                    case OTHERS_EXECUTE:
+                        res.grantPermission(grant, Permission.WriteAcp);
+                        res.grantPermission(grant, Permission.ReadAcp);
+                        break;
+
+                }
+            }
+        }catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return res;
     }
 
     private AccessControlList createAllPermission(String bucketName) {
@@ -750,9 +791,13 @@ public class AmazonS3ClientMock implements AmazonS3 {
     }
 
     public void addFile(Path bucket, String fileName, byte[] content) throws IOException {
+        addFile(bucket, fileName, content, new FileAttribute<?>[0]);
+    }
+
+    public void addFile(Path bucket, String fileName, byte[] content, FileAttribute<?>... attrs) throws IOException {
         if (fileName.endsWith("/"))
             fileName.substring(0, fileName.length() - 1);
-        Path file = Files.createFile(bucket.resolve(fileName.replaceAll("/", "%2F")));
+        Path file = Files.createFile(bucket.resolve(fileName.replaceAll("/", "%2F")), attrs);
         OutputStream outputStream = Files.newOutputStream(file);
         outputStream.write(content);
         outputStream.close();

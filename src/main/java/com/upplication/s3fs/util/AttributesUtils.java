@@ -2,6 +2,7 @@ package com.upplication.s3fs.util;
 
 
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +13,7 @@ public abstract class AttributesUtils {
 
     /**
      * Given a BasicFileAttributes not null then return a Map
-     * with the keys as the fields of the BasicFileAttributes and the values
+     * with the keys as the fields of the BasicFileAttributes or PosixFileAttributes and the values
      * with the content of the fields
      *
      * @param attr BasicFileAttributes
@@ -29,11 +30,19 @@ public abstract class AttributesUtils {
         result.put("lastAccessTime", attr.lastAccessTime());
         result.put("lastModifiedTime", attr.lastModifiedTime());
         result.put("size", attr.size());
+
+        if (attr instanceof PosixFileAttributes) {
+            PosixFileAttributes posixAttr = (PosixFileAttributes) attr;
+            result.put("permissions", posixAttr.permissions());
+            result.put("owner", posixAttr.owner());
+            result.put("group", posixAttr.group());
+        }
+
         return result;
     }
 
     /**
-     * transform the BasicFileAttributes to Map filtering by the keys
+     * transform the java.nio.file.attribute.BasicFileAttributes to Map filtering by the keys
      * given in the filters param
      *
      * @param attr    BasicFileAttributes not null to tranform to map
@@ -45,6 +54,7 @@ public abstract class AttributesUtils {
 
         for (String filter : filters) {
             filter = filter.replace("basic:", "");
+            filter = filter.replace("posix:", "");
             switch (filter) {
                 case "creationTime":
                     result.put("creationTime", attr.creationTime());
@@ -72,6 +82,15 @@ public abstract class AttributesUtils {
                     break;
                 case "size":
                     result.put("size", attr.size());
+                    break;
+                case "permissions":
+                    result.put("permissions", ((PosixFileAttributes)attr).permissions());
+                    break;
+                case "group":
+                    result.put("group", ((PosixFileAttributes)attr).group());
+                    break;
+                case "owner":
+                    result.put("owner", ((PosixFileAttributes)attr).owner());
                     break;
             }
         }

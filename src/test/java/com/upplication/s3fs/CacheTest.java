@@ -1,5 +1,6 @@
 package com.upplication.s3fs;
 
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 import com.upplication.s3fs.util.Cache;
 import org.junit.Test;
 
@@ -15,7 +16,7 @@ public class CacheTest {
         Cache cache = spy(new Cache());
         doReturn(300L).when(cache).getCurrentTime();
 
-        S3FileAttributes attributes = new S3FileAttributes("key", null, 0, false, true);
+        S3BasicFileAttributes attributes = new S3BasicFileAttributes("key", null, 0, false, true);
         attributes.setCacheCreated(0);
 
         boolean result = cache.isInTime(300, attributes);
@@ -27,7 +28,7 @@ public class CacheTest {
         Cache cache = spy(new Cache());
         doReturn(200L).when(cache).getCurrentTime();
 
-        S3FileAttributes attributes = new S3FileAttributes("key", null, 0, false, true);
+        S3BasicFileAttributes attributes = new S3BasicFileAttributes("key", null, 0, false, true);
         attributes.setCacheCreated(0);
 
         boolean result = cache.isInTime(100, attributes);
@@ -39,7 +40,7 @@ public class CacheTest {
         Cache cache = spy(new Cache());
         doReturn(200L).when(cache).getCurrentTime();
 
-        S3FileAttributes attributes = new S3FileAttributes("key", null, 0, false, true);
+        S3BasicFileAttributes attributes = new S3BasicFileAttributes("key", null, 0, false, true);
         attributes.setCacheCreated(100);
 
         boolean result = cache.isInTime(-1, attributes);

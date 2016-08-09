@@ -1,5 +1,6 @@
 package com.upplication.s3fs;
 
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 import com.upplication.s3fs.util.AttributesUtils;
 import org.junit.Test;
 
@@ -29,7 +30,7 @@ public class AttributesUtilsTest {
         final long size = 10L;
         final boolean isDirectory = true;
         final String[] filters = new String[]{"isDirectory", "isRegularFile", "isOther", "creationTime", "fileKey", "isSymbolicLink", "lastAccessTime", "lastModifiedTime", "size"};
-        BasicFileAttributes attrs = new S3FileAttributes(key, fileTime, size, isDirectory, !isDirectory);
+        BasicFileAttributes attrs = new S3BasicFileAttributes(key, fileTime, size, isDirectory, !isDirectory);
 
         Map<String, Object> map = AttributesUtils.fileAttributeToMap(attrs, filters);
 

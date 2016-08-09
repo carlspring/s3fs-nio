@@ -1,6 +1,6 @@
 package com.upplication.s3fs.util;
 
-import com.upplication.s3fs.S3FileAttributes;
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 
 public class Cache {
 
@@ -11,7 +11,7 @@ public class Cache {
      * @param fileAttributes S3FileAttributes to check if is still valid, can be null
      * @return true or false, if cache are -1 and fileAttributes are not null then always return true
      */
-    public boolean isInTime(int cache, S3FileAttributes fileAttributes) {
+    public boolean isInTime(int cache, S3BasicFileAttributes fileAttributes) {
         if (fileAttributes == null) {
             return false;
         }

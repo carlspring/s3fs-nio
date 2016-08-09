@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.TimeUnit;
 
+import com.upplication.s3fs.attribute.S3BasicFileAttributes;
 import org.junit.Test;
 
 public class S3FileAttributesTest {
@@ -15,7 +16,7 @@ public class S3FileAttributesTest {
         final int size = 10;
         final boolean isDirectory = true;
         final boolean isRegularFile = true;
-        S3FileAttributes fileAttributes = new S3FileAttributes(key, fileTime, size, isDirectory, isRegularFile);
+        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key, fileTime, size, isDirectory, isRegularFile);
 
         String print = fileAttributes.toString();
 
@@ -33,7 +34,7 @@ public class S3FileAttributesTest {
         final int size = 138713;
         final boolean isDirectory = false;
         final boolean isRegularFile = false;
-        S3FileAttributes fileAttributes = new S3FileAttributes(key, fileTime, size, isDirectory, isRegularFile);
+        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key, fileTime, size, isDirectory, isRegularFile);
 
         String print = fileAttributes.toString();
 
