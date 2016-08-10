@@ -1,14 +1,10 @@
-package com.upplication.s3fs;
+package com.upplication.s3fs.FileSystemProvider;
 
-import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import com.google.common.collect.ImmutableMap;
+import com.upplication.s3fs.S3FileSystemProvider;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 
 import java.io.IOException;
 import java.net.URI;
@@ -18,13 +14,15 @@ import java.nio.file.FileSystems;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.Before;
-import org.junit.Test;
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
-import com.google.common.collect.ImmutableMap;
-import org.mockito.ArgumentMatcher;
-
-public class FileSystemProviderIT {
+public class NewFileSystemIT {
 
     private S3FileSystemProvider provider;
 
@@ -63,15 +61,7 @@ public class FileSystemProviderIT {
         final Map<String, String> env = buildFakeEnv();
         provider.newFileSystem(S3_GLOBAL_URI_IT, env);
 
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
-            @Override
-            public boolean matches(Object argument) {
-                Properties called = (Properties) argument;
-                assertEquals(env.get(ACCESS_KEY), called.get(ACCESS_KEY));
-                assertEquals(env.get(SECRET_KEY), called.get(SECRET_KEY));
-                return true;
-            }
-        }));
+        verifyCreationWithParams(env.get(ACCESS_KEY), env.get(SECRET_KEY), S3_GLOBAL_URI_IT);
     }
 
     @Test
@@ -86,15 +76,7 @@ public class FileSystemProviderIT {
 
         FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, null);
         assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
-            @Override
-            public boolean matches(Object argument) {
-                Properties called = (Properties) argument;
-                assertEquals(propAccessKey, called.get(ACCESS_KEY));
-                assertEquals(propSecretKey, called.get(SECRET_KEY));
-                return true;
-            }
-        }));
+        verifyCreationWithParams(propAccessKey, propSecretKey, S3_GLOBAL_URI_IT);
     }
 
     @Test
@@ -109,15 +91,7 @@ public class FileSystemProviderIT {
 
         FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, null);
         assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), argThat(new ArgumentMatcher<Properties>() {
-            @Override
-            public boolean matches(Object argument) {
-                Properties called = (Properties) argument;
-                assertEquals(propAccessKey, called.get(ACCESS_KEY));
-                assertEquals(propSecretKey, called.get(SECRET_KEY));
-                return true;
-            }
-        }));
+        verifyCreationWithParams(propAccessKey, propSecretKey, S3_GLOBAL_URI_IT);
     }
 
     @Test
@@ -128,6 +102,24 @@ public class FileSystemProviderIT {
 
         provider.newFileSystem(uri, null);
 
+        verifyCreationWithParams(accessKeyUri, secretKeyUri, uri);
+    }
+
+
+    @Test
+    public void createsAnonymousNotPossible() {
+        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, ImmutableMap.<String, Object>of());
+        assertNotNull(fileSystem);
+        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), eq(buildFakeProps()));
+    }
+
+    private Map<String, String> buildFakeEnv() {
+        return ImmutableMap.<String, String>builder()
+                .put(ACCESS_KEY, "access-key")
+                .put(SECRET_KEY, "secret-key").build();
+    }
+
+    private void verifyCreationWithParams(final String accessKeyUri, final String secretKeyUri, URI uri) {
         verify(provider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>() {
             @Override
             public boolean matches(Object argument) {
@@ -137,31 +129,6 @@ public class FileSystemProviderIT {
                 return true;
             }
         }));
-    }
-
-    @Test
-    public void createsAnonymousNotPossible() {
-        FileSystem fileSystem = provider.newFileSystem(S3_GLOBAL_URI_IT, ImmutableMap.<String, Object>of());
-        assertNotNull(fileSystem);
-        verify(provider).createFileSystem(eq(S3_GLOBAL_URI_IT), eq(buildFakeProps()));
-    }
-
-    @Test
-    public void getFileSystemWithSameEnvReturnSameFileSystem() {
-        doCallRealMethod().when(provider).loadAmazonProperties();
-
-        Map<String, Object> env = ImmutableMap.<String, Object>of("s3fs_access_key", "a", "s3fs_secret_key", "b");
-        FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
-        assertNotNull(fileSystem);
-
-        FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
-        assertSame(fileSystem, sameFileSystem);
-    }
-
-    private Map<String, String> buildFakeEnv() {
-        return ImmutableMap.<String, String>builder()
-                .put(ACCESS_KEY, "access-key")
-                .put(SECRET_KEY, "secret-key").build();
     }
 
     private Properties buildFakeProps() {

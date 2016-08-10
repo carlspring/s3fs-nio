@@ -225,7 +225,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
     /**
      * @return true if the key are overloaded by a system property
      */
-    protected boolean overloadPropertiesWithSystemProps(Properties props, String key) {
+    public boolean overloadPropertiesWithSystemProps(Properties props, String key) {
         if (System.getProperty(key) != null) {
             props.setProperty(key, System.getProperty(key));
             return true;
@@ -244,7 +244,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
         return false;
     }
 
-    protected String systemGetEnv(String key) {
+    public String systemGetEnv(String key) {
         return System.getenv(key);
     }
 
@@ -531,7 +531,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
      * @param props Properties
      * @return S3FileSystem never null
      */
-    protected S3FileSystem createFileSystem(URI uri, Properties props) {
+    public S3FileSystem createFileSystem(URI uri, Properties props) {
         return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
     }
 

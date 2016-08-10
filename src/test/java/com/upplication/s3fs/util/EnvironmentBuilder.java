@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
-import com.upplication.s3fs.FilesOperationsIT;
 import org.apache.http.client.utils.URIBuilder;
 
 /**
@@ -59,7 +58,7 @@ public abstract class EnvironmentBuilder {
         }
         final Properties props = new Properties();
         try {
-            props.load(FilesOperationsIT.class.getResourceAsStream("/amazon-test.properties"));
+            props.load(EnvironmentBuilder.class.getResourceAsStream("/amazon-test.properties"));
             return props.getProperty(BUCKET_NAME_KEY);
         } catch (IOException e) {
             throw new RuntimeException("needed /amazon-test.properties in the classpath");

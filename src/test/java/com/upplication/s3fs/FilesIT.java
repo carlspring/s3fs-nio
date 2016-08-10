@@ -1,36 +1,27 @@
 package com.upplication.s3fs;
 
-import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.upplication.s3fs.util.CopyDirVisitor;
+import com.upplication.s3fs.util.EnvironmentBuilder;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.UUID;
 
-import org.junit.Before;
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
+import static org.junit.Assert.*;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import com.upplication.s3fs.util.CopyDirVisitor;
-import com.upplication.s3fs.util.EnvironmentBuilder;
-import org.junit.Test;
-
-public class FilesOperationsIT {
+public class FilesIT {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
     private static final String bucket = EnvironmentBuilder.getBucket();
@@ -55,18 +46,6 @@ public class FilesOperationsIT {
 
     private static FileSystem createNewFileSystem() throws IOException {
         return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
-    }
-
-    @Test
-    public void buildEnv() {
-        FileSystem fileSystem = FileSystems.getFileSystem(uriGlobal);
-        assertSame(fileSystemAmazon, fileSystem);
-    }
-
-    @Test
-    public void buildEnvAnotherURIReturnDifferent() throws IOException {
-        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, null);
-        assertNotSame(fileSystemAmazon, fileSystem);
     }
 
     @Test
