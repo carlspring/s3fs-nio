@@ -7,12 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -44,6 +39,8 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 
         if (existed && this.options.contains(StandardOpenOption.CREATE_NEW))
             throw new FileAlreadyExistsException(format("target already exists: %s", path));
+        else if (!existed && !this.options.contains(StandardOpenOption.CREATE_NEW))
+            throw new NoSuchFileException(format("target not exists: %s", path));
 
         tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
         boolean removeTempFile = true;

@@ -281,6 +281,16 @@ public class NewByteChannelTest extends S3UnitTestBase {
         assertTrue(Files.exists(file));
     }
 
+    @Test(expected = NoSuchFileException.class)
+    public void seekableNotExists() throws IOException {
+        // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("bucketA").dir("dir");
+
+        Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
+        s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.noneOf(StandardOpenOption.class));
+    }
+
     /**
      * create a new file system for s3 scheme with fake credentials
      * and global endpoint

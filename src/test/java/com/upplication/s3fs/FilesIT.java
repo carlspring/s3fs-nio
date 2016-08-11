@@ -23,7 +23,6 @@ import static org.junit.Assert.*;
 
 public class FilesIT {
 
-    private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
     private static final String bucket = EnvironmentBuilder.getBucket();
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
@@ -104,6 +103,18 @@ public class FilesIT {
         Path file = Files.createTempFile(dir, "file", "temp");
 
         assertTrue(Files.exists(file));
+    }
+
+    @Test
+    public void createTempFileAndWrite() throws IOException {
+
+        Path dir = createEmptyDir();
+        Path testFile = Files.createTempFile(dir, "file-", ".tmp");
+        assertTrue(Files.exists(testFile));
+
+        final String content = "sample content";
+        Files.write(testFile, content.getBytes());
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(testFile));
     }
 
     @Test
@@ -300,6 +311,7 @@ public class FilesIT {
         assertTrue(Files.exists(result));
         assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
     }
+
 
     @Test
     public void copyDownload() throws IOException {
