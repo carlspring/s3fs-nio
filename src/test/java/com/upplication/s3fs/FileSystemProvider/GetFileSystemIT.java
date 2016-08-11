@@ -37,7 +37,6 @@ public class GetFileSystemIT {
             // ignore this
         }
         provider = spy(new S3FileSystemProvider());
-        doReturn(buildFakeProps()).when(provider).loadAmazonProperties();
         // dont override with system envs that we can have setted, like travis
         doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
         doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
@@ -45,23 +44,11 @@ public class GetFileSystemIT {
 
     @Test
     public void getFileSystemWithSameEnvReturnSameFileSystem() {
-        doCallRealMethod().when(provider).loadAmazonProperties();
-
         Map<String, Object> env = ImmutableMap.<String, Object>of("s3fs_access_key", "a", "s3fs_secret_key", "b");
         FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
         assertNotNull(fileSystem);
 
         FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
         assertSame(fileSystem, sameFileSystem);
-    }
-
-    private Properties buildFakeProps() {
-        try {
-            Properties props = new Properties();
-            props.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("amazon-test-sample.properties"));
-            return props;
-        } catch (IOException e) {
-            throw new RuntimeException("amazon-test-sample.properties not present");
-        }
     }
 }
