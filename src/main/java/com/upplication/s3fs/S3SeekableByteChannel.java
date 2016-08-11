@@ -39,7 +39,8 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
 
         if (existed && this.options.contains(StandardOpenOption.CREATE_NEW))
             throw new FileAlreadyExistsException(format("target already exists: %s", path));
-        else if (!existed && !this.options.contains(StandardOpenOption.CREATE_NEW))
+        else if (!existed && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
+                !this.options.contains(StandardOpenOption.CREATE))
             throw new NoSuchFileException(format("target not exists: %s", path));
 
         tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
