@@ -1,6 +1,7 @@
 package com.upplication.s3fs;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
@@ -74,10 +75,7 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
         client.bucket("buck").file("file1");
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3SeekableByteChannel channel = new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
-        assertNotNull(channel);
-        channel.write(ByteBuffer.wrap("hoi".getBytes()));
-        channel.close();
+        new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
     }
 
     @Test(expected = RuntimeException.class)
