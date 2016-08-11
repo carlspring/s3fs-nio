@@ -106,6 +106,18 @@ public class FilesIT {
     }
 
     @Test
+    public void createTempFileAndWrite() throws IOException {
+
+        Path dir = createEmptyDir();
+        Path testFile = Files.createTempFile(dir, "file-", ".tmp");
+        assertTrue(Files.exists(testFile));
+
+        final String content = "sample content";
+        Files.write(testFile, content.getBytes());
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(testFile));
+    }
+
+    @Test
     public void createTempDir() throws IOException {
         Path dir = createEmptyDir();
 
