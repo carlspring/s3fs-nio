@@ -162,36 +162,36 @@ public class NewByteChannelTest extends S3UnitTestBase {
     public void seekableRead() throws IOException {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir");
-
-        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
         final String content = "content";
-        Path file = Files.write(base.resolve("file"), content.getBytes());
+        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
+
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+
         ByteBuffer bufferRead = ByteBuffer.allocate(7);
         try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))) {
             seekable.position(0);
             seekable.read(bufferRead);
         }
         assertArrayEquals(bufferRead.array(), content.getBytes());
-        assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(file));
     }
 
     @Test
     public void seekableReadPartialContent() throws IOException {
         // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir");
-
-        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
         final String content = "content";
-        Path file = Files.write(base.resolve("file"), content.getBytes());
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
+
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+
         ByteBuffer bufferRead = ByteBuffer.allocate(4);
         try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file, EnumSet.of(StandardOpenOption.READ))) {
             seekable.position(3);
             seekable.read(bufferRead);
         }
         assertArrayEquals(bufferRead.array(), "tent".getBytes());
-        assertArrayEquals("content".getBytes(), Files.readAllBytes(base.resolve("file")));
+        assertArrayEquals(content.getBytes(), Files.readAllBytes(file));
     }
 
     @Test
