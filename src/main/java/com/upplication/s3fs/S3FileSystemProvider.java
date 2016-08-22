@@ -182,16 +182,18 @@ public class S3FileSystemProvider extends FileSystemProvider {
         if (authority != null) {
             String host = uriString.substring(uriString.indexOf("@") + 1, uriString.length());
             int lastPath = host.indexOf("/");
-			if (lastPath > -1) {
+            if (lastPath > -1) {
                 host = host.substring(0, lastPath);
-			}
-			if (host.length() == 0) {
+            }
+            if (host.length() == 0) {
                 host = Constants.S3_HOSTNAME;
-			}
+            }
             return authority + "@" + host;
-		}
-		String accessKey = (String) props.get(ACCESS_KEY);
-		return (accessKey != null ? accessKey + "@" : "") + (uri.getHost() != null ? uri.getHost() : Constants.S3_HOSTNAME);
+        } else {
+            String accessKey = (String) props.get(ACCESS_KEY);
+            return (accessKey != null ? accessKey + "@" : "") +
+                    (uri.getHost() != null ? uri.getHost() : Constants.S3_HOSTNAME);
+        }
     }
 
     protected void validateUri(URI uri) {
