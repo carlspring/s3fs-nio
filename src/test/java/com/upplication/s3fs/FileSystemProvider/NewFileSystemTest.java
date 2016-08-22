@@ -1,32 +1,40 @@
 package com.upplication.s3fs.FileSystemProvider;
 
+import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
+import static com.upplication.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
+import static com.upplication.s3fs.S3FileSystemProvider.CHARSET_KEY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.util.Map;
+import java.util.Properties;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatcher;
+
 import com.amazonaws.services.s3.internal.Constants;
 import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.S3FileSystem;
 import com.upplication.s3fs.S3FileSystemConfigurationException;
 import com.upplication.s3fs.S3FileSystemProvider;
 import com.upplication.s3fs.S3UnitTestBase;
-import com.upplication.s3fs.util.AmazonS3ClientMock;
-import com.upplication.s3fs.util.AmazonS3MockFactory;
 import com.upplication.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentMatcher;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.*;
-import java.util.Map;
-import java.util.Properties;
-
-import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
-import static com.upplication.s3fs.S3FileSystemProvider.CHARSET_KEY;
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.mockito.Mockito.*;
 
 public class NewFileSystemTest extends S3UnitTestBase {
 
@@ -59,6 +67,18 @@ public class NewFileSystemTest extends S3UnitTestBase {
     }
 
     @Test
+	public void newS3FileSystemWithCustomHost() {
+		FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@my.ceph.storage"), ImmutableMap.<String, Object> of());
+		assertEquals("access-key:secret-key@my.ceph.storage", ((S3FileSystem) s3fs).getKey());
+	}
+
+	@Test
+	public void newS3FileSystemWithCustomHostAndBucket() {
+		FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@my.ceph.storage/bucket"), ImmutableMap.<String, Object> of());
+		assertEquals("access-key:secret-key@my.ceph.storage", ((S3FileSystem) s3fs).getKey());
+	}
+
+	@Test
     public void createsAuthenticatedByEnv() {
         Map<String, ?> env = buildFakeEnv();
         FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);

@@ -19,14 +19,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.google.common.collect.ImmutableMap;
-import com.upplication.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.amazonaws.services.s3.AmazonS3Client;
+import com.google.common.collect.ImmutableMap;
 import com.upplication.s3fs.util.AmazonS3ClientMock;
 import com.upplication.s3fs.util.AmazonS3MockFactory;
+import com.upplication.s3fs.util.S3EndpointConstant;
 
 public class S3FileSystemTest extends S3UnitTestBase {
     private FileSystem fs;
@@ -221,7 +221,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
         assertEquals(1483378423, s3fs1.hashCode());
         assertEquals(684416791, s3fs2.hashCode());
         assertEquals(182977201, s3fs3.hashCode());
-        assertEquals(1163233038, s3fs4.hashCode());
+		assertEquals(-615984431, s3fs4.hashCode());
         assertEquals(-498271993, s3fs6.hashCode());
         assertEquals(-82123487, s3fs7.hashCode());
 
