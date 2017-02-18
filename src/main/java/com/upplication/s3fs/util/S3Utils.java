@@ -12,6 +12,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -84,15 +85,20 @@ public class S3Utils {
 
         String key = s3Path.getKey();
         String bucketName = s3Path.getFileStore().name();
-        AmazonS3 client = s3Path.getFileSystem().getClient();
-
-        AccessControlList acl = client.getObjectAcl(bucketName, key);
-        Owner owner = acl.getOwner();
-
-        S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
-        Set<PosixFilePermission> permissions = toPosixFilePermissions(acl.getGrants());
 
         S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
+        S3UserPrincipal userPrincipal = null;
+        Set<PosixFilePermission> permissions = null;
+
+        if (!attrs.isDirectory()) {
+            AmazonS3 client = s3Path.getFileSystem().getClient();
+            AccessControlList acl = client.getObjectAcl(bucketName, key);
+            Owner owner = acl.getOwner();
+
+            userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
+            permissions = toPosixFilePermissions(acl.getGrantsAsList());
+        }
+
         return new S3PosixFileAttributes((String)attrs.fileKey(), attrs.lastModifiedTime(),
                 attrs.size(), attrs.isDirectory(), attrs.isRegularFile(), userPrincipal, null, permissions);
     }
@@ -104,7 +110,7 @@ public class S3Utils {
      * @param grants Set grants mandatory, must be not null
      * @return Set PosixFilePermission never null
      */
-    public Set<PosixFilePermission> toPosixFilePermissions(Set<Grant> grants) {
+    public Set<PosixFilePermission> toPosixFilePermissions(List<Grant> grants) {
         Set<PosixFilePermission> filePermissions = new HashSet<>();
         for (Grant grant : grants) {
             filePermissions.addAll(toPosixFilePermission(grant.getPermission()));
