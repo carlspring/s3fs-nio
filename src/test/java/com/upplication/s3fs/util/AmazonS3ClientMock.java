@@ -36,6 +36,7 @@ import com.amazonaws.AmazonServiceException;
 import com.amazonaws.AmazonWebServiceRequest;
 import com.amazonaws.HttpMethod;
 import com.amazonaws.regions.Region;
+import com.amazonaws.services.s3.AbstractAmazonS3;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.S3ResponseMetadata;
@@ -44,7 +45,7 @@ import com.amazonaws.services.s3.waiters.AmazonS3Waiters;
 import com.amazonaws.util.StringUtils;
 import org.apache.http.MethodNotSupportedException;
 
-public class AmazonS3ClientMock implements AmazonS3 {
+public class AmazonS3ClientMock extends AbstractAmazonS3 {
     /**
      * max elements amazon aws
      */
