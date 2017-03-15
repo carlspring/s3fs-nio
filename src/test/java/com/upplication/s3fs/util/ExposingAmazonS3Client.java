@@ -1,5 +1,6 @@
 package com.upplication.s3fs.util;
 
+import java.net.URI;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.metrics.RequestMetricCollector;
@@ -23,5 +24,9 @@ public class ExposingAmazonS3Client extends AmazonS3Client {
 
     public RequestMetricCollector getRequestMetricCollector() {
         return super.requestMetricCollector();
+    }
+
+    public URI getEndpoint() {
+        return endpoint;
     }
 }
