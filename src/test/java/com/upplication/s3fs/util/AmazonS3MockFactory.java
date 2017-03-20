@@ -26,7 +26,7 @@ public class AmazonS3MockFactory extends AmazonS3Factory {
     }
 
     @Override
-    protected AmazonS3 buildAmazon(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
+    protected AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
         return getAmazonClientMock();
     }
 
