@@ -326,7 +326,7 @@ public class FilesIT {
         assertArrayEquals(Files.readAllBytes(result), Files.readAllBytes(notExistLocalResult));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void moveFromDifferentProviders() throws IOException {
         final String content = "sample content";
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
@@ -335,6 +335,10 @@ public class FilesIT {
             Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 
             Files.move(sourceLocal, result);
+
+            assertTrue(Files.exists(result));
+            assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
+            Files.notExists(sourceLocal);
         }
     }
 
@@ -498,6 +502,22 @@ public class FilesIT {
         assertEquals(null, attrs.lastModifiedTime());
         assertTrue(attrs.isDirectory());
 
+    }
+
+    @Test
+    public void fileIsReadableBucket() throws IOException {
+        Path path = fileSystemAmazon.getPath(bucket, "/");
+
+        boolean readable = Files.isReadable(path);
+        assertTrue(readable);
+    }
+
+    @Test
+    public void fileIsReadableBucketFile() throws IOException {
+        Path file = createEmptyFile();
+
+        boolean readable = Files.isReadable(file);
+        assertTrue(readable);
     }
 
     // helpers

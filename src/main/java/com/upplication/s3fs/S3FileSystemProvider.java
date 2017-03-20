@@ -41,10 +41,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -66,7 +63,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.upplication.s3fs.attribute.S3BasicFileAttributeView;
 import com.upplication.s3fs.attribute.S3BasicFileAttributes;
+import com.upplication.s3fs.attribute.S3PosixFileAttributeView;
 import com.upplication.s3fs.attribute.S3PosixFileAttributes;
 import com.upplication.s3fs.util.AttributesUtils;
 import com.upplication.s3fs.util.Cache;
@@ -478,7 +477,16 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
-        throw new UnsupportedOperationException();
+        S3Path s3Path = toS3Path(path);
+        if(type == BasicFileAttributeView.class) {
+            return (V) new S3BasicFileAttributeView(s3Path);
+        } else if(type == PosixFileAttributeView.class) {
+            return (V) new S3PosixFileAttributeView(s3Path);
+        } else if(type == null) {
+            throw new NullPointerException("Type is mandatory");
+        } else {
+            return null;
+        }
     }
 
     @Override
