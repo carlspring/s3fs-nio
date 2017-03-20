@@ -7,6 +7,7 @@ import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3Client;
 
 public class ExposingAmazonS3Client extends AmazonS3Client {
+
     private AWSCredentialsProvider awsCredentialsProvider;
 
     public ExposingAmazonS3Client(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector) {
