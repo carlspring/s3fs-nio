@@ -3,15 +3,12 @@ package com.upplication.s3fs;
 import java.net.URI;
 import java.util.Properties;
 
+import com.amazonaws.auth.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
-import com.amazonaws.internal.StaticCredentialsProvider;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
 
@@ -41,6 +38,23 @@ public abstract class AmazonS3Factory {
     protected Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
+     * Build a new Amazon S3 instance with the URI and the properties provided
+     * @param uri URI mandatory
+     * @param props Properties with the credentials and others options
+     * @return AmazonS3
+     */
+    public AmazonS3 getAmazonS3(URI uri, Properties props) {
+        AmazonS3 client = createAmazonS3(getCredentialsProvider(props), getClientConfiguration(props), getRequestMetricsCollector(props));
+        if (uri.getHost() != null) {
+            if (uri.getPort() != -1)
+                client.setEndpoint(uri.getHost() + ':' + uri.getPort());
+            else
+                client.setEndpoint(uri.getHost());
+        }
+        return client;
+    }
+
+    /**
      * should return a new AmazonS3
      *
      * @param credentialsProvider     AWSCredentialsProvider mandatory
@@ -50,19 +64,12 @@ public abstract class AmazonS3Factory {
      */
     protected abstract AmazonS3 createAmazonS3(AWSCredentialsProvider credentialsProvider, ClientConfiguration clientConfiguration, RequestMetricCollector requestMetricsCollector);
 
-    public AmazonS3 getAmazonS3(URI uri, Properties props) {
-        AmazonS3 client = createAmazonS3(getCredentialsProvider(props), getClientConfiguration(props), getRequestMetricsCollector(props));
-        if (uri.getHost() != null)
-            client.setEndpoint(uri.getHost());
-        return client;
-    }
-
     protected AWSCredentialsProvider getCredentialsProvider(Properties props) {
         AWSCredentialsProvider credentialsProvider;
         if (props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
             credentialsProvider = new DefaultAWSCredentialsProviderChain();
         else
-            credentialsProvider = new StaticCredentialsProvider(getAWSCredentials(props));
+            credentialsProvider = new AWSStaticCredentialsProvider(getAWSCredentials(props));
         return credentialsProvider;
     }
 
@@ -110,7 +117,7 @@ public abstract class AmazonS3Factory {
         if (props.getProperty(SOCKET_TIMEOUT) != null)
             clientConfiguration.setSocketTimeout(Integer.parseInt(props.getProperty(SOCKET_TIMEOUT)));
         if (props.getProperty(USER_AGENT) != null)
-            clientConfiguration.setUserAgent(props.getProperty(USER_AGENT));
+            clientConfiguration.setUserAgentPrefix(props.getProperty(USER_AGENT));
         return clientConfiguration;
     }
 

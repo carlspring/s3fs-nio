@@ -88,7 +88,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
 
     @Override
     public Set<String> supportedFileAttributeViews() {
-        return ImmutableSet.of("basic");
+        return ImmutableSet.of("basic", "posix");
     }
 
     @Override

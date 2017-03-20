@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.net.URI;
 import java.util.Properties;
 
 import com.upplication.s3fs.util.S3EndpointConstant;
@@ -161,5 +162,17 @@ public class AmazonS3ClientFactoryTest {
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
         assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[0]);
         assertEquals(54321, clientConfiguration.getSocketBufferSizeHints()[1]);
+    }
+
+    @Test
+    public void overrideHostAndPort() throws Exception {
+        AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+        System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "test");
+        System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "test");
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(URI.create("s3://localhost:8001/"), new Properties());
+        URI endpoint = client.getEndpoint();
+        assertEquals("https", endpoint.getScheme());
+        assertEquals("localhost", endpoint.getHost());
+        assertEquals(8001, endpoint.getPort());
     }
 }

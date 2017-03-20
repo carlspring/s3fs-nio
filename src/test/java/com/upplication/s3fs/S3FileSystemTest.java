@@ -179,9 +179,8 @@ public class S3FileSystemTest extends S3UnitTestBase {
         assertNotNull(operations);
         assertTrue(!operations.isEmpty());
 
-        for (String operation : operations) {
-            assertEquals("basic", operation);
-        }
+        assertTrue(operations.contains("basic"));
+        assertTrue(operations.contains("posix"));
     }
 
     @Test
