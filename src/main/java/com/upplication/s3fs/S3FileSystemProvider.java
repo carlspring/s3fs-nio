@@ -1,58 +1,5 @@
 package com.upplication.s3fs;
 
-import static com.google.common.collect.Sets.difference;
-import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static com.upplication.s3fs.AmazonS3Factory.CONNECTION_TIMEOUT;
-import static com.upplication.s3fs.AmazonS3Factory.MAX_CONNECTIONS;
-import static com.upplication.s3fs.AmazonS3Factory.MAX_ERROR_RETRY;
-import static com.upplication.s3fs.AmazonS3Factory.PROTOCOL;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_DOMAIN;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_HOST;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_PASSWORD;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_PORT;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_USERNAME;
-import static com.upplication.s3fs.AmazonS3Factory.PROXY_WORKSTATION;
-import static com.upplication.s3fs.AmazonS3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
-import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static com.upplication.s3fs.AmazonS3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
-import static com.upplication.s3fs.AmazonS3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
-import static com.upplication.s3fs.AmazonS3Factory.SOCKET_TIMEOUT;
-import static com.upplication.s3fs.AmazonS3Factory.USER_AGENT;
-import static java.lang.String.format;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.AccessMode;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.*;
-import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.internal.Constants;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
@@ -70,6 +17,23 @@ import com.upplication.s3fs.attribute.S3PosixFileAttributes;
 import com.upplication.s3fs.util.AttributesUtils;
 import com.upplication.s3fs.util.Cache;
 import com.upplication.s3fs.util.S3Utils;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.channels.FileChannel;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
+import java.nio.file.spi.FileSystemProvider;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import static com.google.common.collect.Sets.difference;
+import static com.upplication.s3fs.AmazonS3Factory.*;
+import static java.lang.String.format;
 
 /**
  * Spec:
@@ -140,8 +104,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
 
     private Properties getProperties(URI uri, Map<String, ?> env) {
         Properties props = loadAmazonProperties();
-        // but can be overloaded by envs vars
-        overloadProperties(props, env);
+        addEnvProperties(props, env);
         // and access key and secret key can be override
         String userInfo = uri.getUserInfo();
         if (userInfo != null) {
@@ -200,13 +163,20 @@ public class S3FileSystemProvider extends FileSystemProvider {
         Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
     }
 
-    protected void overloadProperties(Properties props, Map<String, ?> env) {
+    protected void addEnvProperties(Properties props, Map<String, ?> env) {
         if (env == null)
             env = new HashMap<>();
-        for (String key : new String[]{ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
+        List<String> propsToOverload = Arrays.asList(ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
                 PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
-                USER_AGENT, AMAZON_S3_FACTORY_CLASS}) {
-            overloadProperty(props, env, key);
+                USER_AGENT, AMAZON_S3_FACTORY_CLASS);
+        for (String key : env.keySet()) {
+            Object value = env.get(key);
+            if (propsToOverload.contains(key)) {
+                // but can be overloaded by envs vars
+                overloadProperty(props, env, key);
+            } else {
+                props.put(key, value);
+            }
         }
     }
 
@@ -365,6 +335,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
         return new S3SeekableByteChannel(s3Path, options);
     }
 
+    @Override
+    public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
+        S3Path s3Path = toS3Path(path);
+        return new S3FileChannel(s3Path, options);
+    }
+
     /**
      * Deviations from spec: Does not perform atomic check-and-create. Since a
      * directory is just an S3 object, all directories in the hierarchy are
@@ -478,11 +454,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
     @Override
     public <V extends FileAttributeView> V getFileAttributeView(Path path, Class<V> type, LinkOption... options) {
         S3Path s3Path = toS3Path(path);
-        if(type == BasicFileAttributeView.class) {
+        if (type == BasicFileAttributeView.class) {
             return (V) new S3BasicFileAttributeView(s3Path);
-        } else if(type == PosixFileAttributeView.class) {
+        } else if (type == PosixFileAttributeView.class) {
             return (V) new S3PosixFileAttributeView(s3Path);
-        } else if(type == null) {
+        } else if (type == null) {
             throw new NullPointerException("Type is mandatory");
         } else {
             return null;
@@ -531,14 +507,12 @@ public class S3FileSystemProvider extends FileSystemProvider {
         if (attributes.equals("*") || attributes.equals("basic:*")) {
             BasicFileAttributes attr = readAttributes(path, BasicFileAttributes.class, options);
             return AttributesUtils.fileAttributeToMap(attr);
-        }
-        else if (attributes.equals("posix:*")) {
+        } else if (attributes.equals("posix:*")) {
             PosixFileAttributes attr = readAttributes(path, PosixFileAttributes.class, options);
             return AttributesUtils.fileAttributeToMap(attr);
-        }
-        else {
+        } else {
             String[] filters = new String[]{attributes};
-            if (attributes.contains(",")){
+            if (attributes.contains(",")) {
                 filters = attributes.split(",");
             }
             Class<? extends BasicFileAttributes> filter = BasicFileAttributes.class;

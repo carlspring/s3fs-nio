@@ -1,16 +1,16 @@
 package com.upplication.s3fs;
 
-import java.net.URI;
-import java.util.Properties;
-
-import com.amazonaws.auth.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
+
+import java.net.URI;
+import java.util.Properties;
 
 /**
  * Factory base class to create a new AmazonS3 instance.
@@ -34,8 +34,6 @@ public abstract class AmazonS3Factory {
     public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
     public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
     public static final String USER_AGENT = "s3fs_user_agent";
-
-    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
      * Build a new Amazon S3 instance with the URI and the properties provided
