@@ -69,6 +69,9 @@ public class S3FileSystemProvider extends FileSystemProvider {
     public static final String AMAZON_S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
 
     private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
+    private static final List<String> PROPS_TO_OVERLOAD = Arrays.asList(ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
+            PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
+            USER_AGENT, AMAZON_S3_FACTORY_CLASS);
 
     private S3Utils s3Utils = new S3Utils();
     private Cache cache = new Cache();
@@ -166,17 +169,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
     protected void addEnvProperties(Properties props, Map<String, ?> env) {
         if (env == null)
             env = new HashMap<>();
-        List<String> propsToOverload = Arrays.asList(ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
-                PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
-                USER_AGENT, AMAZON_S3_FACTORY_CLASS);
-        for (String key : propsToOverload) {
+        for (String key : PROPS_TO_OVERLOAD) {
             // but can be overloaded by envs vars
             overloadProperty(props, env, key);
         }
 
         for (String key : env.keySet()) {
             Object value = env.get(key);
-            if (!propsToOverload.contains(key)) {
+            if (!PROPS_TO_OVERLOAD.contains(key)) {
                 props.put(key, value);
             }
         }
