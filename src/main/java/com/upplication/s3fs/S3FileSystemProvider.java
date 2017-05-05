@@ -169,12 +169,14 @@ public class S3FileSystemProvider extends FileSystemProvider {
         List<String> propsToOverload = Arrays.asList(ACCESS_KEY, SECRET_KEY, REQUEST_METRIC_COLLECTOR_CLASS, CONNECTION_TIMEOUT, MAX_CONNECTIONS, MAX_ERROR_RETRY, PROTOCOL, PROXY_DOMAIN,
                 PROXY_HOST, PROXY_PASSWORD, PROXY_PORT, PROXY_USERNAME, PROXY_WORKSTATION, SOCKET_SEND_BUFFER_SIZE_HINT, SOCKET_RECEIVE_BUFFER_SIZE_HINT, SOCKET_TIMEOUT,
                 USER_AGENT, AMAZON_S3_FACTORY_CLASS);
+        for (String key : propsToOverload) {
+            // but can be overloaded by envs vars
+            overloadProperty(props, env, key);
+        }
+
         for (String key : env.keySet()) {
             Object value = env.get(key);
-            if (propsToOverload.contains(key)) {
-                // but can be overloaded by envs vars
-                overloadProperty(props, env, key);
-            } else {
+            if (!propsToOverload.contains(key)) {
                 props.put(key, value);
             }
         }
