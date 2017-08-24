@@ -12,10 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -27,40 +24,38 @@ public class S3FileChannel extends FileChannel {
     private S3Path path;
     private Set<? extends OpenOption> options;
     private FileChannel filechannel;
-    private File tempFile;
+    private Path tempFile;
 
     public S3FileChannel(S3Path path, Set<? extends OpenOption> options) throws IOException {
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
         String key = path.getKey();
-        boolean existed = path.getFileSystem().provider().exists(path);
+        boolean exists = path.getFileSystem().provider().exists(path);
 
-        if (existed && this.options.contains(StandardOpenOption.CREATE_NEW))
+        if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
             throw new FileAlreadyExistsException(format("target already exists: %s", path));
-        else if (!existed
-                && !this.options.contains(StandardOpenOption.CREATE_NEW)
-                && !this.options.contains(StandardOpenOption.CREATE))
+        else if (!exists && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
+                !this.options.contains(StandardOpenOption.CREATE))
             throw new NoSuchFileException(format("target not exists: %s", path));
 
-        tempFile = File.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+        tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
         boolean removeTempFile = true;
         try {
-            if (existed && this.options.contains(StandardOpenOption.READ)) {
+            if (exists) {
                 try (S3Object object = path.getFileSystem()
                         .getClient()
                         .getObject(path.getFileStore().getBucket().getName(), key)) {
-                    IOUtils.copy(object.getObjectContent(), new FileOutputStream(tempFile));
+                    Files.copy(object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
-            if (this.options.contains(StandardOpenOption.READ)) {
-                filechannel = new FileInputStream(tempFile).getChannel();
-            } else {
-                filechannel = new FileOutputStream(tempFile).getChannel();
-            }
+
+            Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
+            fileChannelOptions.remove(StandardOpenOption.CREATE_NEW);
+            filechannel = FileChannel.open(tempFile, fileChannelOptions);
             removeTempFile = false;
         } finally {
             if (removeTempFile) {
-                tempFile.delete();
+                Files.deleteIfExists(tempFile);
             }
         }
     }
@@ -150,16 +145,25 @@ public class S3FileChannel extends FileChannel {
         super.close();
         filechannel.close();
         if (!this.options.contains(StandardOpenOption.READ)) {
-            try (InputStream stream = new BufferedInputStream(new FileInputStream(tempFile))) {
-                ObjectMetadata metadata = new ObjectMetadata();
-                metadata.setContentLength(tempFile.length());
-                metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
-
-                String bucket = path.getFileStore().name();
-                String key = path.getKey();
-                path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
-            }
+            sync();
         }
-        tempFile.delete();
+        Files.deleteIfExists(tempFile);
+    }
+
+    /**
+     * try to sync the temp file with the remote s3 path.
+     *
+     * @throws IOException if the tempFile fails to open a newInputStream
+     */
+    protected void sync() throws IOException {
+        try (InputStream stream = new BufferedInputStream(Files.newInputStream(tempFile))) {
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(Files.size(tempFile));
+            metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
+
+            String bucket = path.getFileStore().name();
+            String key = path.getKey();
+            path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
+        }
     }
 }
