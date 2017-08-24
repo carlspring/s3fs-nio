@@ -438,9 +438,11 @@ public class S3PathTest extends S3UnitTestBase {
 
     // toRealPath
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void toRealPathThrowException() throws IOException {
-        forPath("file1").toRealPath();
+        Path path = forPath("/file1");
+        Path other = path.toRealPath();
+        assertEquals(path, other);
     }
 
     // toAbsolutePath

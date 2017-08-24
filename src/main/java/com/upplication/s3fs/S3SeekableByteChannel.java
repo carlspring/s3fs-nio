@@ -35,18 +35,18 @@ public class S3SeekableByteChannel implements SeekableByteChannel {
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
         String key = path.getKey();
-        boolean existed = path.getFileSystem().provider().exists(path);
+        boolean exists = path.getFileSystem().provider().exists(path);
 
-        if (existed && this.options.contains(StandardOpenOption.CREATE_NEW))
+        if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
             throw new FileAlreadyExistsException(format("target already exists: %s", path));
-        else if (!existed && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
+        else if (!exists && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
                 !this.options.contains(StandardOpenOption.CREATE))
             throw new NoSuchFileException(format("target not exists: %s", path));
 
         tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
         boolean removeTempFile = true;
         try {
-            if (existed) {
+            if (exists) {
                 try (S3Object object = path.getFileSystem()
                         .getClient()
                         .getObject(path.getFileStore().getBucket().getName(), key)) {

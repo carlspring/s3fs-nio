@@ -132,6 +132,12 @@ public class InstallProviderTest {
         for (; pathNext.getParent() != null; pathNext = pathNext.getParent()) {
             pathFinal.insert(0, "/" + pathNext.getFileName().toString());
         }
+        String pathName = pathNext.toString();
+        if (pathName.endsWith("\\")) {
+            pathName = pathName.substring(0, pathName.length() - 1);
+        }
+        pathFinal.insert(0, "/" + pathName);
+
         return pathFinal.toString();
     }
 }
