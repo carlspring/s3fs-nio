@@ -1,3 +1,19 @@
+### What is new
+* Implemented S3FileChannel and adopted few places so that the FileSystem can be plugged in Apache Mina SFTP
+* Upgraded AWS SDK to 1.11.125
+* Added propagation of all passed in env's
+
+### How to use in Apache MINA
+```ruby
+public FileSystemFactory createFileSystemFactory(String bucketName) throws IOException, URISyntaxException {
+    FileSystem fileSystem = FileSystems.newFileSystem(new URI("s3:///"), env, Thread.currentThread().getContextClassLoader());
+    String bucketPath = fileSystem.getPath("/" + bucketName);
+
+    return new VirtualFileSystemFactory(bucketPath);
+}
+```
+--
+
 An **Amazon AWS S3** FileSystem Provider **JSR-203** for Java 7 (NIO2)
 
 Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any amount of data, at any time.
@@ -14,7 +30,7 @@ This project provides a first API implementation, little optimized, but "complet
 <dependency>
 	<groupId>com.upplication</groupId>
 	<artifactId>s3fs</artifactId>
-	<version>1.5.3</version>
+	<version>1.5.4</version>
 </dependency>
 ```
 

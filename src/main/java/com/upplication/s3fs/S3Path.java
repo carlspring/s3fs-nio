@@ -353,7 +353,7 @@ public class S3Path implements Path {
 
     @Override
     public Path toRealPath(LinkOption... options) throws IOException {
-        throw new UnsupportedOperationException();
+        return toAbsolutePath();
     }
 
     @Override
