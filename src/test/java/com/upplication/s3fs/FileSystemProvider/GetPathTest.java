@@ -57,12 +57,12 @@ public class GetPathTest extends S3UnitTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void getPathWithEndpointAndWithoutBucket() throws IOException {
         FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"), null);
-        fs.provider().getPath(URI.create("s3://endpoint1//falta-bucket"));
+        fs.provider().getPath(URI.create("s3://endpoint1//missed-bucket"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void getPathWithDefaultEndpointAndWithoutBucket() throws IOException {
         FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
-        fs.provider().getPath(URI.create("s3:////falta-bucket"));
+        fs.provider().getPath(URI.create("s3:////missed-bucket"));
     }
 }
