@@ -89,8 +89,8 @@ public class NewFileSystemTest extends S3UnitTestBase {
     @Test
     public void setEncodingByProperties() {
         Properties props = new Properties();
-        props.setProperty(SECRET_KEY, "better secret key");
-        props.setProperty(ACCESS_KEY, "better access key");
+        props.setProperty(SECRET_KEY, "better_secret_key");
+        props.setProperty(ACCESS_KEY, "better_access_key");
         props.setProperty(CHARSET_KEY, "UTF-8");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
         URI uri = S3EndpointConstant.S3_GLOBAL_URI_TEST;
@@ -98,21 +98,21 @@ public class NewFileSystemTest extends S3UnitTestBase {
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
 
-        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key", "UTF-8")));
+        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better_access_key", "better_secret_key", "UTF-8")));
     }
 
     @Test
     public void createAuthenticatedByProperties() {
         Properties props = new Properties();
-        props.setProperty(SECRET_KEY, "better secret key");
-        props.setProperty(ACCESS_KEY, "better access key");
+        props.setProperty(SECRET_KEY, "better_secret_key");
+        props.setProperty(ACCESS_KEY, "better_access_key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
         URI uri = S3EndpointConstant.S3_GLOBAL_URI_TEST;
 
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
 
-        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key")));
+        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better_access_key", "better_secret_key")));
     }
 
     @Test
@@ -149,8 +149,8 @@ public class NewFileSystemTest extends S3UnitTestBase {
     @Test
     public void createWithDefaultEndpoint() {
         Properties props = new Properties();
-        props.setProperty(SECRET_KEY, "better secret key");
-        props.setProperty(ACCESS_KEY, "better access key");
+        props.setProperty(SECRET_KEY, "better_secret_key");
+        props.setProperty(ACCESS_KEY, "better_access_key");
         props.setProperty(CHARSET_KEY, "UTF-8");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
         URI uri = URI.create("s3:///");
@@ -158,13 +158,13 @@ public class NewFileSystemTest extends S3UnitTestBase {
         FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
         assertNotNull(fileSystem);
 
-        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better access key", "better secret key", "UTF-8")));
+        verify(s3fsProvider).createFileSystem(eq(uri), eq(buildFakeProps("better_access_key", "better_secret_key", "UTF-8")));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithOnlyAccessKey() {
         Properties props = new Properties();
-        props.setProperty(ACCESS_KEY, "better access key");
+        props.setProperty(ACCESS_KEY, "better_access_key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
@@ -172,7 +172,7 @@ public class NewFileSystemTest extends S3UnitTestBase {
     @Test(expected = IllegalArgumentException.class)
     public void createWithOnlySecretKey() {
         Properties props = new Properties();
-        props.setProperty(SECRET_KEY, "better secret key");
+        props.setProperty(SECRET_KEY, "better_secret_key");
         doReturn(props).when(s3fsProvider).loadAmazonProperties();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, ImmutableMap.<String, Object>of());
     }
@@ -230,7 +230,7 @@ public class NewFileSystemTest extends S3UnitTestBase {
 
 
     private Map<String, ?> buildFakeEnv() {
-        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access key").put(SECRET_KEY, "secret key").build();
+        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key").put(SECRET_KEY, "secret_key").build();
     }
 
     private Properties buildFakeProps(String access_key, String secret_key, String encoding) {
