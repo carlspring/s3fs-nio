@@ -93,7 +93,7 @@ public class NewInputStreamTest extends S3UnitTestBase {
     }
 
     private Map<String, ?> buildFakeEnv() {
-        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access key").put(SECRET_KEY, "secret key").build();
+        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "accesskey").put(SECRET_KEY, "secretkey").build();
     }
 
     /**

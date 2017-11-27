@@ -50,7 +50,7 @@ public class DeleteTest extends S3UnitTestBase {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
         Path base = s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"),
-                ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access key").put(SECRET_KEY, "secret key").build())
+                ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key").put(SECRET_KEY, "secret_key").build())
                 .getPath("/bucketA/dir");
         // act
         s3fsProvider.delete(base);

@@ -136,7 +136,7 @@ public class NewOutputStreamTest extends S3UnitTestBase {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
-        return s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access key").put(SECRET_KEY, "secret key").build()).getPath("/bucketA/dir");
+        return s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key").put(SECRET_KEY, "secret_key").build()).getPath("/bucketA/dir");
     }
 
     /**

@@ -51,7 +51,7 @@ public class CreateDirectoryTest extends S3UnitTestBase {
         S3Path root = createNewS3FileSystem().getPath("/newer-bucket");
         Path resolve = root.resolve("folder");
         Path path = Files.createDirectories(resolve);
-        assertEquals("/newer-bucket/folder", path.toAbsolutePath().toString());
+        assertEquals("s3://s3.test.amazonaws.com/newer-bucket/folder", path.toAbsolutePath().toString());
         // assert
         assertTrue(Files.exists(root));
         assertTrue(Files.isDirectory(root));
