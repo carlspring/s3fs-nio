@@ -116,6 +116,8 @@ public class S3Path implements Path {
     /**
      * key for amazon without final slash.
      * <b>note:</b> the final slash need to be added to save a directory (Amazon s3 spec)
+     *
+     * @return the key for AmazonS3Client
      */
     public String getKey() {
 
@@ -125,12 +127,6 @@ public class S3Path implements Path {
             key = key.substring(1, key.length());
         }
 
-        // TODO: review this... :S
-        /*
-        if (key.endsWith("/")) {
-            key = key.substring(0, key.length()-1);
-        }
-        */
         return key;
     }
 

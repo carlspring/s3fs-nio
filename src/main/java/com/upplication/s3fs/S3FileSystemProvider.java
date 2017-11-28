@@ -229,6 +229,10 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     /**
+     * The system envs have preference over the properties files.
+     * So we overload it
+     * @param props Properties
+     * @param key String
      * @return true if the key are overloaded by a system property
      */
     public boolean overloadPropertiesWithSystemEnv(Properties props, String key) {
@@ -239,6 +243,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
         return false;
     }
 
+    /**
+     * Get the system env with the key param
+     * @param key String
+     * @return String or null
+     */
     public String systemGetEnv(String key) {
         return System.getenv(key);
     }
