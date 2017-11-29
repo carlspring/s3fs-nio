@@ -1,6 +1,7 @@
 package com.upplication.s3fs.Path;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import com.upplication.s3fs.S3FileSystemProvider;
 import com.upplication.s3fs.S3Path;
 import com.upplication.s3fs.S3UnitTestBase;
 import com.upplication.s3fs.util.S3EndpointConstant;
@@ -19,14 +20,16 @@ import static org.junit.Assert.assertTrue;
 
 public class EndsWithTest extends S3UnitTestBase {
 
-    @Before
-    public void setup() throws IOException {
-        FileSystems
-                .newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+    private S3FileSystemProvider s3fsProvider;
+
+    private S3Path getPath(String path) {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
 
-    private static S3Path getPath(String path) {
-        return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    @Before
+    public void setup() throws IOException {
+        s3fsProvider = getS3fsProvider();
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test

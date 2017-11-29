@@ -12,9 +12,12 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
@@ -22,13 +25,21 @@ import static com.upplication.s3fs.util.S3EndpointConstant.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class ToUriTest extends S3UnitTestBase {
 
+    private S3FileSystemProvider s3fsProvider;
+
     @Before
-    public void setup() throws IOException {
-        FileSystems
-                .newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+    public void setup() {
+        s3fsProvider = getS3fsProvider();
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -40,10 +51,9 @@ public class ToUriTest extends S3UnitTestBase {
         assertEquals("s3", uri.getScheme());
 
         // could get the correct fileSystem
-        FileSystem fs = FileSystems.getFileSystem(uri);
-        assertTrue(fs instanceof S3FileSystem);
+        S3FileSystem fs =  s3fsProvider.getFileSystem(uri);
         // the host is the endpoint specified in fileSystem
-        assertEquals(((S3FileSystem) fs).getEndpoint(), uri.getHost());
+        assertEquals(fs.getEndpoint(), uri.getHost());
 
         // bucket name as first path
         Path pathActual = fs.provider().getPath(uri);
@@ -67,8 +77,7 @@ public class ToUriTest extends S3UnitTestBase {
 
     @Test
     public void toUriRelative() {
-        S3FileSystem fileSystem = new S3FileSystemProvider()
-                .getFileSystem(S3_GLOBAL_URI_TEST);
+        S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST);
 
         S3Path path = new S3Path(fileSystem, "bla");
         assertEquals(URI.create("bla"), path.toUri());
@@ -84,8 +93,7 @@ public class ToUriTest extends S3UnitTestBase {
     @Test
     public void toUriWithCredentials() {
         Map<String, String> envs = ImmutableMap.<String, String>builder().put(ACCESS_KEY, "access").put(SECRET_KEY, "secret").build();
-        FileSystem fileSystem = new S3FileSystemProvider()
-                .newFileSystem(S3_GLOBAL_URI_TEST, envs);
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI_TEST, envs);
 
         Path path = fileSystem.getPath("/bla/file");
 
@@ -93,8 +101,24 @@ public class ToUriTest extends S3UnitTestBase {
     }
 
     @Test
+    public void toUriWithCredentialBySystemProperty() {
+
+        System.setProperty(ACCESS_KEY, "accessKeywii");
+        System.setProperty(SECRET_KEY, "secretKey");
+
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI_TEST, null);
+
+        Path path = fileSystem.getPath("/bla/file");
+
+        assertEquals(URI.create("s3://accessKeywii@s3.test.amazonaws.com/bla/file"), path.toUri());
+
+        System.clearProperty(ACCESS_KEY);
+        System.clearProperty(SECRET_KEY);
+    }
+
+    @Test
     public void toUriWithEndpoint() throws IOException {
-        try (FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint/"), null)) {
+        try (FileSystem fs = s3fsProvider.newFileSystem(URI.create("s3://endpoint/"), null)) {
             Path path = fs.getPath("/bucket/path/to/file");
             URI uri = path.toUri();
             // the scheme is s3
@@ -104,7 +128,7 @@ public class ToUriTest extends S3UnitTestBase {
         }
     }
 
-    private static S3Path getPath(String path) {
-        return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    private S3Path getPath(String path) {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
 }

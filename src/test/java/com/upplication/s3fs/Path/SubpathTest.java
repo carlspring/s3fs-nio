@@ -1,5 +1,6 @@
 package com.upplication.s3fs.Path;
 
+import com.upplication.s3fs.S3FileSystemProvider;
 import com.upplication.s3fs.S3Path;
 import com.upplication.s3fs.S3UnitTestBase;
 import com.upplication.s3fs.util.S3EndpointConstant;
@@ -14,19 +15,20 @@ import static org.junit.Assert.assertEquals;
 
 public class SubpathTest extends S3UnitTestBase {
 
-    private static S3Path getPath(String path) {
-        return (S3Path) FileSystems.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    private S3FileSystemProvider s3fsProvider;
+
+    private S3Path getPath(String path) {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
 
     @Before
     public void setup() throws IOException {
-        FileSystems
-                .newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        s3fsProvider = getS3fsProvider();
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
     public void subPath0() {
-        // TODO: this is ok?
         assertEquals(getPath("/bucket/path/"), getPath("/bucket/path/to/file").subpath(0, 1));
     }
 
