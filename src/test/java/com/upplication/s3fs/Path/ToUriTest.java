@@ -26,7 +26,9 @@ import static com.upplication.s3fs.util.S3EndpointConstant.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -36,11 +38,7 @@ public class ToUriTest extends S3UnitTestBase {
 
     @Before
     public void setup() {
-        s3fsProvider = spy(new S3FileSystemProvider());
-        // stub the possibility to add system envs var
-        doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
-        doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
-
+        s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
@@ -53,10 +51,9 @@ public class ToUriTest extends S3UnitTestBase {
         assertEquals("s3", uri.getScheme());
 
         // could get the correct fileSystem
-        FileSystem fs = FileSystems.getFileSystem(uri);
-        assertTrue(fs instanceof S3FileSystem);
+        S3FileSystem fs =  s3fsProvider.getFileSystem(uri);
         // the host is the endpoint specified in fileSystem
-        assertEquals(((S3FileSystem) fs).getEndpoint(), uri.getHost());
+        assertEquals(fs.getEndpoint(), uri.getHost());
 
         // bucket name as first path
         Path pathActual = fs.provider().getPath(uri);

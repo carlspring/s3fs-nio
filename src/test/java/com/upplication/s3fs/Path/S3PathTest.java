@@ -14,14 +14,21 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.HashMap;
 
+import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.*;
 
 public class S3PathTest extends S3UnitTestBase {
 
+    private S3FileSystemProvider s3fsProvider;
+
+    private S3Path forPath(String path) {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
+
     @Before
     public void setup() throws IOException {
-        FileSystems
-                .newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        s3fsProvider = getS3fsProvider();
+        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -179,13 +186,13 @@ public class S3PathTest extends S3UnitTestBase {
 
     @Test(expected = IllegalArgumentException.class)
     public void preconditions() {
-        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         new S3Path(fileSystem, "/");
     }
 
     @Test
     public void constructors() {
-        S3FileSystem fileSystem = new S3FileSystemProvider().getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         S3Path path = new S3Path(fileSystem, "/buckname");
         assertEquals("buckname", path.getFileStore().name());
         assertEquals("", path.getKey());
@@ -224,9 +231,5 @@ public class S3PathTest extends S3UnitTestBase {
     public void registerWatchService() throws IOException {
         S3Path path = forPath("/buck/file");
         path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
-    }
-
-    private static S3Path forPath(String path) {
-        return (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath(path);
     }
 }
