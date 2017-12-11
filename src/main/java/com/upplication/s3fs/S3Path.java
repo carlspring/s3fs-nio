@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.file.*;
 import java.util.Iterator;
@@ -60,8 +61,8 @@ public class S3Path implements Path {
 
         List<String> pathsURI = Lists
                 .newArrayList(Splitter.on(PATH_SEPARATOR)
-                .omitEmptyStrings()
-                .split(first));
+                        .omitEmptyStrings()
+                        .split(first));
 
         if (hasBucket) { // absolute path
 
@@ -468,6 +469,26 @@ public class S3Path implements Path {
         }
     }
 
+    /**
+     * Get the url for the s3Path.
+     *
+     * The url represents a Uniform Resource
+     * Locator, a pointer to a "resource" on the World
+     * Wide Web.
+     *
+     * All S3Path has a URL if is absolute
+     *
+     * @see com.amazonaws.services.s3.AmazonS3#getUrl(String, String)
+     * @see S3Path#toUri() for unique resource identifier
+     * @return URL or null if is not absoulte
+     */
+    public URL toURL() {
+        if (!this.isAbsolute())
+            return null;
+
+        return this.getFileSystem().getClient().getUrl(this.fileStore.name(), this.getKey());
+    }
+
     @Override
     public Path toAbsolutePath() {
         if (isAbsolute()) {
@@ -507,7 +528,7 @@ public class S3Path implements Path {
         }
 
         List<String> paths = uriToList();
-        String lastPath = paths.get(paths.size()-1);
+        String lastPath = paths.get(paths.size() - 1);
 
         for (String path : uriToList()) {
             String pathFinal = path + PATH_SEPARATOR;

@@ -8,9 +8,11 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.S3ClientOptions;
 
 import java.net.URI;
 import java.util.Properties;
+
 
 /**
  * Factory base class to create a new AmazonS3 instance.
@@ -35,6 +37,7 @@ public abstract class AmazonS3Factory {
     public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
     public static final String USER_AGENT = "s3fs_user_agent";
     public static final String SIGNER_OVERRIDE = "s3fs_signer_override";
+    public static final String PATH_STYLE_ACCESS = "s3fs_path_style_access";
 
     /**
      * Build a new Amazon S3 instance with the URI and the properties provided
@@ -50,6 +53,9 @@ public abstract class AmazonS3Factory {
             else
                 client.setEndpoint(uri.getHost());
         }
+
+        client.setS3ClientOptions(getClientOptions(props));
+
         return client;
     }
 
@@ -82,6 +88,15 @@ public abstract class AmazonS3Factory {
             }
         }
         return requestMetricCollector;
+    }
+
+    protected S3ClientOptions getClientOptions(Properties props) {
+        S3ClientOptions.Builder builder = S3ClientOptions.builder();
+        if (props.getProperty(PATH_STYLE_ACCESS) != null &&
+                Boolean.parseBoolean(props.getProperty(PATH_STYLE_ACCESS)))
+            builder.setPathStyleAccess(true);
+
+        return builder.build();
     }
 
     protected ClientConfiguration getClientConfiguration(Properties props) {

@@ -3,7 +3,6 @@ package com.upplication.s3fs;
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.any;
 
 import java.io.IOException;
 import java.net.URI;

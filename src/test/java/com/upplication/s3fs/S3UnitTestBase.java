@@ -23,7 +23,6 @@ public class S3UnitTestBase {
 
     @BeforeClass
     public static void setProperties() {
-
         System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);

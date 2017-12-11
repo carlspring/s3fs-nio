@@ -13,13 +13,10 @@ import org.junit.Test;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.*;
-import java.util.Properties;
 
 import static com.upplication.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static com.upplication.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
 
 public class DeleteTest extends S3UnitTestBase {
 
