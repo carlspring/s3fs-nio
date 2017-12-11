@@ -3,9 +3,7 @@ package com.upplication.s3fs;
 import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
 import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
 import static com.upplication.s3fs.AmazonS3Factory.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.net.URI;
 import java.util.Properties;
@@ -43,6 +41,7 @@ public class AmazonS3ClientFactoryTest {
         props.setProperty(SOCKET_TIMEOUT, "30");
         props.setProperty(USER_AGENT, "I-am-Groot");
         props.setProperty(SIGNER_OVERRIDE, "S3SignerType");
+        props.setProperty(PATH_STYLE_ACCESS, "true");
         ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
         AWSCredentialsProvider credentialsProvider = client.getAWSCredentialsProvider();
         AWSCredentials credentials = credentialsProvider.getCredentials();
@@ -65,6 +64,7 @@ public class AmazonS3ClientFactoryTest {
         assertEquals(30, clientConfiguration.getSocketTimeout());
         assertEquals("I-am-Groot", clientConfiguration.getUserAgent());
         assertEquals("S3SignerType", clientConfiguration.getSignerOverride());
+        assertTrue(client.getClientOptions().isPathStyleAccess());
     }
 
     @Test
@@ -95,6 +95,7 @@ public class AmazonS3ClientFactoryTest {
         assertEquals(50000, clientConfiguration.getSocketTimeout());
         assertTrue(clientConfiguration.getUserAgent().startsWith("aws-sdk-java"));
         assertNull(clientConfiguration.getSignerOverride());
+        assertFalse(client.getClientOptions().isPathStyleAccess());
     }
 
     @Test(expected = IllegalArgumentException.class)

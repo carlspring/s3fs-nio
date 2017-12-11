@@ -6,8 +6,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.Map;
 
-import org.junit.Ignore;
-
 import com.upplication.s3fs.util.EnvironmentBuilder;
 import org.junit.Test;
 

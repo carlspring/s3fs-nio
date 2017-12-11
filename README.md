@@ -14,7 +14,7 @@ This project provides a first API implementation, little optimized, but "complet
 <dependency>
 	<groupId>com.upplication</groupId>
 	<artifactId>s3fs</artifactId>
-	<version>2.0.0</version>
+	<version>2.2.0</version>
 </dependency>
 ```
 
@@ -79,6 +79,8 @@ Complete settings lists:
 * s3fs_socket_timeout
 * s3fs_user_agent
 * s3fs_amazon_s3_factory
+* s3fs_signer_override
+* s3fs_path_style_access
 
 ##### Set endpoint to reduce data latency in your applications
 
@@ -138,7 +140,6 @@ Now you can inject in any spring component:
 ```java
 @Autowired
 private FileSystem s3FileSystem;
-
 ```
 
 ##### What is new 2.0.0
@@ -147,6 +148,7 @@ private FileSystem s3FileSystem;
 * Removed META-INF/services/java.nio.file.spi.FileTypeDetector #78
 * Bucket are filestores and root directories for a bucket is the bucket itself.
 * getFileName for a root Path is ```null```
+* Added new method toURL to S3Path and can be customized with the property s3fs_path_style_access #83
 * Improved S3Path Tests
 
 #### Features:
