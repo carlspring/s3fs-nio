@@ -528,6 +528,10 @@ public class S3Path implements Path {
         }
 
         List<String> paths = uriToList();
+
+        if (uriToList().isEmpty())
+            return builder.build().iterator();
+
         String lastPath = paths.get(paths.size() - 1);
 
         for (String path : uriToList()) {
