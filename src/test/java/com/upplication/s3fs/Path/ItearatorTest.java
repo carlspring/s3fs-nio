@@ -14,6 +14,7 @@ import java.util.Iterator;
 
 import static com.upplication.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class ItearatorTest extends S3UnitTestBase {
 
@@ -37,6 +38,12 @@ public class ItearatorTest extends S3UnitTestBase {
         assertEquals(getPath("path/"), iterator.next());
         assertEquals(getPath("to/"), iterator.next());
         assertEquals(getPath("file"), iterator.next());
+    }
+
+    @Test
+    public void iteratorEmtpy() {
+        Iterator<Path> iterator = getPath("").iterator();
+        assertFalse(iterator.hasNext());
     }
 
 
