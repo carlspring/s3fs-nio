@@ -58,6 +58,13 @@ public class ToUriTest extends S3UnitTestBase {
     }
 
     @Test
+    public void toUriWithSpaces() {
+        S3Path s3Path = getPath("/bucket/with spaces");
+
+        assertEquals(S3_GLOBAL_URI_TEST.resolve("bucket/with%20spaces") , s3Path.toUri());
+    }
+
+    @Test
     public void toUriWithNotEndSlash() {
         S3Path s3Path = getPath("/bucket/file");
 
@@ -70,6 +77,14 @@ public class ToUriTest extends S3UnitTestBase {
 
         S3Path path = new S3Path(fileSystem, "bla");
         assertEquals(URI.create("bla"), path.toUri());
+    }
+
+    @Test
+    public void toUriRelativeWithSpaces() {
+        S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST);
+
+        S3Path path = new S3Path(fileSystem, "with space");
+        assertEquals(URI.create("with%20space"), path.toUri());
     }
 
     @Test
