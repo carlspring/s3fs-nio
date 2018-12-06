@@ -512,7 +512,7 @@ public class S3FileSystemProvider
             @Override
             public Iterator<Path> iterator()
             {
-                return new S3Iterator(s3Path);
+                return new S3FilteredIterator(s3Path, filter);
             }
         };
     }
