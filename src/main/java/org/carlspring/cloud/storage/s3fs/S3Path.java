@@ -12,9 +12,12 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -42,12 +45,12 @@ public class S3Path
      * URI not encoded
      * Is the key for S3Client
      */
-    private String uri;
+    private final String uri;
 
     /**
      * actual filesystem
      */
-    private S3FileSystem fileSystem;
+    private final S3FileSystem fileSystem;
 
     /**
      * S3BasicFileAttributes cache
@@ -109,18 +112,16 @@ public class S3Path
                 uriBuilder.append(path + PATH_SEPARATOR);
             }
         }
-
-        this.uri = normalizeURI(uriBuilder.toString());
+        String localUri = normalizeURI(uriBuilder.toString());
         // remove last PATH_SEPARATOR
         if (!first.isEmpty() &&
-            // only first param and not ended with PATH_SEPARATOR
-            ((!first.endsWith(PATH_SEPARATOR) && (more == null || more.length == 0))
-            // we have more param and not ended with PATH_SEPARATOR
-            || more != null && more.length > 0 && !more[more.length - 1].endsWith(PATH_SEPARATOR)))
-        {
-            this.uri = this.uri.substring(0, this.uri.length() - 1);
+                // only first param and not ended with PATH_SEPARATOR
+                ((!first.endsWith(PATH_SEPARATOR) && (more == null || more.length == 0))
+                // we have more param and not ended with PATH_SEPARATOR
+                || more != null &&  more.length > 0 && !more[more.length-1].endsWith(PATH_SEPARATOR))) {
+            localUri = localUri.substring(0, localUri.length() - 1);
         }
-
+        this.uri = localUri;
         this.fileSystem = fileSystem;
     }
 
@@ -435,10 +436,80 @@ public class S3Path
         return this.endsWith(new S3Path(this.fileSystem, other));
     }
 
+    // Inspired by "JimfsPath.isNormal()"
     @Override
     public Path normalize()
     {
-        return this;
+        List<String> pathParts = uriToList();
+        if (isNormal(pathParts))
+            return this;
+
+        Deque<String> newPathParts = new ArrayDeque<>();
+        for (String pathPart : pathParts)
+        {
+            if (pathPart.equals(".."))
+            {
+                String lastPathPart = newPathParts.peekLast();
+                if (lastPathPart != null && !lastPathPart.equals(".."))
+                {
+                    newPathParts.removeLast();
+                }
+                else if (!isAbsolute())
+                {
+                    // if there's a root and we have an extra ".." that would go
+                    // up above the root, ignore it
+                    newPathParts.add(pathPart);
+                }
+            }
+            else if (!pathPart.equals("."))
+            {
+                newPathParts.add(pathPart);
+            }
+        }
+        StringBuilder pathBuilder = new StringBuilder();
+        if (this.isAbsolute())
+        {
+            pathBuilder.append(PATH_SEPARATOR).append(this.fileStore.name()).append(PATH_SEPARATOR);
+        }
+        pathBuilder.append(Joiner.on(PATH_SEPARATOR).join(newPathParts));
+        if (newPathParts.size() > 0 && uri.endsWith(PATH_SEPARATOR))
+        {
+            pathBuilder.append(PATH_SEPARATOR);
+        }
+        return new S3Path(this.fileSystem, pathBuilder.toString());
+    }
+
+    // Inspired by "JimfsPath.isNormal()"
+    private boolean isNormal(List<String> pathParts)
+    {
+        if (getNameCount() == 0 || getNameCount() == 1 && !isAbsolute())
+        {
+            return true;
+        }
+        boolean foundNonParentName = isAbsolute(); // if there's a root, the
+                                                   // path doesn't start with ..
+        boolean normal = true;
+        for (String pathPart : pathParts)
+        {
+            if (pathPart.equals(".."))
+            {
+                if (foundNonParentName)
+                {
+                    normal = false;
+                    break;
+                }
+            }
+            else
+            {
+                if (pathPart.equals("."))
+                {
+                    normal = false;
+                    break;
+                }
+                foundNonParentName = true;
+            }
+        }
+        return normal;
     }
 
     @Override
