@@ -1,10 +1,39 @@
-/target
-/.idea
-*.iml
-*.iws
-*.ipr
-/src/test/resources/amazon-test.properties
-/test-output
-.classpath
-.project
+# common ignore
+*~
+target/
+tmp/
+*.versionsBackup
+.m2/
+
+# Java Files #
+*.jar
+*.war
+*.class
+
+# eclipse specific
 .settings
+.project
+.classpath
+.metadata
+.factorypath
+*.launch
+
+# idea specific
+.idea
+!.idea/codeStyleSettings.xml
+*.iml
+*.ipr
+*.iws
+
+# unix specific
+.DS_Store
+.directory
+
+# static plugins
+.pmd
+
+# log files
+logs/
+*.log
+
+lib/*
