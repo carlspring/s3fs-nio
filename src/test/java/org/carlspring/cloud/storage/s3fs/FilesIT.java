@@ -505,7 +505,7 @@ public class FilesIT {
     }
 
     @Test
-    public void fileIsReadableBucket() throws IOException {
+    public void fileIsReadableBucket() {
         Path path = fileSystemAmazon.getPath(bucket, "/");
 
         boolean readable = Files.isReadable(path);

@@ -54,13 +54,13 @@ public class NewFileSystemTest extends S3UnitTestBase {
     }
 
     @Test
-    public void newS3FileSystemWithEmptyHostAndUserInfo() throws IOException {
+    public void newS3FileSystemWithEmptyHostAndUserInfo() {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3:///bucket/file"), ImmutableMap.<String, Object>of());
         assertEquals(Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }
 
     @Test
-    public void newS3FileSystemWithEmptyHost() throws IOException {
+    public void newS3FileSystemWithEmptyHost() {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@/bucket/file"), ImmutableMap.<String, Object>of());
         assertEquals("access-key:secret-key@" + Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }

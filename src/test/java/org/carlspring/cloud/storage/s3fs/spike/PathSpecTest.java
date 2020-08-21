@@ -176,7 +176,7 @@ public class PathSpecTest {
 
 
     @Test
-    public void getFileNameRootIsNull() throws IOException {
+    public void getFileNameRootIsNull() {
         Path fileNameRoot = fs.getRootDirectories().iterator().next().getFileName();
         assertNull(fileNameRoot);
     }

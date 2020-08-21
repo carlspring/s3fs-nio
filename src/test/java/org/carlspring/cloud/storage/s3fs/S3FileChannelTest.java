@@ -119,7 +119,12 @@ public class S3FileChannelTest extends S3UnitTestBase {
     }
 
     @Test(expected = NoSuchFileException.class)
-    public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void tempFileDisappeared()
+            throws IOException,
+                   NoSuchFieldException,
+                   SecurityException,
+                   IllegalArgumentException,
+                   IllegalAccessException {
         S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
         S3FileChannel channel = new S3FileChannel(file2, EnumSet.of(StandardOpenOption.WRITE));
         Field f = channel.getClass().getDeclaredField("tempFile");

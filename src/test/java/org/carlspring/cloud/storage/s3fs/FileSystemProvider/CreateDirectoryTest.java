@@ -81,7 +81,7 @@ public class CreateDirectoryTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
+    private S3FileSystem createNewS3FileSystem() {
         try {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         } catch (FileSystemNotFoundException e) {

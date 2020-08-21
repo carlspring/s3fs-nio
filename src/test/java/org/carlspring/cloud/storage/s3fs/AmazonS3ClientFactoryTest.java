@@ -153,7 +153,7 @@ public class AmazonS3ClientFactoryTest {
     }
 
     @Test
-    public void overrideHostAndPort() throws Exception {
+    public void overrideHostAndPort() {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "test");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "test");

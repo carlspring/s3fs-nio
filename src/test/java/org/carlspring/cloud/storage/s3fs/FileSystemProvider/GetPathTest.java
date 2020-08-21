@@ -24,7 +24,7 @@ public class GetPathTest extends S3UnitTestBase {
     }
 
     @Test
-    public void getPathWithEmtpyEndpoint() throws IOException {
+    public void getPathWithEmptyEndpoint() throws IOException {
         FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
         Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 

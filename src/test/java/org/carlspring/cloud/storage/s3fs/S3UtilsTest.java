@@ -72,7 +72,6 @@ public class S3UtilsTest extends S3UnitTestBase {
         getS3ObjectSummary(file2);
     }
 
-
     public S3ObjectSummary getS3ObjectSummary(S3Path s3Path) throws NoSuchFileException {
         return new S3Utils().getS3ObjectSummary(s3Path);
     }

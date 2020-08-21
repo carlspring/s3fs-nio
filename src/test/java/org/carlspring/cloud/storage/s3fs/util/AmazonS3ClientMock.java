@@ -398,7 +398,8 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
     }
 
     @Override
-    public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey) throws AmazonClientException {
+    public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey)
+            throws AmazonClientException {
         Path src = find(sourceBucketName, sourceKey);
         if (src != null && Files.exists(src)) {
             Path bucket = find(destinationBucketName);
@@ -605,7 +606,7 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
             final List<Path> matches = new ArrayList<Path>();
             Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     String relativize = bucket.relativize(dir).toString();
                     if (relativize.equals(fileKey)) {
                         matches.add(dir);
@@ -614,7 +615,7 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     String relativize = bucket.relativize(file).toString();
                     if (relativize.equals(fileKey)) {
                         matches.add(file);

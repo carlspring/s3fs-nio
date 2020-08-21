@@ -25,7 +25,6 @@ public class ReadAttributesTest extends S3UnitTestBase {
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-
     // readAttributes BasicFileAttributes.class
 
     @Test
@@ -518,7 +517,7 @@ public class ReadAttributesTest extends S3UnitTestBase {
     // setAttribute
 
     @Test(expected = UnsupportedOperationException.class)
-    public void readAttributesObject() throws IOException {
+    public void readAttributesObject() {
         s3fsProvider.setAttribute(null, "", new Object());
     }
 

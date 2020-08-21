@@ -301,11 +301,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) {
         final S3Path s3Path = toS3Path(dir);
         return new DirectoryStream<Path>() {
             @Override
-            public void close() throws IOException {
+            public void close() {
                 // nothing to do here
             }
 
@@ -431,17 +431,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public boolean isSameFile(Path path1, Path path2) throws IOException {
+    public boolean isSameFile(Path path1, Path path2) {
         return path1.isAbsolute() && path2.isAbsolute() && path1.equals(path2);
     }
 
     @Override
-    public boolean isHidden(Path path) throws IOException {
+    public boolean isHidden(Path path) {
         return false;
     }
 
     @Override
-    public FileStore getFileStore(Path path) throws IOException {
+    public FileStore getFileStore(Path path) {
         throw new UnsupportedOperationException();
     }
 
@@ -536,7 +536,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
+    public void setAttribute(Path path, String attribute, Object value, LinkOption... options) {
         throw new UnsupportedOperationException();
     }
 

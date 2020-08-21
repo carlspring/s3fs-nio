@@ -70,7 +70,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
     }
 
     @Test
-    public void getAttributes() throws IOException {
+    public void getAttributes() {
         assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
         assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
         assertEquals("Mock", fileStore.getAttribute(AttrID.ownerDisplayName.name()));

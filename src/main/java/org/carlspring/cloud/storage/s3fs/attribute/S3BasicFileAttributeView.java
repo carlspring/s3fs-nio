@@ -27,7 +27,7 @@ public class S3BasicFileAttributeView implements BasicFileAttributeView {
     }
 
     @Override
-    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) throws IOException {
+    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
         // not implemented
     }
 }

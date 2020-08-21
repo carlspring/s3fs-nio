@@ -89,7 +89,12 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
     }
 
     @Test(expected = NoSuchFileException.class)
-    public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void tempFileDisappeared()
+            throws IOException,
+                   NoSuchFieldException,
+                   SecurityException,
+                   IllegalArgumentException,
+                   IllegalAccessException {
         S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
         S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
         Field f = channel.getClass().getDeclaredField("tempFile");

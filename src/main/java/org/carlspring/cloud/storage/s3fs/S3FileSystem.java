@@ -47,7 +47,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.provider.close(this);
     }
 
@@ -109,7 +109,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public WatchService newWatchService() throws IOException {
+    public WatchService newWatchService() {
         throw new UnsupportedOperationException();
     }
 

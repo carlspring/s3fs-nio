@@ -35,17 +35,17 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
     }
 
     @Override
-    public long getTotalSpace() throws IOException {
+    public long getTotalSpace() {
         return Long.MAX_VALUE;
     }
 
     @Override
-    public long getUsableSpace() throws IOException {
+    public long getUsableSpace() {
         return Long.MAX_VALUE;
     }
 
     @Override
-    public long getUnallocatedSpace() throws IOException {
+    public long getUnallocatedSpace() {
         return Long.MAX_VALUE;
     }
 
@@ -70,7 +70,7 @@ public class S3FileStore extends FileStore implements Comparable<S3FileStore> {
     }
 
     @Override
-    public Object getAttribute(String attribute) throws IOException {
+    public Object getAttribute(String attribute) {
         return getFileStoreAttributeView(S3FileStoreAttributeView.class).getAttribute(attribute);
     }
 

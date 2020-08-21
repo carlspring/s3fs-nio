@@ -25,7 +25,7 @@ public class SetAttributeTest extends S3UnitTestBase {
 
 
     @Test(expected = UnsupportedOperationException.class)
-    public void readAttributesObject() throws IOException {
+    public void readAttributesObject() {
         s3fsProvider.setAttribute(null, "", new Object());
     }
 
