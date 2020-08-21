@@ -1,6 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-import static org.mockito.Mockito.spy;
+import org.carlspring.cloud.storage.s3fs.AmazonS3Factory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -13,7 +13,7 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.carlspring.cloud.storage.s3fs.AmazonS3Factory;
+import static org.mockito.Mockito.spy;
 
 public class AmazonS3MockFactory extends AmazonS3Factory {
 

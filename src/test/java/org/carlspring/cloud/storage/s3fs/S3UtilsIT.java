@@ -1,11 +1,10 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
+import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
+import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
+import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,16 +12,16 @@ import java.net.URI;
 import java.nio.file.*;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.model.*;
-import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
-import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
-import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
-import org.carlspring.cloud.storage.s3fs.util.S3Utils;
-import org.junit.Before;
-
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.Before;
 import org.junit.Test;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
+import static org.junit.Assert.*;
 
 
 public class S3UtilsIT {

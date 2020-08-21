@@ -1,7 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static java.lang.String.format;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,10 +10,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.tika.Tika;
-
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3Object;
+import org.apache.tika.Tika;
+import static java.lang.String.format;
 
 public class S3SeekableByteChannel implements SeekableByteChannel {
 

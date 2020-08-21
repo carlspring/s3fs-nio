@@ -1,8 +1,5 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
@@ -12,11 +9,12 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ProviderSpecTest {
     FileSystem fs;

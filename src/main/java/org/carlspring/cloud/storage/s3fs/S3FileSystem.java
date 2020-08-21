@@ -1,13 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
-
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.WatchService;
+import java.nio.file.*;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Set;
 
@@ -15,6 +8,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
 
 /**
  * S3FileSystem with a concrete client configured and ready to use.
@@ -47,7 +41,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.provider.close(this);
     }
 
@@ -109,7 +103,7 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public WatchService newWatchService() throws IOException {
+    public WatchService newWatchService() {
         throw new UnsupportedOperationException();
     }
 

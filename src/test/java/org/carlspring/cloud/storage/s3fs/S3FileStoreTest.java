@@ -1,25 +1,26 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.*;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.*;
-import java.util.Map;
-
-import com.amazonaws.services.s3.model.*;
-import com.google.common.collect.ImmutableMap;
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
-
-import com.github.marschall.com.sun.nio.zipfs.ZipFileAttributeView;
 import org.carlspring.cloud.storage.s3fs.S3FileStoreAttributeView.AttrID;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.carlspring.cloud.storage.s3fs.util.UnsupportedFileStoreAttributeView;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.util.Map;
+
+import com.amazonaws.services.s3.model.Owner;
+import com.github.marschall.com.sun.nio.zipfs.ZipFileAttributeView;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.junit.Assert.*;
 
 public class S3FileStoreTest extends S3UnitTestBase {
 
@@ -70,7 +71,7 @@ public class S3FileStoreTest extends S3UnitTestBase {
     }
 
     @Test
-    public void getAttributes() throws IOException {
+    public void getAttributes() {
         assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
         assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
         assertEquals("Mock", fileStore.getAttribute(AttrID.ownerDisplayName.name()));

@@ -32,22 +32,22 @@ public class S3PosixFileAttributeView implements PosixFileAttributeView {
     }
 
     @Override
-    public void setOwner(UserPrincipal owner) throws IOException {
+    public void setOwner(UserPrincipal owner) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setPermissions(Set<PosixFilePermission> perms) throws IOException {
+    public void setPermissions(Set<PosixFilePermission> perms) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setGroup(GroupPrincipal group) throws IOException {
+    public void setGroup(GroupPrincipal group) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) throws IOException {
+    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
         // not implemented
     }
 

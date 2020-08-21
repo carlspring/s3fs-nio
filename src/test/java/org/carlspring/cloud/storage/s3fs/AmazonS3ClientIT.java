@@ -1,10 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealEnv;
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNotNull;
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -13,14 +9,17 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
-import org.junit.Before;
-
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectResult;
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
+import org.junit.Before;
 import org.junit.Test;
+import static java.util.UUID.randomUUID;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealEnv;
+import static org.junit.Assert.assertNotNull;
 
 public class AmazonS3ClientIT {
 

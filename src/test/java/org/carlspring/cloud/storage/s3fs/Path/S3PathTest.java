@@ -5,14 +5,14 @@ import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.HashMap;
 
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.*;
 
@@ -115,17 +115,17 @@ public class S3PathTest extends S3UnitTestBase {
     // register
 
     @Test(expected = UnsupportedOperationException.class)
-    public void registerWithEventsThrowException() throws IOException {
+    public void registerWithEventsThrowException() {
         forPath("file1").register(null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void registerThrowException() throws IOException {
+    public void registerThrowException() {
         forPath("file1").register(null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void registerWithEventsAndModiferThrowException() throws IOException {
+    public void registerWithEventsAndModifierThrowException() {
         forPath("file1").register(null);
     }
 
@@ -162,7 +162,7 @@ public class S3PathTest extends S3UnitTestBase {
 
     @SuppressWarnings("unused")
     @Test(expected = IllegalStateException.class)
-    public void toAbsolutePathRelativePathThrowException() throws IOException {
+    public void toAbsolutePathRelativePathThrowException() {
         forPath("file1").toAbsolutePath();
     }
 
@@ -221,14 +221,15 @@ public class S3PathTest extends S3UnitTestBase {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void register() throws IOException {
+    public void register() {
         S3Path path = forPath("/buck/file");
         path.register(null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void registerWatchService() throws IOException {
+    public void registerWatchService() {
         S3Path path = forPath("/buck/file");
         path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
     }
+
 }

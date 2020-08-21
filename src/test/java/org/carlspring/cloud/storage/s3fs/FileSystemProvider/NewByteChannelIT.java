@@ -1,12 +1,9 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
-import org.carlspring.cloud.storage.s3fs.util.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -18,8 +15,12 @@ import java.nio.file.*;
 import java.util.EnumSet;
 import java.util.UUID;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class NewByteChannelIT extends S3UnitTestBase {
 

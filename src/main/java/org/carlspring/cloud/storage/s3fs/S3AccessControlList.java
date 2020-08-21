@@ -1,7 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static java.lang.String.format;
-
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.util.EnumSet;
@@ -10,6 +8,7 @@ import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.Grant;
 import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.Permission;
+import static java.lang.String.format;
 
 public class S3AccessControlList {
     private String fileStoreName;

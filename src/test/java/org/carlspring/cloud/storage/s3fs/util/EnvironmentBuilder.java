@@ -1,8 +1,5 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,6 +8,8 @@ import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URIBuilder;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 
 /**
  * Test Helper

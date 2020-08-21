@@ -1,12 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import com.google.common.base.*;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
@@ -15,7 +11,11 @@ import java.nio.file.*;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.google.common.collect.Iterables.*;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import static com.google.common.collect.Iterables.concat;
 import static java.lang.String.format;
 
 public class S3Path implements Path {
@@ -499,7 +499,7 @@ public class S3Path implements Path {
     }
 
     @Override
-    public Path toRealPath(LinkOption... options) throws IOException {
+    public Path toRealPath(LinkOption... options) {
         return toAbsolutePath();
     }
 
@@ -509,12 +509,12 @@ public class S3Path implements Path {
     }
 
     @Override
-    public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
+    public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
+    public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) {
         throw new UnsupportedOperationException();
     }
 

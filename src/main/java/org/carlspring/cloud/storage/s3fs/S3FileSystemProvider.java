@@ -1,15 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.internal.Constants;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributeView;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributeView;
@@ -31,9 +21,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.internal.Constants;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Bucket;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import static com.google.common.collect.Sets.difference;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
 import static java.lang.String.format;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
 
 /**
  * Spec:
@@ -301,11 +301,11 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
+    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) {
         final S3Path s3Path = toS3Path(dir);
         return new DirectoryStream<Path>() {
             @Override
-            public void close() throws IOException {
+            public void close() {
                 // nothing to do here
             }
 
@@ -431,17 +431,17 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public boolean isSameFile(Path path1, Path path2) throws IOException {
+    public boolean isSameFile(Path path1, Path path2) {
         return path1.isAbsolute() && path2.isAbsolute() && path1.equals(path2);
     }
 
     @Override
-    public boolean isHidden(Path path) throws IOException {
+    public boolean isHidden(Path path) {
         return false;
     }
 
     @Override
-    public FileStore getFileStore(Path path) throws IOException {
+    public FileStore getFileStore(Path path) {
         throw new UnsupportedOperationException();
     }
 
@@ -536,7 +536,7 @@ public class S3FileSystemProvider extends FileSystemProvider {
     }
 
     @Override
-    public void setAttribute(Path path, String attribute, Object value, LinkOption... options) throws IOException {
+    public void setAttribute(Path path, String attribute, Object value, LinkOption... options) {
         throw new UnsupportedOperationException();
     }
 

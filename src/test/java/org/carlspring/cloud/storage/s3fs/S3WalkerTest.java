@@ -1,9 +1,9 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.reset;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,13 +11,10 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
-
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
-import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.reset;
 
 public class S3WalkerTest extends S3UnitTestBase {
 
@@ -25,25 +22,25 @@ public class S3WalkerTest extends S3UnitTestBase {
         List<String> visitOrder = new ArrayList<>();
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             visitOrder.add("preVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             visitOrder.add("visitFile(" + file.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        public FileVisitResult visitFileFailed(Path file, IOException exc) {
             visitOrder.add("visitFileFailed(" + file.toAbsolutePath().toString() + ", " + exc.getClass().getSimpleName() + "(" + exc.getMessage() + "))");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             visitOrder.add("postVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
         }
@@ -61,28 +58,28 @@ public class S3WalkerTest extends S3UnitTestBase {
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "preVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "visitFile(" + file.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+        public FileVisitResult visitFileFailed(Path file, IOException exc) {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "visitFileFailed(" + file.toAbsolutePath().toString() + ", " + exc.getClass().getSimpleName() + "(" + exc.getMessage() + "))");
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "postVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
             return FileVisitResult.CONTINUE;
@@ -200,7 +197,7 @@ public class S3WalkerTest extends S3UnitTestBase {
         final List<String> visitation = new ArrayList<>();
         FileVisitor<Path> visitor = new FileVisitor<Path>() {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 String fileName = dir.getFileName().toString();
                 if (fileName.equals("subfolder2"))
                     return FileVisitResult.SKIP_SUBTREE;
@@ -208,7 +205,7 @@ public class S3WalkerTest extends S3UnitTestBase {
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                 String name = file.getFileName().toString();
                 visitation.add(name);
                 if (name.equals("file3.1"))
@@ -219,12 +216,12 @@ public class S3WalkerTest extends S3UnitTestBase {
             }
 
             @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
                 return FileVisitResult.CONTINUE;
             }
         };
@@ -235,4 +232,5 @@ public class S3WalkerTest extends S3UnitTestBase {
         Files.walkFileTree(folder, visitor);
         assertEquals(Arrays.asList("file1.1", "file1.2", "file3.1", "file4.1"), visitation);
     }
+
 }

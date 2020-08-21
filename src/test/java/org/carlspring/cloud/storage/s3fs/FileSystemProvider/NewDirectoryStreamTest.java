@@ -7,15 +7,17 @@ import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.MockBucket;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
+import org.junit.Before;
+import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotNull;
 
 public class NewDirectoryStreamTest extends S3UnitTestBase {
 

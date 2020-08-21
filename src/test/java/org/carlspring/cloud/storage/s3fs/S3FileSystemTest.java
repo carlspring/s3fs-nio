@@ -1,19 +1,12 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,13 +15,12 @@ import java.util.Set;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.junit.Assert.*;
 
 public class S3FileSystemTest extends S3UnitTestBase {
     private FileSystem fs;
@@ -198,7 +190,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
     }
 
     @Test
-    public void comparables() throws IOException {
+    public void comparables() {
         // crear other vars
 
         S3FileSystemProvider provider = new S3FileSystemProvider();
@@ -260,11 +252,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
             assertEquals("folder with spaces", parts[2]);
             assertEquals("file", parts[3]);
         } finally {
-            try {
-                s3fs.close();
-            } catch (IOException e) {
-                // ignore
-            }
+            s3fs.close();
         }
     }
 
@@ -277,16 +265,12 @@ public class S3FileSystemTest extends S3UnitTestBase {
         try {
             assertEquals("folder with spaces/file", path.getKey());
         } finally {
-            try {
-                s3fs.close();
-            } catch (IOException e) {
-                // ignore
-            }
+            s3fs.close();
         }
     }
 
     @Test
-    public void urlWithSpecialCharacters() throws IOException {
+    public void urlWithSpecialCharacters() {
         String fileName = "βeta.png";
         String expected = "https://bucket.s3.eu-west-1.amazonaws.com/%CE%B2eta.png";
 
@@ -302,7 +286,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
     }
 
     @Test
-    public void urlWithSpaceCharacters() throws IOException {
+    public void urlWithSpaceCharacters() {
         String fileName = "beta gaming.png";
         String expected = "https://bucket.s3.eu-west-1.amazonaws.com/beta%20gaming.png";
 
@@ -327,11 +311,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
             provider.createDirectory(folder);
             assertTrue(Files.exists(folder));
         } finally {
-            try {
-                s3fs.close();
-            } catch (IOException e) {
-                // ignore
-            }
+            s3fs.close();
         }
     }
 
@@ -344,16 +324,12 @@ public class S3FileSystemTest extends S3UnitTestBase {
             S3Path folder = s3fs.getPath("/bucket", "folder");
             provider.createDirectory(folder, PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrw")));
         } finally {
-            try {
-                s3fs.close();
-            } catch (IOException e) {
-                // ignore
-            }
+            s3fs.close();
         }
     }
 
     @Test
-    public void isSameFile() throws IOException {
+    public void isSameFile() {
         S3FileSystemProvider provider = new S3FileSystemProvider();
         AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
         S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
@@ -367,11 +343,7 @@ public class S3FileSystemTest extends S3UnitTestBase {
             assertFalse(provider.isSameFile(folder, relativize));
             assertFalse(provider.isSameFile(relativize, folder));
         } finally {
-            try {
-                s3fs.close();
-            } catch (IOException e) {
-                // ignore
-            }
+            s3fs.close();
         }
     }
 

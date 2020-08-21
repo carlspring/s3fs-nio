@@ -1,26 +1,19 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.*;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.EnumSet;
 
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
-
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
 
 public class S3SeekableByteChannelTest extends S3UnitTestBase {
 
@@ -89,7 +82,12 @@ public class S3SeekableByteChannelTest extends S3UnitTestBase {
     }
 
     @Test(expected = NoSuchFileException.class)
-    public void tempFileDisappeared() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void tempFileDisappeared()
+            throws IOException,
+                   NoSuchFieldException,
+                   SecurityException,
+                   IllegalArgumentException,
+                   IllegalAccessException {
         S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
         S3SeekableByteChannel channel = new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ));
         Field f = channel.getClass().getDeclaredField("tempFile");

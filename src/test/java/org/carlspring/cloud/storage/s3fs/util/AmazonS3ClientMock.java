@@ -17,18 +17,13 @@ package org.carlspring.cloud.storage.s3fs.util;
  * limitations under the License.
  */
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.*;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.*;
 
 import com.amazonaws.AmazonClientException;
@@ -398,7 +393,8 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
     }
 
     @Override
-    public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey) throws AmazonClientException {
+    public CopyObjectResult copyObject(String sourceBucketName, String sourceKey, String destinationBucketName, String destinationKey)
+            throws AmazonClientException {
         Path src = find(sourceBucketName, sourceKey);
         if (src != null && Files.exists(src)) {
             Path bucket = find(destinationBucketName);
@@ -605,7 +601,7 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
             final List<Path> matches = new ArrayList<Path>();
             Files.walkFileTree(bucket, new SimpleFileVisitor<Path>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     String relativize = bucket.relativize(dir).toString();
                     if (relativize.equals(fileKey)) {
                         matches.add(dir);
@@ -614,7 +610,7 @@ public class AmazonS3ClientMock extends AbstractAmazonS3 {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     String relativize = bucket.relativize(file).toString();
                     if (relativize.equals(fileKey)) {
                         matches.add(file);

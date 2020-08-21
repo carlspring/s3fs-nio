@@ -1,20 +1,10 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
-import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.CHARSET_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
+import org.carlspring.cloud.storage.s3fs.S3FileSystem;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemConfigurationException;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
+import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,17 +14,18 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.amazonaws.services.s3.internal.Constants;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
-
-import com.amazonaws.services.s3.internal.Constants;
-import com.google.common.collect.ImmutableMap;
-import org.carlspring.cloud.storage.s3fs.S3FileSystem;
-import org.carlspring.cloud.storage.s3fs.S3FileSystemConfigurationException;
-import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
-import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
+import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.CHARSET_KEY;
+import static org.junit.Assert.*;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 public class NewFileSystemTest extends S3UnitTestBase {
 
@@ -54,13 +45,13 @@ public class NewFileSystemTest extends S3UnitTestBase {
     }
 
     @Test
-    public void newS3FileSystemWithEmptyHostAndUserInfo() throws IOException {
+    public void newS3FileSystemWithEmptyHostAndUserInfo() {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3:///bucket/file"), ImmutableMap.<String, Object>of());
         assertEquals(Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }
 
     @Test
-    public void newS3FileSystemWithEmptyHost() throws IOException {
+    public void newS3FileSystemWithEmptyHost() {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@/bucket/file"), ImmutableMap.<String, Object>of());
         assertEquals("access-key:secret-key@" + Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }

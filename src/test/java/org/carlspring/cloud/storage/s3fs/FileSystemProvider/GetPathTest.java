@@ -1,17 +1,20 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.google.common.collect.ImmutableMap;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
-import static org.junit.Assert.*;
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class GetPathTest extends S3UnitTestBase {
 
@@ -24,7 +27,7 @@ public class GetPathTest extends S3UnitTestBase {
     }
 
     @Test
-    public void getPathWithEmtpyEndpoint() throws IOException {
+    public void getPathWithEmptyEndpoint() throws IOException {
         FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
         Path path = fs.provider().getPath(URI.create("s3:///bucket/path/to/file"));
 

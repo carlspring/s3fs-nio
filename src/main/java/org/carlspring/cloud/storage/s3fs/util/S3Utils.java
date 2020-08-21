@@ -1,10 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
-import com.google.common.collect.Sets;
-import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3UserPrincipal;
 
@@ -15,6 +12,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.google.common.collect.Sets;
 
 /**
  * Utilities to work with Amazon S3 Objects.

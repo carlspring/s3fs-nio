@@ -1,13 +1,13 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertNotNull;
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.util.Map;
 
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.junit.Test;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.junit.Assert.assertNotNull;
 
 public class EnvironmentIT {
 

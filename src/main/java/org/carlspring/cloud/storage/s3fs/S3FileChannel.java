@@ -1,10 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
-import org.apache.tika.Tika;
-
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -16,6 +14,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.S3Object;
+import org.apache.tika.Tika;
 import static java.lang.String.format;
 
 public class S3FileChannel extends FileChannel {

@@ -1,18 +1,21 @@
 package org.carlspring.cloud.storage.s3fs.Path;
 
-import org.carlspring.cloud.storage.s3fs.*;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
+import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Test;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3ClientFactory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3ClientFactory.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
