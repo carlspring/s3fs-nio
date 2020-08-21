@@ -71,6 +71,13 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- Sonarcloud properties -->
+        <sonar.projectKey>carlspring_s3fs-nio2</sonar.projectKey>
+        <sonar.organization>carlspring</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <!-- Sonarcloud properties -->
+
         <maven.surfire.plugin.version>2.7.1</maven.surfire.plugin.version>
         <slf4j.version>1.7.5</slf4j.version>
         <com.amazonaws.aws-java-sdk-s3.version>1.11.232</com.amazonaws.aws-java-sdk-s3.version>
