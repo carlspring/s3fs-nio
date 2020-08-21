@@ -1,13 +1,10 @@
 package org.carlspring.cloud.storage.s3fs.Path;
 
-import com.google.common.collect.ImmutableMap;
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,10 +12,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.util.Map;
 
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.*;
-
+import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertEquals;
 
 public class ToUriTest extends S3UnitTestBase {

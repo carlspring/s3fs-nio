@@ -1,10 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.google.common.collect.ImmutableMap;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 
 import java.io.IOException;
 import java.net.URI;
@@ -14,10 +10,15 @@ import java.nio.file.FileSystems;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentMatcher;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;

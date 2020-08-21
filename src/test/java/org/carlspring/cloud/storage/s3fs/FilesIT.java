@@ -1,11 +1,7 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,6 +14,10 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.UUID;
 
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.Assert.*;
 

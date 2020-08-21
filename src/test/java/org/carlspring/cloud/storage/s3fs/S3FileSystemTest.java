@@ -1,19 +1,12 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
 import java.util.Map;
@@ -22,13 +15,12 @@ import java.util.Set;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.google.common.collect.ImmutableMap;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.junit.Assert.*;
 
 public class S3FileSystemTest extends S3UnitTestBase {
     private FileSystem fs;

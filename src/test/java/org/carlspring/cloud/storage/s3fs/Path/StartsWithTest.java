@@ -4,12 +4,12 @@ import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;

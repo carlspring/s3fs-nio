@@ -1,5 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import java.net.URI;
+import java.util.Properties;
+
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentialsProvider;
@@ -9,9 +12,6 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.metrics.RequestMetricCollector;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.S3ClientOptions;
-
-import java.net.URI;
-import java.util.Properties;
 
 
 /**

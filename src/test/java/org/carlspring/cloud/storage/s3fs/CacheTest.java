@@ -2,8 +2,8 @@ package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.util.Cache;
-import org.junit.Test;
 
+import org.junit.Test;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.doReturn;

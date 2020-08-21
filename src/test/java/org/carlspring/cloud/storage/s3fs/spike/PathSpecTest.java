@@ -1,18 +1,13 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.nio.file.*;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import static org.junit.Assert.*;
 
 public class PathSpecTest {
 

@@ -1,7 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -12,8 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
-
-import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class SpecTest {
 

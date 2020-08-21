@@ -1,12 +1,12 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.junit.Assert.assertTrue;
+import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.TimeUnit;
 
-import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.junit.Test;
+import static org.junit.Assert.assertTrue;
 
 public class S3FileAttributesTest {
     @Test

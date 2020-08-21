@@ -1,12 +1,15 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
-import java.nio.file.*;
 
 public class FileStoreTest {
 

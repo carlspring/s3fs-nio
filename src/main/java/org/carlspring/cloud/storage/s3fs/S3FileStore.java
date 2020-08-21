@@ -1,6 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.attribute.FileAttributeView;
 import java.nio.file.attribute.FileStoreAttributeView;

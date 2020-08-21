@@ -1,17 +1,26 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.google.common.collect.Sets;
-import org.carlspring.cloud.storage.s3fs.*;
-import org.carlspring.cloud.storage.s3fs.util.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.carlspring.cloud.storage.s3fs.S3FileSystem;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
+import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.nio.file.attribute.*;
-import java.util.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.google.common.collect.Sets;
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.FileAttributeBuilder.build;
 import static org.junit.Assert.*;
 

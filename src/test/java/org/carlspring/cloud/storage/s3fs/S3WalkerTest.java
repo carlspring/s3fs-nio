@@ -1,9 +1,9 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.reset;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
+import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
@@ -11,13 +11,10 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.junit.Before;
 import org.junit.Test;
-
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
-import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.reset;
 
 public class S3WalkerTest extends S3UnitTestBase {
 

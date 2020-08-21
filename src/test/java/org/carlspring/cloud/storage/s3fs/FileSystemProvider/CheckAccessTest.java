@@ -1,7 +1,5 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.amazonaws.services.s3.model.AccessControlList;
-import com.amazonaws.services.s3.model.Owner;
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
@@ -9,15 +7,15 @@ import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.*;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.*;
+import com.amazonaws.services.s3.model.AccessControlList;
+import com.amazonaws.services.s3.model.Owner;
+import org.junit.Before;
+import org.junit.Test;
+import static org.mockito.Mockito.doReturn;
 
 public class CheckAccessTest extends S3UnitTestBase {
 

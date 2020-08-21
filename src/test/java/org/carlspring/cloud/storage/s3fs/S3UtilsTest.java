@@ -1,15 +1,10 @@
 package org.carlspring.cloud.storage.s3fs;
 
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,6 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardOpenOption;
 
+import com.amazonaws.services.s3.model.AmazonS3Exception;
+import com.amazonaws.services.s3.model.Owner;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import org.junit.Before;
+import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.doThrow;

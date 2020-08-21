@@ -1,9 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.FileSystemProvider;
 
-import com.google.common.collect.ImmutableMap;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -12,10 +9,14 @@ import java.nio.file.FileSystems;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.collect.ImmutableMap;
+import org.junit.Before;
+import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.*;
 
 public class GetFileSystemIT {

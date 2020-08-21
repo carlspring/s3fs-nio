@@ -1,11 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,6 +13,9 @@ import java.nio.channels.NonWritableChannelException;
 import java.nio.file.*;
 import java.util.EnumSet;
 
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import org.junit.Before;
+import org.junit.Test;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 

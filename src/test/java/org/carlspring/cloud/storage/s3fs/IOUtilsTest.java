@@ -1,8 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.junit.Test;
-
 import org.carlspring.cloud.storage.s3fs.util.IOUtils;
+
+import org.junit.Test;
 
 /**
  * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods

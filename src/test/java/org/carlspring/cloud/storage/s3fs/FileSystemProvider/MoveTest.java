@@ -6,13 +6,14 @@ import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.*;
 
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertTrue;
 
 public class MoveTest extends S3UnitTestBase {
 

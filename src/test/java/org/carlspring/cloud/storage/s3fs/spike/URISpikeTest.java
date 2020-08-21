@@ -1,13 +1,12 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
-import com.google.common.base.Splitter;
-import org.junit.Test;
-
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.List;
+
+import com.google.common.base.Splitter;
+import org.junit.Test;
 
 public class URISpikeTest {
 

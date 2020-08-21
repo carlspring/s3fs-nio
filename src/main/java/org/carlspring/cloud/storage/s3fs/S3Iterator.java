@@ -1,20 +1,15 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import org.carlspring.cloud.storage.s3fs.util.S3Utils;
+
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 import com.amazonaws.services.s3.model.ListObjectsRequest;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 /**
  * S3 iterator over folders at first level.

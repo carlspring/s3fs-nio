@@ -1,22 +1,21 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
-import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
-import static org.junit.Assert.*;
+import org.carlspring.cloud.storage.s3fs.util.ExposingAmazonS3Client;
+import org.carlspring.cloud.storage.s3fs.util.ExposingAmazonS3ClientFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.net.URI;
 import java.util.Properties;
-
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
-import org.junit.Test;
 
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import org.carlspring.cloud.storage.s3fs.util.ExposingAmazonS3Client;
-import org.carlspring.cloud.storage.s3fs.util.ExposingAmazonS3ClientFactory;
+import org.junit.Test;
+import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
+import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
+import static org.junit.Assert.*;
 
 public class AmazonS3ClientFactoryTest {
     @Test
