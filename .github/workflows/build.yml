@@ -49,4 +49,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Analyze code and publish results to Sonarcloud
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn verify sonar:sonar
