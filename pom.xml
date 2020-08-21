@@ -232,6 +232,7 @@
 
             <build>
                 <plugins>
+                    <!--
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -268,18 +269,12 @@
                     </plugin>
 
                     <plugin>
-                        <groupId>org.eluder.coveralls</groupId>
-                        <artifactId>coveralls-maven-plugin</artifactId>
-                        <version>4.1.0</version>
-                    </plugin>
-
-                    <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>0.7.6.201602180812</version>
 
                         <executions>
-                            <!-- Prepare execution with Surefire -->
+                            &lt;!&ndash; Prepare execution with Surefire &ndash;&gt;
                             <execution>
                                 <id>pre-unit-test</id>
                                 <goals>
@@ -290,7 +285,7 @@
                                     <append>true</append>
                                 </configuration>
                             </execution>
-                            <!-- Generate report after tests are run -->
+                            &lt;!&ndash; Generate report after tests are run &ndash;&gt;
                             <execution>
                                 <id>post-unit-test</id>
                                 <phase>integration-test</phase>
@@ -300,6 +295,7 @@
                             </execution>
                         </executions>
                     </plugin>
+                    -->
                 </plugins>
             </build>
         </profile>
