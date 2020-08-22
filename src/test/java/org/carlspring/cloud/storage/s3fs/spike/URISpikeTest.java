@@ -8,22 +8,23 @@ import java.util.List;
 import com.google.common.base.Splitter;
 import org.junit.Test;
 
-public class URISpikeTest {
+public class URISpikeTest
+{
 
-    private List<String> s3Path_cases = Arrays.asList(
-            "/bucket//folder//folder2/file",
-            "///bucket//folder//folder2/file",
-            "//bucket//folder//folder2/file",
-            "////bucket//folder//folder2/file",
-            "folder//folder2/file",
-            "folder//..//./folder2/file/.",
-            "folder/folder2/folder3/");
+    private List<String> s3Path_cases = Arrays.asList("/bucket//folder//folder2/file",
+                                                      "///bucket//folder//folder2/file",
+                                                      "//bucket//folder//folder2/file",
+                                                      "////bucket//folder//folder2/file",
+                                                      "folder//folder2/file",
+                                                      "folder//..//./folder2/file/.",
+                                                      "folder/folder2/folder3/");
 
     @Test
-    public void test() {
-        for (String s3case : s3Path_cases) {
-            System.out.println(URI.create(s3case).toString() +
-                    " ==> " + URI.create(s3case).normalize().toString());
+    public void test()
+    {
+        for (String s3case : s3Path_cases)
+        {
+            System.out.println(URI.create(s3case).toString() + " ==> " + URI.create(s3case).normalize().toString());
 
             System.out.println("Host:" + URI.create(s3case).getHost());
             System.out.println("Raw query:" + URI.create(s3case).getRawQuery());
@@ -34,14 +35,18 @@ public class URISpikeTest {
 
             // get bucket
 
-            System.out.println("Bucket:" + Splitter.on("/").omitEmptyStrings().splitToList(URI.create(s3case).normalize().toString()).get(0));
+            System.out.println("Bucket:" + Splitter.on("/")
+                                                   .omitEmptyStrings()
+                                                   .splitToList(URI.create(s3case).normalize().toString())
+                                                   .get(0));
             System.out.println("Parent:" + URI.create(s3case).resolve("..").toString());
         }
 
     }
 
     @Test
-    public void uriWithSpaces() {
+    public void uriWithSpaces()
+    {
         URI uri = FileSystems.getDefault().getPath("/file with spaces").toUri();
         System.out.println(uri);
     }

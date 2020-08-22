@@ -15,24 +15,32 @@ import java.nio.file.Path;
 import org.junit.Before;
 import org.junit.Test;
 
-public class GetFileStoreTest extends S3UnitTestBase {
+public class GetFileStoreTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void getFileStore() throws IOException {
+    public void getFileStore()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file1");
 
         // act
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
+
         // assert
         s3fsProvider.getFileStore(file1);
     }
@@ -44,12 +52,17 @@ public class GetFileStoreTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

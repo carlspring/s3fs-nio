@@ -16,36 +16,52 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-public class ProviderSpecTest {
+public class ProviderSpecTest
+{
+
     FileSystem fs;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         fs = MemoryFileSystemBuilder.newLinux().build("linux");
     }
 
     @After
-    public void close() throws IOException {
+    public void close()
+            throws IOException
+    {
         fs.close();
     }
 
     @Test
-    public void readNothing() throws IOException {
+    public void readNothing()
+            throws IOException
+    {
         //Path base = Files.createDirectories(fs.getPath("/dir"));
         Path base = Files.createTempDirectory("asdadadasd");
-        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")), EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE))) {
+        try (SeekableByteChannel seekable = Files.newByteChannel(Files.createFile(base.resolve("file1.html")),
+                                                                 EnumSet.of(StandardOpenOption.DELETE_ON_CLOSE)))
+        {
             // do nothing
         }
+
         assertTrue(Files.notExists(base.resolve("file1.html")));
     }
 
     // FIXME @Test
-    public void seekable() throws IOException {
+    public void seekable()
+            throws IOException
+    {
         Path base = Files.createDirectories(fs.getPath("/dir"));
         // in windows throw exception
         try (SeekableByteChannel seekable = Files.newByteChannel(base.resolve("file1.html"),
-                EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.READ))) {
-
+                                                                 EnumSet.of(StandardOpenOption.CREATE,
+                                                                            StandardOpenOption.WRITE,
+                                                                            StandardOpenOption.READ)))
+        {
             ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
             seekable.position(7);
             seekable.write(buffer);
@@ -59,18 +75,24 @@ public class ProviderSpecTest {
     }
 
     @Test
-    public void seekableRead() throws IOException {
+    public void seekableRead()
+            throws IOException
+    {
         /*
         Path base = Files.createDirectories(fs.getPath("/dir"));
 		Path path = Files.write(base.resolve("file"), "contenido yuhu".getBytes(), StandardOpenOption.CREATE_NEW);
 		*/
-        Path path = Files.write(Files.createTempFile("asdas", "asdsadad"), "contenido uyuhu".getBytes(), StandardOpenOption.APPEND);
-        try (SeekableByteChannel channel = Files.newByteChannel(path)) {
+        Path path = Files.write(Files.createTempFile("asdas", "asdsadad"),
+                                "contenido uyuhu".getBytes(),
+                                StandardOpenOption.APPEND);
+        try (SeekableByteChannel channel = Files.newByteChannel(path))
+        {
 
             //channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 
-            while (channel.read(buffer) > 0) {
+            while (channel.read(buffer) > 0)
+            {
                 buffer.rewind();
                 buffer.flip();
             }
@@ -105,4 +127,5 @@ public class ProviderSpecTest {
 			*/
         }
     }
+
 }

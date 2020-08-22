@@ -17,77 +17,105 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.doReturn;
 
-public class CheckAccessTest extends S3UnitTestBase {
+public class CheckAccessTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
-    // check access
 
+    // check access
     @Test
-    public void checkAccessRead() throws IOException {
+    public void checkAccessRead()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
 
         FileSystem fs = createNewS3FileSystem();
+
         Path file1 = fs.getPath("/bucketA/dir/file");
+
         s3fsProvider.checkAccess(file1, AccessMode.READ);
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void checkAccessReadWithoutPermission() throws IOException {
+    public void checkAccessReadWithoutPermission()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
 
         FileSystem fs = createNewS3FileSystem();
+
         Path file1 = fs.getPath("/bucketA/dir");
+
         s3fsProvider.checkAccess(file1, AccessMode.READ);
     }
 
     @Test
-    public void checkAccessWrite() throws IOException {
+    public void checkAccessWrite()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
 
         S3FileSystem fs = createNewS3FileSystem();
+
         S3Path file1 = fs.getPath("/bucketA/dir/file");
+
         s3fsProvider.checkAccess(file1, AccessMode.WRITE);
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void checkAccessWriteDifferentUser() throws IOException {
+    public void checkAccessWriteDifferentUser()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/readOnly");
+
         // return empty list
-        doReturn(client.createReadOnly(new Owner("2", "Read Only"))).when(client).getObjectAcl("bucketA", "dir/readOnly");
+        doReturn(client.createReadOnly(new Owner("2", "Read Only"))).when(client).getObjectAcl("bucketA",
+                                                                                               "dir/readOnly");
 
         S3FileSystem fs = createNewS3FileSystem();
         S3Path file1 = fs.getPath("/bucketA/dir/readOnly");
+
         s3fsProvider.checkAccess(file1, AccessMode.WRITE);
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void checkAccessWriteWithoutPermission() throws IOException {
+    public void checkAccessWriteWithoutPermission()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
+
         // return empty list
         doReturn(new AccessControlList()).when(client).getObjectAcl("bucketA", "dir/");
 
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir");
+
         s3fsProvider.checkAccess(file1, AccessMode.WRITE);
     }
 
     @Test(expected = AccessDeniedException.class)
-    public void checkAccessExecute() throws IOException {
+    public void checkAccessExecute()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
@@ -104,12 +132,17 @@ public class CheckAccessTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

@@ -1,6 +1,5 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.HashMap;
@@ -9,7 +8,9 @@ import java.util.Map;
 /**
  * Utilities to help transforming BasicFileAttributes to Map
  */
-public abstract class AttributesUtils {
+public abstract class AttributesUtils
+{
+
 
     /**
      * Given a BasicFileAttributes not null then return a Map
@@ -19,7 +20,8 @@ public abstract class AttributesUtils {
      * @param attr BasicFileAttributes
      * @return Map String Object never null
      */
-    public static Map<String, Object> fileAttributeToMap(BasicFileAttributes attr) {
+    public static Map<String, Object> fileAttributeToMap(BasicFileAttributes attr)
+    {
         Map<String, Object> result = new HashMap<>();
         result.put("creationTime", attr.creationTime());
         result.put("fileKey", attr.fileKey());
@@ -31,7 +33,8 @@ public abstract class AttributesUtils {
         result.put("lastModifiedTime", attr.lastModifiedTime());
         result.put("size", attr.size());
 
-        if (attr instanceof PosixFileAttributes) {
+        if (attr instanceof PosixFileAttributes)
+        {
             PosixFileAttributes posixAttr = (PosixFileAttributes) attr;
             result.put("permissions", posixAttr.permissions());
             result.put("owner", posixAttr.owner());
@@ -49,13 +52,16 @@ public abstract class AttributesUtils {
      * @param filters String[] filters
      * @return Map String Object with the same keys as the filters
      */
-    public static Map<String, Object> fileAttributeToMap(BasicFileAttributes attr, String[] filters) {
+    public static Map<String, Object> fileAttributeToMap(BasicFileAttributes attr, String[] filters)
+    {
         Map<String, Object> result = new HashMap<>();
 
-        for (String filter : filters) {
+        for (String filter : filters)
+        {
             filter = filter.replace("basic:", "");
             filter = filter.replace("posix:", "");
-            switch (filter) {
+            switch (filter)
+            {
                 case "creationTime":
                     result.put("creationTime", attr.creationTime());
                     break;
@@ -84,17 +90,18 @@ public abstract class AttributesUtils {
                     result.put("size", attr.size());
                     break;
                 case "permissions":
-                    result.put("permissions", ((PosixFileAttributes)attr).permissions());
+                    result.put("permissions", ((PosixFileAttributes) attr).permissions());
                     break;
                 case "group":
-                    result.put("group", ((PosixFileAttributes)attr).group());
+                    result.put("group", ((PosixFileAttributes) attr).group());
                     break;
                 case "owner":
-                    result.put("owner", ((PosixFileAttributes)attr).owner());
+                    result.put("owner", ((PosixFileAttributes) attr).owner());
                     break;
             }
         }
 
         return result;
     }
+
 }

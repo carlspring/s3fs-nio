@@ -18,59 +18,79 @@ import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.assertTrue;
 
-public class DeleteTest extends S3UnitTestBase {
+public class DeleteTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void deleteFile() throws IOException {
+    public void deleteFile()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
+
         // act
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
         s3fsProvider.delete(file);
-        // assert
+
+        // assertions
         assertTrue(Files.notExists(file));
     }
 
     @Test
-    public void deleteEmptyDirectory() throws IOException {
+    public void deleteEmptyDirectory()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
         Path base = s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"),
-                ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key").put(SECRET_KEY, "secret_key").build())
-                .getPath("/bucketA/dir");
+                                               ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key")
+                                                                                     .put(SECRET_KEY, "secret_key")
+                                                                                     .build()).getPath("/bucketA/dir");
+
         // act
         s3fsProvider.delete(base);
+
         // assert
         assertTrue(Files.notExists(base));
     }
 
     @Test(expected = DirectoryNotEmptyException.class)
-    public void deleteDirectoryWithEntries() throws IOException {
+    public void deleteDirectoryWithEntries()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+
         s3fsProvider.delete(file.getParent());
     }
 
     @Test(expected = NoSuchFileException.class)
-    public void deleteFileNotExists() throws IOException {
+    public void deleteFileNotExists()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+
         s3fsProvider.delete(file);
     }
 
@@ -81,12 +101,17 @@ public class DeleteTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

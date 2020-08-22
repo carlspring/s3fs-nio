@@ -3,20 +3,31 @@ package org.carlspring.cloud.storage.s3fs;
 import java.nio.file.attribute.FileStoreAttributeView;
 import java.util.Date;
 
-public class S3FileStoreAttributeView implements FileStoreAttributeView {
+public class S3FileStoreAttributeView
+        implements FileStoreAttributeView
+{
 
     public static final String ATTRIBUTE_VIEW_NAME = "S3FileStoreAttributeView";
 
     private Date creationDate;
+
     private String name;
+
     private String ownerId;
+
     private String ownerDisplayName;
 
-    public static enum AttrID {
-        creationDate, name, ownerId, ownerDisplayName
+
+    public enum AttrID
+    {
+        creationDate,
+        name,
+        ownerId,
+        ownerDisplayName
     }
 
-    public S3FileStoreAttributeView(Date creationDate, String name, String ownerId, String ownerDisplayName) {
+    public S3FileStoreAttributeView(Date creationDate, String name, String ownerId, String ownerDisplayName)
+    {
         this.creationDate = creationDate;
         this.name = name;
         this.ownerId = ownerId;
@@ -24,16 +35,20 @@ public class S3FileStoreAttributeView implements FileStoreAttributeView {
     }
 
     @Override
-    public String name() {
+    public String name()
+    {
         return ATTRIBUTE_VIEW_NAME;
     }
 
-    public Object getAttribute(String attribute) {
+    public Object getAttribute(String attribute)
+    {
         return getAttribute(AttrID.valueOf(attribute));
     }
 
-    private Object getAttribute(AttrID attrID) {
-        switch (attrID) {
+    private Object getAttribute(AttrID attrID)
+    {
+        switch (attrID)
+        {
             case creationDate:
                 return creationDate;
             case ownerDisplayName:
@@ -44,4 +59,5 @@ public class S3FileStoreAttributeView implements FileStoreAttributeView {
                 return name;
         }
     }
+
 }

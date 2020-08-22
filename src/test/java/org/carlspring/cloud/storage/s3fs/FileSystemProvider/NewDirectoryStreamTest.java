@@ -19,30 +19,40 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class NewDirectoryStreamTest extends S3UnitTestBase {
+public class NewDirectoryStreamTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void createStreamDirectoryReader() throws IOException {
+    public void createStreamDirectoryReader()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1");
 
         // act
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
+
         // assert
         assertNewDirectoryStream(bucket, "file1");
     }
 
     @Test
-    public void createAnotherStreamDirectoryReader() throws IOException {
+    public void createAnotherStreamDirectoryReader()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1", "file2");
@@ -55,7 +65,9 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
     }
 
     @Test
-    public void createAnotherWithDirStreamDirectoryReader() throws IOException {
+    public void createAnotherWithDirStreamDirectoryReader()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir1").file("file1");
@@ -68,11 +80,13 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
     }
 
     @Test
-    public void createStreamDirectoryFromDirectoryReader() throws IOException {
-
+    public void createStreamDirectoryFromDirectoryReader()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir", "dir/file2").file("dir/file1");
+
         // act
         Path dir = createNewS3FileSystem().getPath("/bucketA", "dir");
 
@@ -80,9 +94,10 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
         assertNewDirectoryStream(dir, "file1", "file2");
     }
 
-
     @Test(expected = UnsupportedOperationException.class)
-    public void removeIteratorStreamDirectoryReader() throws IOException {
+    public void removeIteratorStreamDirectoryReader()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir1").file("dir1/file1", "content".getBytes());
@@ -91,62 +106,85 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
         // act
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(bucket)) {
+        try (DirectoryStream<Path> dir = Files.newDirectoryStream(bucket))
+        {
             dir.iterator().remove();
         }
-
     }
 
     @Test
-    public void list999Paths() throws IOException {
+    public void list999Paths()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+
         MockBucket bucketA = client.bucket("bucketA");
+
         final int count999 = 999;
-        for (int i = 0; i < count999; i++) {
+        for (int i = 0; i < count999; i++)
+        {
             bucketA.file(i + "file");
         }
+
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
+
         int count = 0;
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket))
+        {
             Iterator<Path> iterator = files.iterator();
-            while (iterator.hasNext()) {
+            while (iterator.hasNext())
+            {
                 iterator.next();
                 count++;
             }
         }
+
         assertEquals(count999, count);
     }
 
     @Test
-    public void list1050Paths() throws IOException {
+    public void list1050Paths()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         MockBucket bucketA = client.bucket("bucketA");
+
         final int count1050 = 1050;
-        for (int i = 0; i < count1050; i++) {
+        for (int i = 0; i < count1050; i++)
+        {
             bucketA.file(i + "file");
         }
+
         Path bucket = createNewS3FileSystem().getPath("/bucketA");
+
         int count = 0;
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket)) {
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket))
+        {
             Iterator<Path> iterator = files.iterator();
-            while (iterator.hasNext()) {
+            while (iterator.hasNext())
+            {
                 iterator.next();
                 count++;
             }
         }
+
         assertEquals(count1050, count);
     }
 
     /**
      * check if the directory path contains all the files name
-     * @param base Path
+     *
+     * @param base  Path
      * @param files String array of file names
      * @throws IOException
      */
-    private void assertNewDirectoryStream(Path base, final String... files) throws IOException {
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(base)) {
+    private void assertNewDirectoryStream(Path base, final String... files)
+            throws IOException
+    {
+        try (DirectoryStream<Path> dir = Files.newDirectoryStream(base))
+        {
             assertNotNull(dir);
             assertNotNull(dir.iterator());
             assertTrue(dir.iterator().hasNext());
@@ -154,7 +192,8 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
             Set<String> filesNamesExpected = new HashSet<>(Arrays.asList(files));
             Set<String> filesNamesActual = new HashSet<>();
 
-            for (Path path : dir) {
+            for (Path path : dir)
+            {
                 String fileName = path.getFileName().toString();
                 filesNamesActual.add(fileName);
             }
@@ -170,12 +209,17 @@ public class NewDirectoryStreamTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

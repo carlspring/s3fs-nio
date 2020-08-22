@@ -20,18 +20,25 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
-public class GetFileAttributeViewTest extends S3UnitTestBase {
+public class GetFileAttributeViewTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void getBasicFileAttributeView() throws IOException {
+    public void getBasicFileAttributeView()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
@@ -44,9 +51,12 @@ public class GetFileAttributeViewTest extends S3UnitTestBase {
     }
 
     @Test
-    public void getPosixFileAttributeView() throws IOException {
+    public void getPosixFileAttributeView()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file");
+
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
         BasicFileAttributeView view = s3fsProvider.getFileAttributeView(file, PosixFileAttributeView.class);
@@ -63,12 +73,17 @@ public class GetFileAttributeViewTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

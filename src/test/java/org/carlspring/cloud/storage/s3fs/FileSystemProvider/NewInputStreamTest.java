@@ -25,73 +25,96 @@ import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.fail;
 
-public class NewInputStreamTest extends S3UnitTestBase {
+public class NewInputStreamTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-
     @Test
-    public void inputStreamFile() throws IOException {
+    public void inputStreamFile()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1", "content".getBytes());
 
         Path file = createNewS3FileSystem().getPath("/bucketA/file1");
-        try (InputStream inputStream = s3fsProvider.newInputStream(file)) {
-
+        try (InputStream inputStream = s3fsProvider.newInputStream(file))
+        {
             byte[] buffer = IOUtils.toByteArray(inputStream);
+
             // check
             assertArrayEquals("content".getBytes(), buffer);
         }
     }
 
     @Test
-    public void anotherInputStreamFile() throws IOException {
+    public void anotherInputStreamFile()
+            throws IOException
+    {
         String res = "another content";
+
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file1", res.getBytes());
+
         // act
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
-        try (InputStream inputStream = s3fsProvider.newInputStream(file)) {
-
+        try (InputStream inputStream = s3fsProvider.newInputStream(file))
+        {
             byte[] buffer = IOUtils.toByteArray(inputStream);
+
             // check
             assertArrayEquals(res.getBytes(), buffer);
         }
     }
 
     @Test(expected = NoSuchFileException.class)
-    public void newInputStreamFileNotExists() throws IOException {
+    public void newInputStreamFileNotExists()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
+
         // act
         S3FileSystem fileSystem = createNewS3FileSystem();
+
         Path file = fileSystem.getPath("/bucketA/dir/file1");
-        try (InputStream inputStream = s3fsProvider.newInputStream(file)) {
-            fail("file not exists");
+
+        try (InputStream inputStream = s3fsProvider.newInputStream(file))
+        {
+            fail("The file does not exist");
         }
     }
 
     @Test(expected = IOException.class)
-    public void inputStreamDirectory() throws IOException {
+    public void inputStreamDirectory()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
+
         Path result = s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+
         // act
         s3fsProvider.newInputStream(result);
     }
 
-    private Map<String, ?> buildFakeEnv() {
+    private Map<String, ?> buildFakeEnv()
+    {
         return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "accesskey").put(SECRET_KEY, "secretkey").build();
     }
 
@@ -102,12 +125,17 @@ public class NewInputStreamTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

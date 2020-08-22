@@ -20,18 +20,23 @@ import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertEquals;
 
-public class ToUriTest extends S3UnitTestBase {
+public class ToUriTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() {
+    public void setup()
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void toUri() {
+    public void toUri()
+    {
         Path path = getPath("/bucket/path/to/file");
         URI uri = path.toUri();
 
@@ -39,7 +44,8 @@ public class ToUriTest extends S3UnitTestBase {
         assertEquals("s3", uri.getScheme());
 
         // could get the correct fileSystem
-        S3FileSystem fs =  s3fsProvider.getFileSystem(uri);
+        S3FileSystem fs = s3fsProvider.getFileSystem(uri);
+
         // the host is the endpoint specified in fileSystem
         assertEquals(fs.getEndpoint(), uri.getHost());
 
@@ -50,52 +56,64 @@ public class ToUriTest extends S3UnitTestBase {
     }
 
     @Test
-    public void toUriWithEndSlash() {
+    public void toUriWithEndSlash()
+    {
         S3Path s3Path = getPath("/bucket/folder/");
 
         assertEquals(S3_GLOBAL_URI_TEST + "bucket/folder/", s3Path.toUri().toString());
     }
 
     @Test
-    public void toUriWithSpaces() {
+    public void toUriWithSpaces()
+    {
         S3Path s3Path = getPath("/bucket/with spaces");
 
-        assertEquals(S3_GLOBAL_URI_TEST.resolve("bucket/with%20spaces") , s3Path.toUri());
+        assertEquals(S3_GLOBAL_URI_TEST.resolve("bucket/with%20spaces"), s3Path.toUri());
     }
 
     @Test
-    public void toUriWithNotEndSlash() {
+    public void toUriWithNotEndSlash()
+    {
         S3Path s3Path = getPath("/bucket/file");
 
         assertEquals(S3_GLOBAL_URI_TEST + "bucket/file", s3Path.toUri().toString());
     }
 
     @Test
-    public void toUriRelative() {
+    public void toUriRelative()
+    {
         S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST);
 
         S3Path path = new S3Path(fileSystem, "bla");
+
         assertEquals(URI.create("bla"), path.toUri());
     }
 
     @Test
-    public void toUriRelativeWithSpaces() {
+    public void toUriRelativeWithSpaces()
+    {
         S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST);
 
         S3Path path = new S3Path(fileSystem, "with space");
+
         assertEquals(URI.create("with%20space"), path.toUri());
     }
 
     @Test
-    public void toUriBucketWithoutEndSlash() {
+    public void toUriBucketWithoutEndSlash()
+    {
         S3Path s3Path = getPath("/bucket");
 
         assertEquals(S3_GLOBAL_URI_TEST.resolve("/bucket/"), s3Path.toUri());
     }
 
     @Test
-    public void toUriWithCredentials() {
-        Map<String, String> envs = ImmutableMap.<String, String>builder().put(ACCESS_KEY, "access").put(SECRET_KEY, "secret").build();
+    public void toUriWithCredentials()
+    {
+        Map<String, String> envs = ImmutableMap.<String, String>builder().put(ACCESS_KEY, "access")
+                                                                         .put(SECRET_KEY, "secret")
+                                                                         .build();
+
         FileSystem fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI_TEST, envs);
 
         Path path = fileSystem.getPath("/bla/file");
@@ -104,8 +122,8 @@ public class ToUriTest extends S3UnitTestBase {
     }
 
     @Test
-    public void toUriWithCredentialBySystemProperty() {
-
+    public void toUriWithCredentialBySystemProperty()
+    {
         System.setProperty(ACCESS_KEY, "accessKeywii");
         System.setProperty(SECRET_KEY, "secretKey");
 
@@ -120,10 +138,14 @@ public class ToUriTest extends S3UnitTestBase {
     }
 
     @Test
-    public void toUriWithEndpoint() throws IOException {
-        try (FileSystem fs = s3fsProvider.newFileSystem(URI.create("s3://endpoint/"), null)) {
+    public void toUriWithEndpoint()
+            throws IOException
+    {
+        try (FileSystem fs = s3fsProvider.newFileSystem(URI.create("s3://endpoint/"), null))
+        {
             Path path = fs.getPath("/bucket/path/to/file");
             URI uri = path.toUri();
+
             // the scheme is s3
             assertEquals("s3", uri.getScheme());
             assertEquals("endpoint", uri.getHost());
@@ -131,7 +153,9 @@ public class ToUriTest extends S3UnitTestBase {
         }
     }
 
-    private S3Path getPath(String path) {
+    private S3Path getPath(String path)
+    {
         return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
+
 }

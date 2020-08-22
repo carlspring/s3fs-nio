@@ -2,16 +2,22 @@ package org.carlspring.cloud.storage.s3fs.attribute;
 
 import java.nio.file.attribute.UserPrincipal;
 
-public class S3UserPrincipal implements UserPrincipal {
+public class S3UserPrincipal
+        implements UserPrincipal
+{
 
     private String name;
 
-    public S3UserPrincipal(String name) {
+
+    public S3UserPrincipal(String name)
+    {
         this.name = name;
     }
 
     @Override
-    public String getName() {
+    public String getName()
+    {
         return name;
     }
+
 }

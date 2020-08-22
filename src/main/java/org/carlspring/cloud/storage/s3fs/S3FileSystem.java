@@ -15,15 +15,24 @@ import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
  *
  * @see AmazonS3 configured by {@link AmazonS3Factory}
  */
-public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem> {
+public class S3FileSystem
+        extends FileSystem
+        implements Comparable<S3FileSystem>
+{
 
     private final S3FileSystemProvider provider;
+
     private final String key;
+
     private final AmazonS3 client;
+
     private final String endpoint;
+
     private int cache;
 
-    public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint) {
+
+    public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint)
+    {
         this.provider = provider;
         this.key = key;
         this.client = client;
@@ -32,60 +41,77 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public S3FileSystemProvider provider() {
+    public S3FileSystemProvider provider()
+    {
         return provider;
     }
 
-    public String getKey() {
+    public String getKey()
+    {
         return key;
     }
 
     @Override
-    public void close() {
+    public void close()
+    {
         this.provider.close(this);
     }
 
     @Override
-    public boolean isOpen() {
+    public boolean isOpen()
+    {
         return this.provider.isOpen(this);
     }
 
     @Override
-    public boolean isReadOnly() {
+    public boolean isReadOnly()
+    {
         return false;
     }
 
     @Override
-    public String getSeparator() {
+    public String getSeparator()
+    {
         return S3Path.PATH_SEPARATOR;
     }
 
     @Override
-    public Iterable<Path> getRootDirectories() {
+    public Iterable<Path> getRootDirectories()
+    {
         ImmutableList.Builder<Path> builder = ImmutableList.builder();
-        for (FileStore fileStore : getFileStores()) {
+
+        for (FileStore fileStore : getFileStores())
+        {
             builder.add(((S3FileStore) fileStore).getRootDirectory());
         }
+
         return builder.build();
     }
 
     @Override
-    public Iterable<FileStore> getFileStores() {
+    public Iterable<FileStore> getFileStores()
+    {
         ImmutableList.Builder<FileStore> builder = ImmutableList.builder();
-        for (Bucket bucket : client.listBuckets()) {
+
+        for (Bucket bucket : client.listBuckets())
+        {
             builder.add(new S3FileStore(this, bucket.getName()));
         }
+
         return builder.build();
     }
 
     @Override
-    public Set<String> supportedFileAttributeViews() {
+    public Set<String> supportedFileAttributeViews()
+    {
         return ImmutableSet.of("basic", "posix");
     }
 
     @Override
-    public S3Path getPath(String first, String... more) {
-        if (more.length == 0) {
+    public S3Path getPath(String first, String... more)
+    {
+        if (more.length == 0)
+        {
             return new S3Path(this, first);
         }
 
@@ -93,21 +119,25 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
     }
 
     @Override
-    public PathMatcher getPathMatcher(String syntaxAndPattern) {
+    public PathMatcher getPathMatcher(String syntaxAndPattern)
+    {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public UserPrincipalLookupService getUserPrincipalLookupService() {
+    public UserPrincipalLookupService getUserPrincipalLookupService()
+    {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public WatchService newWatchService() {
+    public WatchService newWatchService()
+    {
         throw new UnsupportedOperationException();
     }
 
-    public AmazonS3 getClient() {
+    public AmazonS3 getClient()
+    {
         return client;
     }
 
@@ -117,57 +147,86 @@ public class S3FileSystem extends FileSystem implements Comparable<S3FileSystem>
      * @return string
      * @see <a href="http://docs.aws.amazon.com/general/latest/gr/rande.html">http://docs.aws.amazon.com/general/latest/gr/rande.html</a>
      */
-    public String getEndpoint() {
+    public String getEndpoint()
+    {
         return endpoint;
     }
 
-    public String[] key2Parts(String keyParts) {
+    public String[] key2Parts(String keyParts)
+    {
         String[] parts = keyParts.split(PATH_SEPARATOR);
         String[] split = new String[parts.length];
+
         int i = 0;
-        for (String part : parts) {
+        for (String part : parts)
+        {
             split[i++] = part;
         }
+
         return split;
     }
 
     @Override
-    public int hashCode() {
+    public int hashCode()
+    {
         final int prime = 31;
+
         int result = 1;
         result = prime * result + ((endpoint == null) ? 0 : endpoint.hashCode());
         result = prime * result + ((key == null) ? 0 : key.hashCode());
+
         return result;
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(Object obj)
+    {
         if (this == obj)
+        {
             return true;
+        }
+
         if (obj == null)
+        {
             return false;
+        }
+
         if (!(obj instanceof S3FileSystem))
+        {
             return false;
+        }
+
         S3FileSystem other = (S3FileSystem) obj;
-        if (endpoint == null) {
+        if (endpoint == null)
+        {
             if (other.endpoint != null)
+            {
                 return false;
-        } else if (!endpoint.equals(other.endpoint))
+            }
+        }
+        else if (!endpoint.equals(other.endpoint))
+        {
             return false;
-        if (key == null) {
-            if (other.key != null)
-                return false;
-        } else if (!key.equals(other.key))
-            return false;
-        return true;
+        }
+        if (key == null)
+        {
+            return other.key == null;
+        }
+        else
+        {
+            return key.equals(other.key);
+        }
     }
 
     @Override
-    public int compareTo(S3FileSystem o) {
+    public int compareTo(S3FileSystem o)
+    {
         return key.compareTo(o.getKey());
     }
 
-    public int getCache() {
+    public int getCache()
+    {
         return cache;
     }
+
 }

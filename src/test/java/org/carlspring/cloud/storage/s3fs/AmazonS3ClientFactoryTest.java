@@ -17,14 +17,20 @@ import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
 import static org.junit.Assert.*;
 
-public class AmazonS3ClientFactoryTest {
+public class AmazonS3ClientFactoryTest
+{
+
+
     @Test
-    public void neverTrustTheDefaults() {
+    public void neverTrustTheDefaults()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "some_access_key");
         props.setProperty(SECRET_KEY, "super_secret_key");
-        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS, "org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector");
+        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS,
+                          "org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector");
         props.setProperty(CONNECTION_TIMEOUT, "10");
         props.setProperty(MAX_CONNECTIONS, "50");
         props.setProperty(MAX_ERROR_RETRY, "3");
@@ -41,13 +47,20 @@ public class AmazonS3ClientFactoryTest {
         props.setProperty(USER_AGENT, "I-am-Groot");
         props.setProperty(SIGNER_OVERRIDE, "S3SignerType");
         props.setProperty(PATH_STYLE_ACCESS, "true");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
+        ExposingAmazonS3Client client =
+                (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
         AWSCredentialsProvider credentialsProvider = client.getAWSCredentialsProvider();
         AWSCredentials credentials = credentialsProvider.getCredentials();
+
         assertEquals("some_access_key", credentials.getAWSAccessKeyId());
         assertEquals("super_secret_key", credentials.getAWSSecretKey());
-        assertEquals("class org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector", client.getRequestMetricsCollector().getClass().toString());
+        assertEquals("class org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector",
+                     client.getRequestMetricsCollector().getClass().toString());
+
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
+
         assertEquals(10, clientConfiguration.getConnectionTimeout());
         assertEquals(50, clientConfiguration.getMaxConnections());
         assertEquals(3, clientConfiguration.getMaxErrorRetry());
@@ -67,18 +80,27 @@ public class AmazonS3ClientFactoryTest {
     }
 
     @Test
-    public void theDefaults() {
+    public void theDefaults()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "giev.ma.access!");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
+
         Properties props = new Properties();
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
+        ExposingAmazonS3Client client =
+                (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
         AWSCredentialsProvider credentialsProvider = client.getAWSCredentialsProvider();
         AWSCredentials credentials = credentialsProvider.getCredentials();
+
         assertEquals("giev.ma.access!", credentials.getAWSAccessKeyId());
         assertEquals("I'll never teeeeeellllll!", credentials.getAWSSecretKey());
         assertNull(client.getRequestMetricsCollector());
+
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
+
         assertEquals(ClientConfiguration.DEFAULT_CONNECTION_TIMEOUT, clientConfiguration.getConnectionTimeout());
         assertEquals(ClientConfiguration.DEFAULT_MAX_CONNECTIONS, clientConfiguration.getMaxConnections());
         assertEquals(-1, clientConfiguration.getMaxErrorRetry());
@@ -98,68 +120,101 @@ public class AmazonS3ClientFactoryTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void halfTheCredentials() {
+    public void halfTheCredentials()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
+
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "I want access");
+
         clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void theOtherHalf() {
+    public void theOtherHalf()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "I want access");
+
         Properties props = new Properties();
         props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
+
         clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void wrongMetricsCollector() {
+    public void wrongMetricsCollector()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "I want access");
         props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
-        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS, "org.carlspring.cloud.storage.s3fs.util.WrongRequestMetricCollector");
+        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS,
+                          "org.carlspring.cloud.storage.s3fs.util.WrongRequestMetricCollector");
+
         clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
     }
 
     @Test
-    public void defaultSendBufferHint() {
+    public void defaultSendBufferHint()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "giev.ma.access!");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
+
         Properties props = new Properties();
         props.setProperty(SOCKET_SEND_BUFFER_SIZE_HINT, "12345");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
+        ExposingAmazonS3Client client =
+                (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
+
         assertEquals(12345, clientConfiguration.getSocketBufferSizeHints()[0]);
         assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[1]);
     }
 
     @Test
-    public void defaultReceiveBufferHint() {
+    public void defaultReceiveBufferHint()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "giev.ma.access!");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
+
         Properties props = new Properties();
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "54321");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
+        ExposingAmazonS3Client client =
+                (ExposingAmazonS3Client) clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
         ClientConfiguration clientConfiguration = client.getClientConfiguration();
+
         assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[0]);
         assertEquals(54321, clientConfiguration.getSocketBufferSizeHints()[1]);
     }
 
     @Test
-    public void overrideHostAndPort() {
+    public void overrideHostAndPort()
+    {
         AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+
         System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "test");
         System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "test");
-        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(URI.create("s3://localhost:8001/"), new Properties());
+
+        ExposingAmazonS3Client client = (ExposingAmazonS3Client) clientFactory.getAmazonS3(URI.create(
+                "s3://localhost:8001/"), new Properties());
+
         URI endpoint = client.getEndpoint();
+
         assertEquals("https", endpoint.getScheme());
         assertEquals("localhost", endpoint.getHost());
         assertEquals(8001, endpoint.getPort());
     }
+
 }

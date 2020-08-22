@@ -8,15 +8,26 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 import static org.junit.Assert.assertTrue;
 
-public class S3FileAttributesTest {
+public class S3FileAttributesTest
+{
+
+
     @Test
-    public void toStringPrintsBasicInfo() {
+    public void toStringPrintsBasicInfo()
+    {
         final String key = "a key";
         final FileTime fileTime = FileTime.from(100, TimeUnit.SECONDS);
+
         final int size = 10;
+
         final boolean isDirectory = true;
         final boolean isRegularFile = true;
-        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key, fileTime, size, isDirectory, isRegularFile);
+
+        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key,
+                                                                         fileTime,
+                                                                         size,
+                                                                         isDirectory,
+                                                                         isRegularFile);
 
         String print = fileAttributes.toString();
 
@@ -28,13 +39,21 @@ public class S3FileAttributesTest {
     }
 
     @Test
-    public void anotherToStringPrintsBasicInfo() {
+    public void anotherToStringPrintsBasicInfo()
+    {
         final String key = "another complex key";
         final FileTime fileTime = FileTime.from(472931, TimeUnit.SECONDS);
+
         final int size = 138713;
+
         final boolean isDirectory = false;
         final boolean isRegularFile = false;
-        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key, fileTime, size, isDirectory, isRegularFile);
+
+        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key,
+                                                                         fileTime,
+                                                                         size,
+                                                                         isDirectory,
+                                                                         isRegularFile);
 
         String print = fileAttributes.toString();
 
@@ -44,4 +63,5 @@ public class S3FileAttributesTest {
         assertTrue(print.contains(fileTime.toString()));
         assertTrue(print.contains(key));
     }
+
 }

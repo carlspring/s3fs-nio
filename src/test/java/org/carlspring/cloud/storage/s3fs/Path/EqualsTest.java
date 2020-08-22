@@ -18,22 +18,29 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
-public class EqualsTest extends S3UnitTestBase {
+public class EqualsTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
-    private S3Path getPath(String path) {
+
+    private S3Path getPath(String path)
+    {
         return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void equals() {
+    public void equals()
+    {
         Path path = getPath("/bucketA/dir/file");
         Path path2 = getPath("/bucketA/dir/file");
 
@@ -41,7 +48,8 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void equalsDir() {
+    public void equalsDir()
+    {
         Path path = getPath("/bucketA/dir/");
         Path path2 = getPath("/bucketA/dir/");
 
@@ -49,7 +57,8 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void equalsBucket() {
+    public void equalsBucket()
+    {
         Path path = getPath("/bucketA/");
         Path path2 = getPath("/bucketA/");
 
@@ -57,7 +66,8 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void equalsBucketWithoutEndSlash() {
+    public void equalsBucketWithoutEndSlash()
+    {
         Path path = getPath("/bucketA/");
         Path path2 = getPath("/bucketA");
 
@@ -65,7 +75,8 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void notEquals() {
+    public void notEquals()
+    {
         Path path = getPath("/bucketA/dir/file");
         Path path2 = getPath("/bucketA/dir/file2");
 
@@ -73,7 +84,8 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void notEqualsDirFile() {
+    public void notEqualsDirFile()
+    {
         Path path = getPath("/bucketA/dir/asd/");
         Path path2 = getPath("/bucketA/dir/asd");
 
@@ -81,23 +93,28 @@ public class EqualsTest extends S3UnitTestBase {
     }
 
     @Test
-    public void notEqualsNull() {
+    public void notEqualsNull()
+    {
         Path path = getPath("/bucketA/dir/file");
 
         assertNotEquals(path, null);
     }
 
     @Test
-    public void notEqualsDifferentProvider() throws IOException {
+    public void notEqualsDifferentProvider()
+            throws IOException
+    {
         Path path = getPath("/c/dir/file");
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux")) {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        {
             Path fileLinux = linux.getPath("/dir/file");
 
             assertNotEquals(path, fileLinux);
         }
 
-        try (FileSystem window = MemoryFileSystemBuilder.newWindows().build("window")) {
+        try (FileSystem window = MemoryFileSystemBuilder.newWindows().build("window"))
+        {
             Path file = window.getPath("c:/dir/file");
 
             assertNotEquals(path, file);
