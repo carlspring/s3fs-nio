@@ -79,7 +79,7 @@
         <!-- Sonarcloud properties -->
 
         <maven.surfire.plugin.version>2.7.1</maven.surfire.plugin.version>
-        <slf4j.version>1.7.5</slf4j.version>
+        <slf4j.version>1.7.30</slf4j.version>
         <com.amazonaws.aws-java-sdk-s3.version>1.11.232</com.amazonaws.aws-java-sdk-s3.version>
         <com.google.guava.guava.version>18.0</com.google.guava.guava.version>
         <org.apache.tika.tika-core.version>1.5</org.apache.tika.tika-core.version>
