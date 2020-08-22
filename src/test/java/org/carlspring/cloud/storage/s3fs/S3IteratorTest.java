@@ -18,15 +18,21 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class S3IteratorTest extends S3UnitTestBase {
+public class S3IteratorTest
+        extends S3UnitTestBase
+{
 
     S3FileSystemProvider provider;
 
     private static URI endpoint = URI.create("s3://s3iteratortest.test");
 
+
     @Before
-    public void prepare() throws IOException {
+    public void prepare()
+            throws IOException
+    {
         provider = spy(new S3FileSystemProvider());
+
         doReturn(new Properties()).when(provider).loadAmazonProperties();
         doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 
@@ -36,17 +42,23 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorDirectory() throws IOException {
+    public void iteratorDirectory()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file1");
+
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA", "dir");
         S3Iterator iterator = new S3Iterator(path);
+
         assertIterator(iterator, "file1");
     }
 
     @Test
-    public void iteratorAnotherDirectory() throws IOException {
+    public void iteratorAnotherDirectory()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir2").file("dir2/file1", "dir2/file2");
 
@@ -58,7 +70,9 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorWithFileContainsDirectoryName() throws IOException {
+    public void iteratorWithFileContainsDirectoryName()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir2").file("dir2/dir2-file", "dir2-file2");
 
@@ -70,9 +84,15 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorWithSubFolderAndSubFiles() throws IOException {
+    public void iteratorWithSubFolderAndSubFiles()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir", "dir/dir", "dir/dir2", "dir/dir2/dir3").file("dir/file", "dir/file2", "dir/dir/file", "dir/dir2/file", "dir/dir2/dir3/file");
+        client.bucket("bucketA").dir("dir", "dir/dir", "dir/dir2", "dir/dir2/dir3").file("dir/file",
+                                                                                         "dir/file2",
+                                                                                         "dir/dir/file",
+                                                                                         "dir/dir2/file",
+                                                                                         "dir/dir2/dir3/file");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA", "dir");
@@ -82,9 +102,14 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorWithSubFolderAndSubFilesAtBucketLevel() throws IOException {
+    public void iteratorWithSubFolderAndSubFilesAtBucketLevel()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").file("file", "file2", "dir/file3", "dir2/file4", "dir2/dir3/file3").dir("dir", "dir2", "dir2/dir3", "dir4");
+        client.bucket("bucketA").file("file", "file2", "dir/file3", "dir2/file4", "dir2/dir3/file3").dir("dir",
+                                                                                                         "dir2",
+                                                                                                         "dir2/dir3",
+                                                                                                         "dir4");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA");
@@ -94,7 +119,9 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorFileReturnEmpty() throws IOException {
+    public void iteratorFileReturnEmpty()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1");
 
@@ -106,7 +133,9 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorEmptyDirectory() throws IOException {
+    public void iteratorEmptyDirectory()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir");
 
@@ -118,7 +147,9 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorBucket() throws IOException {
+    public void iteratorBucket()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1", "file2", "file3");
 
@@ -130,22 +161,35 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test(expected = NoSuchElementException.class)
-    public void iteratorExhausted() throws IOException {
+    public void iteratorExhausted()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("file1", "file2", "file3");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA");
         S3Iterator iterator = new S3Iterator(path);
+
         while (iterator.hasNext())
+        {
             iterator.next();
+        }
+
         iterator.next();
     }
 
     @Test
-    public void iteratorDirs() throws IOException {
+    public void iteratorDirs()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").file("file1", "file2", "file3", "directory1/file1.1", "directory1/file1.2", "directory1/file1.3").dir("directory1");
+        client.bucket("bucketA").file("file1",
+                                      "file2",
+                                      "file3",
+                                      "directory1/file1.1",
+                                      "directory1/file1.2",
+                                      "directory1/file1.3").dir("directory1");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA");
@@ -155,7 +199,9 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void virtualDirs() throws IOException {
+    public void virtualDirs()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").file("directory1/file1.1", "directory1/file1.2", "directory1/file1.3");
 
@@ -164,15 +210,21 @@ public class S3IteratorTest extends S3UnitTestBase {
         S3Iterator iterator = new S3Iterator(path);
 
         assertIterator(iterator, "file1.1", "file1.2", "file1.3");
+
         path = s3FileSystem.getPath("/bucketA");
         iterator = new S3Iterator(path);
+
         assertIterator(iterator, "directory1");
     }
 
     @Test
-    public void incrementalVirtualDirs() throws IOException {
+    public void incrementalVirtualDirs()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").file("dir/subdir/subberdir/file1.1", "dir/subdir/subberdir/file1.2", "dir/subdir/subberdir/file1.3");
+        client.bucket("bucketA").file("dir/subdir/subberdir/file1.1",
+                                      "dir/subdir/subberdir/file1.2",
+                                      "dir/subdir/subberdir/file1.3");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA/dir/subdir");
@@ -182,51 +234,79 @@ public class S3IteratorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorMoreThanAmazonS3ClientLimit() throws IOException {
+    public void iteratorMoreThanAmazonS3ClientLimit()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        MockBucket mocket = client.bucket("bucketD");
+        MockBucket mockBucket = client.bucket("bucketD");
 
-        String filesNameExpected[] = new String[1050];
-        for (int i = 0; i < 1050; i++) {
+        String fileNamesExpected[] = new String[1050];
+        for (int i = 0; i < 1050; i++)
+        {
             StringBuilder name = new StringBuilder("file-");
+
             if (i < 1000)
+            {
                 name.append("0");
+            }
+
             if (i < 100)
+            {
                 name.append("0");
+            }
+
             if (i < 10)
+            {
                 name.append("0");
+            }
+
             name.append(i);
-            mocket.file(name.toString());
-            filesNameExpected[i] = name.toString();
+            mockBucket.file(name.toString());
+
+            fileNamesExpected[i] = name.toString();
         }
+
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketD");
         S3Iterator iterator = new S3Iterator(path);
-        assertIterator(iterator, filesNameExpected);
+
+        assertIterator(iterator, fileNamesExpected);
+
         verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void remove() throws IOException {
+    public void remove()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file1");
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+
         S3Iterator iterator = new S3Iterator(path);
         iterator.remove();
     }
 
-    private void assertIterator(Iterator<Path> iterator, final String... files) {
+    private void assertIterator(Iterator<Path> iterator, final String... files)
+    {
         assertNotNull(iterator);
         assertTrue(iterator.hasNext());
+
         List<String> filesNamesExpected = Arrays.asList(files);
         List<String> filesNamesActual = new ArrayList<>();
-        while (iterator.hasNext()) {
+
+        while (iterator.hasNext())
+        {
             Path path = iterator.next();
+
             String fileName = path.getFileName().toString();
+
             filesNamesActual.add(fileName);
         }
+
         assertEquals(filesNamesExpected, filesNamesActual);
     }
+
 }

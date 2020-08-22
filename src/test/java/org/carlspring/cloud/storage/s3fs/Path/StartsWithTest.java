@@ -14,116 +14,141 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class StartsWithTest extends S3UnitTestBase {
+public class StartsWithTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
-    private S3Path getPath(String path) {
-        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
-    }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
+
     @Test
-    public void startsWithBucket() {
+    public void startsWithBucket()
+    {
         assertTrue(getPath("/bucket/file1").startsWith(getPath("/bucket/")));
         assertFalse(getPath("/bucket/file1").startsWith(getPath("/bucket")));
     }
 
     @Test
-    public void startsWithBlank() {
+    public void startsWithBlank()
+    {
         assertFalse(getPath("/bucket/file1").startsWith(getPath("")));
     }
 
     @Test
-    public void startsWithBlankRelative() {
+    public void startsWithBlankRelative()
+    {
         assertFalse(getPath("file1").startsWith(getPath("")));
     }
 
     @Test
-    public void startsWithSlash() {
+    public void startsWithSlash()
+    {
         assertTrue(getPath("/bucket/file").startsWith(getPath("/bucket/")));
     }
 
     @Test
-    public void startsWithBlankBlank() {
+    public void startsWithBlankBlank()
+    {
         assertTrue(getPath("").startsWith(getPath("")));
     }
 
     @Test
-    public void startsWithOnlyBuckets() {
+    public void startsWithOnlyBuckets()
+    {
         assertTrue(getPath("/bucket").startsWith(getPath("/bucket")));
     }
 
     @Test
-    public void startsWithRelativeVsAbsolute() {
+    public void startsWithRelativeVsAbsolute()
+    {
         assertFalse(getPath("/bucket/file1").startsWith(getPath("file1")));
     }
 
     @Test
-    public void startsWithRelativeVsAbsoluteInBucket() {
+    public void startsWithRelativeVsAbsoluteInBucket()
+    {
         assertFalse(getPath("/bucket/file1").startsWith(getPath("bucket")));
     }
 
     @Test
-    public void startsWithFalse() {
+    public void startsWithFalse()
+    {
         assertFalse(getPath("/bucket/file1").startsWith(getPath("/bucket/file1/file2")));
         assertTrue(getPath("/bucket/file1/file2").startsWith(getPath("/bucket/file1")));
     }
 
     @Test
-    public void startsWithNotNormalize() {
+    public void startsWithNotNormalize()
+    {
         assertFalse(getPath("/bucket/file1/file2").startsWith(getPath("/bucket/file1/../")));
     }
 
     @Test
-    public void startsWithNormalize() {
+    public void startsWithNormalize()
+    {
         // in this implementation not exists .. or . special paths
         assertFalse(getPath("/bucket/file1/file2").startsWith(getPath("/bucket/file1/../").normalize()));
     }
 
     @Test
-    public void startsWithRelative() {
+    public void startsWithRelative()
+    {
         assertTrue(getPath("file/file1").startsWith(getPath("file")));
     }
 
     @Test
-    public void startsWithDifferentProvider() {
+    public void startsWithDifferentProvider()
+    {
         assertFalse(getPath("/bucket/hello").startsWith(Paths.get("/bucket")));
     }
 
     @Test
-    public void startsWithString() {
+    public void startsWithString()
+    {
         assertTrue(getPath("/bucket/hello").startsWith("/bucket/hello"));
     }
 
     @Test
-    public void startsWithStringRelative() {
+    public void startsWithStringRelative()
+    {
         assertTrue(getPath("subkey1/hello").startsWith("subkey1/hello"));
     }
 
     @Test
-    public void startsWithStringOnlyBuckets() {
+    public void startsWithStringOnlyBuckets()
+    {
         assertTrue(getPath("/bucket").startsWith("/bucket"));
     }
 
     @Test
-    public void startsWithStringRelativeVsAbsolute() {
+    public void startsWithStringRelativeVsAbsolute()
+    {
         assertFalse(getPath("/bucket/file1").startsWith("file1"));
     }
 
     @Test
-    public void startsWithStringFalse() {
+    public void startsWithStringFalse()
+    {
         assertFalse(getPath("/bucket/file1").startsWith("/bucket/file1/file2"));
         assertTrue(getPath("/bucket/file1/file2").startsWith("/bucket/file1"));
     }
 
     @Test
-    public void startsWithStringRelativeVsAbsoluteInBucket() {
+    public void startsWithStringRelativeVsAbsoluteInBucket()
+    {
         assertFalse(getPath("/bucket/file1").startsWith("bucket"));
     }
 

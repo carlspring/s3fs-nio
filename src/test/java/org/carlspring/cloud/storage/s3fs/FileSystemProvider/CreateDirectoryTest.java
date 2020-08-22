@@ -18,18 +18,25 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class CreateDirectoryTest extends S3UnitTestBase {
+public class CreateDirectoryTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void createDirectory() throws IOException {
+    public void createDirectory()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA");
@@ -37,7 +44,8 @@ public class CreateDirectoryTest extends S3UnitTestBase {
         // act
         Path base = createNewS3FileSystem().getPath("/bucketA/dir");
         Files.createDirectory(base);
-        // assert
+
+        // assertions
         assertTrue(Files.exists(base));
         assertTrue(Files.isDirectory(base));
         assertTrue(Files.exists(base));
@@ -45,13 +53,16 @@ public class CreateDirectoryTest extends S3UnitTestBase {
 
 
     @Test
-    public void createDirectoryInNewBucket() throws IOException {
+    public void createDirectoryInNewBucket()
+            throws IOException
+    {
         S3Path root = createNewS3FileSystem().getPath("/newer-bucket");
+
         Path resolve = root.resolve("folder");
         Path path = Files.createDirectories(resolve);
 
+        // assertions
         assertEquals("s3://s3.test.amazonaws.com/newer-bucket/folder", path.toAbsolutePath().toString());
-        // assert
         assertTrue(Files.exists(root));
         assertTrue(Files.isDirectory(root));
         assertTrue(Files.exists(root));
@@ -61,7 +72,9 @@ public class CreateDirectoryTest extends S3UnitTestBase {
     }
 
     @Test
-    public void createDirectoryWithSpace() throws IOException {
+    public void createDirectoryWithSpace()
+            throws IOException
+    {
         // fixtures
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA");
@@ -69,9 +82,11 @@ public class CreateDirectoryTest extends S3UnitTestBase {
         // act
         Path base = createNewS3FileSystem().getPath("/bucketA/dir with space/another space");
         Files.createDirectories(base);
-        // assert
+
+        // assertions
         assertTrue(Files.exists(base));
         assertTrue(Files.isDirectory(base));
+
         // parent
         assertTrue(Files.exists(base.getParent()));
         assertTrue(Files.isDirectory(base.getParent()));
@@ -84,11 +99,16 @@ public class CreateDirectoryTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
     }
+
 }

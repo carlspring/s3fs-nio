@@ -15,22 +15,29 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-public class ItearatorTest extends S3UnitTestBase {
+public class IteratorTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
-    private S3Path getPath(String path) {
-        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
-    }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
+
     @Test
-    public void iterator() {
+    public void iterator()
+    {
         Iterator<Path> iterator = getPath("/bucket/path/to/file").iterator();
 
         assertEquals(getPath("/bucket/"), iterator.next());
@@ -40,10 +47,10 @@ public class ItearatorTest extends S3UnitTestBase {
     }
 
     @Test
-    public void iteratorEmtpy() {
+    public void iteratorEmtpy()
+    {
         Iterator<Path> iterator = getPath("").iterator();
         assertFalse(iterator.hasNext());
     }
-
 
 }

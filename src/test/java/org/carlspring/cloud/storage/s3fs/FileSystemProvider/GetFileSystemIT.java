@@ -19,33 +19,47 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.mockito.Mockito.*;
 
-public class GetFileSystemIT {
+public class GetFileSystemIT
+{
 
     private S3FileSystemProvider provider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);
-        try {
+
+        try
+        {
             FileSystems.getFileSystem(S3_GLOBAL_URI_IT).close();
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             // ignore this
         }
+
         provider = spy(new S3FileSystemProvider());
-        // dont override with system envs that we can have setted, like travis
+
+        // Don't override with system envs that we can have set, like Travis
         doReturn(false).when(provider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
         doReturn(false).when(provider).overloadPropertiesWithSystemProps(any(Properties.class), anyString());
     }
 
     @Test
-    public void getFileSystemWithSameEnvReturnSameFileSystem() {
+    public void getFileSystemWithSameEnvReturnSameFileSystem()
+    {
         Map<String, Object> env = ImmutableMap.<String, Object>of("s3fs_access_key", "a", "s3fs_secret_key", "b");
         FileSystem fileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
+
         assertNotNull(fileSystem);
 
         FileSystem sameFileSystem = provider.getFileSystem(S3_GLOBAL_URI_IT, env);
+
         assertSame(fileSystem, sameFileSystem);
     }
+
 }

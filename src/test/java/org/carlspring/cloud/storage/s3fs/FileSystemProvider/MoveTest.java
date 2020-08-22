@@ -15,28 +15,38 @@ import org.junit.Test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
 
-public class MoveTest extends S3UnitTestBase {
+public class MoveTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-
     @Test
-    public void move() throws IOException {
+    public void move()
+            throws IOException
+    {
         // fixtures
         final String content = "sample-content";
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir", "dir2").file("dir/file1", content.getBytes());
+
         // act
         FileSystem fs = createNewS3FileSystem();
+
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
+
         s3fsProvider.move(file, fileDest);
+
         // assert
         assertTrue(Files.exists(fileDest));
         assertTrue(Files.notExists(file));
@@ -44,18 +54,23 @@ public class MoveTest extends S3UnitTestBase {
     }
 
     @Test
-    public void moveWithReplaceExisting() throws IOException {
+    public void moveWithReplaceExisting()
+            throws IOException
+    {
         // fixtures
         final String content = "sample-content";
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir")
-                .file("dir/file1", content.getBytes())
-                .file("dir/file2", "different-content".getBytes());
+        client.bucket("bucketA").dir("dir").file("dir/file1", content.getBytes()).file("dir/file2",
+                                                                                       "different-content".getBytes());
+
         // act
         FileSystem fs = createNewS3FileSystem();
+
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
+
         s3fsProvider.move(file, fileDest, StandardCopyOption.REPLACE_EXISTING);
+
         // assert
         assertTrue(Files.exists(fileDest));
         assertTrue(Files.notExists(file));
@@ -63,30 +78,40 @@ public class MoveTest extends S3UnitTestBase {
     }
 
     @Test(expected = FileAlreadyExistsException.class)
-    public void moveWithoutReplaceExisting() throws IOException {
+    public void moveWithoutReplaceExisting()
+            throws IOException
+    {
         // fixtures
         final String content = "sample-content";
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir")
-                .file("dir/file1", content.getBytes())
-                .file("dir/file2", "different-content".getBytes());
+        client.bucket("bucketA").dir("dir").file("dir/file1", content.getBytes()).file("dir/file2",
+                                                                                       "different-content".getBytes());
+
         // act
         FileSystem fs = createNewS3FileSystem();
+
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
+
         s3fsProvider.move(file, fileDest);
     }
 
     @Test(expected = AtomicMoveNotSupportedException.class)
-    public void moveWithAtomicOption() throws IOException {
+    public void moveWithAtomicOption()
+            throws IOException
+    {
         // fixtures
         final String content = "sample-content";
+
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir", "dir2").file("dir/file1", content.getBytes());
+
         // act
         FileSystem fs = createNewS3FileSystem();
+
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
+
         s3fsProvider.move(file, fileDest, StandardCopyOption.ATOMIC_MOVE);
     }
 
@@ -97,12 +122,17 @@ public class MoveTest extends S3UnitTestBase {
      * @return FileSystem
      * @throws IOException
      */
-    private S3FileSystem createNewS3FileSystem() throws IOException {
-        try {
+    private S3FileSystem createNewS3FileSystem()
+            throws IOException
+    {
+        try
+        {
             return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        } catch (FileSystemNotFoundException e) {
+        }
+        catch (FileSystemNotFoundException e)
+        {
             return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
         }
-
     }
+
 }

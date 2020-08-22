@@ -7,11 +7,17 @@ import org.junit.Test;
 /**
  * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods
  */
-public class IOUtilsTest {
+public class IOUtilsTest
+{
+
+
     @Test
-    public void just_to_silence_coverage() {
-        new IOUtils() {
+    public void just_to_silence_coverage()
+    {
+        new IOUtils()
+        {
             // ignore this
         };
     }
+
 }

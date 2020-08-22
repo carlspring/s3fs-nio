@@ -9,14 +9,18 @@ import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.junit.Assert.assertNotNull;
 
-public class EnvironmentIT {
+public class EnvironmentIT
+{
+
 
     @Test
-    public void couldCreateFileSystem() {
+    public void couldCreateFileSystem()
+    {
         Map<String, Object> res = EnvironmentBuilder.getRealEnv();
 
         assertNotNull(res);
         assertNotNull(res.get(ACCESS_KEY));
         assertNotNull(res.get(SECRET_KEY));
     }
+
 }

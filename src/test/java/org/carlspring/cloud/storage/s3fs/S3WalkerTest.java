@@ -16,109 +16,165 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.reset;
 
-public class S3WalkerTest extends S3UnitTestBase {
+public class S3WalkerTest
+        extends S3UnitTestBase
+{
 
-    class RegisteringVisitor implements FileVisitor<Path> {
+    class RegisteringVisitor
+            implements FileVisitor<Path>
+    {
+
         List<String> visitOrder = new ArrayList<>();
 
+
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+        {
             visitOrder.add("preVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+        {
             visitOrder.add("visitFile(" + file.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
-            visitOrder.add("visitFileFailed(" + file.toAbsolutePath().toString() + ", " + exc.getClass().getSimpleName() + "(" + exc.getMessage() + "))");
+        public FileVisitResult visitFileFailed(Path file, IOException exc)
+        {
+            visitOrder.add("visitFileFailed(" + file.toAbsolutePath().toString() + ", " +
+                           exc.getClass().getSimpleName() + "(" + exc.getMessage() + "))");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+        {
             visitOrder.add("postVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
 
-        public List<String> getVisitOrder() {
+        public List<String> getVisitOrder()
+        {
             return visitOrder;
         }
+
     }
 
-    class CheckVisitor implements FileVisitor<Path> {
+    class CheckVisitor
+            implements FileVisitor<Path>
+    {
+
         private Iterator<String> iterator;
 
-        public CheckVisitor(Iterator<String> iterator) {
+
+        public CheckVisitor(Iterator<String> iterator)
+        {
             this.iterator = iterator;
         }
 
         @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+        {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "preVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+        {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "visitFile(" + file.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) {
+        public FileVisitResult visitFileFailed(Path file, IOException exc)
+        {
             assertTrue(iterator.hasNext());
-            assertEquals(iterator.next(), "visitFileFailed(" + file.toAbsolutePath().toString() + ", " + exc.getClass().getSimpleName() + "(" + exc.getMessage() + "))");
+            assertEquals(iterator.next(),
+                         "visitFileFailed(" + file.toAbsolutePath().toString() + ", " + exc.getClass().getSimpleName() +
+                         "(" + exc.getMessage() + "))");
+
             return FileVisitResult.CONTINUE;
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+        public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+        {
             assertTrue(iterator.hasNext());
             assertEquals(iterator.next(), "postVisitDirectory(" + dir.toAbsolutePath().toString() + ")");
+
             return FileVisitResult.CONTINUE;
         }
+
     }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void walkFileTree() throws IOException {
+    public void walkFileTree()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        MockBucket mocket = client.bucket("/tree");
-        mocket.dir("folder", "folder/subfolder1");
-        mocket.file("folder/subfolder1/file1.1", "folder/subfolder1/file1.2", "folder/subfolder1/file1.3", "folder/subfolder1/file1.4");
-        mocket.file("folder/subfolder2/file2.1", "folder/subfolder2/file2.2", "folder/subfolder2/file2.3", "folder/subfolder2/file2.4");
+
+        MockBucket mockBucket = client.bucket("/tree");
+        mockBucket.dir("folder", "folder/subfolder1");
+        mockBucket.file("folder/subfolder1/file1.1",
+                        "folder/subfolder1/file1.2",
+                        "folder/subfolder1/file1.3",
+                        "folder/subfolder1/file1.4");
+        mockBucket.file("folder/subfolder2/file2.1",
+                        "folder/subfolder2/file2.2",
+                        "folder/subfolder2/file2.3",
+                        "folder/subfolder2/file2.4");
 
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
+
         reset(client);
+
         RegisteringVisitor registrar = new RegisteringVisitor();
+
         Files.walkFileTree(folder, registrar);
+
         // 14: 2 for folders: one previst and one postvisit and 1 for files
         assertEquals(14, registrar.getVisitOrder().size());
 
         final Iterator<String> iterator = registrar.getVisitOrder().iterator();
+
         reset(client);
+
         Files.walkFileTree(folder, new CheckVisitor(iterator));
+
         assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
 
         reset(client);
+
         Iterator<String> iter = registrar.getVisitOrder().iterator();
+
         Files.walkFileTree(folder, Collections.<FileVisitOption>emptySet(), 20, new CheckVisitor(iter));
+
         assertFalse("Iterator should have been  exhausted.", iter.hasNext());
     }
 
     @Test
-    public void walkEmptyFileTree() throws IOException {
+    public void walkEmptyFileTree()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("tree").dir("folder");
 
@@ -126,110 +182,171 @@ public class S3WalkerTest extends S3UnitTestBase {
         RegisteringVisitor registrar = new RegisteringVisitor();
 
         reset(client);
+
         Files.walkFileTree(folder, registrar);
+
         assertEquals(2, registrar.getVisitOrder().size());
 
         final Iterator<String> iterator = registrar.getVisitOrder().iterator();
+
         reset(client);
 
         Files.walkFileTree(folder, new CheckVisitor(iterator));
+
         assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
     }
 
     @Test
-    public void walkLargeFileTree() throws IOException {
+    public void walkLargeFileTree()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        MockBucket mocket = client.bucket("/tree");
-        for (int i = 0; i < 21; i++) {
-            for (int j = 0; j < 50; j++) {
+        MockBucket mockBucket = client.bucket("/tree");
+
+        for (int i = 0; i < 21; i++)
+        {
+            for (int j = 0; j < 50; j++)
+            {
                 StringBuilder filename = new StringBuilder("folder/subfolder");
+
                 if (i < 10)
+                {
                     filename.append("0");
+                }
+
                 filename.append(i);
                 filename.append("/file");
+
                 if (j < 10)
+                {
                     filename.append("0");
+                }
+
                 filename.append(j);
-                mocket.file(filename.toString());
+
+                mockBucket.file(filename.toString());
             }
         }
+
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
 
         reset(client);
+
         RegisteringVisitor registrar = new RegisteringVisitor();
+
         Files.walkFileTree(folder, registrar);
+
         assertEquals(1094, registrar.getVisitOrder().size());
 
         final Iterator<String> iterator = registrar.getVisitOrder().iterator();
+
         reset(client);
+
         Files.walkFileTree(folder, new CheckVisitor(iterator));
+
         assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
     }
 
     @Test
-    public void noSuchElementTreeWalk() throws IOException {
+    public void noSuchElementTreeWalk()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("/tree");
+
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
+
         reset(client);
+
         RegisteringVisitor registrar = new RegisteringVisitor();
+
         Files.walkFileTree(folder, registrar);
+
         assertEquals(1, registrar.getVisitOrder().size());
 
         final Iterator<String> iterator = registrar.getVisitOrder().iterator();
+
         reset(client);
+
         Files.walkFileTree(folder, new CheckVisitor(iterator));
+
         assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
     }
 
     @Test
-    public void skippingWalk() throws IOException {
+    public void skippingWalk()
+            throws IOException
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        MockBucket mocket = client.bucket("/tree");
-        mocket.dir("folder", "folder/subfolder1");
-        mocket.file("folder/subfolder1/file1.1", "folder/subfolder1/file1.2");
-        mocket.file("folder/subfolder2/file2.1", "folder/subfolder2/file2.2");
-        mocket.file("folder/subfolder3/file3.1", "folder/subfolder3/file3.2");
-        mocket.file("folder/subfolder4/file4.1", "folder/subfolder4/file4.2");
+
+        MockBucket mockBucket = client.bucket("/tree");
+        mockBucket.dir("folder", "folder/subfolder1");
+        mockBucket.file("folder/subfolder1/file1.1", "folder/subfolder1/file1.2");
+        mockBucket.file("folder/subfolder2/file2.1", "folder/subfolder2/file2.2");
+        mockBucket.file("folder/subfolder3/file3.1", "folder/subfolder3/file3.2");
+        mockBucket.file("folder/subfolder4/file4.1", "folder/subfolder4/file4.2");
 
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
+
         reset(client);
+
         final List<String> visitation = new ArrayList<>();
-        FileVisitor<Path> visitor = new FileVisitor<Path>() {
+
+        FileVisitor<Path> visitor = new FileVisitor<Path>()
+        {
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+            {
                 String fileName = dir.getFileName().toString();
                 if (fileName.equals("subfolder2"))
+                {
                     return FileVisitResult.SKIP_SUBTREE;
+                }
+
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            {
                 String name = file.getFileName().toString();
+
                 visitation.add(name);
+
                 if (name.equals("file3.1"))
+                {
                     return FileVisitResult.SKIP_SIBLINGS;
+                }
+
                 if (name.equals("file4.1"))
+                {
                     return FileVisitResult.TERMINATE;
+                }
+
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+            public FileVisitResult visitFileFailed(Path file, IOException exc)
+            {
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+            {
                 return FileVisitResult.CONTINUE;
             }
         };
+
         Files.walkFileTree(folder, visitor);
+
         assertEquals(Arrays.asList("file1.1", "file1.2", "file3.1", "file4.1"), visitation);
 
         visitation.clear();
+
         Files.walkFileTree(folder, visitor);
+
         assertEquals(Arrays.asList("file1.1", "file1.2", "file3.1", "file4.1"), visitation);
     }
 

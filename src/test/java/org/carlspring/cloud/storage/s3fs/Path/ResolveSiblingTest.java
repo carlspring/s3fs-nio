@@ -12,31 +12,40 @@ import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertEquals;
 
-public class ResolveSiblingTest extends S3UnitTestBase {
+public class ResolveSiblingTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
-    private S3Path getPath(String path) {
-        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
-    }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
 
     @Test
-    public void resolveSibling() {
+    public void resolveSibling()
+    {
         // absolute (non-root) vs...
-        assertEquals(getPath("/bucket/path/to/file").resolveSibling(getPath("other/child")), getPath("/bucket/path/to/other/child"));
-        assertEquals(getPath("/bucket/path/to/file").resolveSibling(getPath("/bucket2/other/child")), getPath("/bucket2/other/child"));
+        assertEquals(getPath("/bucket/path/to/file").resolveSibling(getPath("other/child")),
+                     getPath("/bucket/path/to/other/child"));
+        assertEquals(getPath("/bucket/path/to/file").resolveSibling(getPath("/bucket2/other/child")),
+                     getPath("/bucket2/other/child"));
         assertEquals(getPath("/bucket/path/to/file").resolveSibling(getPath("")), getPath("/bucket/path/to/"));
 
         // absolute (root) vs ...
         assertEquals(getPath("/bucket").resolveSibling(getPath("other/child")), getPath("other/child"));
-        assertEquals(getPath("/bucket").resolveSibling(getPath("/bucket2/other/child")), getPath("/bucket2/other/child"));
+        assertEquals(getPath("/bucket").resolveSibling(getPath("/bucket2/other/child")),
+                     getPath("/bucket2/other/child"));
         assertEquals(getPath("/bucket").resolveSibling(getPath("")), getPath(""));
 
         // relative (empty) vs ...
@@ -46,15 +55,19 @@ public class ResolveSiblingTest extends S3UnitTestBase {
 
         // relative (non-empty) vs ...
         assertEquals(getPath("path/to/file").resolveSibling(getPath("other/child")), getPath("path/to/other/child"));
-        assertEquals(getPath("path/to/file").resolveSibling(getPath("/bucket2/other/child")), getPath("/bucket2/other/child"));
+        assertEquals(getPath("path/to/file").resolveSibling(getPath("/bucket2/other/child")),
+                     getPath("/bucket2/other/child"));
         assertEquals(getPath("path/to/file").resolveSibling(getPath("")), getPath("path/to/"));
     }
 
     @Test
-    public void resolveSiblingString() {
+    public void resolveSiblingString()
+    {
         // absolute (non-root) vs...
-        assertEquals(getPath("/bucket/path/to/file").resolveSibling("other/child"), getPath("/bucket/path/to/other/child"));
-        assertEquals(getPath("/bucket/path/to/file").resolveSibling("/bucket2/other/child"), getPath("/bucket2/other/child"));
+        assertEquals(getPath("/bucket/path/to/file").resolveSibling("other/child"),
+                     getPath("/bucket/path/to/other/child"));
+        assertEquals(getPath("/bucket/path/to/file").resolveSibling("/bucket2/other/child"),
+                     getPath("/bucket2/other/child"));
         assertEquals(getPath("/bucket/path/to/file").resolveSibling(""), getPath("/bucket/path/to/"));
 
         // absolute (root) vs ...
@@ -72,6 +85,5 @@ public class ResolveSiblingTest extends S3UnitTestBase {
         assertEquals(getPath("path/to/file").resolveSibling("/bucket2/other/child"), getPath("/bucket2/other/child"));
         assertEquals(getPath("path/to/file").resolveSibling(""), getPath("path/to/"));
     }
-
 
 }

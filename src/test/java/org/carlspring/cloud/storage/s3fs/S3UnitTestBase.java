@@ -16,12 +16,15 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-public class S3UnitTestBase {
+public class S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
+
     @BeforeClass
-    public static void setProperties() {
+    public static void setProperties()
+    {
         System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);
@@ -30,28 +33,37 @@ public class S3UnitTestBase {
     }
 
     @Before
-    public void setupS3fsProvider() {
+    public void setupS3fsProvider()
+    {
         s3fsProvider = spy(new S3FileSystemProvider());
+
         // stub the possibility to add system envs var
         doReturn(false).when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
         doReturn(new Properties()).when(s3fsProvider).loadAmazonProperties();
     }
 
     @After
-    public void closeMemory() {
+    public void closeMemory()
+    {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.clear();
 
-        for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values()) {
-            try {
+        for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values())
+        {
+            try
+            {
                 s3FileSystem.close();
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 //ignore
             }
         }
     }
 
-    public S3FileSystemProvider getS3fsProvider() {
+    public S3FileSystemProvider getS3fsProvider()
+    {
         return this.s3fsProvider;
     }
+
 }

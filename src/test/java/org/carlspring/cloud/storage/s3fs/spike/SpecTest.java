@@ -14,31 +14,43 @@ import org.junit.Test;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-public class SpecTest {
+public class SpecTest
+{
 
-	@Test
-	public void parentOfRelativeSinglePathIsNull() {
-		Path path = FileSystems.getDefault().getPath("relative");
-		assertNull(path.getParent());
-	}
 
-	@Test
-	public void readAttributes() throws IOException {
-		Path path = Files.createTempFile("asdas", "sdasda");
-		Map<String,Object> attrs = Files.readAttributes(path, "*");
-		Map<String,Object> attrs2 = Files.readAttributes(path, "lastModifiedTime");
-	}
+    @Test
+    public void parentOfRelativeSinglePathIsNull()
+    {
+        Path path = FileSystems.getDefault().getPath("relative");
+        assertNull(path.getParent());
+    }
 
-	@Test
-	public void installedFileSystemsLoadFromMetaInf() {
-		List<FileSystemProvider> providers = FileSystemProvider.installedProviders();
-		boolean installed = false;
-		for (FileSystemProvider prov : providers) {
-			if (prov instanceof S3FileSystemProvider) {
-				installed = true;
-				return;
-			}
-		}
-		assertTrue(installed);
-	}
+    @Test
+    public void readAttributes()
+            throws IOException
+    {
+        Path path = Files.createTempFile("asdas", "sdasda");
+
+        Map<String, Object> attrs = Files.readAttributes(path, "*");
+        Map<String, Object> attrs2 = Files.readAttributes(path, "lastModifiedTime");
+    }
+
+    @Test
+    public void installedFileSystemsLoadFromMetaInf()
+    {
+        List<FileSystemProvider> providers = FileSystemProvider.installedProviders();
+        boolean installed = false;
+        for (FileSystemProvider prov : providers)
+        {
+            if (prov instanceof S3FileSystemProvider)
+            {
+                installed = true;
+
+                return;
+            }
+        }
+
+        assertTrue(installed);
+    }
+
 }

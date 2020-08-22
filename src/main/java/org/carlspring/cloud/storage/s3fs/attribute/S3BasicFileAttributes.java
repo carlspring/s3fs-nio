@@ -5,15 +5,29 @@ import java.nio.file.attribute.FileTime;
 
 import static java.lang.String.format;
 
-public class S3BasicFileAttributes implements BasicFileAttributes {
+public class S3BasicFileAttributes
+        implements BasicFileAttributes
+{
+
     private final FileTime lastModifiedTime;
+
     private final long size;
+
     private final boolean directory;
+
     private final boolean regularFile;
+
     private final String key;
+
     private long cacheCreated;
 
-    public S3BasicFileAttributes(String key, FileTime lastModifiedTime, long size, boolean isDirectory, boolean isRegularFile) {
+
+    public S3BasicFileAttributes(String key,
+                                 FileTime lastModifiedTime,
+                                 long size,
+                                 boolean isDirectory,
+                                 boolean isRegularFile)
+    {
         this.key = key;
         this.lastModifiedTime = lastModifiedTime;
         this.size = size;
@@ -24,62 +38,79 @@ public class S3BasicFileAttributes implements BasicFileAttributes {
     }
 
     @Override
-    public FileTime lastModifiedTime() {
+    public FileTime lastModifiedTime()
+    {
         return lastModifiedTime;
     }
 
     @Override
-    public FileTime lastAccessTime() {
+    public FileTime lastAccessTime()
+    {
         return lastModifiedTime;
     }
 
     @Override
-    public FileTime creationTime() {
+    public FileTime creationTime()
+    {
         return lastModifiedTime;
     }
 
     @Override
-    public boolean isRegularFile() {
+    public boolean isRegularFile()
+    {
         return regularFile;
     }
 
     @Override
-    public boolean isDirectory() {
+    public boolean isDirectory()
+    {
         return directory;
     }
 
     @Override
-    public boolean isSymbolicLink() {
+    public boolean isSymbolicLink()
+    {
         return false;
     }
 
     @Override
-    public boolean isOther() {
+    public boolean isOther()
+    {
         return false;
     }
 
     @Override
-    public long size() {
+    public long size()
+    {
         return size;
     }
 
     @Override
-    public Object fileKey() {
+    public Object fileKey()
+    {
         return key;
     }
 
     @Override
-    public String toString() {
-        return format("[%s: lastModified=%s, size=%s, isDirectory=%s, isRegularFile=%s]", key, lastModifiedTime, size, directory, regularFile);
+    public String toString()
+    {
+        return format("[%s: lastModified=%s, size=%s, isDirectory=%s, isRegularFile=%s]",
+                      key,
+                      lastModifiedTime,
+                      size,
+                      directory,
+                      regularFile);
     }
 
-    public long getCacheCreated() {
+    public long getCacheCreated()
+    {
         return cacheCreated;
     }
 
     // for testing
-
-    public void setCacheCreated(long time) {
+    public void setCacheCreated(long time)
+    {
         this.cacheCreated = time;
     }
+
 }

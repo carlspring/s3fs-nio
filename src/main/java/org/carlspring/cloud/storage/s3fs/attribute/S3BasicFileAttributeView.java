@@ -7,27 +7,37 @@ import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
-
-public class S3BasicFileAttributeView implements BasicFileAttributeView {
+public class S3BasicFileAttributeView
+        implements BasicFileAttributeView
+{
 
     private S3Path s3Path;
 
-    public S3BasicFileAttributeView(S3Path s3Path) {
+
+    public S3BasicFileAttributeView(S3Path s3Path)
+    {
         this.s3Path = s3Path;
     }
 
     @Override
-    public String name() {
+    public String name()
+    {
         return "basic";
     }
 
     @Override
-    public BasicFileAttributes readAttributes() throws IOException {
+    public BasicFileAttributes readAttributes()
+            throws IOException
+    {
         return s3Path.getFileSystem().provider().readAttributes(s3Path, BasicFileAttributes.class);
     }
 
     @Override
-    public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
-        // not implemented
+    public void setTimes(FileTime lastModifiedTime,
+                         FileTime lastAccessTime,
+                         FileTime createTime)
+    {
+        // TODO: Not implemented
     }
+
 }

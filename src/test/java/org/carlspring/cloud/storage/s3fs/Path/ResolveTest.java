@@ -12,26 +12,35 @@ import org.junit.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.Assert.assertEquals;
 
-public class ResolveTest extends S3UnitTestBase {
+public class ResolveTest
+        extends S3UnitTestBase
+{
 
     private S3FileSystemProvider s3fsProvider;
 
-    private S3Path getPath(String path) {
-        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
-    }
 
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         s3fsProvider = getS3fsProvider();
         s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
+
     @Test
-    public void resolve() {
-        assertEquals(getPath("/bucket/path/to/dir/child/xyz"), getPath("/bucket/path/to/dir/").resolve(getPath("child/xyz")));
+    public void resolve()
+    {
+        assertEquals(getPath("/bucket/path/to/dir/child/xyz"),
+                     getPath("/bucket/path/to/dir/").resolve(getPath("child/xyz")));
         assertEquals(getPath("/bucket/path/to/dir/child/xyz"), getPath("/bucket/path/to/dir/").resolve("child/xyz"));
 
-        assertEquals(getPath("/bucket/path/to/dir/child/xyz"), getPath("/bucket/path/to/dir").resolve(getPath("child/xyz")));
+        assertEquals(getPath("/bucket/path/to/dir/child/xyz"),
+                     getPath("/bucket/path/to/dir").resolve(getPath("child/xyz")));
         assertEquals(getPath("/bucket/path/to/dir/child/xyz"), getPath("/bucket/path/to/dir").resolve("child/xyz"));
 
         assertEquals(getPath("/bucket/path/to/file"), getPath("/bucket/path/to/file").resolve(getPath("")));
@@ -43,9 +52,9 @@ public class ResolveTest extends S3UnitTestBase {
         assertEquals(getPath("path/to/file"), getPath("path/to/file").resolve(getPath("")));
         assertEquals(getPath("path/to/file"), getPath("path/to/file").resolve(""));
 
-        assertEquals(getPath("/bucket2/other/child"), getPath("/bucket/path/to/file").resolve(getPath("/bucket2/other/child")));
+        assertEquals(getPath("/bucket2/other/child"),
+                     getPath("/bucket/path/to/file").resolve(getPath("/bucket2/other/child")));
         assertEquals(getPath("/bucket2/other/child"), getPath("/bucket/path/to/file").resolve("/bucket2/other/child"));
     }
-
 
 }

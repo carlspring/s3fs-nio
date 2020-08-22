@@ -11,54 +11,75 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class FileStoreTest {
+public class FileStoreTest
+{
 
     FileSystem fs;
+
     FileSystem fsWindows;
+
     FileSystem fsMac;
 
+
     @Before
-    public void setup() throws IOException {
+    public void setup()
+            throws IOException
+    {
         fs = MemoryFileSystemBuilder.newLinux().build("linux");
         fsWindows = MemoryFileSystemBuilder.newWindows().build("windows");
         fsMac = MemoryFileSystemBuilder.newMacOs().build("mac");
     }
 
     @After
-    public void close() throws IOException {
+    public void close()
+            throws IOException
+    {
         fs.close();
         fsWindows.close();
         fsMac.close();
     }
 
     @Test
-    public void getFileStore() {
+    public void getFileStore()
+    {
         System.out.println("Default:");
         System.out.println("-------");
-        for (FileStore fileStore : FileSystems.getDefault().getFileStores()) {
+
+        for (FileStore fileStore : FileSystems.getDefault().getFileStores())
+        {
             System.out.println("- " + fileStore.name());
         }
+
         System.out.println("\nLinux:");
         System.out.println("-----");
-        for (FileStore fileStore : fs.getFileStores()) {
+
+        for (FileStore fileStore : fs.getFileStores())
+        {
             System.out.println("- " + fileStore.name());
         }
+
         System.out.println("\nWindows:");
         System.out.println("-------");
-        for (FileStore fileStore : fsWindows.getFileStores()) {
+
+        for (FileStore fileStore : fsWindows.getFileStores())
+        {
             System.out.println("- " + fileStore.name());
         }
+
         System.out.println("\nMac:");
         System.out.println("---");
-        for (FileStore fileStore : fsMac.getFileStores()) {
+
+        for (FileStore fileStore : fsMac.getFileStores())
+        {
             System.out.println("- " + fileStore.name());
         }
     }
 
+    // ~ helper methods
 
-    // ~ helpers methods
-
-    private Path get(String path) {
+    private Path get(String path)
+    {
         return fs.getPath(path);
     }
+
 }
