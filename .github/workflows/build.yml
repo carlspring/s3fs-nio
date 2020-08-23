@@ -1,19 +1,7 @@
 name: Build and test workflow
 on: [push, pull_request]
 jobs:
-  build:
-    runs-on: ${{ matrix.operating-system }}
-    strategy:
-      matrix:
-        # Commenting Windows out in order to preserve our free minutes.
-        # We can re-enable it, if we get a sponsor.
-        #operating-system: [ubuntu-latest, windows-latest]
-        operating-system: [ubuntu-latest]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-  test:
+  build-and-test:
     runs-on: ${{ matrix.operating-system }}
     strategy:
       matrix:
