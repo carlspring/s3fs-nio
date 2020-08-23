@@ -24,7 +24,10 @@ import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS;
 import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.CHARSET_KEY;
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class NewFileSystemTest
@@ -158,12 +161,10 @@ public class NewFileSystemTest
         verify(s3fsProvider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>()
         {
             @Override
-            public boolean matches(Object argument)
+            public boolean matches(Properties properties)
             {
-                Properties called = (Properties) argument;
-
-                assertEquals(accessKey, called.getProperty(ACCESS_KEY));
-                assertEquals(secretKey, called.getProperty(SECRET_KEY));
+                assertEquals(accessKey, properties.getProperty(ACCESS_KEY));
+                assertEquals(secretKey, properties.getProperty(SECRET_KEY));
 
                 return true;
             }

@@ -13,14 +13,15 @@ import java.util.Properties;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentMatcher;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class NewFileSystemIT
@@ -146,18 +147,11 @@ public class NewFileSystemIT
 
     private void verifyCreationWithParams(final String accessKeyUri, final String secretKeyUri, URI uri)
     {
-        verify(provider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>()
-        {
-            @Override
-            public boolean matches(Object argument)
-            {
-                Properties called = (Properties) argument;
+        verify(provider).createFileSystem(eq(uri), argThat(properties -> {
+            assertEquals(accessKeyUri, properties.get(ACCESS_KEY));
+            assertEquals(secretKeyUri, properties.get(SECRET_KEY));
 
-                assertEquals(accessKeyUri, called.get(ACCESS_KEY));
-                assertEquals(secretKeyUri, called.get(SECRET_KEY));
-
-                return true;
-            }
+            return true;
         }));
     }
 
