@@ -33,7 +33,7 @@ This task:
 
 # Help
 
-* Our [chat channel](https://chat.carlspring.org/channel/s3fs-nio-community)
+* Our [chat channel](https://chat.carlspring.org/channel/s3fs-nio2-community)
 * Points of contact:
   * @carlspring
   * @steve-todorov
