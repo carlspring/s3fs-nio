@@ -20,6 +20,8 @@ import com.amazonaws.services.s3.S3ClientOptions;
 public abstract class AmazonS3Factory
 {
 
+    public static final String REGION = "s3fs_region";
+
     public static final String ACCESS_KEY = "s3fs_access_key";
 
     public static final String SECRET_KEY = "s3fs_secret_key";
