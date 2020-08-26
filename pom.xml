@@ -251,23 +251,8 @@
         <profile>
             <id>integration-tests</id>
 
-            <activation>
-                <property>
-                    <name>env.TRAVIS</name>
-                    <value>true</value>
-                </property>
-            </activation>
-
             <build>
                 <plugins>
-                    <!--
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <argLine>${jacoco.agent.arg}</argLine>
-                        </configuration>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-failsafe-plugin</artifactId>
@@ -276,7 +261,9 @@
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>
-                            <argLine>${jacoco.agent.arg}</argLine>
+                            <excludes>
+                                <exclude>**/**Test.java</exclude>
+                            </excludes>
                         </configuration>
                         <executions>
                             <execution>
@@ -295,6 +282,30 @@
                             </execution>
                         </executions>
                     </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>jacoco-code-coverage</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <argLine>${jacoco.agent.arg}</argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <argLine>${jacoco.agent.arg}</argLine>
+                        </configuration>
+                    </plugin>
 
                     <plugin>
                         <groupId>org.jacoco</groupId>
@@ -302,7 +313,7 @@
                         <version>0.8.5</version>
 
                         <executions>
-                            &lt;!&ndash; Prepare execution with Surefire &ndash;&gt;
+                            <!-- Prepare execution with Surefire -->
                             <execution>
                                 <id>pre-unit-test</id>
                                 <goals>
@@ -313,7 +324,7 @@
                                     <append>true</append>
                                 </configuration>
                             </execution>
-                            &lt;!&ndash; Generate report after tests are run &ndash;&gt;
+                            <!-- Generate report after tests are run -->
                             <execution>
                                 <id>post-unit-test</id>
                                 <phase>integration-test</phase>
@@ -323,7 +334,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    -->
                 </plugins>
             </build>
         </profile>
