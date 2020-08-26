@@ -18,7 +18,8 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Build with Maven
-        run: mvn clean install -Pintegration-tests
+#        run: mvn clean install -Pintegration-tests
+        run: mvn clean install -Pjacoco-code-coverage
 
   sonarqube:
     runs-on: ubuntu-latest
