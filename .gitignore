@@ -37,3 +37,6 @@ logs/
 *.log
 
 lib/*
+
+# Secrets file
+amazon-test.properties
