@@ -59,8 +59,8 @@ public class CopyDirVisitor
     }
 
     /**
-     * Obtenemos el path que corresponde en el parametro: {@link #fromPath}
-     * relativo al parametro <code>Path to</code>
+     * Obtain the corresponding path in the parameter: {@link #fromPath}
+     * relative to the parameter <code>Path to</code>
      *
      * @param to Path
      * @return
@@ -69,12 +69,12 @@ public class CopyDirVisitor
     {
         Path targetPath = toPath;
 
-        // sacamos el path relativo y lo recorremos para
-        // añadirlo al nuevo
+        // Take out the relative path and traverse through it
+        // and add new to it..
         for (Path path : fromPath.relativize(to))
         {
-            // si utilizamos path en vez de string: lanza error por ser
-            // distintos paths
+            // If we use path instead of string : It Throws an error
+            // due to the different paths..
             targetPath = targetPath.resolve(path.getFileName().toString());
         }
 

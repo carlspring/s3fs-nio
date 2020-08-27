@@ -18,9 +18,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * FileSystems.newFileSystem busca mediante el serviceLoader los
- * posibles fileSystemsProvider y los llama con newFileSystem.
- * Si
+ * FileSystems.newFileSystem search through serviceLoader for
+ * posibles fileSystemsProvider and call them with newFileSystem.
+ * yes
  *
  * @author jarnaiz
  */
