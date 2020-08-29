@@ -26,11 +26,11 @@ public abstract class EnvironmentBuilder
      */
     public static Map<String, Object> getRealEnv()
     {
-        Map<String, Object> env = null;
+        Map<String, Object> env;
 
         String accessKey = System.getenv(ACCESS_KEY);
         String secretKey = System.getenv(SECRET_KEY);
-        String region = System.getProperty(REGION);
+        String region = System.getenv(REGION);
 
         if (accessKey != null && secretKey != null && region != null)
         {
