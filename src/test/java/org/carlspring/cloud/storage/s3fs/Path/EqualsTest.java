@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.Path;
 
+import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
@@ -12,30 +13,37 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 
 public class EqualsTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    private S3Path getPath(String path)
-    {
-        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
-    }
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+    }
+
+    @AfterEach
+    public void tearDown()
+            throws IOException
+    {
+        s3fsProvider.close((S3FileSystem) fileSystem);
+        fileSystem.close();
+    }
+
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
     }
 
     @Test

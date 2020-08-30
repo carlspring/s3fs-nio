@@ -7,9 +7,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class FileStoreTest
 {
@@ -21,7 +21,7 @@ public class FileStoreTest
     FileSystem fsMac;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -30,7 +30,7 @@ public class FileStoreTest
         fsMac = MemoryFileSystemBuilder.newMacOs().build("mac");
     }
 
-    @After
+    @AfterEach
     public void close()
             throws IOException
     {

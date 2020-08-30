@@ -18,26 +18,23 @@ import java.nio.file.Path;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NewInputStreamTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -80,37 +77,45 @@ public class NewInputStreamTest
         }
     }
 
-    @Test(expected = NoSuchFileException.class)
+    @Test
     public void newInputStreamFileNotExists()
-            throws IOException
     {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NoSuchFileException.class, () -> {
+            // fixtures
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir");
 
-        // act
-        S3FileSystem fileSystem = createNewS3FileSystem();
+            // act
+            S3FileSystem fileSystem = createNewS3FileSystem();
 
-        Path file = fileSystem.getPath("/bucketA/dir/file1");
+            Path file = fileSystem.getPath("/bucketA/dir/file1");
 
-        try (InputStream inputStream = s3fsProvider.newInputStream(file))
-        {
-            fail("The file does not exist");
-        }
+            try (InputStream inputStream = s3fsProvider.newInputStream(file))
+            {
+                fail("The file does not exist");
+            }
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void inputStreamDirectory()
-            throws IOException
     {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IOException.class, () -> {
+            // fixtures
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir");
 
-        Path result = s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
+            Path result = s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"), buildFakeEnv()).getPath("/bucketA/dir");
 
-        // act
-        s3fsProvider.newInputStream(result);
+            // act
+            s3fsProvider.newInputStream(result);
+        });
+
+        assertNotNull(exception);
     }
 
     private Map<String, ?> buildFakeEnv()

@@ -10,9 +10,10 @@ import java.nio.ByteBuffer;
 import java.nio.file.*;
 import java.util.EnumSet;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 public class S3SeekableByteChannelTest
@@ -20,11 +21,11 @@ public class S3SeekableByteChannelTest
 {
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
-        FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -56,6 +57,7 @@ public class S3SeekableByteChannelTest
         S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ)));
 
         assertNotNull(channel);
+
         channel.close();
 
         verify(channel, never()).sync();
@@ -78,49 +80,65 @@ public class S3SeekableByteChannelTest
         verify(channel, times(1)).sync();
     }
 
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void alreadyExists()
-            throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("buck").file("file1");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("buck").file("file1");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
+            S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
+                                               .getPath("/buck/file1");
+            new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void brokenNetwork()
-            throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
 
-        doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
+            S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
+                                               .getPath("/buck/file2");
+            S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
+                                                                      EnumSet.of(StandardOpenOption.WRITE,
+                                                                                 StandardOpenOption.READ));
+            channel.close();
+        });
 
-        S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
-        S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
-                                                                  EnumSet.of(StandardOpenOption.WRITE,
-                                                                             StandardOpenOption.READ));
-        channel.close();
+        assertNotNull(exception);
     }
 
-    @Test(expected = NoSuchFileException.class)
+    @Test
     public void tempFileDisappeared()
-            throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException,
-                   IllegalAccessException
+            throws SecurityException,
+                   IllegalArgumentException
     {
-        S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
-        S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
-                                                                  EnumSet.of(StandardOpenOption.WRITE,
-                                                                             StandardOpenOption.READ));
-        Field f = channel.getClass().getDeclaredField("tempFile");
-        f.setAccessible(true);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NoSuchFileException.class, () -> {
+            S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
+                                               .getPath("/buck/file2");
+            S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
+                                                                      EnumSet.of(StandardOpenOption.WRITE,
+                                                                                 StandardOpenOption.READ));
 
-        Path tempFile = (Path) f.get(channel);
+            Field f = channel.getClass().getDeclaredField("tempFile");
+            f.setAccessible(true);
 
-        Files.delete(tempFile);
+            Path tempFile = (Path) f.get(channel);
 
-        channel.close();
+            Files.delete(tempFile);
+
+            channel.close();
+        });
+
+        assertNotNull(exception);
     }
 
 }

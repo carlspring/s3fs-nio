@@ -13,22 +13,21 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.util.EnumSet;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NewByteChannelTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -47,14 +46,15 @@ public class NewByteChannelTest
                                                                         EnumSet.of(StandardOpenOption.WRITE,
                                                                                    StandardOpenOption.READ)))
         {
-            ByteBuffer bufferRead = ByteBuffer.allocate(7);
             ByteBuffer buffer = ByteBuffer.wrap(content.getBytes());
 
             seekable.write(buffer);
+            ByteBuffer bufferRead = ByteBuffer.allocate(7);
             seekable.position(0);
             seekable.read(bufferRead);
 
             assertArrayEquals(bufferRead.array(), buffer.array());
+            seekable.close();
         }
 
         assertArrayEquals(content.getBytes(), Files.readAllBytes(base.resolve("file")));
@@ -206,7 +206,7 @@ public class NewByteChannelTest
         assertTrue(seekable.isOpen());
         seekable.close();
 
-        assertTrue(!seekable.isOpen());
+        assertFalse(seekable.isOpen());
     }
 
     @Test
@@ -214,9 +214,10 @@ public class NewByteChannelTest
             throws IOException
     {
         // fixtures
+        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+
         final String content = "content";
 
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
@@ -379,17 +380,21 @@ public class NewByteChannelTest
         assertTrue(Files.exists(file));
     }
 
-    @Test(expected = NoSuchFileException.class)
+    @Test
     public void seekableNotExists()
-            throws IOException
     {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NoSuchFileException.class, () -> {
+            // fixtures
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir");
 
-        Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
+            Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
 
-        s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.noneOf(StandardOpenOption.class));
+            s3fsProvider.newByteChannel(base.resolve("file"), EnumSet.noneOf(StandardOpenOption.class));
+        });
+
+        assertNotNull(exception);
     }
 
     /**

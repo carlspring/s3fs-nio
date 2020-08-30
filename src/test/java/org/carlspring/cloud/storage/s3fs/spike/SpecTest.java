@@ -10,9 +10,9 @@ import java.nio.file.spi.FileSystemProvider;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Test;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SpecTest
 {
@@ -22,6 +22,7 @@ public class SpecTest
     public void parentOfRelativeSinglePathIsNull()
     {
         Path path = FileSystems.getDefault().getPath("relative");
+
         assertNull(path.getParent());
     }
 
@@ -40,6 +41,7 @@ public class SpecTest
     {
         List<FileSystemProvider> providers = FileSystemProvider.installedProviders();
         boolean installed = false;
+
         for (FileSystemProvider prov : providers)
         {
             if (prov instanceof S3FileSystemProvider)

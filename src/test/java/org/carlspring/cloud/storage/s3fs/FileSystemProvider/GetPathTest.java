@@ -11,24 +11,21 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GetPathTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -64,20 +61,26 @@ public class GetPathTest
         assertSame(path.getFileSystem(), fs);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getPathWithEndpointAndWithoutBucket()
-            throws IOException
     {
-        FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"), null);
-        fs.provider().getPath(URI.create("s3://endpoint1//missed-bucket"));
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            FileSystem fs = FileSystems.newFileSystem(URI.create("s3://endpoint1/"), null);
+            fs.provider().getPath(URI.create("s3://endpoint1//missed-bucket"));
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getPathWithDefaultEndpointAndWithoutBucket()
-            throws IOException
     {
-        FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
-        fs.provider().getPath(URI.create("s3:////missed-bucket"));
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            FileSystem fs = FileSystems.newFileSystem(URI.create("s3:///"), ImmutableMap.<String, Object>of());
+            fs.provider().getPath(URI.create("s3:////missed-bucket"));
+        });
+
+        assertNotNull(exception);
     }
 
 }

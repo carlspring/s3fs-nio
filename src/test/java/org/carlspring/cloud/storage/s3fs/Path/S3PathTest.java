@@ -7,28 +7,25 @@ import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.HashMap;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class S3PathTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
-            throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     private S3Path forPath(String path)
@@ -124,31 +121,49 @@ public class S3PathTest
     }
 
     // register
-
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void registerWithEventsThrowException()
     {
-        forPath("file1").register(null);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            forPath("file1").register(null);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void registerThrowException()
     {
-        forPath("file1").register(null);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            forPath("file1").register(null);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void registerWithEventsAndModifierThrowException()
     {
-        forPath("file1").register(null);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            forPath("file1").register(null);
+        });
+
+        assertNotNull(exception);
     }
 
     // to file
-
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void toFile()
     {
-        forPath("file1").toFile();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            forPath("file1").toFile();
+        });
+
+        assertNotNull(exception);
     }
 
     // compares to
@@ -156,10 +171,10 @@ public class S3PathTest
     @Test
     public void compare()
     {
-        assertTrue(forPath("file1").compareTo(forPath("file1")) == 0);
-        assertTrue(forPath("/path/file1").compareTo(forPath("/path/file1")) == 0);
-        assertTrue(forPath("/A/file1").compareTo(forPath("/B/file1")) == -1);
-        assertTrue(forPath("/B/file1").compareTo(forPath("/A/file1")) == 1);
+        assertEquals(0, forPath("file1").compareTo(forPath("file1")));
+        assertEquals(0, forPath("/path/file1").compareTo(forPath("/path/file1")));
+        assertEquals(-1, forPath("/A/file1").compareTo(forPath("/B/file1")));
+        assertEquals(1, forPath("/B/file1").compareTo(forPath("/A/file1")));
         assertTrue(forPath("/AA/file1").compareTo(forPath("/A/file1")) > 0);
         assertTrue(forPath("a").compareTo(forPath("aa")) < 0);
         assertTrue(forPath("ab").compareTo(forPath("aa")) > 0);
@@ -173,16 +188,22 @@ public class S3PathTest
     {
         Path path = forPath("/file1");
         Path other = path.toRealPath();
+
         assertEquals(path, other);
     }
 
     // toAbsolutePath
 
     @SuppressWarnings("unused")
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void toAbsolutePathRelativePathThrowException()
     {
-        forPath("file1").toAbsolutePath();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalStateException.class, () -> {
+            forPath("file1").toAbsolutePath();
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -190,6 +211,7 @@ public class S3PathTest
     {
         Path path = forPath("/file1");
         Path other = path.toAbsolutePath();
+
         assertEquals(path, other);
     }
 
@@ -204,12 +226,17 @@ public class S3PathTest
         assertEquals("b", hashMap.get(forPath("/bucket/a")));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void preconditions()
     {
-        S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
 
-        new S3Path(fileSystem, "/");
+            new S3Path(fileSystem, "/");
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -257,18 +284,28 @@ public class S3PathTest
         assertNull(path.getParent());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void register()
     {
-        S3Path path = forPath("/buck/file");
-        path.register(null);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            S3Path path = forPath("/buck/file");
+            path.register(null);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void registerWatchService()
     {
-        S3Path path = forPath("/buck/file");
-        path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            S3Path path = forPath("/buck/file");
+            path.register(null, new WatchEvent.Kind<?>[0], new WatchEvent.Modifier[0]);
+        });
+
+        assertNotNull(exception);
     }
 
 }

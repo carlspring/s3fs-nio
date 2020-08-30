@@ -1,6 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
@@ -16,24 +15,21 @@ import java.nio.file.StandardOpenOption;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Owner;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.doThrow;
 
 public class S3UtilsTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystem fileSystem = null;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
-        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
 
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
 
@@ -44,7 +40,7 @@ public class S3UtilsTest
     public void getS3ObjectSummary()
             throws IOException
     {
-        S3Path root = fileSystem.getPath("/bucket");
+        S3Path root = (S3Path) fileSystem.getPath("/bucket");
         S3Path file1 = (S3Path) root.resolve("file1");
 
         String contentString = "Some content String";
@@ -56,7 +52,7 @@ public class S3UtilsTest
         S3ObjectSummary file1ObjectSummary = getS3ObjectSummary(file1);
 
         assertEquals("bucket", file1ObjectSummary.getBucketName());
-        assertEquals(null, file1ObjectSummary.getETag());
+        assertNull(file1ObjectSummary.getETag());
         assertEquals("file1", file1ObjectSummary.getKey());
         assertNotNull(file1ObjectSummary.getLastModified());
 
@@ -68,33 +64,40 @@ public class S3UtilsTest
         assertEquals(19, file1ObjectSummary.getSize());
     }
 
-    @Test(expected = NoSuchFileException.class)
+    @Test
     public void getS3ObjectSummary404()
-            throws IOException
     {
-        S3Path root = fileSystem.getPath("/bucket");
-        S3Path file1 = (S3Path) root.resolve("file1");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NoSuchFileException.class, () -> {
+            S3Path root = (S3Path) fileSystem.getPath("/bucket");
+            S3Path file1 = (S3Path) root.resolve("file1");
 
-        getS3ObjectSummary(file1);
+            getS3ObjectSummary(file1);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = AmazonS3Exception.class)
+    @Test
     public void getS3ObjectSummary500()
-            throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(AmazonS3Exception.class, () -> {
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            AmazonS3Exception toBeThrown = new AmazonS3Exception("We messed up");
 
-        AmazonS3Exception toBeThrown = new AmazonS3Exception("We messed up");
-        toBeThrown.setStatusCode(500);
+            toBeThrown.setStatusCode(500);
+            doThrow(toBeThrown).when(client).getObjectAcl("bucket", "file2");
 
-        doThrow(toBeThrown).when(client).getObjectAcl("bucket", "file2");
+            S3Path root = (S3Path) fileSystem.getPath("/bucket");
+            S3Path file2 = (S3Path) root.resolve("file2");
 
-        S3Path root = fileSystem.getPath("/bucket");
-        S3Path file2 = (S3Path) root.resolve("file2");
+            Files.createFile(file2);
 
-        Files.createFile(file2);
+            getS3ObjectSummary(file2);
+        });
 
-        getS3ObjectSummary(file2);
+        assertNotNull(exception);
     }
 
     public S3ObjectSummary getS3ObjectSummary(S3Path s3Path)

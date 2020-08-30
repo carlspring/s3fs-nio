@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.nio.file.*;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PathSpecTest
 {
@@ -17,7 +17,7 @@ public class PathSpecTest
     FileSystem fsWindows;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -25,11 +25,19 @@ public class PathSpecTest
         fsWindows = MemoryFileSystemBuilder.newWindows().build("windows");
     }
 
-    @After
+    @AfterEach
     public void close()
             throws IOException
     {
-        fs.close();
+        try
+        {
+            fs.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
         fsWindows.close();
     }
 
@@ -47,7 +55,7 @@ public class PathSpecTest
     @Test
     public void relative()
     {
-        assertTrue(!get("file").isAbsolute());
+        assertFalse(get("file").isAbsolute());
     }
 
     @Test
@@ -146,7 +154,7 @@ public class PathSpecTest
     }
 
     @Test
-    public void endsWithDifferenteFileSystem()
+    public void endsWithDifferentFileSystem()
     {
         assertFalse(get("/file/file1").endsWith(Paths.get("/file/file1")));
     }
@@ -219,21 +227,29 @@ public class PathSpecTest
         assertEquals(get("/"), get("/dir/dir/file").getRoot());
     }
 
-
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void fileWithSameNameAsDir()
             throws IOException
     {
-        Files.createFile(fs.getPath("/tmp"));
-        Files.createDirectory(fs.getPath("/tmp/"));
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            Files.createFile(fs.getPath("/tmp"));
+            Files.createDirectory(fs.getPath("/tmp/"));
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void dirWithSameNameAsFile()
-            throws IOException
     {
-        Files.createDirectories(fs.getPath("/tmp/"));
-        Files.createFile(fs.getPath("/tmp"));
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            Files.createDirectories(fs.getPath("/tmp/"));
+            Files.createFile(fs.getPath("/tmp"));
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
