@@ -68,17 +68,24 @@ public class S3UnitTestBase
     public void tearDown()
             throws IOException
     {
-        if (s3fsProvider != null)
+        try
         {
-            s3fsProvider.close((S3FileSystem) fileSystem);
-        }
+            if (s3fsProvider != null)
+            {
+                s3fsProvider.close((S3FileSystem) fileSystem);
+            }
 
-        if (fileSystem != null)
+            if (fileSystem != null)
+            {
+                fileSystem.close();
+            }
+
+            com.amazonaws.http.IdleConnectionReaper.shutdown();
+        }
+        catch (Throwable t)
         {
-            fileSystem.close();
+            // e.printStackTrace();
         }
-
-        com.amazonaws.http.IdleConnectionReaper.shutdown();
     }
 
     public S3FileSystemProvider getS3fsProvider()
