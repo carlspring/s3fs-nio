@@ -13,24 +13,32 @@ import java.net.URI;
 import java.nio.file.*;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NewOutputStreamTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+    }
+
+    @AfterEach
+    public void tearDown()
+            throws IOException
+    {
+        super.tearDown();
+
     }
 
     @Test
@@ -82,14 +90,18 @@ public class NewOutputStreamTest
         assertArrayEquals(res.getBytes(), buffer);
     }
 
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void outputStreamWithCreateNewAndFileExists()
-            throws IOException
     {
-        Path base = getS3Directory();
-        Path file = Files.createFile(base.resolve("file1"));
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            Path base = getS3Directory();
+            Path file = Files.createFile(base.resolve("file1"));
 
-        s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW);
+            s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW);
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -121,6 +133,7 @@ public class NewOutputStreamTest
             throws IOException
     {
         Path base = getS3Directory();
+
         Path file = base.resolve("file1");
 
         try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE))
@@ -141,8 +154,9 @@ public class NewOutputStreamTest
             throws IOException
     {
         Path base = getS3Directory();
-        final String content = "heyyyyyy";
         Path file = base.resolve("file1");
+
+        final String content = "heyyyyyy";
 
         try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW))
         {
@@ -165,8 +179,7 @@ public class NewOutputStreamTest
         client.bucket("bucketA").dir("dir");
 
         return s3fsProvider.newFileSystem(URI.create("s3://endpoint1/"),
-                                          ImmutableMap.<String, Object>builder().put(ACCESS_KEY,
-                                                                                     "access_key")
+                                          ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access_key")
                                                                                 .put(SECRET_KEY, "secret_key")
                                                                                 .build())
                            .getPath("/bucketA/dir");

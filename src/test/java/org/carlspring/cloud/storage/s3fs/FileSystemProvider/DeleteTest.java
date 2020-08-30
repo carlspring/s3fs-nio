@@ -12,25 +12,23 @@ import java.net.URI;
 import java.nio.file.*;
 
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DeleteTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -68,7 +66,7 @@ public class DeleteTest
         assertTrue(Files.notExists(base));
     }
 
-    @Test(expected = DirectoryNotEmptyException.class)
+    @Test
     public void deleteDirectoryWithEntries()
             throws IOException
     {
@@ -78,10 +76,14 @@ public class DeleteTest
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        s3fsProvider.delete(file.getParent());
+        Exception exception = assertThrows(DirectoryNotEmptyException.class, () -> {
+            s3fsProvider.delete(file.getParent());
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = NoSuchFileException.class)
+    @Test
     public void deleteFileNotExists()
             throws IOException
     {
@@ -91,7 +93,11 @@ public class DeleteTest
 
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
 
-        s3fsProvider.delete(file);
+        Exception exception = assertThrows(NoSuchFileException.class, () -> {
+            s3fsProvider.delete(file);
+        });
+
+        assertNotNull(exception);
     }
 
     /**

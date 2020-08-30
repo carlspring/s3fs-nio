@@ -9,28 +9,33 @@ import java.io.IOException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SetAttributeTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void readAttributesObject()
     {
-        s3fsProvider.setAttribute(null, "", new Object());
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            s3fsProvider.setAttribute(null, "", new Object());
+        });
+
+        assertNotNull(exception);
     }
 
     /**

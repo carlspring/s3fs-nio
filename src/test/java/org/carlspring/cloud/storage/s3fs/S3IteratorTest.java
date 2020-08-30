@@ -11,11 +11,11 @@ import java.nio.file.Path;
 import java.util.*;
 
 import com.amazonaws.services.s3.model.ObjectListing;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 public class S3IteratorTest
@@ -24,10 +24,10 @@ public class S3IteratorTest
 
     S3FileSystemProvider provider;
 
-    private static URI endpoint = URI.create("s3://s3iteratortest.test");
+    private static final URI endpoint = URI.create("s3://s3iteratortest.test");
 
 
-    @Before
+    @BeforeEach
     public void prepare()
             throws IOException
     {
@@ -160,23 +160,27 @@ public class S3IteratorTest
         assertIterator(iterator, "file1", "file2", "file3");
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test
     public void iteratorExhausted()
-            throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").file("file1", "file2", "file3");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NoSuchElementException.class, () -> {
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").file("file1", "file2", "file3");
 
-        S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
-        S3Path path = s3FileSystem.getPath("/bucketA");
-        S3Iterator iterator = new S3Iterator(path);
+            S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
+            S3Path path = s3FileSystem.getPath("/bucketA");
 
-        while (iterator.hasNext())
-        {
+            S3Iterator iterator = new S3Iterator(path);
+            while (iterator.hasNext())
+            {
+                iterator.next();
+            }
+
             iterator.next();
-        }
+        });
 
-        iterator.next();
+        assertNotNull(exception);
     }
 
     @Test
@@ -240,7 +244,7 @@ public class S3IteratorTest
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         MockBucket mockBucket = client.bucket("bucketD");
 
-        String fileNamesExpected[] = new String[1050];
+        String[] filesNameExpected = new String[1050];
         for (int i = 0; i < 1050; i++)
         {
             StringBuilder name = new StringBuilder("file-");
@@ -262,31 +266,33 @@ public class S3IteratorTest
 
             name.append(i);
             mockBucket.file(name.toString());
-
-            fileNamesExpected[i] = name.toString();
+            filesNameExpected[i] = name.toString();
         }
 
         S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
         S3Path path = s3FileSystem.getPath("/bucketD");
         S3Iterator iterator = new S3Iterator(path);
 
-        assertIterator(iterator, fileNamesExpected);
+        assertIterator(iterator, filesNameExpected);
 
         verify(client, times(1)).listNextBatchOfObjects(any(ObjectListing.class));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void remove()
-            throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir").file("dir/file1");
 
-        S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
-        S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+            S3FileSystem s3FileSystem = (S3FileSystem) FileSystems.getFileSystem(endpoint);
+            S3Path path = s3FileSystem.getPath("/bucketA", "dir");
+            S3Iterator iterator = new S3Iterator(path);
+            iterator.remove();
+        });
 
-        S3Iterator iterator = new S3Iterator(path);
-        iterator.remove();
+        assertNotNull(exception);
     }
 
     private void assertIterator(Iterator<Path> iterator, final String... files)

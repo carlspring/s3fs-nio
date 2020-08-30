@@ -22,6 +22,7 @@ public class ExposingAmazonS3Client
                                   RequestMetricCollector requestMetricsCollector)
     {
         super(credentialsProvider, clientConfiguration, requestMetricsCollector);
+
         this.awsCredentialsProvider = credentialsProvider;
     }
 
@@ -38,6 +39,7 @@ public class ExposingAmazonS3Client
     public synchronized void setS3ClientOptions(S3ClientOptions clientOptions)
     {
         super.setS3ClientOptions(clientOptions);
+
         this.s3ClientOptions = clientOptions;
     }
 

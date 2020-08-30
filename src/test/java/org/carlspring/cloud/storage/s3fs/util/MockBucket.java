@@ -9,13 +9,13 @@ public class MockBucket
 
     private AmazonS3ClientMock amazonS3ClientMock;
 
-    private Path mocketPath;
+    private Path mockedPath;
 
 
-    public MockBucket(AmazonS3ClientMock amazonS3ClientMock, Path mocketPath)
+    public MockBucket(AmazonS3ClientMock amazonS3ClientMock, Path mockedPath)
     {
         this.amazonS3ClientMock = amazonS3ClientMock;
-        this.mocketPath = mocketPath;
+        this.mockedPath = mockedPath;
     }
 
     public MockBucket file(String... file)
@@ -23,7 +23,7 @@ public class MockBucket
     {
         for (String string : file)
         {
-            amazonS3ClientMock.addFile(mocketPath, string, "sample-content".getBytes());
+            amazonS3ClientMock.addFile(mockedPath, string, "sample-content".getBytes());
         }
 
         return this;
@@ -32,7 +32,7 @@ public class MockBucket
     public MockBucket file(String file, byte[] content)
             throws IOException
     {
-        amazonS3ClientMock.addFile(mocketPath, file, content);
+        amazonS3ClientMock.addFile(mockedPath, file, content);
 
         return this;
     }
@@ -40,7 +40,7 @@ public class MockBucket
     public MockBucket file(String file, byte[] content, FileAttribute<?>... attrs)
             throws IOException
     {
-        amazonS3ClientMock.addFile(mocketPath, file, content, attrs);
+        amazonS3ClientMock.addFile(mockedPath, file, content, attrs);
 
         return this;
     }
@@ -50,7 +50,7 @@ public class MockBucket
     {
         for (String string : dir)
         {
-            amazonS3ClientMock.addDirectory(mocketPath, string);
+            amazonS3ClientMock.addDirectory(mockedPath, string);
         }
 
         return this;
@@ -58,7 +58,7 @@ public class MockBucket
 
     public Path resolve(String file)
     {
-        return mocketPath.resolve(file.replaceAll("/", "%2F"));
+        return mockedPath.resolve(file.replaceAll("/", "%2F"));
     }
 
 }

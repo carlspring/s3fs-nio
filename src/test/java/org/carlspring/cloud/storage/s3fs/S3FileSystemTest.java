@@ -16,11 +16,13 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class S3FileSystemTest
         extends S3UnitTestBase
@@ -29,7 +31,7 @@ public class S3FileSystemTest
     private FileSystem fs;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -39,6 +41,17 @@ public class S3FileSystemTest
 
         fs = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
+
+    @AfterEach
+    public void tearDown()
+            throws IOException
+    {
+//!        super.tearDown();
+
+        //  s3fsProvider.close((S3FileSystem) fs);
+        fs.close();
+    }
+
 
     @Test
     public void getPathFirst()
@@ -122,7 +135,7 @@ public class S3FileSystemTest
     @Test
     public void readOnlyAlwaysFalse()
     {
-        assertTrue(!fs.isReadOnly());
+        assertFalse(fs.isReadOnly());
     }
 
     @Test
@@ -132,29 +145,48 @@ public class S3FileSystemTest
         assertEquals("/", S3Path.PATH_SEPARATOR);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void getPathMatcherThrowException()
     {
-        fs.getPathMatcher("");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            fs.getPathMatcher("");
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void getUserPrincipalLookupServiceThrowException()
     {
-        fs.getUserPrincipalLookupService();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            fs.getUserPrincipalLookupService();
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void newWatchServiceThrowException()
-            throws Exception
     {
-        fs.newWatchService();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            fs.newWatchService();
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getPathWithoutBucket()
     {
-        fs.getPath("//path/to/file");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            fs.getPath("//path/to/file");
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -186,9 +218,11 @@ public class S3FileSystemTest
         for (Path path : paths)
         {
             S3Path s3Path = (S3Path) path;
+
             String fileStore = s3Path.getFileStore().name();
 
             Path fileName = s3Path.getFileName();
+
             if (fileStore.equals("bucketA") && fileName == null)
             {
                 bucketNameA = true;
@@ -212,7 +246,7 @@ public class S3FileSystemTest
         Set<String> operations = fs.supportedFileAttributeViews();
 
         assertNotNull(operations);
-        assertTrue(!operations.isEmpty());
+        assertFalse(operations.isEmpty());
 
         assertTrue(operations.contains("basic"));
         assertTrue(operations.contains("posix"));
@@ -226,18 +260,13 @@ public class S3FileSystemTest
 
         fs.close();
 
-        assertTrue(!fs.isOpen());
-    }
-
-    private static void assertNotEquals(Object a, Object b)
-    {
-        assertTrue(a + " are not equal to: " + b, !a.equals(b));
+        assertFalse(fs.isOpen());
     }
 
     @Test
     public void comparables()
     {
-        // crear other vars
+        // create other vars
 
         S3FileSystemProvider provider = new S3FileSystemProvider();
 
@@ -271,20 +300,20 @@ public class S3FileSystemTest
         assertEquals(-498271993, s3fs6.hashCode());
         assertEquals(-82123487, s3fs7.hashCode());
 
-        assertFalse(s3fs1.equals(s3fs2));
-        assertFalse(s3fs1.equals(s3fs3));
-        assertFalse(s3fs1.equals(s3fs4));
-        assertFalse(s3fs1.equals(s3fs6));
-        assertFalse(s3fs3.equals(s3fs4));
-        assertFalse(s3fs3.equals(s3fs6));
-        assertFalse(s3fs1.equals(s3fs6));
-        assertFalse(s3fs1.equals(new S3FileStore(s3fs1, "emmer")));
-        assertFalse(s3fs7.equals(s3fs8));
-        assertTrue(s3fs8.equals(s3fs8));
-        assertFalse(s3fs8.equals(s3fs1));
-        assertTrue(s3fs8.equals(s3fs9));
-        assertFalse(s3fs9.equals(s3fs10));
-        assertTrue(s3fs2.equals(s3fs11));
+        assertNotEquals(s3fs1, s3fs2);
+        assertNotEquals(s3fs1, s3fs3);
+        assertNotEquals(s3fs1, s3fs4);
+        assertNotEquals(s3fs1, s3fs6);
+        assertNotEquals(s3fs3, s3fs4);
+        assertNotEquals(s3fs3, s3fs6);
+        assertNotEquals(s3fs1, s3fs6);
+        assertNotEquals(s3fs1, new S3FileStore(s3fs1, "emmer"));
+        assertNotEquals(s3fs7, s3fs8);
+        assertEquals(s3fs8, s3fs8);
+        assertNotEquals(s3fs8, s3fs1);
+        assertEquals(s3fs8, s3fs9);
+        assertNotEquals(s3fs9, s3fs10);
+        assertEquals(s3fs2, s3fs11);
 
         assertEquals(-1, s3fs1.compareTo(s3fs2));
         assertEquals(1, s3fs2.compareTo(s3fs1));
@@ -304,9 +333,7 @@ public class S3FileSystemTest
 
         AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
 
-        S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
-
-        try
+        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
         {
             String[] parts = s3fs.key2Parts("/bucket/folder with spaces/file");
 
@@ -314,10 +341,6 @@ public class S3FileSystemTest
             assertEquals("bucket", parts[1]);
             assertEquals("folder with spaces", parts[2]);
             assertEquals("file", parts[3]);
-        }
-        finally
-        {
-            s3fs.close();
         }
     }
 
@@ -329,16 +352,10 @@ public class S3FileSystemTest
         AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
 
         S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
+
         S3Path path = s3fs.getPath("/bucket", "folder with spaces", "file");
 
-        try
-        {
-            assertEquals("folder with spaces/file", path.getKey());
-        }
-        finally
-        {
-            s3fs.close();
-        }
+        assertEquals("folder with spaces/file", path.getKey());
     }
 
     @Test
@@ -379,38 +396,32 @@ public class S3FileSystemTest
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
         AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
-        S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 
-        try
+        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
         {
             S3Path folder = s3fs.getPath("/bucket", "folder");
             provider.createDirectory(folder);
             assertTrue(Files.exists(folder));
         }
-        finally
-        {
-            s3fs.close();
-        }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void createDirectoryWithAttributes()
-            throws IOException
     {
-        S3FileSystemProvider provider = new S3FileSystemProvider();
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
-        S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            S3FileSystemProvider provider = new S3FileSystemProvider();
+            AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
 
-        try
-        {
-            S3Path folder = s3fs.getPath("/bucket", "folder");
-            provider.createDirectory(folder,
-                                     PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrw")));
-        }
-        finally
-        {
-            s3fs.close();
-        }
+            try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
+            {
+                S3Path folder = s3fs.getPath("/bucket", "folder");
+                provider.createDirectory(folder,
+                                         PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrw")));
+            }
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -418,9 +429,8 @@ public class S3FileSystemTest
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
         AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
-        S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 
-        try
+        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
         {
             S3Path folder = s3fs.getPath("/bucket", "folder");
             S3Path sameFolder = s3fs.getPath("/bucket", "folder");
@@ -432,10 +442,6 @@ public class S3FileSystemTest
             assertFalse(provider.isSameFile(folder, differentFolder));
             assertFalse(provider.isSameFile(folder, relativize));
             assertFalse(provider.isSameFile(relativize, folder));
-        }
-        finally
-        {
-            s3fs.close();
         }
     }
 

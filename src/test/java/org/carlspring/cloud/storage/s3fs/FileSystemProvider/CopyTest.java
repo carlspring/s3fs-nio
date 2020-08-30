@@ -10,23 +10,21 @@ import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import java.io.IOException;
 import java.nio.file.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CopyTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -99,7 +97,7 @@ public class CopyTest
         assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
     }
 
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void copyAlreadyExists()
             throws IOException
     {
@@ -114,7 +112,11 @@ public class CopyTest
         Path file = fs.getPath("/bucketA", "dir", "file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
 
-        s3fsProvider.copy(file, fileDest);
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            s3fsProvider.copy(file, fileDest);
+        });
+
+        assertNotNull(exception);
     }
 
     /**

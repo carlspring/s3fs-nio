@@ -5,8 +5,8 @@ import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class S3FileAttributesTest
 {
@@ -42,6 +42,7 @@ public class S3FileAttributesTest
     public void anotherToStringPrintsBasicInfo()
     {
         final String key = "another complex key";
+
         final FileTime fileTime = FileTime.from(472931, TimeUnit.SECONDS);
 
         final int size = 138713;

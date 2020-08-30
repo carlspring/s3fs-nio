@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.base.Splitter;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class URISpikeTest
 {
@@ -41,7 +41,6 @@ public class URISpikeTest
                                                    .get(0));
             System.out.println("Parent:" + URI.create(s3case).resolve("..").toString());
         }
-
     }
 
     @Test

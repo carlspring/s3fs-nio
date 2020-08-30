@@ -13,11 +13,11 @@ import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3ClientFactory.PATH_STYLE_ACCESS;
+import org.junit.jupiter.api.Test;
+import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ToURLIT
 {

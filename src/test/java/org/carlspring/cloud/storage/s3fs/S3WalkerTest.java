@@ -11,16 +11,16 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.reset;
 
 public class S3WalkerTest
         extends S3UnitTestBase
 {
 
-    class RegisteringVisitor
+    static class RegisteringVisitor
             implements FileVisitor<Path>
     {
 
@@ -64,14 +64,13 @@ public class S3WalkerTest
         {
             return visitOrder;
         }
-
     }
 
-    class CheckVisitor
+    static class CheckVisitor
             implements FileVisitor<Path>
     {
 
-        private Iterator<String> iterator;
+        private final Iterator<String> iterator;
 
 
         public CheckVisitor(Iterator<String> iterator)
@@ -119,7 +118,7 @@ public class S3WalkerTest
 
     }
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -160,7 +159,7 @@ public class S3WalkerTest
 
         Files.walkFileTree(folder, new CheckVisitor(iterator));
 
-        assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
+        assertFalse(iterator.hasNext(), "Iterator should have been  exhausted.");
 
         reset(client);
 
@@ -168,7 +167,7 @@ public class S3WalkerTest
 
         Files.walkFileTree(folder, Collections.<FileVisitOption>emptySet(), 20, new CheckVisitor(iter));
 
-        assertFalse("Iterator should have been  exhausted.", iter.hasNext());
+        assertFalse(iter.hasNext(), "Iterator should have been  exhausted.");
     }
 
     @Test
@@ -193,7 +192,7 @@ public class S3WalkerTest
 
         Files.walkFileTree(folder, new CheckVisitor(iterator));
 
-        assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
+        assertFalse(iterator.hasNext(), "Iterator should have been  exhausted.");
     }
 
     @Test
@@ -201,6 +200,7 @@ public class S3WalkerTest
             throws IOException
     {
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+
         MockBucket mockBucket = client.bucket("/tree");
 
         for (int i = 0; i < 21; i++)
@@ -244,7 +244,7 @@ public class S3WalkerTest
 
         Files.walkFileTree(folder, new CheckVisitor(iterator));
 
-        assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
+        assertFalse(iterator.hasNext(), "Iterator should have been  exhausted.");
     }
 
     @Test
@@ -270,7 +270,7 @@ public class S3WalkerTest
 
         Files.walkFileTree(folder, new CheckVisitor(iterator));
 
-        assertFalse("Iterator should have been  exhausted.", iterator.hasNext());
+        assertFalse(iterator.hasNext(), "Iterator should have been  exhausted.");
     }
 
     @Test
@@ -294,6 +294,7 @@ public class S3WalkerTest
 
         FileVisitor<Path> visitor = new FileVisitor<Path>()
         {
+
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
             {
@@ -337,6 +338,7 @@ public class S3WalkerTest
             {
                 return FileVisitResult.CONTINUE;
             }
+
         };
 
         Files.walkFileTree(folder, visitor);

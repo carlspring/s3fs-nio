@@ -12,23 +12,21 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class IsHiddenTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -43,7 +41,7 @@ public class IsHiddenTest
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
         // assert
-        assertTrue(!s3fsProvider.isHidden(file1));
+        assertFalse(s3fsProvider.isHidden(file1));
     }
 
     /**
