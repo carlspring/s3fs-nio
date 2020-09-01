@@ -39,7 +39,6 @@ plugins:
 markdown_extensions:
   - admonition
   - attr_list
-  #- git-revision-date
   - meta
   - mdx_gh_links
   - toc:

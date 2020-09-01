@@ -5,5 +5,5 @@ mkdocs-markdownextradata-plugin
 mkdocs-git-revision-date-plugin
 mkdocs-redirects
 mkdocs-htmlproofer-plugin
-mkdocs-pom-parser-plugin>=1.0.2
+mkdocs-pom-parser-plugin>=1.0.3
 mkdocs-minify-plugin==0.3.0
