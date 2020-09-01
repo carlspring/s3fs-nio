@@ -2,15 +2,15 @@
 
 S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 
-[![Master Build Status][master-build-status-badge]][master-build-status-link]
-[![Docs][master-docs-badge]][master-docs-link]
-[![License][license-badge]][license-link]
-[![Help Contribute to Open Source][codetriage-badge]][codetriage-link]
+[![Master Build Status][master-build-status-badge]][master-build-status-link] 
+[![SonarQube Quality Gate][sonarqube-badge]][sonarqube-link] 
+[![Docs][master-docs-badge]][master-docs-link] 
+[![License][license-badge]][license-link]  
+<!-- [![Help Contribute to Open Source][codetriage-badge]][codetriage-link] -->
 [![GitHub issues by-label][good-first-issue-badge]][good-first-issue-link]
 [![GitHub issues by-label][help-wanted-badge]][help-wanted-link]
 [![GitHub issues by-label][hacktoberfest-badge]][hacktoberfest-link]
 [![GitHub issues by-label][stackoverflow-badge]][stackoverflow-link]
-
 
 ## Installation
 
@@ -92,23 +92,26 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [master-build-status-link]: {{ repo_url }}/actions?query=branch%3Amaster
 [master-build-status-badge]: {{ repo_url }}/workflows/Build%20and%20test%20workflow/badge.svg
 
+[sonarqube-link]: https://sonarcloud.io/dashboard?id={{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}
+[sonarqube-badge]: https://sonarcloud.io/api/project_badges/measure?project={{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}&metric=alert_status
+
 [master-docs-link]: {{ docs_url }}
 [master-docs-badge]: https://img.shields.io/badge/docs-current-brightgreen.svg
 
 [license-link]: https://opensource.org/licenses/Apache-2.0
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 
-[codetriage-link]: https://www.codetriage.com/carlspring/s3fs-nio
-[codetriage-badge]: https://www.codetriage.com/carlspring/s3fs-nio/badges/users.svg
+[codetriage-link]: https://www.codetriage.com/carlspring/{{ POM_ARTIFACT_ID }}
+[codetriage-badge]: https://www.codetriage.com/carlspring/{{ POM_ARTIFACT_ID }}/badges/users.svg
 
 [good-first-issue-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good%20first%20issue%22
-[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/good%20first%20issue.svg?label=good%20first%20issue
+[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/{{ POM_ARTIFACT_ID }}/good%20first%20issue.svg?label=good%20first%20issue
 
 [help-wanted-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22
-[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
+[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/{{ POM_ARTIFACT_ID }}/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
 
 [hacktoberfest-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22
-[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/hacktoberfest.svg?label=hacktoberfest&color=orange
+[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/{{ POM_ARTIFACT_ID }}/hacktoberfest.svg?label=hacktoberfest&color=orange
 
-[stackoverflow-link]: https://stackoverflow.com/tags/s3fs-nio/
+[stackoverflow-link]: https://stackoverflow.com/tags/{{ POM_ARTIFACT_ID }}/
 [stackoverflow-badge]: https://img.shields.io/badge/stackoverflow-ask-orange.svg
