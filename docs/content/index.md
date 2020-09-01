@@ -48,23 +48,26 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 5. Select `AmazonS3FullAccess` policy and `Create user`
 6. Copy `Access key ID` and `Secret access key` - you will need them later!
 
-### Java
+### Example
 
-=== "Step 1"
+=== "1. Configure"
 
-    In your `META-INF/services/java.nio.file.spi.FileSystemProvider` file add a new line importing the provider: 
-   
+    Create/load a properties file in your project which defines the following properties:
+    
     ```
-    {{ POM_GROUP_ID }}.S3FileSystemProvider
-    ```
+    --8<-- "../src/test/resources/amazon-test-sample.properties"
+    ``` 
+    
+    These properties can also be exported as environment variables.
+    A complete list is available in the [Configuration Reference]
 
-=== "Step 2"
+=== "2. Example"
 
     ```java
     --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClass.java"
     ```
 
-=== "Step 3"
+=== "3. Test"
     ```java
     --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClassIT.java"
     ```
