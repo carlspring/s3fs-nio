@@ -68,7 +68,7 @@ markdown_extensions:
   - pymdownx.magiclink:
       repo_url_shorthand: true
       user: carlspring
-      repo: s3fs-nio2
+      repo: s3fs-nio
   - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.snippets:
@@ -89,8 +89,11 @@ extra:
   resourcesPath: &resourcesPath !!python/object/apply:urllib.parse.urljoin [*assetsPath, "resources"]
   assets: !!python/object/apply:urllib.parse.urljoin [*url, *assetsPath]
   resources: !!python/object/apply:urllib.parse.urljoin [*url, *resourcesPath]
+  site_name: &site_name S3FS NIO
+  project_name: *site_name
   repo_url: &repo_url https://github.com/carlspring/s3fs-nio
   chat_url: &chat_url https://chat.carlspring.org/channel/s3fs-nio-community
+  docs_url: https://s3fs-nio.carlspring.org
   social:
   - icon: fontawesome/brands/github-alt
     link: *repo_url

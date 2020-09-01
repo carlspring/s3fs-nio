@@ -9,7 +9,7 @@ stable release.
 
 ## Versioning policy
 
-S3FS NIO2 is following the [semantic versioning][semver] guide to ensure we introduce predictable changes.
+{{ project_name }} is following the [semantic versioning][semver] guide to ensure we introduce predictable changes.
 
 * Release version numbers have three parts: `major.minor.patch`.  
   For example, version `1.2.3` indicates major version 1, minor version 2, and patch level 3.

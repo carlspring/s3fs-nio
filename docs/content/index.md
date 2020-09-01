@@ -1,4 +1,4 @@
-# S3FS NIO2
+# {{ site_name }}
 
 S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 
@@ -61,7 +61,7 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
     These properties can also be exported as environment variables.
     A complete list is available in the [Configuration Reference]
 
-=== "2. Example"
+=== "2. Code"
 
     ```java
     --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClass.java"
@@ -84,31 +84,31 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [JSR-203]: https://jcp.org/en/jsr/detail?id=203 "JSR-203"
 [Contributing]: ./contributing/index.md "Contributing"
 [Configuration Reference]: ./reference/configuration.md "Configuration Reference"
-[More examples]: ./examples "More examples"
+[More examples]: ./reference/examples.md "More examples"
 [S3 Console]: https://s3.console.aws.amazon.com/s3/home "Amazon S3 Console"
 [IAM]: https://console.aws.amazon.com/iam/home "Amazon IAM"
 
 [<--# Badges -->]: #
-[master-build-status-link]: https://github.com/carlspring/s3fs-nio2/actions?query=branch%3Amaster
-[master-build-status-badge]: https://github.com/carlspring/s3fs-nio2/workflows/Build%20and%20test%20workflow/badge.svg
+[master-build-status-link]: {{ repo_url }}/actions?query=branch%3Amaster
+[master-build-status-badge]: {{ repo_url }}/workflows/Build%20and%20test%20workflow/badge.svg
 
-[master-docs-link]: https://carlspring.github.io/s3fs-nio2
+[master-docs-link]: {{ docs_url }}
 [master-docs-badge]: https://img.shields.io/badge/docs-current-brightgreen.svg
 
 [license-link]: https://opensource.org/licenses/Apache-2.0
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
 
-[codetriage-link]: https://www.codetriage.com/carlspring/s3fs-nio2
-[codetriage-badge]: https://www.codetriage.com/carlspring/s3fs-nio2/badges/users.svg
+[codetriage-link]: https://www.codetriage.com/carlspring/s3fs-nio
+[codetriage-badge]: https://www.codetriage.com/carlspring/s3fs-nio/badges/users.svg
 
-[good-first-issue-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22good%20first%20issue%22
-[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/good%20first%20issue.svg?label=good%20first%20issue
+[good-first-issue-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good%20first%20issue%22
+[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/good%20first%20issue.svg?label=good%20first%20issue
 
-[help-wanted-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22
-[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
+[help-wanted-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22
+[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
 
-[hacktoberfest-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22
-[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/hacktoberfest.svg?label=hacktoberfest&color=orange
+[hacktoberfest-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22
+[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/hacktoberfest.svg?label=hacktoberfest&color=orange
 
-[stackoverflow-link]: https://stackoverflow.com/tags/s3fs-nio2/
+[stackoverflow-link]: https://stackoverflow.com/tags/s3fs-nio/
 [stackoverflow-badge]: https://img.shields.io/badge/stackoverflow-ask-orange.svg

@@ -59,9 +59,9 @@ TODO: Add a guide to run tests with MinIO and docker-compose
 [<--# Links -->]: #
 [Maven 3.6+]: https://maven.apache.org/download.cgi
 [issue-tracker]: {{ repo_url }}/issues
-[good-first-issue-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22good%20first%20issue%22
-[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/good%20first%20issue.svg?label=good%20first%20issue
-[help-wanted-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22
-[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
-[hacktoberfest-link]: https://github.com/carlspring/s3fs-nio2/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22
-[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio2/hacktoberfest.svg?label=hacktoberfest&color=orange
+[good-first-issue-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22good%20first%20issue%22
+[good-first-issue-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/good%20first%20issue.svg?label=good%20first%20issue
+[help-wanted-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22help%20wanted%22
+[help-wanted-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/help%20wanted.svg?label=help%20wanted&color=%23856bf9& 
+[hacktoberfest-link]: {{ repo_url }}/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22
+[hacktoberfest-badge]: https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/hacktoberfest.svg?label=hacktoberfest&color=orange

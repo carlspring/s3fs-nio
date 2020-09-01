@@ -1,1 +1,1 @@
-redirect: https://chat.carlspring.org/channel/s3fs-nio-community
+redirect: {{ chat_url }}

@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: ./docs.Dockerfile
     image: squidfunk/mkdocs-material:5.5.9-custom
-    container_name: s3fs-nio2-docs
+    container_name: s3fs-nio-docs
     working_dir: /workspace/docs
     volumes:
       - ../:/workspace
