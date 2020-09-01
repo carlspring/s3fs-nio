@@ -29,7 +29,7 @@ plugins:
         - en
   - mkdocs-pom-parser-plugin:
       path: ../pom.xml
-      debug: false
+      debug: true
   # This plugin should be AFTER mkdocs-pom-parser-plugin until issue is fixed.
   # https://github.com/rosscdh/mkdocs-markdownextradata-plugin/issues/26
   - markdownextradata: {}
