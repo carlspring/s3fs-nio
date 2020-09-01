@@ -2,12 +2,13 @@
 
 S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 
-[![Maven Release Version][maven-central-badge]][maven-central-link]
+[![Maven Release Version][maven-central-badge]][maven-central-link] 
+![JDK support badge][jdk-support-badge] 
 [![Master Build Status][master-build-status-badge]][master-build-status-link] 
 [![SonarQube Quality Gate][sonarqube-badge]][sonarqube-link] 
-[![Docs][master-docs-badge]][master-docs-link]
-[![Chat][chat-badge]][chat-link]
-[![License][license-badge]][license-link]  
+[![Docs][master-docs-badge]][master-docs-link] 
+[![Chat][chat-badge]][chat-link] 
+[![License][license-badge]][license-link] 
 <!-- [![Help Contribute to Open Source][codetriage-badge]][codetriage-link] -->
 [![GitHub issues by-label][good-first-issue-badge]][good-first-issue-link]
 [![GitHub issues by-label][help-wanted-badge]][help-wanted-link]
@@ -91,9 +92,10 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [IAM]: https://console.aws.amazon.com/iam/home "Amazon IAM"
 
 [<--# Badges -->]: #
+[jdk-support-badge]: https://img.shields.io/badge/JDK-8%20and%2011-blue
+
 [maven-central-link]: https://repo1.maven.org/maven2/org/carlspring/cloud/aws/s3fs-nio/
 [maven-central-badge]: https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Forg%2Fcarlspring%2Fcloud%2Faws%2Fs3fs-nio%2Fmaven-metadata.xml
-
 
 [master-build-status-link]: {{ repo_url }}/actions?query=branch%3Amaster
 [master-build-status-badge]: {{ repo_url }}/workflows/Build%20and%20test/badge.svg
