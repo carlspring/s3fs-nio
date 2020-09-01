@@ -24,9 +24,9 @@ This directory contains the S3FS NIO2 documentation.
    docker-compose run --rm -p 8000:8000 -v $(pwd)/../:/workspace --entrypoint /bin/sh mkdocs
    ```
 
-2. Manually start the server (i.e. test plugins)
+2. Manually start the server (i.e. test plugins, cwd should be ./docs!)
    ```
-   mkdocs serve -f /workspace/docs/mkdocs.yml -a 0.0.0.0:8000
+   mkdocs serve -a 0.0.0.0:8000
    ```
 
 ## Notes
