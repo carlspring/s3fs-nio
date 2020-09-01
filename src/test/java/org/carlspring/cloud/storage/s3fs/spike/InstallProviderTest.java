@@ -11,11 +11,10 @@ import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * FileSystems.newFileSystem busca mediante el serviceLoader los
@@ -28,7 +27,7 @@ public class InstallProviderTest
 {
 
 
-    @Before
+    @BeforeEach
     public void cleanup()
     {
         //clean resources
@@ -61,13 +60,17 @@ public class InstallProviderTest
         //assertTrue(zipPath.getFileSystem().provider() instanceof com.sun.nio.zipfs.ZipFileSystemProvider);
     }
 
-    @Test(expected = FileSystemNotFoundException.class)
+    @Test
     public void useZipProviderPathNotExists()
-            throws IOException
     {
-        FileSystems.newFileSystem(URI.create("jar:file:/not/exists/zip.zip"),
-                                  new HashMap<String, Object>(),
-                                  this.getClass().getClassLoader());
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
+            FileSystems.newFileSystem(URI.create("jar:file:/not/exists/zip.zip"),
+                                      new HashMap<String, Object>(),
+                                      this.getClass().getClassLoader());
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
@@ -112,26 +115,40 @@ public class InstallProviderTest
         fs.close();
     }
 
-    @Test(expected = FileSystemNotFoundException.class)
+    @Test
     public void getZipProvider()
     {
-        URI uri = URI.create("jar:file:/file.zip");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
+            URI uri = URI.create("jar:file:/file.zip");
+            FileSystems.getFileSystem(uri);
+        });
 
-        FileSystems.getFileSystem(uri);
+        assertNotNull(exception);
     }
 
     // deviation from spec
-    @Test(expected = FileSystemNotFoundException.class)
+    @Test
     public void getZipPath()
     {
-        Paths.get(URI.create("jar:file:/file.zip!/BAR"));
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
+            Paths.get(URI.create("jar:file:/file.zip!/BAR"));
+        });
+
+        assertNotNull(exception);
     }
 
     // deviation from spec
-    @Test(expected = FileSystemNotFoundException.class)
+    @Test
     public void getMemoryPath()
     {
-        Paths.get(URI.create("memory:hellou:/file.zip"));
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
+            Paths.get(URI.create("memory:hellou:/file.zip"));
+        });
+
+        assertNotNull(exception);
     }
 
     // ~ helper methods

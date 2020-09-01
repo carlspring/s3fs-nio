@@ -10,24 +10,21 @@ import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import java.io.IOException;
 import java.nio.file.*;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class MoveTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -77,7 +74,7 @@ public class MoveTest
         assertArrayEquals(content.getBytes(), Files.readAllBytes(fileDest));
     }
 
-    @Test(expected = FileAlreadyExistsException.class)
+    @Test
     public void moveWithoutReplaceExisting()
             throws IOException
     {
@@ -93,10 +90,14 @@ public class MoveTest
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir", "file2");
 
-        s3fsProvider.move(file, fileDest);
+        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
+            s3fsProvider.move(file, fileDest);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = AtomicMoveNotSupportedException.class)
+    @Test
     public void moveWithAtomicOption()
             throws IOException
     {
@@ -112,7 +113,11 @@ public class MoveTest
         Path file = fs.getPath("/bucketA/dir/file1");
         Path fileDest = fs.getPath("/bucketA", "dir2", "file2");
 
-        s3fsProvider.move(file, fileDest, StandardCopyOption.ATOMIC_MOVE);
+        Exception exception = assertThrows(AtomicMoveNotSupportedException.class, () -> {
+            s3fsProvider.move(file, fileDest, StandardCopyOption.ATOMIC_MOVE);
+        });
+
+        assertNotNull(exception);
     }
 
     /**

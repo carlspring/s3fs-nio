@@ -16,11 +16,10 @@ import java.util.EnumSet;
 import java.util.UUID;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NewByteChannelIT
         extends S3UnitTestBase
@@ -33,7 +32,7 @@ public class NewByteChannelIT
     private FileSystem fileSystemAmazon;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -100,7 +99,7 @@ public class NewByteChannelIT
         assertArrayEquals(content.getBytes(), Files.readAllBytes(file));
     }
 
-    @Test(expected = NonWritableChannelException.class)
+    @Test
     public void newByteChannelWriteWithoutPermission()
             throws IOException
     {
@@ -111,7 +110,11 @@ public class NewByteChannelIT
         try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
                                                                                    EnumSet.of(StandardOpenOption.READ)))
         {
-            seek.write(ByteBuffer.wrap(content.getBytes()));
+            Exception exception = assertThrows(NonWritableChannelException.class, () -> {
+                seek.write(ByteBuffer.wrap(content.getBytes()));
+            });
+
+            assertNotNull(exception);
         }
     }
 
@@ -136,7 +139,7 @@ public class NewByteChannelIT
         assertArrayEquals(new String(bufferRead.array()).getBytes(), content.getBytes());
     }
 
-    @Test(expected = NonReadableChannelException.class)
+    @Test
     public void newByteChannelReadWithoutPermission()
             throws IOException
     {
@@ -146,7 +149,11 @@ public class NewByteChannelIT
         try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
                                                                                    EnumSet.of(StandardOpenOption.WRITE)))
         {
-            seek.read(ByteBuffer.allocate(content.length()));
+            Exception exception = assertThrows(NonReadableChannelException.class, () -> {
+                seek.read(ByteBuffer.allocate(content.length()));
+            });
+
+            assertNotNull(exception);
         }
     }
 

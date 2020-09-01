@@ -3,9 +3,9 @@ package org.carlspring.cloud.storage.s3fs;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.util.Cache;
 
-import org.junit.Test;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 

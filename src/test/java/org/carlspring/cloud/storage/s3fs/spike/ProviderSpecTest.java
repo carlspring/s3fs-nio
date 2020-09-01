@@ -10,11 +10,11 @@ import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ProviderSpecTest
 {
@@ -22,14 +22,14 @@ public class ProviderSpecTest
     FileSystem fs;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         fs = MemoryFileSystemBuilder.newLinux().build("linux");
     }
 
-    @After
+    @AfterEach
     public void close()
             throws IOException
     {
@@ -56,6 +56,7 @@ public class ProviderSpecTest
             throws IOException
     {
         Path base = Files.createDirectories(fs.getPath("/dir"));
+
         // in windows throw exception
         try (SeekableByteChannel seekable = Files.newByteChannel(base.resolve("file1.html"),
                                                                  EnumSet.of(StandardOpenOption.CREATE,
@@ -63,6 +64,7 @@ public class ProviderSpecTest
                                                                             StandardOpenOption.READ)))
         {
             ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
+
             seekable.position(7);
             seekable.write(buffer);
 
@@ -85,9 +87,9 @@ public class ProviderSpecTest
         Path path = Files.write(Files.createTempFile("asdas", "asdsadad"),
                                 "contenido uyuhu".getBytes(),
                                 StandardOpenOption.APPEND);
+
         try (SeekableByteChannel channel = Files.newByteChannel(path))
         {
-
             //channel = Paths.get("Path to file").newByteChannel(StandardOpenOption.READ);
             ByteBuffer buffer = ByteBuffer.allocate(4096);
 

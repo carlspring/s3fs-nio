@@ -11,11 +11,11 @@ import com.amazonaws.ClientConfiguration;
 import com.amazonaws.Protocol;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.AWSCredentialsProvider;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_SYSTEM_PROPERTY;
 import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_SYSTEM_PROPERTY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AmazonS3ClientFactoryTest
 {
@@ -119,44 +119,58 @@ public class AmazonS3ClientFactoryTest
         assertFalse(client.getClientOptions().isPathStyleAccess());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void halfTheCredentials()
     {
-        AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
 
-        System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
+            System.setProperty(SECRET_KEY_SYSTEM_PROPERTY, "I'll never teeeeeellllll!");
 
-        Properties props = new Properties();
-        props.setProperty(ACCESS_KEY, "I want access");
+            Properties props = new Properties();
+            props.setProperty(ACCESS_KEY, "I want access");
 
-        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+            clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void theOtherHalf()
     {
-        AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
 
-        System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "I want access");
+            System.setProperty(ACCESS_KEY_SYSTEM_PROPERTY, "I want access");
 
-        Properties props = new Properties();
-        props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
+            Properties props = new Properties();
+            props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
 
-        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+            clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+        });
+
+        assertNotNull(exception);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void wrongMetricsCollector()
     {
-        AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            AmazonS3ClientFactory clientFactory = new ExposingAmazonS3ClientFactory();
 
-        Properties props = new Properties();
-        props.setProperty(ACCESS_KEY, "I want access");
-        props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
-        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS,
-                          "org.carlspring.cloud.storage.s3fs.util.WrongRequestMetricCollector");
+            Properties props = new Properties();
+            props.setProperty(ACCESS_KEY, "I want access");
+            props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
+            props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS, "org.carlspring.cloud.storage.s3fs.util.WrongRequestMetricCollector");
 
-        clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+            clientFactory.getAmazonS3(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+        });
+
+        assertNotNull(exception);
     }
 
     @Test

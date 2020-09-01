@@ -11,27 +11,27 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 
 import com.amazonaws.services.s3.model.Owner;
 import com.github.marschall.com.sun.nio.zipfs.ZipFileAttributeView;
 import com.google.common.collect.ImmutableMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class S3FileStoreTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystem fileSystem;
 
     private S3FileStore fileStore;
 
 
-    @Before
+    @BeforeEach
     public void prepareFileStore()
             throws IOException
     {
@@ -39,14 +39,13 @@ public class S3FileStoreTest
                                                                         .put(SECRET_KEY, "secret-mocked")
                                                                         .build();
 
-        fileSystem = (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
-
+        fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
 
         AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
         client.bucket("bucket").file("placeholder");
         client.bucket("bucket2").file("placeholder");
 
-        S3Path path = fileSystem.getPath("/bucket/");
+        S3Path path = (S3Path) fileSystem.getPath("/bucket/");
 
         fileStore = path.getFileStore();
     }
@@ -54,7 +53,7 @@ public class S3FileStoreTest
     @Test
     public void bucketConstructor()
     {
-        S3FileStore s3FileStore = new S3FileStore(fileSystem, "name");
+        S3FileStore s3FileStore = new S3FileStore((S3FileSystem) fileSystem, "name");
 
         assertEquals("name", s3FileStore.name());
         assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
@@ -63,7 +62,7 @@ public class S3FileStoreTest
     @Test
     public void nameConstructorAlreadyExists()
     {
-        S3FileStore s3FileStore = new S3FileStore(fileSystem, "bucket2");
+        S3FileStore s3FileStore = new S3FileStore((S3FileSystem) fileSystem, "bucket2");
 
         assertEquals("bucket2", s3FileStore.name());
         assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
@@ -82,14 +81,19 @@ public class S3FileStoreTest
         assertEquals("1", fileStoreAttributeView.getAttribute(AttrID.ownerId.name()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getUnsupportedFileStoreAttributeView()
     {
-        fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
+        });
+
+        assertNotNull(exception);
     }
 
     @Test
     public void getAttributes()
+            throws IOException
     {
         assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
         assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
@@ -111,7 +115,7 @@ public class S3FileStoreTest
     {
         S3Path rootDirectory = fileStore.getRootDirectory();
 
-        assertNull("", rootDirectory.getFileName());
+        assertNull(rootDirectory.getFileName());
         assertTrue(rootDirectory.isAbsolute());
         assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toAbsolutePath().toString());
         assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toUri().toString());
@@ -121,15 +125,13 @@ public class S3FileStoreTest
     public void getSpaces()
             throws IOException
     {
-        S3Path root = fileSystem.getPath("/newbucket");
-
+        Path root = fileSystem.getPath("/newbucket");
         Files.createFile(root);
-
-        S3FileStore newFileStore = root.getFileStore();
+        S3FileStore newFileStore = ((S3Path) root).getFileStore();
 
         assertEquals("newbucket", newFileStore.name());
         assertEquals("S3Bucket", newFileStore.type());
-        assertEquals(false, newFileStore.isReadOnly());
+        assertFalse(newFileStore.isReadOnly());
         assertEquals(Long.MAX_VALUE, newFileStore.getTotalSpace());
         assertEquals(Long.MAX_VALUE, newFileStore.getUsableSpace());
         assertEquals(Long.MAX_VALUE, newFileStore.getUnallocatedSpace());
@@ -141,11 +143,12 @@ public class S3FileStoreTest
     public void comparable()
             throws IOException
     {
-        S3FileStore store = fileSystem.getPath("/bucket").getFileStore();
-        S3FileStore other = fileSystem.getPath("/bucket1").getFileStore();
+        S3FileStore store = ((S3Path) fileSystem.getPath("/bucket")).getFileStore();
+        S3FileStore other = ((S3Path) fileSystem.getPath("/bucket1")).getFileStore();
 
         FileSystem fileSystemLocalhost = FileSystems.newFileSystem(URI.create("s3://localhost/"), buildFakeEnv());
         FileSystem fileSystemDefault = FileSystems.getFileSystem(store.getFileSystem().getPath("/bucket").toUri());
+
         S3FileStore differentHost = ((S3Path) fileSystemLocalhost.getPath("/bucket")).getFileStore();
         S3FileStore shouldBeTheSame = ((S3Path) fileSystemDefault.getPath("/bucket")).getFileStore();
         S3FileStore noFs1 = new S3FileStore(null, "bucket");
@@ -153,6 +156,7 @@ public class S3FileStoreTest
         S3FileStore noFsSameAs1 = new S3FileStore(null, "bucket");
         S3FileStore noFsNoName1 = new S3FileStore(null, null);
         S3FileStore noFsNoName2 = new S3FileStore(null, null);
+
         Comparable<S3FileStore> s3FileStore = new S3FileStore(null, "bucket");
 
         assertEquals(0, store.compareTo(store));

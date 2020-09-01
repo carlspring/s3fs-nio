@@ -34,7 +34,10 @@ public abstract class EnvironmentBuilder
 
         if (accessKey != null && secretKey != null && region != null)
         {
-            env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey).put(SECRET_KEY, secretKey).put(REGION, region).build();
+            env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey)
+                                                        .put(SECRET_KEY, secretKey)
+                                                        .put(REGION, region)
+                                                        .build();
         }
         else
         {

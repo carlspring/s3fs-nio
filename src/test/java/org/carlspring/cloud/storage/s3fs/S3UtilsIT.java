@@ -16,12 +16,13 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class S3UtilsIT
 {
@@ -33,7 +34,7 @@ public class S3UtilsIT
     private FileSystem fileSystemAmazon;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -82,7 +83,9 @@ public class S3UtilsIT
             throws IOException
     {
         Path path;
+
         final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
             Path base = Files.createDirectory(linux.getPath("/base"));
@@ -131,6 +134,7 @@ public class S3UtilsIT
         final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
+
         ObjectMetadata metadata = new ObjectMetadata();
         metadata.setContentLength(0L);
 
@@ -177,10 +181,10 @@ public class S3UtilsIT
         S3Path s3Path = (S3Path) path.resolve("file");
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
 
-        assertEquals(false, result.isDirectory());
-        assertEquals(true, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertFalse(result.isDirectory());
+        assertTrue(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
@@ -205,10 +209,10 @@ public class S3UtilsIT
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
 
-        assertEquals(true, result.isDirectory());
-        assertEquals(false, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertTrue(result.isDirectory());
+        assertFalse(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
@@ -239,10 +243,10 @@ public class S3UtilsIT
 
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
 
-        assertEquals(true, result.isDirectory());
-        assertEquals(false, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertTrue(result.isDirectory());
+        assertFalse(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
@@ -260,16 +264,17 @@ public class S3UtilsIT
         S3Path s3Path = (S3Path) path.resolve("file");
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
 
-        assertEquals(false, result.isDirectory());
-        assertEquals(true, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertFalse(result.isDirectory());
+        assertTrue(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
         assertNotNull(result.size());
+
         // posix
         assertNotNull(result.owner());
         assertNull(result.group());
@@ -292,16 +297,17 @@ public class S3UtilsIT
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
 
-        assertEquals(true, result.isDirectory());
-        assertEquals(false, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertTrue(result.isDirectory());
+        assertFalse(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
         assertNotNull(result.size());
+
         // posix
         assertNull(result.owner());
         assertNull(result.group());
@@ -329,16 +335,17 @@ public class S3UtilsIT
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
 
-        assertEquals(true, result.isDirectory());
-        assertEquals(false, result.isRegularFile());
-        assertEquals(false, result.isSymbolicLink());
-        assertEquals(false, result.isOther());
+        assertTrue(result.isDirectory());
+        assertFalse(result.isRegularFile());
+        assertFalse(result.isSymbolicLink());
+        assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
         assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
         assertNotNull(result.size());
+
         // posix
         assertNull(result.owner());
         assertNull(result.group());

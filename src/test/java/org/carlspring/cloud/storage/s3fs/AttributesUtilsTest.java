@@ -8,13 +8,12 @@ import java.nio.file.attribute.FileTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-import static org.junit.Assert.assertEquals;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class AttributesUtilsTest
 {
-
 
     /**
      * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods

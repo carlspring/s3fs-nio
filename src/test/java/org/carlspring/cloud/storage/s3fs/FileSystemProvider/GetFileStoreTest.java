@@ -12,37 +12,41 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class GetFileStoreTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void getFileStore()
-            throws IOException
     {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1");
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            // fixtures
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir").file("dir/file1");
 
-        // act
-        Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
+            // act
+            Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
-        // assert
-        s3fsProvider.getFileStore(file1);
+            // assert
+            s3fsProvider.getFileStore(file1);
+        });
+
+        assertNotNull(exception);
     }
 
     /**

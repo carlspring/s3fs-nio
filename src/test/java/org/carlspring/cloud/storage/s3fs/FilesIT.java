@@ -16,10 +16,10 @@ import java.util.UUID;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FilesIT
 {
@@ -31,7 +31,7 @@ public class FilesIT
     private FileSystem fileSystemAmazon;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
@@ -66,7 +66,7 @@ public class FilesIT
     {
         Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 
-        assertTrue(!Files.exists(dir));
+        assertFalse(Files.exists(dir));
     }
 
     @Test
@@ -74,7 +74,7 @@ public class FilesIT
     {
         Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 
-        assertTrue(!Files.exists(file));
+        assertFalse(Files.exists(file));
     }
 
     @Test
@@ -406,7 +406,7 @@ public class FilesIT
             }
         });
 
-        assertTrue(!Files.exists(dir));
+        assertFalse(Files.exists(dir));
     }
 
     @Test
@@ -440,9 +440,9 @@ public class FilesIT
             throws IOException
     {
         final String content = "sample content";
+
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-
             Path sourceLocal = Files.write(linux.getPath("/index.html"), content.getBytes());
             Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 
@@ -607,10 +607,10 @@ public class FilesIT
         BasicFileAttributes fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
 
         assertNotNull(fileAttributes);
-        assertEquals(true, fileAttributes.isRegularFile());
-        assertEquals(false, fileAttributes.isDirectory());
-        assertEquals(false, fileAttributes.isSymbolicLink());
-        assertEquals(false, fileAttributes.isOther());
+        assertTrue(fileAttributes.isRegularFile());
+        assertFalse(fileAttributes.isDirectory());
+        assertFalse(fileAttributes.isSymbolicLink());
+        assertFalse(fileAttributes.isOther());
         assertEquals(content.length(), fileAttributes.size());
     }
 
@@ -664,7 +664,7 @@ public class FilesIT
         BasicFileAttributes fileAttributes = Files.readAttributes(dir.resolve("lib").resolve("angular"),
                                                                   BasicFileAttributes.class);
         assertNotNull(fileAttributes);
-        assertEquals(true, fileAttributes.isDirectory());
+        assertTrue(fileAttributes.isDirectory());
         assertEquals(startPath + "lib/angular/", fileAttributes.fileKey());
     }
 
@@ -690,9 +690,9 @@ public class FilesIT
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
 
         assertEquals(0, attrs.size());
-        assertEquals(null, attrs.creationTime());
-        assertEquals(null, attrs.lastAccessTime());
-        assertEquals(null, attrs.lastModifiedTime());
+        assertNull(attrs.creationTime());
+        assertNull(attrs.lastAccessTime());
+        assertNull(attrs.lastModifiedTime());
         assertTrue(attrs.isDirectory());
     }
 

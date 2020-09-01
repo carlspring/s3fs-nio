@@ -8,25 +8,23 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class FileSystemsIT
 {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
 
-    private static final String bucket = EnvironmentBuilder.getBucket();
-
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
     private FileSystem fileSystemAmazon;
 
 
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {

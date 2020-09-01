@@ -15,23 +15,21 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NewDirectoryStreamTest
         extends S3UnitTestBase
 {
 
-    private S3FileSystemProvider s3fsProvider;
 
-
-    @Before
+    @BeforeEach
     public void setup()
             throws IOException
     {
         s3fsProvider = getS3fsProvider();
-        s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
@@ -94,22 +92,26 @@ public class NewDirectoryStreamTest
         assertNewDirectoryStream(dir, "file1", "file2");
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void removeIteratorStreamDirectoryReader()
-            throws IOException
     {
-        // fixtures
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-        client.bucket("bucketA").dir("dir1").file("dir1/file1", "content".getBytes());
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
+            // fixtures
+            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            client.bucket("bucketA").dir("dir1").file("dir1/file1", "content".getBytes());
 
-        // act
-        Path bucket = createNewS3FileSystem().getPath("/bucketA");
+            // act
+            Path bucket = createNewS3FileSystem().getPath("/bucketA");
 
-        // act
-        try (DirectoryStream<Path> dir = Files.newDirectoryStream(bucket))
-        {
-            dir.iterator().remove();
-        }
+            // act
+            try (DirectoryStream<Path> dir = Files.newDirectoryStream(bucket))
+            {
+                dir.iterator().remove();
+            }
+        });
+
+        assertNotNull(exception);
     }
 
     @Test

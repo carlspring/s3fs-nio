@@ -47,6 +47,7 @@ public class AmazonS3ClientMock
      */
     private static final int LIMIT_AWS_MAX_ELEMENTS = 1000;
 
+
     // default owner
     private Owner defaultOwner = new Owner()
     {
@@ -89,11 +90,13 @@ public class AmazonS3ClientMock
 
         final Path bucket = find(bucketName);
         final TreeMap<String, S3Element> elems = new TreeMap<>();
+
         try
         {
             for (Path elem : Files.newDirectoryStream(bucket))
             {
                 S3Element element = parse(elem, bucket);
+
                 if (!elems.containsKey(element.getS3Object().getKey()))
                 {
                     elems.put(element.getS3Object().getKey(), element);
@@ -106,8 +109,10 @@ public class AmazonS3ClientMock
         }
 
         Iterator<S3Element> iterator = elems.values().iterator();
+
         int i = 0;
         boolean waitForMarker = !StringUtils.isNullOrEmpty(marker);
+
         while (iterator.hasNext())
         {
             S3Element elem = iterator.next();
@@ -160,14 +165,7 @@ public class AmazonS3ClientMock
             }
         }
 
-        Collections.sort(objectListing.getObjectSummaries(), new Comparator<S3ObjectSummary>()
-        {
-            @Override
-            public int compare(S3ObjectSummary o1, S3ObjectSummary o2)
-            {
-                return o1.getKey().compareTo(o2.getKey());
-            }
-        });
+        objectListing.getObjectSummaries().sort(Comparator.comparing(S3ObjectSummary::getKey));
 
         return objectListing;
     }
@@ -209,6 +207,7 @@ public class AmazonS3ClientMock
 
         Path bucket = find(previousObjectListing.getBucketName());
         List<S3Element> elems = new ArrayList<>();
+
         try
         {
             for (Path elem : Files.newDirectoryStream(bucket))
@@ -221,14 +220,7 @@ public class AmazonS3ClientMock
             throw new AmazonClientException(e);
         }
 
-        Collections.sort(elems, new Comparator<S3Element>()
-        {
-            @Override
-            public int compare(S3Element o1, S3Element o2)
-            {
-                return o1.getS3Object().getKey().compareTo(o2.getS3Object().getKey());
-            }
-        });
+        elems.sort(Comparator.comparing(o -> o.getS3Object().getKey()));
 
         Iterator<S3Element> iterator = elems.iterator();
 
@@ -289,6 +281,7 @@ public class AmazonS3ClientMock
     private S3ObjectSummary parseToS3ObjectSummary(S3Element elem)
     {
         S3Object s3Object = elem.getS3Object();
+
         ObjectMetadata objectMetadata = s3Object.getObjectMetadata();
 
         S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
@@ -921,8 +914,8 @@ public class AmazonS3ClientMock
                 if (elem.getS3Object() != null && this.getS3Object() != null &&
                     elem.getS3Object().getBucketName() != null &&
                     elem.getS3Object().getBucketName().equals(this.getS3Object().getBucketName()) &&
-                    elem.getS3Object().getKey() != null && elem.getS3Object().getKey().equals(this.getS3Object()
-                                                                                                  .getKey()))
+                    elem.getS3Object().getKey() != null &&
+                    elem.getS3Object().getKey().equals(this.getS3Object().getKey()))
                 {
                     return true;
                 }
