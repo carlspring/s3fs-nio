@@ -5,13 +5,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.carlspring.cloud.aws</groupId>
-    <artifactId>s3fs-nio2</artifactId>
-    <packaging>jar</packaging>
+    <artifactId>s3fs-nio</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
 
-    <name>S3FS NIO2</name>
-    <description>A Java (NIO2) FileSystem Provider for Amazon AWS S3.</description>
-    <url>https://github.com/carlspring/s3fs-nio2</url>
+    <name>S3FS NIO</name>
+    <description>A Java NIO FileSystem Provider for Amazon AWS S3.</description>
+    <url>https://github.com/carlspring/s3fs-nio</url>
 
     <licenses>
         <license>
@@ -66,16 +66,16 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/carlspring/s3fs-nio2.git</connection>
-        <developerConnection>scm:git:git@github.com:carlspring/s3fs-nio2.git</developerConnection>
-        <url>https://github.com/carlspring/s3fs-nio2</url>
+        <connection>scm:git:git://github.com/carlspring/s3fs-nio.git</connection>
+        <developerConnection>scm:git:git@github.com:carlspring/s3fs-nio.git</developerConnection>
+        <url>https://github.com/carlspring/s3fs-nio</url>
     </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Sonarcloud properties -->
-        <sonar.projectKey>carlspring_s3fs-nio2</sonar.projectKey>
+        <sonar.projectKey>carlspring_s3fs-nio</sonar.projectKey>
         <sonar.organization>carlspring</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- Sonarcloud properties -->
