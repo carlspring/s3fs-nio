@@ -2,9 +2,11 @@
 
 S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 
+[![Maven Release Version][maven-central-badge]][maven-central-link]
 [![Master Build Status][master-build-status-badge]][master-build-status-link] 
 [![SonarQube Quality Gate][sonarqube-badge]][sonarqube-link] 
-[![Docs][master-docs-badge]][master-docs-link] 
+[![Docs][master-docs-badge]][master-docs-link]
+[![Chat][chat-badge]][chat-link]
 [![License][license-badge]][license-link]  
 <!-- [![Help Contribute to Open Source][codetriage-badge]][codetriage-link] -->
 [![GitHub issues by-label][good-first-issue-badge]][good-first-issue-link]
@@ -89,14 +91,21 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [IAM]: https://console.aws.amazon.com/iam/home "Amazon IAM"
 
 [<--# Badges -->]: #
+[maven-central-link]: https://repo1.maven.org/maven2/org/carlspring/cloud/aws/s3fs-nio/
+[maven-central-badge]: https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Forg%2Fcarlspring%2Fcloud%2Faws%2Fs3fs-nio%2Fmaven-metadata.xml
+
+
 [master-build-status-link]: {{ repo_url }}/actions?query=branch%3Amaster
-[master-build-status-badge]: {{ repo_url }}/workflows/Build%20and%20test%20workflow/badge.svg
+[master-build-status-badge]: {{ repo_url }}/workflows/Build%20and%20test/badge.svg
 
 [sonarqube-link]: https://sonarcloud.io/dashboard?id={{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}
 [sonarqube-badge]: https://sonarcloud.io/api/project_badges/measure?project={{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}&metric=alert_status
 
 [master-docs-link]: {{ docs_url }}
 [master-docs-badge]: https://img.shields.io/badge/docs-current-brightgreen.svg
+
+[chat-link]: {{ chat_url }}
+[chat-badge]: https://img.shields.io/badge/chat-join-success
 
 [license-link]: https://opensource.org/licenses/Apache-2.0
 [license-badge]: https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg
