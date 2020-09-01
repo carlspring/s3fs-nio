@@ -1,0 +1,128 @@
+site_name: S3FS NIO
+site_url: https://carlspring.github.com/s3fs-nio
+repo_url: https://github.com/carlspring/s3fs-nio
+
+edit_uri: edit/master/docs/content/
+docs_dir: content
+
+theme:
+  name: material
+  custom_dir: 'theme'
+  icon:
+    repo: fontawesome/brands/github-alt
+
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  features:
+    - search.highlight
+    - meta
+    # Instant should be disabled because of a bug - not redirecting pages.
+    #- instant
+    - tabs
+
+plugins:
+  - search:
+      prebuild_index: false
+      lang:
+        - en
+  - mkdocs-pom-parser-plugin:
+      path: ../pom.xml
+      debug: false
+  # This plugin should be AFTER mkdocs-pom-parser-plugin until issue is fixed.
+  # https://github.com/rosscdh/mkdocs-markdownextradata-plugin/issues/26
+  - markdownextradata: {}
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  #- git-revision-date
+  - meta
+  - mdx_gh_links
+  - toc:
+      permalink: true
+  - pymdownx.extra
+  - markdown.extensions.admonition
+  - markdown.extensions.attr_list
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - pymdownx.superfences
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: carlspring
+      repo: s3fs-nio2
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+extra_css:
+  - assets/custom.css
+  - assets/structor-menu.css
+
+extra:
+  url: &url !!python/object/apply:os.getenv ["DEPLOY_URL", "http://localhost:8000"]
+  assetsPath: &assetsPath "assets/"
+  resourcesPath: &resourcesPath !!python/object/apply:urllib.parse.urljoin [*assetsPath, "resources"]
+  assets: !!python/object/apply:urllib.parse.urljoin [*url, *assetsPath]
+  resources: !!python/object/apply:urllib.parse.urljoin [*url, *resourcesPath]
+  repo_url: &repo_url https://github.com/carlspring/s3fs-nio
+  chat_url: &chat_url https://chat.carlspring.org/channel/s3fs-nio-community
+  social:
+  - icon: fontawesome/brands/github-alt
+    link: *repo_url
+  - icon: fontawesome/brands/rocketchat
+    link: *chat_url
+
+nav:
+  - Home:
+    - Getting started: index.md
+    - History: history.md
+    - Versioning and Releases: versioning.md
+    - License: license.md
+  - Contributing:
+    - Getting started: contributing/index.md
+    - Guides:
+      - Developers: contributing/developer-guide/index.md
+      - Security Advisers: contributing/security-advisers.md
+      - Writing documentation: contributing/writing-documentation.md
+  - Reference:
+    - Configuration: reference/configuration.md
+    - Examples: reference/examples.md
+#  - Changelog:
+#      - Release notes:
+#        - master: changelog/release/notes-master.md
+#        #- v1.0: changelog/release/notes-v1.md
+#      - Upgrading:
+#        - master: changelog/upgrading/master.md
+  - Join chat:
+      - Redirect: chat.md
+
+# Google Analytics
+google_analytics:
+  - !!python/object/apply:os.getenv ["GOOGLE_ANALYTICS_KEY"]
+  - auto

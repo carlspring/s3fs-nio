@@ -11,13 +11,79 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [![GitHub issues by-label][hacktoberfest-badge]][hacktoberfest-link]
 [![GitHub issues by-label][stackoverflow-badge]][stackoverflow-link]
 
-## Documentation
 
-Please check https://s3fs.carlspring.org
+## Installation
+
+=== "Maven" 
+    
+    ```
+    <dependency>
+        <groupId>{{ POM_GROUP_ID }}</groupId>
+        <artifactId>{{ POM_ARTIFACT_ID }}</artifactId>
+        <version>{{ POM_VERSION }}</version>
+    </dependency>
+    ```
+
+=== "Gradle"
+    
+    ```
+    compile group: '{{ POM_GROUP_ID }}', name: '{{ POM_ARTIFACT_ID }}', version: '{{ POM_VERSION }}'
+    ```
+
+=== "SBT"
+    
+    ```
+    libraryDependencies += "{{ POM_GROUP_ID }}" % "{{ POM_ARTIFACT_ID }}" % "{{ POM_VERSION }}"
+    ```
+
+
+## Quick start
+
+### Amazon S3 Setup
+
+1. Open [S3 Console] and add a bucket
+2. Open [IAM] and go to `Add User`
+3. Set `Access Type` to `Programmatic Access` or you will get `403 Forbidden` errors.
+4. Select `Attach an existing policies directly`
+5. Select `AmazonS3FullAccess` policy and `Create user`
+6. Copy `Access key ID` and `Secret access key` - you will need them later!
+
+### Java
+
+=== "Step 1"
+
+    In your `META-INF/services/java.nio.file.spi.FileSystemProvider` file add a new line importing the provider: 
+   
+    ```
+    {{ POM_GROUP_ID }}.S3FileSystemProvider
+    ```
+
+=== "Step 2"
+
+    ```java
+    --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClass.java"
+    ```
+
+=== "Step 3"
+    ```java
+    --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClassIT.java"
+    ```
+
+
+## See also
+
+* [Contributing]
+* [Configuration Reference]
+* [More examples]
+
 
 [<--# Links -->]: #
-
-[JSR-203]: https://jcp.org/en/jsr/detail?id=203
+[JSR-203]: https://jcp.org/en/jsr/detail?id=203 "JSR-203"
+[Contributing]: ./contributing/index.md "Contributing"
+[Configuration Reference]: ./reference/configuration.md "Configuration Reference"
+[More examples]: ./examples "More examples"
+[S3 Console]: https://s3.console.aws.amazon.com/s3/home "Amazon S3 Console"
+[IAM]: https://console.aws.amazon.com/iam/home "Amazon IAM"
 
 [<--# Badges -->]: #
 [master-build-status-link]: https://github.com/carlspring/s3fs-nio2/actions?query=branch%3Amaster

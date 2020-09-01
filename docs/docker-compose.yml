@@ -1,0 +1,13 @@
+version: '3'
+services:
+  mkdocs:
+    build:
+      context: .
+      dockerfile: ./docs.Dockerfile
+    image: squidfunk/mkdocs-material:5.5.9-custom
+    container_name: s3fs-nio2-docs
+    working_dir: /workspace/docs
+    volumes:
+      - ../:/workspace
+    ports:
+      - 8000:8000

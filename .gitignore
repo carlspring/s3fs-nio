@@ -4,6 +4,7 @@ target/
 tmp/
 *.versionsBackup
 .m2/
+site/
 
 # Java Files #
 *.jar
