@@ -1,6 +1,13 @@
-# S3FS NIO2
+# General
 
-S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
+This is an implementation of an **Amazon AWS S3** `FileSystem` provider using **[JSR-203]** (a.k.a. NIO2) for Java 8.
+
+Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any
+amount of data, at any time.
+
+[NIO2] is the new file management API, introduced in Java version 7. 
+
+This project provides a complete API implementation, for managing files and folders directly in Amazon S3.
 
 [![Master Build Status][master-build-status-badge]][master-build-status-link]
 [![Docs][master-docs-badge]][master-docs-link]
@@ -11,12 +18,17 @@ S3 filesystem provider for java using the NIO 2 API ([JSR-203]) that just works.
 [![GitHub issues by-label][hacktoberfest-badge]][hacktoberfest-link]
 [![GitHub issues by-label][stackoverflow-badge]][stackoverflow-link]
 
+# Compatibility
+
+We support both JDK 8 and 11.
+
 ## Documentation
 
-Please check https://s3fs.carlspring.org
+You can check out our documentation [here](https://s3fs.carlspring.org).
 
 [<--# Links -->]: #
 
+[NIO2]: https://jcp.org/en/jsr/detail?id=203
 [JSR-203]: https://jcp.org/en/jsr/detail?id=203
 
 [<--# Badges -->]: #
