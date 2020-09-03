@@ -41,6 +41,8 @@ markdown_extensions:
   - attr_list
   - meta
   - mdx_gh_links
+  - mdx_include:
+      base_path: ./content
   - toc:
       permalink: true
   - pymdownx.extra
