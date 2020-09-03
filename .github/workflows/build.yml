@@ -27,9 +27,11 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Build with Maven
         run: mvn clean install -Pjacoco-code-coverage
+      # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
+      #           it from October 2020. Please update to at least Java 11.
       - name: Publish code analysis to Sonarcloud
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11.0.3' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -DskipTests
+        run: mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Pjacoco-code-coverage -DskipTests
