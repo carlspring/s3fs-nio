@@ -1,29 +1,29 @@
 # Versioning policy and Releases
 
-We recognize stability and usability is the most important thing for every project - especially for libraries. We also
-share the desire to keep evolving this library to the next level which will undoubtedly require breaking changes to be 
-made whenever this is necessary.
+We recognize stability and usability is the most important thing for every project, especially, for libraries. We would
+also like to keep evolving this library. We intend to keep the library as stable, as possible and when there will be
+breaking changes, we will release new major versions.
 
-This document contains the practices we will be following to ensure predictable changes, high-quality code and 
-stable release. 
+Here is an overview of the practices we will be following to ensure predictable changes, high-quality code and stable
+release.
 
 ## Versioning policy
 
 {{ project_name }} is following the [semantic versioning][semver] guide to ensure we introduce predictable changes.
 
-* Release version numbers have three parts: `major.minor.patch`.  
-  For example, version `1.2.3` indicates major version 1, minor version 2, and patch level 3.
+* Release version numbers consist of three parts: `major.minor.patch`.  
+  For example, version `1.2.3` indicates major version `1`, minor version `2`, and patch level `3`.
 
 * Release version numbers are incremented, based on the level of change included in the release:
 
     !!! danger "Major releases contain significant new features or changes"
-        When updating to a new major release, the developer might need to refactor code, run additional tests, and/or 
+        When updating to a new major release, you might need to refactor code, run additional tests, and/or 
         learn new APIs. Major releases will be **backwards-incompatible**, unless otherwise stated in the release notes.
     
     !!! success "Minor releases contain new smaller features" 
-        Minor releases are fully backward-compatible.  
-        Developer assistance might be necessary during update, but you can optionally modify your apps and libraries to 
-        begin using new APIs, features, and capabilities that were added in the release.
+        Minor releases will be fully backward-compatible.
+        Developer intervention might be required during updates, but you can optionally modify your apps and libraries
+        to begin using new features, bug fixes and other improvements that were added to the release.
     
     !!! success "Patch releases are low risk, bug fix releases"   
         Upgrading requires no developer assistance other than updating the dependency.
@@ -34,18 +34,18 @@ TODO
 
 ## Preview releases
 
-We will be doing pre-releases for each upcoming `major` and `minor` version.
+We will be doing pre-releases for each upcoming `major` version.
 
 ### Release Candidate
 
 `Release Candidate` (rc) versions are considered to be feature complete and in the final testing phase. 
-All `RC` versions will end with `-RC[N]` where `[N]` will equal a positive integer.
+All `rc` versions will end with `-rc-[N]` where `[N]` will equal a positive integer.
 We encourage the community to test and provide [feedback] regarding possible issues. 
 
-Examples: `1.2.3-RC1`, `1.2.3-RC2`
+Examples: `1.2.3-rc-1`, `1.2.3-rc-2`
 
 !!! warning "RC versions should be considered unstable"
-    Although the `RC` versions should be near ready for production - keep in mind it's in the final testing phase.
+    Although the `rc` versions should be near ready for production - keep in mind it's in the final testing phase.
     Some functionality might be broken without us being aware of just yet. Use with caution. 
 
 
@@ -65,13 +65,15 @@ Examples: `1.2.3-SNAPSHOT`, `2.3.4-SNAPSHOT`
 
 ## Release frequency
 
-We would love to fix and release as fast and as much as possible, but we also have a daytime job. The schedule below is 
-rather a guideline - we will try to follow it, but we cannot guarantee we will meet any deadlines.  
+We would love to fix and release as fast and as often as possible, but we also have a daytime job. We will do our best
+to cut releases as frequently as possible, but will act within reason and depending on our free time.
 
-* `Patch` releases - at least once a month (but could be more regular if there are critical issues/CVEs/bugfixes)
-* `SNAPSHOT` releases - automatically - on every push (DO NOT USE IN PRODUCTION!)
-* `Minor` releases - at least once every 6 months (or when/if necessary )
-* `Major` releases - at least once year.
+* `snapshot` builds - automatically - on every push to the `master` between releases. (DO NOT USE IN PRODUCTION!)
+* `major` releases will most-likely be tied with new releases of Amazon's SDK for Java, or when there are other
+   significant changes in our codebase, or dependencies that introduce breaking changes.
+* `minor` releases will be cut as often as possible, as long as there enough approved changes. These should, hopefully,
+   be monthly (or more frequently, should there be approved fixes); or at least once every three months.
+* `patch` releases will be on-demand and be cut, when there are critical issues/CVEs/bugfixes.
 
 
 [<--# Links -->]: #

@@ -1,6 +1,6 @@
 # Developer Guide
 
-## Prerequisites
+## Pre-requisites
 
 Before you start writing code, please read:
 
@@ -9,8 +9,8 @@ Before you start writing code, please read:
 
 ## System requirements
 
-1. [Maven 3.6+]
-2. `JDK8` or `JDK11` (`JDK14` is not supported yet, but might be working) 
+1. Maven 3.6.3, or higher
+2. `JDK8` or `JDK11` 
 
 
 ## Finding issues to work on
@@ -50,10 +50,6 @@ mvn clean install
 ### Docker
 
 TODO: Add a guide to run tests with MinIO and docker-compose
-
-
-
-
 
 
 [<--# Links -->]: #
