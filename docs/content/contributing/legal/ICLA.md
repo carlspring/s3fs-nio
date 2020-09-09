@@ -32,30 +32,34 @@ your records.
 <table>
  <tr>
    <td width="20%">Full name</td>
-   <td width="80%"></td>
+   <td width="70%"></td>
  </tr>
  <tr>
    <td width="20%">Company</td>
-   <td width="80%"></td>
+   <td width="70%"></td>
  </tr>
  <tr>
    <td width="20%">E-mail</td>
-   <td width="80%"></td>
+   <td width="70%"></td>
  </tr>
  <tr>
    <td width="20%" valign="top">Mailing address</td>
-   <td width="80%" height="100"></td>
+   <td width="70%" height="100"></td>
  </tr>
  <tr>
    <td width="20%">Country</td>
-   <td width="80%"></td>
+   <td width="70%"></td>
  </tr>
  <tr>
    <td width="20%">Telephone</td>
-   <td width="80%"></td>
+   <td width="70%"></td>
  </tr>
 </table>
 
+<br/>
+<br/>
+
+```
 You accept  and agree to the  following terms and  conditions for Your
 present and  future Contributions   submitted   Carlspring. In return,
 Carlspring shall not  use Your Contributions in a way that is contrary
@@ -64,7 +68,6 @@ Carlspring and  recipients of  software distributed by Carlspring, You
 reserve all right, title, and interest in and to Your Contributions.
 
 1. Definitions.
-
    "You" (or  "Your") shall mean  the copyright owner or  legal entity
    authorized  by the copyright  owner that  is making  this Agreement
    with Carlspring. For legal entities, the entity making a
@@ -156,4 +159,4 @@ reserve all right, title, and interest in and to Your Contributions.
 
 
 Please sign: __________________________________ Date: ________________
-
+```
