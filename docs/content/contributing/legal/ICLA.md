@@ -29,6 +29,8 @@ United Kingdom, SE10 8QS.
 Please read this document carefully before signing and keep a copy for
 your records.
 
+This document is available as a PDF [here][ICLA PDF].
+
 <table>
  <tr>
    <td width="20%">Full name</td>
@@ -160,3 +162,7 @@ reserve all right, title, and interest in and to Your Contributions.
 
 Please sign: __________________________________ Date: ________________
 ```
+
+<!--  Please keep the empty line above! -->
+[ICLA PDF]: {{ resourcesUrl }}/pdfs/ICLA.pdf
+<!-- Please keep the empty line below! -->
