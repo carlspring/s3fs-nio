@@ -89,8 +89,8 @@ extra:
   url: &url !!python/object/apply:os.getenv ["DEPLOY_URL", "http://localhost:8000"]
   assetsPath: &assetsPath "assets/"
   resourcesPath: &resourcesPath !!python/object/apply:urllib.parse.urljoin [*assetsPath, "resources"]
-  assets: !!python/object/apply:urllib.parse.urljoin [*url, *assetsPath]
-  resources: !!python/object/apply:urllib.parse.urljoin [*url, *resourcesPath]
+  assetsUrl: !!python/object/apply:urllib.parse.urljoin [*url, *assetsPath]
+  resourcesUrl: !!python/object/apply:urllib.parse.urljoin [*url, *resourcesPath]
   site_name: &site_name S3FS NIO
   project_name: *site_name
   repo_url: &repo_url https://github.com/carlspring/s3fs-nio
@@ -104,16 +104,23 @@ extra:
 
 nav:
   - Home:
-    - Getting started: index.md
+    - Getting Started: index.md
     - History: history.md
     - Versioning and Releases: versioning.md
     - License: license.md
   - Contributing:
-    - Getting started: contributing/index.md
+    - Getting Started: contributing/index.md
+    - Code of Conduct: contributing/code-of-conduct.md
     - Guides:
       - Developers: contributing/developer-guide/index.md
       - Security Advisers: contributing/security-advisers.md
-      - Writing documentation: contributing/writing-documentation.md
+      - Writing Documentation: contributing/writing-documentation.md
+    - Legal:
+        - Overview: contributing/legal/index.md
+        - License: contributing/legal/license.md
+        - ICLA: contributing/legal/ICLA.md
+    - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
+    - Who Can Help And How: who-can-help-and-how.md
   - Reference:
     - Configuration: reference/configuration.md
     - Examples: reference/examples.md
