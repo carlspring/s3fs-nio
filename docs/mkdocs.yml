@@ -117,7 +117,9 @@ nav:
       - Writing Documentation: contributing/writing-documentation.md
     - Legal:
         - Overview: contributing/legal/index.md
-        - License: contributing/legal/license.md
+        - Licenses:
+          - Apache 2.0: contributing/legal/license-Apache-2.0.md
+          - MIT: contributing/legal/license-MIT.md
         - ICLA: contributing/legal/ICLA.md
     - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
     - Who Can Help And How: who-can-help-and-how.md
