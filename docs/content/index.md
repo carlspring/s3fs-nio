@@ -70,7 +70,7 @@
 
 [<--# Links -->]: #
 [Contributing]: ./contributing/index.md "Contributing"
-[Configuration Reference]: ./reference/configuration.md "Configuration Reference"
-[More examples]: ./reference/examples.md "More examples"
+[Configuration Options]: ./reference/configuration-options.md "Configuration Options"
+[More examples]: reference/examples/basic-example.md "More examples"
 [S3 Console]: https://s3.console.aws.amazon.com/s3/home "Amazon S3 Console"
 [IAM]: https://console.aws.amazon.com/iam/home "Amazon IAM"

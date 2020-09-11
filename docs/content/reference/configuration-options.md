@@ -1,4 +1,4 @@
-# Configuration Reference
+# Configuration Options
 
 ## Environment Variables
 

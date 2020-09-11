@@ -2,7 +2,7 @@
 
 This directory contains the S3FS NIO2 documentation.
 
-## Prerequisites
+## Pre-requisites
 
 * [Docker][docker-install]
 * [Docker Compose][docker-compose-install]

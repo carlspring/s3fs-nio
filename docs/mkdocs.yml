@@ -124,8 +124,11 @@ nav:
     - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
     - Who Can Help And How: who-can-help-and-how.md
   - Reference:
-    - Configuration: reference/configuration.md
-    - Examples: reference/examples.md
+    - Configuration Options: reference/configuration-options.md
+    - Examples:
+      - Basic Example: reference/examples/basic-example.md
+      - MINA Example: reference/examples/mina-example.md
+      - Spring Example: reference/examples/spring-example.md
 #  - Changelog:
 #      - Release notes:
 #        - master: changelog/release/notes-master.md
