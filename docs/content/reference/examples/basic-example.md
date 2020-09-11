@@ -64,8 +64,7 @@ Use the following code to create the `FileSystem` and set it to a specific end-p
 ```java
 FileSystems.newFileSystem("s3:///",
                           new HashMap<String,Object>(),
-                          Thread.currentThread()
-                                .getContextClassLoader());
+                          Thread.currentThread().getContextClassLoader());
 ```
 
 ### Using Service Locator With Authentication Settings
