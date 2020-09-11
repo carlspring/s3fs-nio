@@ -2,7 +2,7 @@
 
 ## Yet another fork !?!
 
-![fixed-the-code-will-be-meme]({{assets}}/fixed-the-code-will-be.jpg)
+![fixed-the-code-will-be-meme]({{assetsUrl}}/fixed-the-code-will-be.jpg)
 
 In the past, there have been several attempts to implement an S3 `FileSystem` provider. Initially, the work on this was
 started by Martin Traverso in his project [martint/s3fs]. This work was later continued by Javier Arnáiz and his fork
@@ -42,4 +42,4 @@ channel.
 [Contributing]: /contributing/index.md "Contributing page"
 [martint/s3fs]: https://github.com/martint/s3fs
 [Upplication/Amazon-S3-FileSystem-NIO2]: https://github.com/Upplication/Amazon-S3-FileSystem-NIO2
-[chat]: https://chat.carlspring.org/channel/s3fs-nio-community
+[chat]: {{ chat_url }}
