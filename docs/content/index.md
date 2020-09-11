@@ -47,24 +47,21 @@
     ``` 
     
     These properties can also be exported as environment variables.
-    A complete list is available in the [Configuration Reference]
+    A complete list is available in the [Configuration Options]
 
 === "2. Code"
 
     ```java
-    --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClass.java"
+    FileSystems.newFileSystem("s3:///",
+                              new HashMap<String,Object>(),
+                              Thread.currentThread().getContextClassLoader());
+    
     ```
-
-=== "3. Test"
-    ```java
-    --8<-- "../src/test/java/org/carlspring/cloud/storage/s3fs/ExampleClassIT.java"
-    ```
-
 
 ## See also
 
 * [Contributing]
-* [Configuration Reference]
+* [Configuration Options]
 * [More examples]
 
 
