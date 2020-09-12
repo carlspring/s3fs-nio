@@ -41,7 +41,8 @@ public FileSystemFactory createFileSystemFactory(String bucketName)
 {
     FileSystem fileSystem = FileSystems.newFileSystem(new URI("s3:///"),
                                                       env,
-                                                      Thread.currentThread().getContextClassLoader());
+                                                      Thread.currentThread()
+                                                            .getContextClassLoader());
     
     String bucketPath = fileSystem.getPath("/" + bucketName);
 
