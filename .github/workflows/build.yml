@@ -10,6 +10,13 @@ jobs:
         # We can re-enable it, if we get a sponsor.
         os: [ubuntu-latest, windows-latest, macos-latest]
         java: [ 8, 11.0.3 ]
+    env:
+      EVENT_NAME: ${{ toJSON(github.event_name) }}
+      # format: username:branch
+      PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
+      # format: boolean
+      # check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
+      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -17,6 +24,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
+      - name: Show GitHub context
+        run: echo "$EVENT_NAME $PR_HEAD_LABEL $IS_EXTERNAL_PR"
       # https://github.com/actions/cache/blob/master/examples.md#java---maven
       - name: Cache local Maven repository
         uses: actions/cache@v2
@@ -27,10 +36,12 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Build with Maven
         run: mvn clean install -Pjacoco-code-coverage
-      # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
-      #           it from October 2020. Please update to at least Java 11.
       - name: Publish code analysis to Sonarcloud
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11.0.3' }}
+        # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
+        #           it from October 2020. Please update to at least Java 11.
+        # [WARNING] No analysis for external contributors - sorry.
+        #           Check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11.0.3' && env.IS_EXTERNAL_PR == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
