@@ -75,7 +75,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- Sonarcloud properties -->
-        <sonar.projectKey>carlspring_s3fs-nio</sonar.projectKey>
+        <sonar.projectKey>org.carlspring.cloud.aws:s3fs-nio</sonar.projectKey>
         <sonar.organization>carlspring</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <!-- Sonarcloud properties -->
