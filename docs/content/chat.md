@@ -1,0 +1,1 @@
+redirect: {{ chat_url }}
