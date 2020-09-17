@@ -122,7 +122,7 @@ nav:
           - MIT: contributing/legal/license-MIT.md
         - ICLA: contributing/legal/ICLA.md
     - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
-    - Who Can Help And How: who-can-help-and-how.md
+    - Who Can Help And How: ./contributing/who-can-help-and-how.md
   - Reference:
     - Configuration Options: reference/configuration-options.md
     - Examples:
