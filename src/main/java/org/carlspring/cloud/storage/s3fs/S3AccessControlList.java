@@ -3,29 +3,32 @@ package org.carlspring.cloud.storage.s3fs;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.AccessMode;
 import java.util.EnumSet;
+import java.util.stream.StreamSupport;
 
-import com.amazonaws.services.s3.model.AccessControlList;
-import com.amazonaws.services.s3.model.Grant;
-import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.Permission;
+import software.amazon.awssdk.services.s3.model.Grant;
+import software.amazon.awssdk.services.s3.model.Owner;
+import software.amazon.awssdk.services.s3.model.Permission;
+import software.amazon.awssdk.utils.StringUtils;
 import static java.lang.String.format;
 
 public class S3AccessControlList
 {
 
-    private String fileStoreName;
+    private final String fileStoreName;
 
-    private String key;
+    private final String key;
 
-    private AccessControlList acl;
+    private final Iterable<Grant> grants;
 
-    private Owner owner;
+    private final Owner owner;
 
-
-    public S3AccessControlList(String fileStoreName, String key, AccessControlList acl, Owner owner)
+    public S3AccessControlList(final String fileStoreName,
+                               final String key,
+                               final Iterable<Grant> grants,
+                               final Owner owner)
     {
         this.fileStoreName = fileStoreName;
-        this.acl = acl;
+        this.grants = grants;
         this.key = key;
         this.owner = owner;
     }
@@ -41,20 +44,14 @@ public class S3AccessControlList
      * @param permissions almost one
      * @return
      */
-    private boolean hasPermission(EnumSet<Permission> permissions)
+    private boolean hasPermission(final EnumSet<Permission> permissions)
     {
-        for (Grant grant : acl.getGrantsAsList())
-        {
-            if (grant.getGrantee().getIdentifier().equals(owner.getId()) && permissions.contains(grant.getPermission()))
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return StreamSupport.stream(grants.spliterator(), false).anyMatch(
+                grant -> StringUtils.equals(grant.grantee().id(), owner.id()) &&
+                         permissions.contains(grant.permission()));
     }
 
-    public void checkAccess(AccessMode[] modes)
+    public void checkAccess(final AccessMode[] modes)
             throws AccessDeniedException
     {
         for (AccessMode accessMode : modes)
@@ -64,20 +61,17 @@ public class S3AccessControlList
                 case EXECUTE:
                     throw new AccessDeniedException(fileName(), null, "file is not executable");
                 case READ:
-                    if (!hasPermission(EnumSet.of(Permission.FullControl, Permission.Read)))
+                    if (!hasPermission(EnumSet.of(Permission.FULL_CONTROL, Permission.READ)))
                     {
                         throw new AccessDeniedException(fileName(), null, "file is not readable");
                     }
-
                     break;
                 case WRITE:
-                    if (!hasPermission(EnumSet.of(Permission.FullControl, Permission.Write)))
+                    if (!hasPermission(EnumSet.of(Permission.FULL_CONTROL, Permission.WRITE)))
                     {
-                        throw new AccessDeniedException(fileName(),
-                                                        null,
+                        throw new AccessDeniedException(fileName(), null,
                                                         format("bucket '%s' is not writable", fileStoreName));
                     }
-
                     break;
             }
         }
@@ -87,5 +81,4 @@ public class S3AccessControlList
     {
         return fileStoreName + S3Path.PATH_SEPARATOR + key;
     }
-
 }

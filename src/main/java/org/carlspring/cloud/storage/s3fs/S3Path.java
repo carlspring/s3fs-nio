@@ -7,7 +7,11 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.file.*;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.Iterator;
 import java.util.List;
 
@@ -15,14 +19,20 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import software.amazon.awssdk.core.Protocol;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import static com.google.common.collect.Iterables.concat;
 import static java.lang.String.format;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 
 public class S3Path
         implements Path
 {
 
     public static final String PATH_SEPARATOR = "/";
+    public static final String PATH_OTHER_INSTANCE_MESSAGE = "other must be an instance of %s";
 
     /**
      * S3FileStore which represents the Bucket this path resides in.
@@ -31,7 +41,7 @@ public class S3Path
 
     /**
      * URI not encoded
-     * Is the key for AmazonS3
+     * Is the key for S3Client
      */
     private String uri;
 
@@ -58,7 +68,6 @@ public class S3Path
         Preconditions.checkArgument(first != null, "first path must be not null");
         Preconditions.checkArgument(!first.startsWith("//"), "first path doesnt start with '//'. Miss bucket");
         // see tests org.carlspring.cloud.storage.s3fs.Path.EndsWithTest#endsWithRelativeBlankAbsolute()
-        // Preconditions.checkArgument(!first.isEmpty(), "first path must be not empty");
 
         boolean hasBucket = first.startsWith("/");
 
@@ -67,7 +76,7 @@ public class S3Path
         if (hasBucket)
         { // absolute path
 
-            Preconditions.checkArgument(pathsURI.size() >= 1, "path must start with bucket name");
+            Preconditions.checkArgument(!pathsURI.isEmpty(), "path must start with bucket name");
             Preconditions.checkArgument(!pathsURI.get(0).isEmpty(), "bucket name must be not empty");
 
             String bucket = pathsURI.get(0);
@@ -130,10 +139,20 @@ public class S3Path
     }
 
     /**
+     * bucket name for amazon.
+     *
+     * @return the bucketName for S3Client
+     */
+    public String getBucketName()
+    {
+        return fileStore.name();
+    }
+
+    /**
      * key for amazon without final slash.
      * <b>note:</b> the final slash need to be added to save a directory (Amazon s3 spec)
      *
-     * @return the key for AmazonS3Client
+     * @return the key for S3Client
      */
     public String getKey()
     {
@@ -164,7 +183,7 @@ public class S3Path
     {
         if (isAbsolute())
         {
-            return new S3Path(fileSystem, PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR);
+            return new S3Path(fileSystem, PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR);
         }
 
         return null;
@@ -215,7 +234,7 @@ public class S3Path
             return null;
         }
 
-        String filestore = isAbsolute() ? PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR : "";
+        String filestore = isAbsolute() ? PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR : "";
 
         return new S3Path(fileSystem, filestore + newUri);
     }
@@ -242,7 +261,7 @@ public class S3Path
 
         if (isAbsolute() && index == 0)
         {
-            pathsBuilder.append(PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR);
+            pathsBuilder.append(PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR);
         }
 
         pathsBuilder.append(path);
@@ -285,7 +304,7 @@ public class S3Path
         // build path string
         if (this.isAbsolute() && beginIndex == 0)
         {
-            pathsStringBuilder.append(PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR);
+            pathsStringBuilder.append(PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR);
         }
 
         for (String path : pathSubList)
@@ -324,7 +343,7 @@ public class S3Path
 
         S3Path path = (S3Path) other;
 
-        if (this.isAbsolute() && other.isAbsolute() && !this.fileStore.name().equals(path.fileStore.name()))
+        if (this.isAbsolute() && other.isAbsolute() && !getBucketName().equals(path.getBucketName()))
         {
             return false;
         }
@@ -389,7 +408,7 @@ public class S3Path
 
         int i = pathsOther.size() - 1;
         int j = paths.size() - 1;
-        for (; i >= 0 && j >= 0; )
+        while (i >= 0 && j >= 0)
         {
             if (!pathsOther.get(i).equals(paths.get(j)))
             {
@@ -421,7 +440,7 @@ public class S3Path
         if (other.isAbsolute())
         {
             Preconditions.checkArgument(other instanceof S3Path,
-                                        "other must be an instance of %s",
+                                        PATH_OTHER_INSTANCE_MESSAGE,
                                         S3Path.class.getName());
 
             return other;
@@ -432,7 +451,7 @@ public class S3Path
 
         if (this.isAbsolute())
         {
-            pathBuilder.append(PATH_SEPARATOR + this.fileStore.name() + PATH_SEPARATOR);
+            pathBuilder.append(PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR);
         }
 
         pathBuilder.append(this.uri);
@@ -454,7 +473,7 @@ public class S3Path
     @Override
     public Path resolveSibling(Path other)
     {
-        Preconditions.checkArgument(other instanceof S3Path, "other must be an instance of %s", S3Path.class.getName());
+        Preconditions.checkArgument(other instanceof S3Path, PATH_OTHER_INSTANCE_MESSAGE, S3Path.class.getName());
 
         S3Path s3Path = (S3Path) other;
 
@@ -479,7 +498,7 @@ public class S3Path
 
         if (isAbsolute())
         {
-            pathBuilder.append(PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR);
+            pathBuilder.append(PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR);
         }
         for (String path : concat(paths.subList(0, paths.size() - 1), othersPaths))
         {
@@ -502,7 +521,7 @@ public class S3Path
     @Override
     public Path relativize(Path other)
     {
-        Preconditions.checkArgument(other instanceof S3Path, "other must be an instance of %s", S3Path.class.getName());
+        Preconditions.checkArgument(other instanceof S3Path, PATH_OTHER_INSTANCE_MESSAGE, S3Path.class.getName());
         S3Path s3Path = (S3Path) other;
 
         if (this.equals(other))
@@ -516,7 +535,6 @@ public class S3Path
                                     "Cannot relativize paths with different buckets: '%s', '%s'",
                                     this,
                                     other);
-        // Preconditions.checkArgument(parts.size() <= s3Path.parts.size(), "Cannot relativize against a parent path: '%s', '%s'", this, other);
 
         String uriPath = decode(URI.create(encode(this.uri)).relativize(URI.create(encode(s3Path.uri))));
 
@@ -544,18 +562,18 @@ public class S3Path
     @Override
     public URI toUri()
     {
-        String uri = encode(this.uri);
+        String encodedUri = encode(this.uri);
 
         // absolute
         if (this.isAbsolute())
         {
-            String builder = fileSystem.getKey() + PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR + uri;
+            String builder = fileSystem.getKey() + PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR + encodedUri;
 
             return URI.create("s3://" + normalizeURI(builder));
         }
         else
         {
-            return URI.create(uri);
+            return URI.create(encodedUri);
         }
     }
 
@@ -569,7 +587,6 @@ public class S3Path
      * All S3Path has a URL if is absolute
      *
      * @return URL or null if is not absoulte
-     * @see com.amazonaws.services.s3.AmazonS3#getUrl(String, String)
      * @see S3Path#toUri() for unique resource identifier
      */
     public URL toURL()
@@ -579,7 +596,16 @@ public class S3Path
             return null;
         }
 
-        return this.getFileSystem().getClient().getUrl(this.fileStore.name(), this.getKey());
+        final S3Client s3client = this.getFileSystem().getClient();
+        //TODO: How to get s3fs_protocol property value?
+        final String protocol = Protocol.HTTPS.name();
+        final String endpointStr = String.format("%s://%s", protocol, this.getFileSystem().getEndpoint());
+        final URI endpoint = URI.create(endpointStr);
+        final S3Utilities utilities = s3client.utilities();
+        final String bucketName = this.getBucketName();
+        final String key = this.getKey();
+        final GetUrlRequest request = GetUrlRequest.builder().bucket(bucketName).key(key).endpoint(endpoint).build();
+        return utilities.getUrl(request);
     }
 
     @Override
@@ -624,7 +650,7 @@ public class S3Path
 
         if (isAbsolute())
         {
-            builder.add(new S3Path(fileSystem, PATH_SEPARATOR + fileStore.name() + PATH_SEPARATOR));
+            builder.add(new S3Path(fileSystem, PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR));
         }
 
         List<String> paths = uriToList();
@@ -704,7 +730,7 @@ public class S3Path
     {
         // remove special case URI starting with //
         uri = uri.replace("//", "/");
-        uri = uri.replaceAll(" ", "%20");
+        uri = uri.replace(" ", "%20");
 
         return uri;
     }

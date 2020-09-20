@@ -1,19 +1,24 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import java.nio.file.*;
+import java.io.IOException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Set;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.Bucket;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Bucket;
 import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
 
 /**
  * S3FileSystem with a concrete client configured and ready to use.
  *
- * @see AmazonS3 configured by {@link AmazonS3Factory}
+ * @see S3Client configured by {@link S3Factory}
  */
 public class S3FileSystem
         extends FileSystem
@@ -24,14 +29,16 @@ public class S3FileSystem
 
     private final String key;
 
-    private final AmazonS3 client;
+    private final S3Client client;
 
     private final String endpoint;
 
-    private int cache;
+    private final int cache;
 
-
-    public S3FileSystem(S3FileSystemProvider provider, String key, AmazonS3 client, String endpoint)
+    public S3FileSystem(final S3FileSystemProvider provider,
+                        final String key,
+                        final S3Client client,
+                        final String endpoint)
     {
         this.provider = provider;
         this.key = key;
@@ -53,6 +60,7 @@ public class S3FileSystem
 
     @Override
     public void close()
+            throws IOException
     {
         this.provider.close(this);
     }
@@ -72,19 +80,17 @@ public class S3FileSystem
     @Override
     public String getSeparator()
     {
-        return S3Path.PATH_SEPARATOR;
+        return PATH_SEPARATOR;
     }
 
     @Override
     public Iterable<Path> getRootDirectories()
     {
         ImmutableList.Builder<Path> builder = ImmutableList.builder();
-
         for (FileStore fileStore : getFileStores())
         {
             builder.add(((S3FileStore) fileStore).getRootDirectory());
         }
-
         return builder.build();
     }
 
@@ -92,10 +98,9 @@ public class S3FileSystem
     public Iterable<FileStore> getFileStores()
     {
         ImmutableList.Builder<FileStore> builder = ImmutableList.builder();
-
-        for (Bucket bucket : client.listBuckets())
+        for (Bucket bucket : client.listBuckets().buckets())
         {
-            builder.add(new S3FileStore(this, bucket.getName()));
+            builder.add(new S3FileStore(this, bucket.name()));
         }
 
         return builder.build();
@@ -108,7 +113,8 @@ public class S3FileSystem
     }
 
     @Override
-    public S3Path getPath(String first, String... more)
+    public S3Path getPath(final String first,
+                          final String... more)
     {
         if (more.length == 0)
         {
@@ -119,7 +125,7 @@ public class S3FileSystem
     }
 
     @Override
-    public PathMatcher getPathMatcher(String syntaxAndPattern)
+    public PathMatcher getPathMatcher(final String syntaxAndPattern)
     {
         throw new UnsupportedOperationException();
     }
@@ -136,7 +142,7 @@ public class S3FileSystem
         throw new UnsupportedOperationException();
     }
 
-    public AmazonS3 getClient()
+    public S3Client getClient()
     {
         return client;
     }
@@ -219,7 +225,7 @@ public class S3FileSystem
     }
 
     @Override
-    public int compareTo(S3FileSystem o)
+    public int compareTo(final S3FileSystem o)
     {
         return key.compareTo(o.getKey());
     }
@@ -228,5 +234,4 @@ public class S3FileSystem
     {
         return cache;
     }
-
 }
