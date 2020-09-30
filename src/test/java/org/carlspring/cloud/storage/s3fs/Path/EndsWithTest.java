@@ -67,7 +67,7 @@ public class EndsWithTest
     }
 
     @Test
-    public void endsWithDifferenteFileSystem()
+    public void endsWithDifferentFileSystem()
     {
         assertFalse(getPath("/bucket/file1").endsWith(Paths.get("/bucket/file1")));
     }

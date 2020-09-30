@@ -80,12 +80,8 @@ public class ProviderSpecTest
     public void seekableRead()
             throws IOException
     {
-        /*
-        Path base = Files.createDirectories(fs.getPath("/dir"));
-		Path path = Files.write(base.resolve("file"), "contenido yuhu".getBytes(), StandardOpenOption.CREATE_NEW);
-		*/
         Path path = Files.write(Files.createTempFile("asdas", "asdsadad"),
-                                "contenido uyuhu".getBytes(),
+                                "content uyuhu".getBytes(),
                                 StandardOpenOption.APPEND);
 
         try (SeekableByteChannel channel = Files.newByteChannel(path))

@@ -17,9 +17,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * FileSystems.newFileSystem busca mediante el serviceLoader los
- * posibles fileSystemsProvider y los llama con newFileSystem.
- * Si
+ * A test to search using ServiceLoader for available FileSystemsProvider-s and call them with newFileSystem.
  *
  * @author jarnaiz
  */
@@ -97,7 +95,7 @@ public class InstallProviderTest
     public void newS3Provider()
             throws IOException
     {
-        URI uri = URI.create("s3:///hola/que/tal/");
+        URI uri = URI.create("s3:///hello/there/");
 
         // if meta-inf/services/java.ni.spi.FileSystemProvider is not present with
         // the content: org.carlspring.cloud.storage.s3fs.S3FileSystemProvider
