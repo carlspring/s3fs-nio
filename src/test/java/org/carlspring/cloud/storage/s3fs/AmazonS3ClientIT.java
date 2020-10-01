@@ -94,7 +94,7 @@ public class AmazonS3ClientIT
     {
         PutObjectResult result = client.putObject(getBucket(),
                                                   randomUUID().toString(),
-                                                  new ByteArrayInputStream("contenido1".getBytes()),
+                                                  new ByteArrayInputStream("content1".getBytes()),
                                                   new ObjectMetadata());
 
         assertNotNull(result);

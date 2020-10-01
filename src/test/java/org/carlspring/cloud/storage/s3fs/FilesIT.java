@@ -289,7 +289,7 @@ public class FilesIT
             {
                 number++;
 
-                // solo recorre ficheros del primer nivel
+                // check files only from first level
                 assertEquals(dir, path.getParent());
 
                 switch (path.getFileName().toString())

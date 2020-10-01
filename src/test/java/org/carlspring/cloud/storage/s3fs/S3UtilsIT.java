@@ -163,7 +163,7 @@ public class S3UtilsIT
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
         s3FileSystem.getClient().putObject(bucket.replace("/", ""),
                                            key,
-                                           new ByteArrayInputStream("contenido1".getBytes()),
+                                           new ByteArrayInputStream("content1".getBytes()),
                                            new ObjectMetadata());
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
@@ -203,7 +203,7 @@ public class S3UtilsIT
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
         s3FileSystem.getClient().putObject(bucket.replace("/", ""),
                                            key,
-                                           new ByteArrayInputStream("contenido1".getBytes()),
+                                           new ByteArrayInputStream("content1".getBytes()),
                                            new ObjectMetadata());
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
@@ -291,7 +291,7 @@ public class S3UtilsIT
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
         s3FileSystem.getClient().putObject(bucket.replace("/", ""),
                                            key,
-                                           new ByteArrayInputStream("contenido1".getBytes()),
+                                           new ByteArrayInputStream("content1".getBytes()),
                                            new ObjectMetadata());
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);

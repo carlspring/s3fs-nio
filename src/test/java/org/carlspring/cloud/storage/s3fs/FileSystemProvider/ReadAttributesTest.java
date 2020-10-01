@@ -254,7 +254,7 @@ public class ReadAttributesTest
         Exception exception = assertThrows(NoSuchFileException.class, () -> {
             // fixtures
             AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-            client.bucket("bucketA").dir("dir").file("dir/file1hola", "content".getBytes());
+            client.bucket("bucketA").dir("dir").file("dir/file1hello", "content".getBytes());
 
             FileSystem fs = createNewS3FileSystem();
             Path file1 = fs.getPath("/bucketA/dir/file1");
