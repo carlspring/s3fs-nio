@@ -7,14 +7,14 @@ import java.nio.file.attribute.FileAttribute;
 public class MockBucket
 {
 
-    private AmazonS3ClientMock amazonS3ClientMock;
+    private final S3ClientMock s3ClientMock;
 
-    private Path mockedPath;
+    private final Path mockedPath;
 
-
-    public MockBucket(AmazonS3ClientMock amazonS3ClientMock, Path mockedPath)
+    public MockBucket(final S3ClientMock s3ClientMock,
+                      final Path mockedPath)
     {
-        this.amazonS3ClientMock = amazonS3ClientMock;
+        this.s3ClientMock = s3ClientMock;
         this.mockedPath = mockedPath;
     }
 
@@ -23,24 +23,27 @@ public class MockBucket
     {
         for (String string : file)
         {
-            amazonS3ClientMock.addFile(mockedPath, string, "sample-content".getBytes());
+            s3ClientMock.addFile(mockedPath, string, "sample-content".getBytes());
         }
 
         return this;
     }
 
-    public MockBucket file(String file, byte[] content)
+    public MockBucket file(String file,
+                           final byte[] content)
             throws IOException
     {
-        amazonS3ClientMock.addFile(mockedPath, file, content);
+        s3ClientMock.addFile(mockedPath, file, content);
 
         return this;
     }
 
-    public MockBucket file(String file, byte[] content, FileAttribute<?>... attrs)
+    public MockBucket file(String file,
+                           final byte[] content,
+                           final FileAttribute<?>... attrs)
             throws IOException
     {
-        amazonS3ClientMock.addFile(mockedPath, file, content, attrs);
+        s3ClientMock.addFile(mockedPath, file, content, attrs);
 
         return this;
     }
@@ -50,15 +53,17 @@ public class MockBucket
     {
         for (String string : dir)
         {
-            amazonS3ClientMock.addDirectory(mockedPath, string);
+            s3ClientMock.addDirectory(mockedPath, string);
         }
 
         return this;
     }
 
-    public Path resolve(String file)
+    public Path resolve(final String file)
     {
-        return mockedPath.resolve(file.replaceAll("/", "%2F"));
+        final String encodedFile = file.replaceAll("/", "%2F");
+        return mockedPath.resolve(encodedFile);
     }
+
 
 }

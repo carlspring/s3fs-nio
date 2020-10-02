@@ -1,9 +1,9 @@
 package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.S3FileStoreAttributeView.AttrID;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.UnsupportedFileStoreAttributeView;
 
 import java.io.IOException;
@@ -14,16 +14,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
-import com.amazonaws.services.s3.model.Owner;
 import com.github.marschall.com.sun.nio.zipfs.ZipFileAttributeView;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.*;
+import software.amazon.awssdk.services.s3.model.Owner;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class S3FileStoreTest
+class S3FileStoreTest
         extends S3UnitTestBase
 {
 
@@ -41,7 +47,7 @@ public class S3FileStoreTest
 
         fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
 
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("bucket").file("placeholder");
         client.bucket("bucket2").file("placeholder");
 
@@ -51,25 +57,25 @@ public class S3FileStoreTest
     }
 
     @Test
-    public void bucketConstructor()
+    void bucketConstructor()
     {
         S3FileStore s3FileStore = new S3FileStore((S3FileSystem) fileSystem, "name");
 
         assertEquals("name", s3FileStore.name());
-        assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
+        assertEquals("Mock", s3FileStore.getOwner().displayName());
     }
 
     @Test
-    public void nameConstructorAlreadyExists()
+    void nameConstructorAlreadyExists()
     {
         S3FileStore s3FileStore = new S3FileStore((S3FileSystem) fileSystem, "bucket2");
 
         assertEquals("bucket2", s3FileStore.name());
-        assertEquals("Mock", s3FileStore.getOwner().getDisplayName());
+        assertEquals("Mock", s3FileStore.getOwner().displayName());
     }
 
     @Test
-    public void getFileStoreAttributeView()
+    void getFileStoreAttributeView()
     {
         S3FileStoreAttributeView fileStoreAttributeView =
                 fileStore.getFileStoreAttributeView(S3FileStoreAttributeView.class);
@@ -82,18 +88,15 @@ public class S3FileStoreTest
     }
 
     @Test
-    public void getUnsupportedFileStoreAttributeView()
+    void getUnsupportedFileStoreAttributeView()
     {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class);
-        });
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void getAttributes()
-            throws IOException
+    void getAttributes()
     {
         assertEquals("bucket", fileStore.getAttribute(AttrID.name.name()));
         assertNotNull(fileStore.getAttribute(AttrID.creationDate.name()));
@@ -102,16 +105,16 @@ public class S3FileStoreTest
     }
 
     @Test
-    public void getOwner()
+    void getOwner()
     {
         Owner owner = fileStore.getOwner();
 
-        assertEquals("Mock", owner.getDisplayName());
-        assertEquals("1", owner.getId());
+        assertEquals("Mock", owner.displayName());
+        assertEquals("1", owner.id());
     }
 
     @Test
-    public void getRootDirectory()
+    void getRootDirectory()
     {
         S3Path rootDirectory = fileStore.getRootDirectory();
 
@@ -122,7 +125,7 @@ public class S3FileStoreTest
     }
 
     @Test
-    public void getSpaces()
+    void getSpaces()
             throws IOException
     {
         Path root = fileSystem.getPath("/newbucket");
@@ -140,7 +143,7 @@ public class S3FileStoreTest
     }
 
     @Test
-    public void comparable()
+    void comparable()
             throws IOException
     {
         S3FileStore store = ((S3Path) fileSystem.getPath("/bucket")).getFileStore();
@@ -167,16 +170,16 @@ public class S3FileStoreTest
         assertEquals(0, noFs1.compareTo(noFsSameAs1));
         assertEquals(0, s3FileStore.compareTo(noFsSameAs1));
 
-        assertFalse(store.equals(other));
-        assertFalse(store.equals(differentHost));
-        assertTrue(store.equals(shouldBeTheSame));
-        assertFalse(store.equals(shouldBeTheSame.getOwner()));
-        assertFalse(store.equals(noFs1));
-        assertFalse(noFs1.equals(store));
-        assertFalse(noFs1.equals(noFs2));
-        assertTrue(noFs1.equals(noFsSameAs1));
-        assertFalse(noFsNoName1.equals(noFs1));
-        assertTrue(noFsNoName1.equals(noFsNoName2));
+        assertNotEquals(other, store);
+        assertNotEquals(differentHost, store);
+        assertEquals(shouldBeTheSame, store);
+        assertNotEquals(shouldBeTheSame.getOwner(), store);
+        assertNotEquals(noFs1, store);
+        assertNotEquals(store, noFs1);
+        assertNotEquals(noFs2, noFs1);
+        assertEquals(noFsSameAs1, noFs1);
+        assertNotEquals(noFs1, noFsNoName1);
+        assertEquals(noFsNoName2, noFsNoName1);
     }
 
     private Map<String, ?> buildFakeEnv()

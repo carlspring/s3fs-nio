@@ -1,22 +1,33 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-public class S3SeekableByteChannelTest
+class S3SeekableByteChannelTest
         extends S3UnitTestBase
 {
 
@@ -29,10 +40,10 @@ public class S3SeekableByteChannelTest
     }
 
     @Test
-    public void constructor()
+    void constructor()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("buck").file("file1");
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
@@ -47,10 +58,10 @@ public class S3SeekableByteChannelTest
     }
 
     @Test
-    public void readDontNeedToSyncTempFile()
+    void readDontNeedToSyncTempFile()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("buck").file("file1");
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
@@ -64,10 +75,10 @@ public class S3SeekableByteChannelTest
     }
 
     @Test
-    public void writeNeedToSyncTempFile()
+    void writeNeedToSyncTempFile()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("buck").file("file1");
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
@@ -81,11 +92,11 @@ public class S3SeekableByteChannelTest
     }
 
     @Test
-    public void alreadyExists()
+    void alreadyExists()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
-            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+            S3ClientMock client = S3MockFactory.getS3ClientMock();
             client.bucket("buck").file("file1");
 
             S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
@@ -97,26 +108,25 @@ public class S3SeekableByteChannelTest
     }
 
     @Test
-    public void brokenNetwork()
+    void brokenNetwork()
     {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-            doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
+        final S3ClientMock client = S3MockFactory.getS3ClientMock();
+        final GetObjectRequest request = GetObjectRequest.builder().bucket("buck").key("file2").build();
+        doThrow(new RuntimeException("network broken")).when(client).getObject(request);
 
-            S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
-                                               .getPath("/buck/file2");
-            S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
-                                                                      EnumSet.of(StandardOpenOption.WRITE,
-                                                                                 StandardOpenOption.READ));
-            channel.close();
-        });
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file2 = (S3Path) fileSystem.getPath("/buck/file2");
+
+        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
+
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(RuntimeException.class, () -> new S3SeekableByteChannel(file2, options));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void tempFileDisappeared()
+    void tempFileDisappeared()
             throws SecurityException,
                    IllegalArgumentException
     {

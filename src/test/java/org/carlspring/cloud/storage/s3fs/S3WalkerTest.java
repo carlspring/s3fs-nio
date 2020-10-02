@@ -1,22 +1,33 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.MockBucket;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.reset;
 
-public class S3WalkerTest
+class S3WalkerTest
         extends S3UnitTestBase
 {
 
@@ -119,17 +130,17 @@ public class S3WalkerTest
     }
 
     @BeforeEach
-    public void setup()
+    void setup()
             throws IOException
     {
         FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
     @Test
-    public void walkFileTree()
+    void walkFileTree()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
 
         MockBucket mockBucket = client.bucket("/tree");
         mockBucket.dir("folder", "folder/subfolder1");
@@ -165,16 +176,16 @@ public class S3WalkerTest
 
         Iterator<String> iter = registrar.getVisitOrder().iterator();
 
-        Files.walkFileTree(folder, Collections.<FileVisitOption>emptySet(), 20, new CheckVisitor(iter));
+        Files.walkFileTree(folder, Collections.emptySet(), 20, new CheckVisitor(iter));
 
         assertFalse(iter.hasNext(), "Iterator should have been  exhausted.");
     }
 
     @Test
-    public void walkEmptyFileTree()
+    void walkEmptyFileTree()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("tree").dir("folder");
 
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
@@ -196,10 +207,10 @@ public class S3WalkerTest
     }
 
     @Test
-    public void walkLargeFileTree()
+    void walkLargeFileTree()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
 
         MockBucket mockBucket = client.bucket("/tree");
 
@@ -248,10 +259,10 @@ public class S3WalkerTest
     }
 
     @Test
-    public void noSuchElementTreeWalk()
+    void noSuchElementTreeWalk()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("/tree");
 
         S3Path folder = (S3Path) Paths.get(URI.create(S3EndpointConstant.S3_GLOBAL_URI_TEST + "tree/folder"));
@@ -274,10 +285,10 @@ public class S3WalkerTest
     }
 
     @Test
-    public void skippingWalk()
+    void skippingWalk()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
 
         MockBucket mockBucket = client.bucket("/tree");
         mockBucket.dir("folder", "folder/subfolder1");

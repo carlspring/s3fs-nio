@@ -1,40 +1,44 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class CopyDirVisitor
         extends SimpleFileVisitor<Path>
 {
 
-    private Path fromPath;
+    private final Path fromPath;
 
-    private Path toPath;
+    private final Path toPath;
 
-    private StandardCopyOption copyOption;
+    private final StandardCopyOption copyOption;
 
 
-    public CopyDirVisitor(Path fromPath, Path toPath, StandardCopyOption copyOption)
+    public CopyDirVisitor(final Path fromPath, final Path toPath, final StandardCopyOption copyOption)
     {
         this.fromPath = fromPath;
         this.toPath = toPath;
         this.copyOption = copyOption;
     }
 
-    public CopyDirVisitor(Path fromPath, Path toPath)
+    public CopyDirVisitor(final Path fromPath, final Path toPath)
     {
         this(fromPath, toPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     @Override
-    public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+    public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs)
             throws IOException
     {
         // we allow to work against different providers
         Path targetPath = appendPath(dir);
 
-        if (!Files.exists(targetPath))
+        if (Files.notExists(targetPath))
         {
             if (!targetPath.toString().endsWith("/"))
             {
@@ -48,10 +52,10 @@ public class CopyDirVisitor
     }
 
     @Override
-    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+    public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs)
             throws IOException
     {
-        Path targetPath = appendPath(file);
+        final Path targetPath = appendPath(file);
 
         Files.copy(file, targetPath, copyOption);
 
@@ -65,7 +69,7 @@ public class CopyDirVisitor
      * @param to Path
      * @return
      */
-    private Path appendPath(Path to)
+    private Path appendPath(final Path to)
     {
         Path targetPath = toPath;
 

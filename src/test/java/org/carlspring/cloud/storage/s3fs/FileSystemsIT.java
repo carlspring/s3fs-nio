@@ -14,7 +14,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-public class FileSystemsIT
+class FileSystemsIT
 {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");
@@ -28,7 +28,7 @@ public class FileSystemsIT
     public void setup()
             throws IOException
     {
-        System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
+        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
 
         fileSystemAmazon = build();
     }
@@ -55,7 +55,7 @@ public class FileSystemsIT
     }
 
     @Test
-    public void buildEnv()
+    void buildEnv()
     {
         FileSystem fileSystem = FileSystems.getFileSystem(uriGlobal);
 
@@ -63,10 +63,10 @@ public class FileSystemsIT
     }
 
     @Test
-    public void buildEnvAnotherURIReturnDifferent()
+    void buildEnvAnotherURIReturnDifferent()
             throws IOException
     {
-        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, null);
+        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, EnvironmentBuilder.getRealEnv());
 
         assertNotSame(fileSystemAmazon, fileSystem);
     }
