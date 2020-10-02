@@ -1,7 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,8 +17,11 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.regions.Region;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -106,12 +108,14 @@ class InstallProviderTest
     {
         final URI uri = URI.create("s3:///hello/there/");
 
-        final Map<String, Object> env = new HashMap<>(EnvironmentBuilder.getRealEnv());
+        // Region property is needed to create S3 client.
+        final Map<String, Object> envMap = ImmutableMap.<String, Object>builder().put(REGION, Region.US_EAST_1.id())
+                                                                                 .build();
 
-        // if meta-inf/services/java.ni.spi.FileSystemProvider is not present with
+        // if META-INF/services/java.nio.file.spi.FileSystemProvider is not present with
         // the content: org.carlspring.cloud.storage.s3fs.S3FileSystemProvider
         // this method return ProviderNotFoundException
-        FileSystem fs = FileSystems.newFileSystem(uri, env, this.getClass().getClassLoader());
+        FileSystem fs = FileSystems.newFileSystem(uri, envMap, this.getClass().getClassLoader());
 
         Path path = fs.getPath("test.zip");
 

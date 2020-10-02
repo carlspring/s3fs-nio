@@ -50,7 +50,7 @@ class S3FileSystemTest
         client.bucket("bucketA");
         client.bucket("bucketB");
 
-        final URI s3GlobalUriTest = getS3URI(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final URI s3GlobalUriTest = S3EndpointConstant.S3_GLOBAL_URI_TEST;
         fs = FileSystems.newFileSystem(s3GlobalUriTest, null);
     }
 
