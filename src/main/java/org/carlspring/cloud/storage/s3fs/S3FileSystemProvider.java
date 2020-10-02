@@ -87,6 +87,7 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
@@ -147,6 +148,7 @@ public class S3FileSystemProvider
                                                                         PROXY_PORT,
                                                                         PROXY_USERNAME,
                                                                         PROXY_WORKSTATION,
+                                                                        REGION,
                                                                         SOCKET_SEND_BUFFER_SIZE_HINT,
                                                                         SOCKET_RECEIVE_BUFFER_SIZE_HINT,
                                                                         SOCKET_TIMEOUT,
