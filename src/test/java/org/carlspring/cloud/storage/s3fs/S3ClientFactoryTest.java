@@ -10,9 +10,9 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.SdkSystemSetting;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
-import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
@@ -36,12 +36,12 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZ
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static software.amazon.awssdk.core.client.config.SdkClientOption.ENDPOINT;
-import static software.amazon.awssdk.profiles.ProfileProperty.AWS_ACCESS_KEY_ID;
-import static software.amazon.awssdk.profiles.ProfileProperty.AWS_SECRET_ACCESS_KEY;
 
 class S3ClientFactoryTest
 {
@@ -97,7 +97,7 @@ class S3ClientFactoryTest
         assertEquals(3, overrideConfiguration.retryPolicy().get().numRetries());
 
         //TODO: Review how to get these attributes with v2
-        //assertEquals(Protocol.HTTP, overrideConfiguration.getProtocol());
+        //assertEquals(Protocol.HTTPS, overrideConfiguration.getProtocol());
 
         ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
 
@@ -126,18 +126,54 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_ACCESS_KEY_ID, "giev.ma.access!");
-        System.setProperty(AWS_SECRET_ACCESS_KEY, "I'll never teeeeeellllll!");
+        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "giev.ma.access!");
+        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
 
         Properties props = new Properties();
         props.setProperty(REGION, "eu-central-1");
 
         final AwsCredentialsProvider credentialsProvider = clientFactory.getCredentialsProvider(props);
+        final AwsCredentials credentials = credentialsProvider.resolveCredentials();
 
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(SdkException.class, credentialsProvider::resolveCredentials);
+        assertEquals("giev.ma.access!", credentials.accessKeyId());
+        assertEquals("I'll never teeeeeellllll!", credentials.secretAccessKey());
 
-        assertNotNull(exception);
+        //TODO: Review how to get these attributes with v2
+        /*
+        final SdkHttpClient httpClient = clientFactory.getHttpClient(props);
+        final ApacheHttpClient apacheHttpClient = (ApacheHttpClient) httpClient;
+
+        assertEquals(10, clientConfiguration.getConnectionTimeout());
+        assertEquals(50, clientConfiguration.getMaxConnections());
+         */
+
+        ClientOverrideConfiguration overrideConfiguration = clientFactory.getOverrideConfiguration(props);
+
+        assertFalse(overrideConfiguration.retryPolicy().isPresent());
+
+        //TODO: Review how to get these attributes with v2
+        //assertEquals(Protocol.HTTPS, overrideConfiguration.getProtocol());
+
+        ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
+
+        assertNull(proxyConfiguration.host());
+        assertEquals(0, proxyConfiguration.port());
+        assertNull(proxyConfiguration.username());
+        assertNull(proxyConfiguration.password());
+        assertNull(proxyConfiguration.ntlmDomain());
+        assertNull(proxyConfiguration.ntlmWorkstation());
+
+        //TODO: Review how to get these attributes with v2
+        /*
+        assertEquals(48000, clientConfiguration.getSocketBufferSizeHints()[0]);
+        assertEquals(49000, clientConfiguration.getSocketBufferSizeHints()[1]);
+        assertEquals(30, clientConfiguration.getSocketTimeout());
+        assertEquals("I-am-Groot", clientConfiguration.getUserAgent());
+        assertEquals("S3SignerType", clientConfiguration.getSignerOverride());
+         */
+
+        S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
+        assertFalse(serviceConfiguration.pathStyleAccessEnabled());
     }
 
     @Test
@@ -145,7 +181,7 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_SECRET_ACCESS_KEY, "I'll never teeeeeellllll!");
+        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
 
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "I want access");
@@ -164,7 +200,7 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_ACCESS_KEY_ID, "I want access");
+        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "I want access");
 
         Properties props = new Properties();
         props.setProperty(SECRET_KEY, "I'll never teeeeeellllll!");
@@ -183,8 +219,8 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_ACCESS_KEY_ID, "giev.ma.access!");
-        System.setProperty(AWS_SECRET_ACCESS_KEY, "I'll never teeeeeellllll!");
+        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "giev.ma.access!");
+        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
 
         Properties props = new Properties();
         props.setProperty(SOCKET_SEND_BUFFER_SIZE_HINT, "12345");
@@ -209,8 +245,8 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_ACCESS_KEY_ID, "giev.ma.access!");
-        System.setProperty(AWS_SECRET_ACCESS_KEY, "I'll never teeeeeellllll!");
+        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "giev.ma.access!");
+        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
 
         Properties props = new Properties();
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "54321");
@@ -235,8 +271,8 @@ class S3ClientFactoryTest
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();
 
-        System.setProperty(AWS_ACCESS_KEY_ID, "test");
-        System.setProperty(AWS_SECRET_ACCESS_KEY, "test");
+        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "test");
+        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "test");
 
         URI uri = URI.create("s3://localhost:8001/");
         Properties props = new Properties();
