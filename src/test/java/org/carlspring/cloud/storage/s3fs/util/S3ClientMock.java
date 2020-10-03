@@ -433,43 +433,7 @@ public class S3ClientMock
         }
     }
 
-    @Override
-    public GetObjectResponse getObject(final GetObjectRequest getObjectRequest,
-                                       final Path filePath)
-            throws AwsServiceException, SdkClientException
-    {
-        //TODO: Check how we can merge this method with this one:
-        // <ReturnT> ReturnT getObject(GetObjectRequest getObjectRequest, ResponseTransformer<GetObjectResponse, ReturnT> responseTransformer)
-        final String bucketName = getObjectRequest.bucket();
-        final String key = getObjectRequest.key();
-        Path element = find(bucketName, key);
-
-        if (element == null || Files.notExists(element))
-        {
-            element = find(bucketName, key + "/");
-        }
-
-        if (element == null || Files.notExists(element))
-        {
-            throw NoSuchKeyException.builder()
-                                    .message("Key not found: " + key)
-                                    .statusCode(NOT_FOUND)
-                                    .build();
-        }
-
-        final S3Object object = getObject(bucketName, key);
-        if (StringUtils.equals(object.key(), key))
-        {
-            return buildGetObjectResponse(object);
-        }
-
-        throw NoSuchKeyException.builder()
-                                .message("Key not found: " + object.key())
-                                .statusCode(NOT_FOUND)
-                                .build();
-
-    }
-
+    @SuppressWarnings("unchecked")
     @Override
     public <ReturnT> ReturnT getObject(final GetObjectRequest getObjectRequest,
                                        final ResponseTransformer<GetObjectResponse, ReturnT> responseTransformer)
@@ -493,16 +457,21 @@ public class S3ClientMock
                 final GetObjectResponse response = buildGetObjectResponse(object);
 
                 final boolean isDirectory = key.endsWith("/") || key.isEmpty();
-                final InputStream inputStream = getInputStream(isDirectory, element);
-                final AbortableInputStream abortableInputStream = AbortableInputStream.create(inputStream);
-                try
+                if(!isDirectory)
                 {
-                    return responseTransformer.transform(response, abortableInputStream);
+                    final InputStream inputStream = getInputStream(false, element);
+                    final AbortableInputStream abortableInputStream = AbortableInputStream.create(inputStream);
+                    try
+                    {
+                        return responseTransformer.transform(response, abortableInputStream);
+                    }
+                    catch (final Exception e)
+                    {
+                        throw SdkException.create("Error while transforming the response: " + response, e);
+                    }
                 }
-                catch (final Exception e)
-                {
-                    throw SdkException.create("Error while transforming the response: " + response, e);
-                }
+
+                return (ReturnT) response;
             }
         }
 
@@ -584,7 +553,6 @@ public class S3ClientMock
     {
         final String bucketName = request.bucket();
         final String prefix = request.prefix();
-        //TODO: check if new "marker" is "continuationToken" or "startAfter"
         final String marker = request.continuationToken();
         final String delimiter = request.delimiter();
 
