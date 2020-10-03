@@ -26,8 +26,8 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -501,21 +501,23 @@ class FilesIT
     void amazonCopyDetectContentType()
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"),
+                                              "<html><body>html file</body></html>".getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
-            S3Path resultS3 = (S3Path) result;
-            GetObjectRequest request = GetObjectRequest.builder().bucket(resultS3.getFileStore().name()).key(
-                    resultS3.getKey()).build();
-            GetObjectResponse response = resultS3.getFileSystem()
-                                                 .getClient()
-                                                 .getObject(request, resultS3);
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
             assertEquals("text/html", response.contentType());
         }
@@ -542,22 +544,22 @@ class FilesIT
                                         0x30,
                                         (byte) 0x9d };
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
+            final Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
-            S3Path resultS3 = (S3Path) result;
-
-            GetObjectRequest request = GetObjectRequest.builder().bucket(resultS3.getFileStore().name()).key(
-                    resultS3.getKey()).build();
-            GetObjectResponse response = resultS3.getFileSystem()
-                                                 .getClient()
-                                                 .getObject(request, resultS3);
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
             assertEquals("application/octet-stream", response.contentType());
         }
@@ -567,24 +569,24 @@ class FilesIT
     void amazonOutpuStreamDetectContentType()
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
-            try (OutputStream out = Files.newOutputStream(result))
+            try (final OutputStream out = Files.newOutputStream(result))
             {
                 // copied from Files.write
-                byte[] bytes = Files.readAllBytes(htmlFile);
+                final byte[] bytes = Files.readAllBytes(htmlFile);
 
-                int len = bytes.length;
+                final int len = bytes.length;
                 int rem = len;
 
                 while (rem > 0)
                 {
-                    int n = Math.min(rem, 8192);
+                    final int n = Math.min(rem, 8192);
 
                     out.write(bytes, (len - rem), n);
 
@@ -592,12 +594,13 @@ class FilesIT
                 }
             }
 
-            S3Path resultS3 = (S3Path) result;
-            GetObjectRequest request = GetObjectRequest.builder().bucket(resultS3.getFileStore().name()).key(
-                    resultS3.getKey()).build();
-            GetObjectResponse response = resultS3.getFileSystem()
-                                                 .getClient()
-                                                 .getObject(request, resultS3);
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
             assertEquals("text/html", response.contentType());
         }
@@ -690,7 +693,7 @@ class FilesIT
     void bucketIsDirectory()
             throws IOException
     {
-        Path path = fileSystemAmazon.getPath(bucket, "/");
+        Path path = fileSystemAmazon.getPath(bucket);
 
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
 
