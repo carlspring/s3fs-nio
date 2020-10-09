@@ -67,7 +67,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3Object_when_S3Path_is_file()
+    public void lookupS3ObjectWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
@@ -79,7 +79,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3Object_when_S3Path_is_file_and_exists_other_starts_with_same_name()
+    public void lookupS3ObjectWhenS3PathIsFileAndExistsOtherStartsWithSameName()
             throws IOException
     {
         Path path;
@@ -105,7 +105,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3Object_when_S3Path_is_a_directory()
+    public void lookupS3ObjectWhenS3PathIsADirectory()
             throws IOException
     {
         Path path;
@@ -128,7 +128,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3Object_when_S3Path_is_a_directory_and_exists_other_directory_starts_same_name()
+    public void lookupS3ObjectWhenS3PathIsADirectoryAndExistsOtherDirectoryStartsSameName()
             throws IOException
     {
         final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
@@ -154,7 +154,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3Object_when_S3Path_is_a_directory_and_is_virtual()
+    public void lookupS3ObjectWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
@@ -173,7 +173,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3BasicFileAttributes_when_S3Path_is_file()
+    public void lookupS3BasicFileAttributesWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
@@ -194,7 +194,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3BasicFileAttributes_when_S3Path_is_a_directory_and_is_virtual()
+    public void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
@@ -222,7 +222,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3BasicFileAttributes_when_S3Path_is_a_directory_and_is_not_virtual_and_no_content()
+    public void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
         String folder = "folder" + UUID.randomUUID().toString();
@@ -256,7 +256,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3PosixFileAttributes_when_S3Path_is_file()
+    public void lookupS3PosixFileAttributesWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
@@ -282,7 +282,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3PosixFileAttributes_when_S3Path_is_a_directory_and_is_virtual()
+    public void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
@@ -315,7 +315,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookup_S3PosixFileAttributes_when_S3Path_is_a_directory_and_is_not_virtual_and_no_content()
+    public void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
         String folder = "folder" + UUID.randomUUID().toString();
