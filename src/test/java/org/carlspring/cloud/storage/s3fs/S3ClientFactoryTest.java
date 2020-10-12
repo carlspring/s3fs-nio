@@ -215,58 +215,6 @@ class S3ClientFactoryTest
     }
 
     @Test
-    void defaultSendBufferHint()
-    {
-        S3ClientFactory clientFactory = new ExposingS3ClientFactory();
-
-        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "giev.ma.access!");
-        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
-
-        Properties props = new Properties();
-        props.setProperty(SOCKET_SEND_BUFFER_SIZE_HINT, "12345");
-        props.setProperty(REGION, "eu-central-1");
-
-        ExposingS3Client client =
-                (ExposingS3Client) clientFactory.getS3Client(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
-
-        assertNotNull(client);
-
-        //TODO: Review how to get these attributes with v2
-        /*
-        ClientConfiguration clientConfiguration = client.getClientConfiguration();
-
-        assertEquals(12345, clientConfiguration.getSocketBufferSizeHints()[0]);
-        assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[1]);
-         */
-    }
-
-    @Test
-    void defaultReceiveBufferHint()
-    {
-        S3ClientFactory clientFactory = new ExposingS3ClientFactory();
-
-        System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "giev.ma.access!");
-        System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "I'll never teeeeeellllll!");
-
-        Properties props = new Properties();
-        props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "54321");
-        props.setProperty(REGION, "eu-central-1");
-
-        ExposingS3Client client =
-                (ExposingS3Client) clientFactory.getS3Client(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
-
-        assertNotNull(client);
-
-        //TODO: Review how to get these attributes with v2
-        /*
-        ClientConfiguration clientConfiguration = client.getClientConfiguration();
-
-        assertEquals(0, clientConfiguration.getSocketBufferSizeHints()[0]);
-        assertEquals(54321, clientConfiguration.getSocketBufferSizeHints()[1]);
-         */
-    }
-
-    @Test
     void overrideHostAndPort()
     {
         S3ClientFactory clientFactory = new ExposingS3ClientFactory();

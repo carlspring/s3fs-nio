@@ -56,8 +56,16 @@ public abstract class S3Factory
 
     public static final String PROXY_WORKSTATION = "s3fs_proxy_workstation";
 
+    /**
+     * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
+     */
+    @Deprecated
     public static final String SOCKET_SEND_BUFFER_SIZE_HINT = "s3fs_socket_send_buffer_size_hint";
 
+    /**
+     * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
+     */
+    @Deprecated
     public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
 
     public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
