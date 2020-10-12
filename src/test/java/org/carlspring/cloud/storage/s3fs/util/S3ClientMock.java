@@ -57,8 +57,6 @@ import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
-import software.amazon.awssdk.services.s3.model.BucketAlreadyExistsException;
-import software.amazon.awssdk.services.s3.model.BucketAlreadyOwnedByYouException;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CopyObjectResponse;
@@ -262,7 +260,7 @@ public class S3ClientMock
 
     @Override
     public CreateBucketResponse createBucket(final CreateBucketRequest createBucketRequest)
-            throws BucketAlreadyExistsException, BucketAlreadyOwnedByYouException, AwsServiceException, SdkClientException, S3Exception
+            throws AwsServiceException, SdkClientException
     {
         final String bucketName = createBucketRequest.bucket();
         Path element = null;
@@ -273,8 +271,7 @@ public class S3ClientMock
             element = base.resolve(name);
             Files.createDirectories(element);
 
-            final String location = createBucketRequest.createBucketConfiguration().locationConstraintAsString();
-            return CreateBucketResponse.builder().location(location).build();
+            return CreateBucketResponse.builder().build();
         }
         catch (final IOException e)
         {

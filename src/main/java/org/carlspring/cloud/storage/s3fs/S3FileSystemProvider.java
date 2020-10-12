@@ -58,11 +58,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketConfiguration;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
@@ -578,20 +576,15 @@ public class S3FileSystemProvider
 
         if (bucket == null)
         {
-            //TODO: How to get s3fs_region property value?
-            final Region region = Region.US_EAST_1;
-            final CreateBucketConfiguration configuration = CreateBucketConfiguration.builder()
-                                                                                     .locationConstraint(region.id())
-                                                                                     .build();
             final CreateBucketRequest request = CreateBucketRequest.builder()
                                                                    .bucket(bucketName)
-                                                                   .createBucketConfiguration(configuration)
                                                                    .build();
             client.createBucket(request);
         }
 
         // create the object as directory
         final String directoryKey = s3Path.getKey().endsWith("/") ? s3Path.getKey() : s3Path.getKey() + "/";
+        //TODO: If the temp file is larger than 5 GB then, instead of a putObject, a multi-part upload is needed.
         final PutObjectRequest request = PutObjectRequest.builder()
                                                          .bucket(bucketName)
                                                          .key(directoryKey)
@@ -663,6 +656,7 @@ public class S3FileSystemProvider
 
         final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
 
+        //TODO: If the temp file is larger than 5 GB then, instead of a copyObject, a multi-part copy is needed.
         final CopyObjectRequest request = CopyObjectRequest.builder()
                                                            .copySource(encodedUrl)
                                                            .destinationBucket(bucketNameTarget)
