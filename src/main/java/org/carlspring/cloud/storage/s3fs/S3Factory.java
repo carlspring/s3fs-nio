@@ -1,25 +1,34 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.retry.RetryPolicy;
+import software.amazon.awssdk.core.signer.Signer;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.SdkHttpConfigurationOption;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
+import software.amazon.awssdk.services.s3.model.Protocol;
 import software.amazon.awssdk.utils.AttributeMap;
+import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.SIGNER;
+import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.USER_AGENT_PREFIX;
 
 
 /**
@@ -75,6 +84,12 @@ public abstract class S3Factory
     public static final String SIGNER_OVERRIDE = "s3fs_signer_override";
 
     public static final String PATH_STYLE_ACCESS = "s3fs_path_style_access";
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(S3Factory.class);
+
+    private static final String DEFAULT_PROTOCOL = Protocol.HTTPS.toString();
+
+    private static final Region DEFAULT_REGION = Region.US_EAST_1;
 
     /**
      * Build a new Amazon S3 instance with the URI and the properties provided
@@ -134,7 +149,12 @@ public abstract class S3Factory
 
     private String getProtocol(final Properties props)
     {
-        return props.getProperty(PROTOCOL);
+        if (props.getProperty(PROTOCOL) != null)
+        {
+            return Protocol.fromValue(props.getProperty(PROTOCOL)).toString();
+        }
+
+        return DEFAULT_PROTOCOL;
     }
 
     private Region getRegion(final Properties props)
@@ -144,7 +164,16 @@ public abstract class S3Factory
             return Region.of(props.getProperty(REGION));
         }
 
-        return null;
+        try
+        {
+            return new DefaultAwsRegionProviderChain().getRegion();
+        }
+        catch (final SdkClientException e)
+        {
+            LOGGER.warn("Unable to load region from any of the providers in the chain");
+        }
+
+        return DEFAULT_REGION;
     }
 
     protected SdkHttpClient getHttpClient(final Properties props)
@@ -166,7 +195,14 @@ public abstract class S3Factory
 
         if (props.getProperty(MAX_CONNECTIONS) != null)
         {
-            builder.maxConnections(Integer.parseInt(props.getProperty(MAX_CONNECTIONS)));
+            final int maxConnections = Integer.parseInt(props.getProperty(MAX_CONNECTIONS));
+            builder.maxConnections(maxConnections);
+        }
+
+        if (props.getProperty(SOCKET_TIMEOUT) != null)
+        {
+            final Duration duration = Duration.ofMillis(Long.parseLong(props.getProperty(SOCKET_TIMEOUT)));
+            builder.socketTimeout(duration);
         }
 
         return builder.proxyConfiguration(getProxyConfiguration(props));
@@ -191,7 +227,7 @@ public abstract class S3Factory
      */
     protected abstract S3Client createS3Client(final S3ClientBuilder builder);
 
-    protected AwsCredentialsProvider getCredentialsProvider(Properties props)
+    protected AwsCredentialsProvider getCredentialsProvider(final Properties props)
     {
         AwsCredentialsProvider credentialsProvider;
         if (props.getProperty(ACCESS_KEY) == null && props.getProperty(SECRET_KEY) == null)
@@ -200,12 +236,13 @@ public abstract class S3Factory
         }
         else
         {
-            credentialsProvider = StaticCredentialsProvider.create(getAwsCredentials(props));
+            final AwsCredentials awsCredentials = getAwsCredentials(props);
+            credentialsProvider = StaticCredentialsProvider.create(awsCredentials);
         }
         return credentialsProvider;
     }
 
-    protected AwsCredentials getAwsCredentials(Properties props)
+    protected AwsCredentials getAwsCredentials(final Properties props)
     {
         return AwsBasicCredentials.create(props.getProperty(ACCESS_KEY), props.getProperty(SECRET_KEY));
     }
@@ -221,7 +258,7 @@ public abstract class S3Factory
         return builder.build();
     }
 
-    protected ClientOverrideConfiguration getOverrideConfiguration(Properties props)
+    protected ClientOverrideConfiguration getOverrideConfiguration(final Properties props)
     {
         final ClientOverrideConfiguration.Builder builder = ClientOverrideConfiguration.builder();
 
@@ -230,6 +267,26 @@ public abstract class S3Factory
             final Integer numRetries = Integer.parseInt(props.getProperty(MAX_ERROR_RETRY));
             final RetryPolicy retryPolicy = RetryPolicy.builder().numRetries(numRetries).build();
             builder.retryPolicy(retryPolicy);
+        }
+
+        if (props.getProperty(USER_AGENT) != null)
+        {
+            builder.putAdvancedOption(USER_AGENT_PREFIX, props.getProperty(USER_AGENT));
+        }
+
+        if (props.getProperty(SIGNER_OVERRIDE) != null)
+        {
+            try
+            {
+                final Class<?> clazz = Class.forName(props.getProperty(SIGNER_OVERRIDE));
+                final Signer signer = (Signer) clazz.getDeclaredConstructor().newInstance();
+                builder.putAdvancedOption(SIGNER, signer);
+            }
+            catch (final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e)
+            {
+                LOGGER.warn("The '{}' property could not be instantiated with this value: {}", SIGNER_OVERRIDE,
+                            props.getProperty(SIGNER_OVERRIDE));
+            }
         }
 
         return builder.build();
@@ -243,8 +300,8 @@ public abstract class S3Factory
         if (props.getProperty(PROXY_HOST) != null)
         {
             final String host = props.getProperty(PROXY_HOST);
-            final int port =
-                    props.getProperty(PROXY_PORT) != null ? Integer.parseInt(props.getProperty(PROXY_PORT)) : -1;
+            final String portStr = props.getProperty(PROXY_PORT);
+            final int port = portStr != null ? Integer.parseInt(portStr) : -1;
             final URI uri = getEndpointUri(host, port, props);
             builder.endpoint(uri);
         }
