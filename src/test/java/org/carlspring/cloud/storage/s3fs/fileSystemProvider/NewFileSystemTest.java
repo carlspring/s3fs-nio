@@ -9,6 +9,7 @@ import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemAlreadyExistsException;
 import java.util.Map;
@@ -18,7 +19,6 @@ import java.util.UUID;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3FileSystemProvider.CHARSET_KEY;
@@ -28,10 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
@@ -52,13 +52,13 @@ class NewFileSystemTest
     @Test
     void misconfigure()
     {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(S3FileSystemConfigurationException.class, () -> {
-            Properties props = new Properties();
-            props.setProperty(S3_FACTORY_CLASS, "org.carlspring.cloud.storage.s3fs.util.BrokenS3Factory");
+        Properties props = new Properties();
+        props.setProperty(S3_FACTORY_CLASS, "org.carlspring.cloud.storage.s3fs.util.BrokenS3Factory");
 
-            s3fsProvider.createFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
-        });
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(S3FileSystemConfigurationException.class,
+                                           () -> s3fsProvider.createFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST,
+                                                                               props));
 
         assertNotNull(exception);
     }
@@ -67,7 +67,7 @@ class NewFileSystemTest
     void newS3FileSystemWithEmptyHostAndUserInfo()
     {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3:///bucket/file"),
-                                                     ImmutableMap.<String, Object>of());
+                                                     ImmutableMap.of());
 
         assertEquals(Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }
@@ -76,7 +76,7 @@ class NewFileSystemTest
     void newS3FileSystemWithEmptyHost()
     {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@/bucket/file"),
-                                                     ImmutableMap.<String, Object>of());
+                                                     ImmutableMap.of());
 
         assertEquals("access-key:secret-key@" + Constants.S3_HOSTNAME, ((S3FileSystem) s3fs).getKey());
     }
@@ -85,7 +85,7 @@ class NewFileSystemTest
     void newS3FileSystemWithCustomHost()
     {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@my.ceph.storage"),
-                                                     ImmutableMap.<String, Object>of());
+                                                     ImmutableMap.of());
 
         assertEquals("access-key:secret-key@my.ceph.storage", ((S3FileSystem) s3fs).getKey());
     }
@@ -94,7 +94,7 @@ class NewFileSystemTest
     void newS3FileSystemWithCustomHostAndBucket()
     {
         FileSystem s3fs = s3fsProvider.newFileSystem(URI.create("s3://access-key:secret-key@my.ceph.storage/bucket"),
-                                                     ImmutableMap.<String, Object>of());
+                                                     ImmutableMap.of());
 
         assertEquals("access-key:secret-key@my.ceph.storage", ((S3FileSystem) s3fs).getKey());
     }
@@ -127,12 +127,13 @@ class NewFileSystemTest
 
         URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
         verify(s3fsProvider).createFileSystem(eq(uri),
-                                              eq(buildFakeProps("better_access_key", "better_secret_key", "UTF-8")));
+                                              eq(buildFakeProps("better_access_key", "better_secret_key",
+                                                                StandardCharsets.UTF_8.toString())));
     }
 
     @Test
@@ -146,7 +147,7 @@ class NewFileSystemTest
 
         URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
@@ -165,18 +166,13 @@ class NewFileSystemTest
         doReturn(secretKey).when(s3fsProvider).systemGetEnv(SECRET_KEY);
         doCallRealMethod().when(s3fsProvider).overloadPropertiesWithSystemEnv(any(Properties.class), anyString());
 
-        s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
-        verify(s3fsProvider).createFileSystem(eq(uri), argThat(new ArgumentMatcher<Properties>()
-        {
-            @Override
-            public boolean matches(Properties properties)
-            {
-                assertEquals(accessKey, properties.getProperty(ACCESS_KEY));
-                assertEquals(secretKey, properties.getProperty(SECRET_KEY));
+        verify(s3fsProvider).createFileSystem(eq(uri), argThat(properties -> {
+            assertEquals(accessKey, properties.getProperty(ACCESS_KEY));
+            assertEquals(secretKey, properties.getProperty(SECRET_KEY));
 
-                return true;
-            }
+            return true;
         }));
     }
 
@@ -185,7 +181,7 @@ class NewFileSystemTest
     {
         URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
@@ -204,7 +200,7 @@ class NewFileSystemTest
 
         URI uri = URI.create("s3:///");
 
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
@@ -215,18 +211,19 @@ class NewFileSystemTest
     @Test
     void createWithOnlyAccessKey()
     {
+        Properties props = new Properties();
+
+        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
+
+        props.setProperty(ACCESS_KEY, "better_access_key");
+
+        doReturn(props).when(s3fsProvider).loadAmazonProperties();
+
+        final ImmutableMap<String, Object> env = ImmutableMap.of();
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            Properties props = new Properties();
-
-            URI uri = URI.create("s3://" + UUID.randomUUID().toString());
-
-            props.setProperty(ACCESS_KEY, "better_access_key");
-
-            doReturn(props).when(s3fsProvider).loadAmazonProperties();
-
-            s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
-        });
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                                           () -> s3fsProvider.newFileSystem(uri, env));
 
         assertNotNull(exception);
     }
@@ -234,17 +231,18 @@ class NewFileSystemTest
     @Test
     void createWithOnlySecretKey()
     {
+        Properties props = new Properties();
+        props.setProperty(SECRET_KEY, "better_secret_key");
+
+        doReturn(props).when(s3fsProvider).loadAmazonProperties();
+
+        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
+
+        final ImmutableMap<String, Object> env = ImmutableMap.of();
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            Properties props = new Properties();
-            props.setProperty(SECRET_KEY, "better_secret_key");
-
-            doReturn(props).when(s3fsProvider).loadAmazonProperties();
-
-            URI uri = URI.create("s3://" + UUID.randomUUID().toString());
-
-            s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
-        });
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                                           () -> s3fsProvider.newFileSystem(uri, env));
 
         assertNotNull(exception);
     }
@@ -252,17 +250,16 @@ class NewFileSystemTest
     @Test
     void createFailsIfAlreadyCreated()
     {
+        final ImmutableMap<String, Object> env = ImmutableMap.of();
+        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
+
+        assertNotNull(fileSystem);
+
+        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemAlreadyExistsException.class, () -> {
-            FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST,
-                                                               ImmutableMap.<String, Object>of());
-
-            assertNotNull(fileSystem);
-
-            URI uri = URI.create("s3://" + UUID.randomUUID().toString());
-
-            s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
-        });
+        Exception exception = assertThrows(FileSystemAlreadyExistsException.class,
+                                           () -> s3fsProvider.newFileSystem(uri, env));
 
         assertNotNull(exception);
     }
@@ -270,21 +267,22 @@ class NewFileSystemTest
     @Test
     void createWithWrongEnv()
     {
+        Map<String, Object> env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, 1234)
+                                                                        .put(SECRET_KEY,
+                                                                             "secret key")
+                                                                        .build();
+
+        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
+
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, env);
+
+        assertNotNull(fileSystem);
+
+        final ImmutableMap<String, Object> emptyEnv = ImmutableMap.of();
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            Map<String, Object> env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, 1234)
-                                                                            .put(SECRET_KEY,
-                                                                                 "secret key")
-                                                                            .build();
-
-            URI uri = URI.create("s3://" + UUID.randomUUID().toString());
-
-            FileSystem fileSystem = s3fsProvider.newFileSystem(uri, env);
-
-            assertNotNull(fileSystem);
-
-            s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
-        });
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                                           () -> s3fsProvider.newFileSystem(uri, emptyEnv));
 
         assertNotNull(exception);
     }
@@ -294,11 +292,11 @@ class NewFileSystemTest
     {
         URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.<String, Object>of());
+        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
-        fileSystem = s3fsProvider.getFileSystem(uri, ImmutableMap.<String, Object>of());
+        fileSystem = s3fsProvider.getFileSystem(uri, ImmutableMap.of());
 
         assertNotNull(fileSystem);
 
@@ -311,7 +309,7 @@ class NewFileSystemTest
     void getUnknownFileSystem()
     {
         FileSystem fileSystem = s3fsProvider.getFileSystem(URI.create("s3://endpoint20/bucket/path/to/file"),
-                                                           ImmutableMap.<String, Object>of());
+                                                           ImmutableMap.of());
 
         assertNotNull(fileSystem);
     }
@@ -338,18 +336,17 @@ class NewFileSystemTest
     @Test
     void createTwoFileSystemThrowError()
     {
+        S3FileSystemProvider provider = new S3FileSystemProvider();
+
+        Map<String, ?> env = buildFakeEnv();
+
+        FileSystem fileSystem = provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
+
+        assertNotNull(fileSystem);
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemAlreadyExistsException.class, () -> {
-            S3FileSystemProvider provider = new S3FileSystemProvider();
-
-            Map<String, ?> env = buildFakeEnv();
-
-            FileSystem fileSystem = provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
-
-            assertNotNull(fileSystem);
-
-            provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
-        });
+        Exception exception = assertThrows(FileSystemAlreadyExistsException.class,
+                                           () -> provider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env));
 
         assertNotNull(exception);
     }
@@ -362,7 +359,9 @@ class NewFileSystemTest
                                                      .build();
     }
 
-    private Properties buildFakeProps(String access_key, String secret_key, String encoding)
+    private Properties buildFakeProps(String access_key,
+                                      String secret_key,
+                                      String encoding)
     {
         Properties props = buildFakeProps(access_key, secret_key);
         props.setProperty(CHARSET_KEY, encoding);
@@ -371,7 +370,8 @@ class NewFileSystemTest
     }
 
 
-    private Properties buildFakeProps(String access_key, String secret_key)
+    private Properties buildFakeProps(String access_key,
+                                      String secret_key)
     {
         Properties props = new Properties();
         props.setProperty(S3_FACTORY_CLASS, "org.carlspring.cloud.storage.s3fs.util.S3MockFactory");
