@@ -693,7 +693,7 @@ class FilesIT
     void bucketIsDirectory()
             throws IOException
     {
-        Path path = fileSystemAmazon.getPath(bucket);
+        Path path = fileSystemAmazon.getPath(bucket, "/");
 
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
 

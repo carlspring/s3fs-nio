@@ -41,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.SIGNER;
+import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.USER_AGENT_PREFIX;
 import static software.amazon.awssdk.core.client.config.SdkClientOption.ENDPOINT;
 
 class S3ClientFactoryTest
@@ -58,7 +60,7 @@ class S3ClientFactoryTest
         props.setProperty(CONNECTION_TIMEOUT, "10");
         props.setProperty(MAX_CONNECTIONS, "50");
         props.setProperty(MAX_ERROR_RETRY, "3");
-        props.setProperty(PROTOCOL, "HTTP");
+        props.setProperty(PROTOCOL, "http");
         props.setProperty(PROXY_DOMAIN, "localhost");
         props.setProperty(PROXY_HOST, "127.0.0.1");
         props.setProperty(PROXY_PASSWORD, "proxy_password");
@@ -69,7 +71,7 @@ class S3ClientFactoryTest
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "49000");
         props.setProperty(SOCKET_TIMEOUT, "30");
         props.setProperty(USER_AGENT, "I-am-Groot");
-        props.setProperty(SIGNER_OVERRIDE, "S3SignerType");
+        props.setProperty(SIGNER_OVERRIDE, "software.amazon.awssdk.core.signer.NoOpSigner");
         props.setProperty(PATH_STYLE_ACCESS, "true");
         props.setProperty(REGION, "eu-central-1");
 
@@ -82,22 +84,17 @@ class S3ClientFactoryTest
         assertEquals("some_access_key", credentials.accessKeyId());
         assertEquals("super_secret_key", credentials.secretAccessKey());
 
-        //TODO: Review how to get these attributes with v2
-        /*
-        final SdkHttpClient httpClient = clientFactory.getHttpClient(props);
-        final ApacheHttpClient apacheHttpClient = (ApacheHttpClient) httpClient;
-
-        assertEquals(10, clientConfiguration.getConnectionTimeout());
-        assertEquals(50, clientConfiguration.getMaxConnections());
-         */
-
         ClientOverrideConfiguration overrideConfiguration = clientFactory.getOverrideConfiguration(props);
 
         assertTrue(overrideConfiguration.retryPolicy().isPresent());
         assertEquals(3, overrideConfiguration.retryPolicy().get().numRetries());
+        assertEquals("I-am-Groot", overrideConfiguration.toBuilder().advancedOptions().get(USER_AGENT_PREFIX));
+        assertEquals("class software.amazon.awssdk.core.signer.NoOpSigner",
+                     overrideConfiguration.toBuilder().advancedOptions().get(SIGNER).getClass().toString());
 
-        //TODO: Review how to get these attributes with v2
-        //assertEquals(Protocol.HTTPS, overrideConfiguration.getProtocol());
+        final SdkClientConfiguration clientConfiguration = client.getClientConfiguration();
+        final URI endpoint = clientConfiguration.option(ENDPOINT);
+        assertEquals("http", endpoint.getScheme());
 
         ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
 
@@ -107,15 +104,6 @@ class S3ClientFactoryTest
         assertEquals("proxy_password", proxyConfiguration.password());
         assertEquals("localhost", proxyConfiguration.ntlmDomain());
         assertEquals("what.does.this.do.localhost", proxyConfiguration.ntlmWorkstation());
-
-        //TODO: Review how to get these attributes with v2
-        /*
-        assertEquals(48000, clientConfiguration.getSocketBufferSizeHints()[0]);
-        assertEquals(49000, clientConfiguration.getSocketBufferSizeHints()[1]);
-        assertEquals(30, clientConfiguration.getSocketTimeout());
-        assertEquals("I-am-Groot", clientConfiguration.getUserAgent());
-        assertEquals("S3SignerType", clientConfiguration.getSignerOverride());
-         */
 
         S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
         assertTrue(serviceConfiguration.pathStyleAccessEnabled());
@@ -132,27 +120,24 @@ class S3ClientFactoryTest
         Properties props = new Properties();
         props.setProperty(REGION, "eu-central-1");
 
+        ExposingS3Client client =
+                (ExposingS3Client) clientFactory.getS3Client(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+
         final AwsCredentialsProvider credentialsProvider = clientFactory.getCredentialsProvider(props);
         final AwsCredentials credentials = credentialsProvider.resolveCredentials();
 
         assertEquals("giev.ma.access!", credentials.accessKeyId());
         assertEquals("I'll never teeeeeellllll!", credentials.secretAccessKey());
 
-        //TODO: Review how to get these attributes with v2
-        /*
-        final SdkHttpClient httpClient = clientFactory.getHttpClient(props);
-        final ApacheHttpClient apacheHttpClient = (ApacheHttpClient) httpClient;
-
-        assertEquals(10, clientConfiguration.getConnectionTimeout());
-        assertEquals(50, clientConfiguration.getMaxConnections());
-         */
-
         ClientOverrideConfiguration overrideConfiguration = clientFactory.getOverrideConfiguration(props);
 
         assertFalse(overrideConfiguration.retryPolicy().isPresent());
+        assertNull(overrideConfiguration.toBuilder().advancedOptions().get(USER_AGENT_PREFIX));
+        assertNull(overrideConfiguration.toBuilder().advancedOptions().get(SIGNER));
 
-        //TODO: Review how to get these attributes with v2
-        //assertEquals(Protocol.HTTPS, overrideConfiguration.getProtocol());
+        final SdkClientConfiguration clientConfiguration = client.getClientConfiguration();
+        final URI endpoint = clientConfiguration.option(ENDPOINT);
+        assertEquals("https", endpoint.getScheme());
 
         ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
 
@@ -162,15 +147,6 @@ class S3ClientFactoryTest
         assertNull(proxyConfiguration.password());
         assertNull(proxyConfiguration.ntlmDomain());
         assertNull(proxyConfiguration.ntlmWorkstation());
-
-        //TODO: Review how to get these attributes with v2
-        /*
-        assertEquals(48000, clientConfiguration.getSocketBufferSizeHints()[0]);
-        assertEquals(49000, clientConfiguration.getSocketBufferSizeHints()[1]);
-        assertEquals(30, clientConfiguration.getSocketTimeout());
-        assertEquals("I-am-Groot", clientConfiguration.getUserAgent());
-        assertEquals("S3SignerType", clientConfiguration.getSignerOverride());
-         */
 
         S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
         assertFalse(serviceConfiguration.pathStyleAccessEnabled());

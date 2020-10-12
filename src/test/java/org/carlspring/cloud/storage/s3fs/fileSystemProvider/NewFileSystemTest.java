@@ -250,16 +250,18 @@ class NewFileSystemTest
     @Test
     void createFailsIfAlreadyCreated()
     {
+        final URI uri = URI.create("s3://" + UUID.randomUUID().toString());
         final ImmutableMap<String, Object> env = ImmutableMap.of();
-        FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
-
-        assertNotNull(fileSystem);
-
-        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemAlreadyExistsException.class,
-                                           () -> s3fsProvider.newFileSystem(uri, env));
+        final Exception exception = assertThrows(FileSystemAlreadyExistsException.class, () -> {
+
+            final FileSystem fileSystem = s3fsProvider.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, env);
+
+            assertNotNull(fileSystem);
+
+            s3fsProvider.newFileSystem(uri, env);
+        });
 
         assertNotNull(exception);
     }
@@ -267,22 +269,23 @@ class NewFileSystemTest
     @Test
     void createWithWrongEnv()
     {
-        Map<String, Object> env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, 1234)
-                                                                        .put(SECRET_KEY,
-                                                                             "secret key")
+        final Map<String, Object> env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, 1234)
+                                                                        .put(SECRET_KEY, "secret key")
                                                                         .build();
 
-        URI uri = URI.create("s3://" + UUID.randomUUID().toString());
-
-        FileSystem fileSystem = s3fsProvider.newFileSystem(uri, env);
-
-        assertNotNull(fileSystem);
+        final URI uri = URI.create("s3://" + UUID.randomUUID().toString());
 
         final ImmutableMap<String, Object> emptyEnv = ImmutableMap.of();
 
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(IllegalArgumentException.class,
-                                           () -> s3fsProvider.newFileSystem(uri, emptyEnv));
+        final Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+
+            final FileSystem fileSystem = s3fsProvider.newFileSystem(uri, env);
+
+            assertNotNull(fileSystem);
+
+            s3fsProvider.newFileSystem(uri, emptyEnv);
+        });
 
         assertNotNull(exception);
     }
