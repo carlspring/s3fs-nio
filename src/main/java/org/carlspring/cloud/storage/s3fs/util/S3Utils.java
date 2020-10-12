@@ -36,7 +36,7 @@ import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 public class S3Utils
 {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(S3Utils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(S3Utils.class);
 
     /**
      * Get the {@link S3Object} that represent this Path or her first child if this path not exists

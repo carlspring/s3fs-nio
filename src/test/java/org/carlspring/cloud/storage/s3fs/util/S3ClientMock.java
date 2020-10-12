@@ -99,7 +99,7 @@ public class S3ClientMock
         implements S3Client
 {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(S3ClientMock.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(S3ClientMock.class);
 
     /**
      * max elements amazon aws
