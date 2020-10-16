@@ -242,7 +242,7 @@ public class S3FileSystemProvider
     {
         // we don`t use uri.getUserInfo and uri.getHost because secret key and access key have special chars
         // and dont return the correct strings
-        String uriString = uri.toString().replace("s3://", "");
+        String uriString = uri.toString().replaceAll("s3://", "");
         String authority = null;
 
         int authoritySeparator = uriString.indexOf("@");

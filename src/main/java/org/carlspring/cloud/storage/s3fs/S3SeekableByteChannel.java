@@ -63,7 +63,7 @@ public class S3SeekableByteChannel
             throw new NoSuchFileException(format("target not exists: %s", path));
         }
 
-        tempFile = Files.createTempFile("temp-s3-", key.replace("/", "_"));
+        tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
 
         boolean removeTempFile = true;
 

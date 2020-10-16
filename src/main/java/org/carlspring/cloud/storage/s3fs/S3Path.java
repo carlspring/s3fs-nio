@@ -25,7 +25,6 @@ import software.amazon.awssdk.services.s3.S3Utilities;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
 import static com.google.common.collect.Iterables.concat;
 import static java.lang.String.format;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 
 public class S3Path
         implements Path
@@ -730,7 +729,7 @@ public class S3Path
     {
         // remove special case URI starting with //
         uri = uri.replace("//", "/");
-        uri = uri.replace(" ", "%20");
+        uri = uri.replaceAll(" ", "%20");
 
         return uri;
     }
