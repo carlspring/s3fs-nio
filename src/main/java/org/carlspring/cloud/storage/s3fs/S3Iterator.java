@@ -13,6 +13,7 @@ import java.util.Set;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
@@ -92,7 +93,8 @@ public class S3Iterator
                                                                .continuationToken(current.nextContinuationToken())
                                                                .build();
 
-            this.current = fileSystem.getClient().listObjectsV2(request);
+            final S3Client client = fileSystem.getClient();
+            this.current = client.listObjectsV2(request);
 
             loadObjects();
         }

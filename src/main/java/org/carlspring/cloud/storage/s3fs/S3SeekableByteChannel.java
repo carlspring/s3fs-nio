@@ -71,13 +71,14 @@ public class S3SeekableByteChannel
         {
             if (exists)
             {
+                final S3Client client = path.getFileSystem().getClient();
                 final String bucketName = path.getFileStore().getBucket().name();
                 final GetObjectRequest request = GetObjectRequest.builder()
                                                                  .bucket(bucketName)
                                                                  .key(key)
                                                                  .build();
 
-                try (InputStream byteStream = path.getFileSystem().getClient().getObject(request))
+                try (InputStream byteStream = client.getObject(request))
                 {
                     Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 }

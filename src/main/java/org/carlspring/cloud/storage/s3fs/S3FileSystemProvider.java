@@ -499,11 +499,12 @@ public class S3FileSystemProvider
 
         try
         {
+            final S3Client client = s3Path.getFileSystem().getClient();
             final GetObjectRequest request = GetObjectRequest.builder()
                                                              .bucket(bucketName)
                                                              .key(key)
                                                              .build();
-            final ResponseInputStream<GetObjectResponse> res = s3Path.getFileSystem().getClient().getObject(request);
+            final ResponseInputStream<GetObjectResponse> res = client.getObject(request);
 
             if (res == null)
             {
@@ -616,13 +617,14 @@ public class S3FileSystemProvider
 
         String key = s3Path.getKey();
         String bucketName = s3Path.getFileStore().name();
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
-        s3Path.getFileSystem().getClient().deleteObject(request);
+        client.deleteObject(request);
 
         // we delete the two objects (sometimes exists the key '/' and sometimes not)
         request = DeleteObjectRequest.builder().bucket(bucketName).key(key + "/").build();
-        s3Path.getFileSystem().getClient().deleteObject(request);
+        client.deleteObject(request);
     }
 
     @Override
@@ -653,6 +655,7 @@ public class S3FileSystemProvider
         String keySource = s3Source.getKey();
         String bucketNameTarget = s3Target.getFileStore().name();
         String keyTarget = s3Target.getKey();
+        final S3Client client = s3Source.getFileSystem().getClient();
 
         final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
 
@@ -663,7 +666,7 @@ public class S3FileSystemProvider
                                                            .destinationKey(keyTarget)
                                                            .build();
 
-        s3Source.getFileSystem().getClient().copyObject(request);
+        client.copyObject(request);
     }
 
     private String encodeUrl(final String bucketNameOrigin,
@@ -735,7 +738,8 @@ public class S3FileSystemProvider
         final String key = s3Object.key();
         final String bucket = s3Path.getFileStore().name();
         final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucket).key(key).build();
-        final List<Grant> grants = s3Path.getFileSystem().getClient().getObjectAcl(request).grants();
+        final S3Client client = s3Path.getFileSystem().getClient();
+        final List<Grant> grants = client.getObjectAcl(request).grants();
         final Owner owner = s3Path.getFileStore().getOwner();
         final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key, grants, owner);
 

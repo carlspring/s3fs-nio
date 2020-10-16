@@ -23,6 +23,7 @@ import java.util.Set;
 import org.apache.tika.Tika;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -249,7 +250,8 @@ public class S3FileChannel
                    .contentLength(length)
                    .contentType(new Tika().detect(stream, path.getFileName().toString()));
 
-            path.getFileSystem().getClient().putObject(builder.build(), RequestBody.fromInputStream(stream, length));
+            final S3Client client = path.getFileSystem().getClient();
+            client.putObject(builder.build(), RequestBody.fromInputStream(stream, length));
         }
     }
 }

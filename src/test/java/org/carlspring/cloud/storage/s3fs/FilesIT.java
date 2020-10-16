@@ -26,6 +26,7 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -276,18 +277,19 @@ class FilesIT
         Path dir = fileSystemAmazon.getPath(bucket, folder);
 
         S3Path s3Path = (S3Path) dir;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // upload file without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
         String bucketName = s3Path.getFileStore().name();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(file1).build();
-        s3Path.getFileSystem().getClient().putObject(request, requestBody);
+        client.putObject(request, requestBody);
 
 
         // another file without paths
         request = PutObjectRequest.builder().bucket(bucketName).key(file2).build();
-        s3Path.getFileSystem().getClient().putObject(request, requestBody);
+        client.putObject(request, requestBody);
 
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir))
         {
@@ -335,17 +337,18 @@ class FilesIT
         Path dir = fileSystemAmazon.getPath(bucket, folder);
 
         S3Path s3Path = (S3Path) dir;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // upload without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
         String bucketName = s3Path.getFileStore().name();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(subFolder).build();
-        s3Path.getFileSystem().getClient().putObject(request, requestBody);
+        client.putObject(request, requestBody);
 
         // upload another file without paths
         request = PutObjectRequest.builder().bucket(bucketName).key(file2).build();
-        s3Path.getFileSystem().getClient().putObject(request, requestBody);
+        client.putObject(request, requestBody);
 
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir))
         {
@@ -485,13 +488,14 @@ class FilesIT
         Path path = fileSystemAmazon.getPath(bucket, fileWithFolders.split("/"));
 
         S3Path s3Path = (S3Path) path;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // upload without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
         String bucketName = s3Path.getFileStore().name();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(fileWithFolders).build();
-        s3Path.getFileSystem().getClient().putObject(request, requestBody);
+        client.putObject(request, requestBody);
 
         assertTrue(Files.exists(path));
         assertTrue(Files.exists(path.getParent()));
