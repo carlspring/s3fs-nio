@@ -17,7 +17,6 @@ import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.retry.RetryPolicy;
 import software.amazon.awssdk.core.signer.Signer;
 import software.amazon.awssdk.http.SdkHttpClient;
-import software.amazon.awssdk.http.SdkHttpConfigurationOption;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
@@ -26,7 +25,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
 import software.amazon.awssdk.services.s3.model.Protocol;
-import software.amazon.awssdk.utils.AttributeMap;
 import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.SIGNER;
 import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.USER_AGENT_PREFIX;
 
@@ -90,6 +88,8 @@ public abstract class S3Factory
     private static final String DEFAULT_PROTOCOL = Protocol.HTTPS.toString();
 
     private static final Region DEFAULT_REGION = Region.US_EAST_1;
+
+    private static final int RADIX = 10;
 
     /**
      * Build a new Amazon S3 instance with the URI and the properties provided
@@ -179,8 +179,7 @@ public abstract class S3Factory
     protected SdkHttpClient getHttpClient(final Properties props)
     {
         final ApacheHttpClient.Builder builder = getApacheHttpClientBuilder(props);
-        final AttributeMap map = getAttributeMap(props);
-        return builder.buildWithDefaults(map);
+        return builder.build();
     }
 
     private ApacheHttpClient.Builder getApacheHttpClientBuilder(final Properties props)
@@ -189,34 +188,45 @@ public abstract class S3Factory
 
         if (props.getProperty(CONNECTION_TIMEOUT) != null)
         {
-            final Duration duration = Duration.ofMillis(Long.parseLong(props.getProperty(CONNECTION_TIMEOUT)));
-            builder.connectionTimeout(duration);
+            try
+            {
+                final Duration duration = Duration.ofMillis(
+                        Long.parseLong(props.getProperty(CONNECTION_TIMEOUT), RADIX));
+                builder.connectionTimeout(duration);
+            }
+            catch (final NumberFormatException e)
+            {
+                printWarningMessage(props, CONNECTION_TIMEOUT);
+            }
         }
 
         if (props.getProperty(MAX_CONNECTIONS) != null)
         {
-            final int maxConnections = Integer.parseInt(props.getProperty(MAX_CONNECTIONS));
-            builder.maxConnections(maxConnections);
+            try
+            {
+                final int maxConnections = Integer.parseInt(props.getProperty(MAX_CONNECTIONS), RADIX);
+                builder.maxConnections(maxConnections);
+            }
+            catch (final NumberFormatException e)
+            {
+                printWarningMessage(props, MAX_CONNECTIONS);
+            }
         }
 
         if (props.getProperty(SOCKET_TIMEOUT) != null)
         {
-            final Duration duration = Duration.ofMillis(Long.parseLong(props.getProperty(SOCKET_TIMEOUT)));
-            builder.socketTimeout(duration);
+            try
+            {
+                final Duration duration = Duration.ofMillis(Long.parseLong(props.getProperty(SOCKET_TIMEOUT), RADIX));
+                builder.socketTimeout(duration);
+            }
+            catch (final NumberFormatException e)
+            {
+                printWarningMessage(props, SOCKET_TIMEOUT);
+            }
         }
 
         return builder.proxyConfiguration(getProxyConfiguration(props));
-    }
-
-    private AttributeMap getAttributeMap(Properties props)
-    {
-        final AttributeMap.Builder builder = AttributeMap.builder();
-        if (props.getProperty(SOCKET_TIMEOUT) != null)
-        {
-            final Duration duration = Duration.ofMillis(Long.parseLong(props.getProperty(SOCKET_TIMEOUT)));
-            builder.put(SdkHttpConfigurationOption.READ_TIMEOUT, duration);
-        }
-        return builder.build();
     }
 
     /**
@@ -264,9 +274,16 @@ public abstract class S3Factory
 
         if (props.getProperty(MAX_ERROR_RETRY) != null)
         {
-            final Integer numRetries = Integer.parseInt(props.getProperty(MAX_ERROR_RETRY));
-            final RetryPolicy retryPolicy = RetryPolicy.builder().numRetries(numRetries).build();
-            builder.retryPolicy(retryPolicy);
+            try
+            {
+                final Integer numRetries = Integer.parseInt(props.getProperty(MAX_ERROR_RETRY), RADIX);
+                final RetryPolicy retryPolicy = RetryPolicy.builder().numRetries(numRetries).build();
+                builder.retryPolicy(retryPolicy);
+            }
+            catch (final NumberFormatException e)
+            {
+                printWarningMessage(props, MAX_ERROR_RETRY);
+            }
         }
 
         if (props.getProperty(USER_AGENT) != null)
@@ -284,8 +301,7 @@ public abstract class S3Factory
             }
             catch (final ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e)
             {
-                LOGGER.warn("The '{}' property could not be instantiated with this value: {}", SIGNER_OVERRIDE,
-                            props.getProperty(SIGNER_OVERRIDE));
+                printWarningMessage(props, SIGNER_OVERRIDE);
             }
         }
 
@@ -301,7 +317,16 @@ public abstract class S3Factory
         {
             final String host = props.getProperty(PROXY_HOST);
             final String portStr = props.getProperty(PROXY_PORT);
-            final int port = portStr != null ? Integer.parseInt(portStr) : -1;
+            int port = -1;
+            try
+            {
+                port = portStr != null ? Integer.parseInt(portStr, RADIX) : -1;
+            }
+            catch (final NumberFormatException e)
+            {
+                printWarningMessage(props, PROXY_PORT);
+            }
+
             final URI uri = getEndpointUri(host, port, props);
             builder.endpoint(uri);
         }
@@ -327,6 +352,13 @@ public abstract class S3Factory
         }
 
         return builder.build();
+    }
+
+    private void printWarningMessage(final Properties props,
+                                     final String propertyName)
+    {
+        LOGGER.warn("The '{}' property could not be loaded with this value: {}", propertyName,
+                    props.getProperty(propertyName));
     }
 
 }
