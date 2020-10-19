@@ -535,7 +535,7 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        return new S3SeekableByteChannel(s3Path, options);
+        return new S3SeekableByteChannel(s3Path, options, true);
     }
 
     @Override
@@ -546,7 +546,7 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        return new S3FileChannel(s3Path, options);
+        return new S3FileChannel(s3Path, options, true);
     }
 
     /**

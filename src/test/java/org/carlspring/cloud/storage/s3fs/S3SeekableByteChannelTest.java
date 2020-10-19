@@ -18,6 +18,8 @@ import java.util.EnumSet;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,8 +41,10 @@ class S3SeekableByteChannelTest
         fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
     }
 
-    @Test
-    void constructor()
+    @ParameterizedTest
+    @ValueSource(booleans = { true,
+                              false })
+    void constructor(final boolean tempFileRequired)
             throws IOException
     {
         S3ClientMock client = S3MockFactory.getS3ClientMock();
@@ -49,7 +53,7 @@ class S3SeekableByteChannelTest
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
         S3SeekableByteChannel channel = new S3SeekableByteChannel(file1,
                                                                   EnumSet.of(StandardOpenOption.WRITE,
-                                                                             StandardOpenOption.READ));
+                                                                             StandardOpenOption.READ), tempFileRequired);
 
         assertNotNull(channel);
 
@@ -65,7 +69,24 @@ class S3SeekableByteChannelTest
         client.bucket("buck").file("file1");
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ)));
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ), true));
+
+        assertNotNull(channel);
+
+        channel.close();
+
+        verify(channel, never()).sync();
+    }
+
+    @Test
+    void tempFileRequiredFlagToFalseDontNeedToSyncTempFile()
+            throws IOException
+    {
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket("buck").file("file1");
+
+        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ), false));
 
         assertNotNull(channel);
 
@@ -83,7 +104,7 @@ class S3SeekableByteChannelTest
 
         S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
 
-        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE)));
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true));
 
         channel.write(ByteBuffer.wrap("hoi".getBytes()));
         channel.close();
@@ -101,7 +122,7 @@ class S3SeekableByteChannelTest
 
             S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST)
                                                .getPath("/buck/file1");
-            new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
+            new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW), true);
         });
 
         assertNotNull(exception);
@@ -120,7 +141,7 @@ class S3SeekableByteChannelTest
         final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
 
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(RuntimeException.class, () -> new S3SeekableByteChannel(file2, options));
+        Exception exception = assertThrows(RuntimeException.class, () -> new S3SeekableByteChannel(file2, options, true));
 
         assertNotNull(exception);
     }
@@ -136,7 +157,7 @@ class S3SeekableByteChannelTest
                                                .getPath("/buck/file2");
             S3SeekableByteChannel channel = new S3SeekableByteChannel(file2,
                                                                       EnumSet.of(StandardOpenOption.WRITE,
-                                                                                 StandardOpenOption.READ));
+                                                                                 StandardOpenOption.READ), true);
 
             Field f = channel.getClass().getDeclaredField("tempFile");
             f.setAccessible(true);

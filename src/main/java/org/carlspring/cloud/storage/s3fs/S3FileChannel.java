@@ -41,13 +41,21 @@ public class S3FileChannel
 
     private final Path tempFile;
 
+    /**
+     * Open or creates a file, returning a file channel.
+     *
+     * @param path             the path open or create.
+     * @param options          options specifying how the file is opened.
+     * @param tempFileRequired true if a temp file wanted, false in case of a in-memory solution option.
+     * @throws IOException if an I/O error occurs
+     */
     public S3FileChannel(final S3Path path,
-                         final Set<? extends OpenOption> options)
+                         final Set<? extends OpenOption> options,
+                         final boolean tempFileRequired)
             throws IOException
     {
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
-        String key = path.getKey();
         boolean exists = path.getFileSystem().provider().exists(path);
 
         if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
@@ -60,34 +68,44 @@ public class S3FileChannel
             throw new NoSuchFileException(format("target not exists: %s", path));
         }
 
-        tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
-        boolean removeTempFile = true;
-        try
+        final Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
+        fileChannelOptions.remove(StandardOpenOption.CREATE_NEW);
+
+        if(tempFileRequired)
         {
-            if (exists)
+            final String key = path.getKey();
+            this.tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+            boolean removeTempFile = true;
+            try
             {
-                try (ResponseInputStream<GetObjectResponse> byteStream = path.getFileSystem()
-                                                                             .getClient()
-                                                                             .getObject(GetObjectRequest
-                                                                                                .builder()
-                                                                                                .bucket(path.getFileStore().name())
-                                                                                                .key(key).build()))
+                if (exists)
                 {
-                    Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    final S3Client client = path.getFileSystem().getClient();
+                    final GetObjectRequest request = GetObjectRequest.builder()
+                                                                     .bucket(path.getFileStore().name())
+                                                                     .key(key)
+                                                                     .build();
+                    try (ResponseInputStream<GetObjectResponse> byteStream = client.getObject(request))
+                    {
+                        Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    }
+                }
+
+                this.filechannel = FileChannel.open(tempFile, fileChannelOptions);
+                removeTempFile = false;
+            }
+            finally
+            {
+                if (removeTempFile)
+                {
+                    Files.deleteIfExists(tempFile);
                 }
             }
-
-            Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
-            fileChannelOptions.remove(StandardOpenOption.CREATE_NEW);
-            filechannel = FileChannel.open(tempFile, fileChannelOptions);
-            removeTempFile = false;
         }
-        finally
+        else
         {
-            if (removeTempFile)
-            {
-                Files.deleteIfExists(tempFile);
-            }
+            this.tempFile = null;
+            this.filechannel = FileChannel.open(path, fileChannelOptions);
         }
     }
 
@@ -224,12 +242,16 @@ public class S3FileChannel
             throws IOException
     {
         super.close();
-        filechannel.close();
-        if (!this.options.contains(StandardOpenOption.READ))
+        this.filechannel.close();
+        if(this.tempFile != null)
         {
-            sync();
+            if (!this.options.contains(StandardOpenOption.READ))
+            {
+                sync();
+            }
+
+            Files.deleteIfExists(tempFile);
         }
-        Files.deleteIfExists(tempFile);
     }
 
     /**

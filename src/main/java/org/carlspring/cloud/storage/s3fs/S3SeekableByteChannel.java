@@ -39,11 +39,14 @@ public class S3SeekableByteChannel
     /**
      * Open or creates a file, returning a seekable byte channel
      *
-     * @param path    the path open or create
-     * @param options options specifying how the file is opened
+     * @param path             the path open or create
+     * @param options          options specifying how the file is opened
+     * @param tempFileRequired true if a temp file wanted, false in case of a in-memory solution option.
      * @throws IOException if an I/O error occurs
      */
-    public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options)
+    public S3SeekableByteChannel(final S3Path path,
+                                 final Set<? extends OpenOption> options,
+                                 final boolean tempFileRequired)
             throws IOException
     {
         this.path = path;
@@ -63,41 +66,48 @@ public class S3SeekableByteChannel
             throw new NoSuchFileException(format("target not exists: %s", path));
         }
 
-        tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+        final Set<? extends OpenOption> seekOptions = new HashSet<>(this.options);
+        seekOptions.remove(StandardOpenOption.CREATE_NEW);
 
-        boolean removeTempFile = true;
-
-        try
+        if(tempFileRequired)
         {
-            if (exists)
-            {
-                final S3Client client = path.getFileSystem().getClient();
-                final String bucketName = path.getFileStore().getBucket().name();
-                final GetObjectRequest request = GetObjectRequest.builder()
-                                                                 .bucket(bucketName)
-                                                                 .key(key)
-                                                                 .build();
+            tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
 
-                try (InputStream byteStream = client.getObject(request))
+            boolean removeTempFile = true;
+
+            try
+            {
+                if (exists)
                 {
-                    Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    final S3Client client = path.getFileSystem().getClient();
+                    final String bucketName = path.getFileStore().getBucket().name();
+                    final GetObjectRequest request = GetObjectRequest.builder()
+                                                                     .bucket(bucketName)
+                                                                     .key(key)
+                                                                     .build();
+
+                    try (InputStream byteStream = client.getObject(request))
+                    {
+                        Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    }
+
                 }
 
+                seekable = Files.newByteChannel(tempFile, seekOptions);
+
+                removeTempFile = false;
             }
-
-            Set<? extends OpenOption> seekOptions = new HashSet<>(this.options);
-            seekOptions.remove(StandardOpenOption.CREATE_NEW);
-
-            seekable = Files.newByteChannel(tempFile, seekOptions);
-
-            removeTempFile = false;
-        }
-        finally
-        {
-            if (removeTempFile)
+            finally
             {
-                Files.deleteIfExists(tempFile);
+                if (removeTempFile)
+                {
+                    Files.deleteIfExists(tempFile);
+                }
             }
+        }else
+        {
+            this.tempFile = null;
+            this.seekable = Files.newByteChannel(path, seekOptions);
         }
     }
 
@@ -132,11 +142,17 @@ public class S3SeekableByteChannel
                 return;
             }
 
-            sync();
+            if(this.tempFile != null)
+            {
+                sync();
+            }
         }
         finally
         {
-            Files.deleteIfExists(tempFile);
+            if(tempFile != null)
+            {
+                Files.deleteIfExists(tempFile);
+            }
         }
     }
 

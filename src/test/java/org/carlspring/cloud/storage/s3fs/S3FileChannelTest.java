@@ -18,6 +18,8 @@ import java.util.EnumSet;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -62,7 +64,7 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ));
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), true);
 
         assertNotNull(channel);
 
@@ -79,7 +81,7 @@ class S3FileChannelTest
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath(
                 "/buck/file1");
-        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ));
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), true);
 
         assertNotNull(channel);
 
@@ -99,7 +101,7 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE));
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true);
 
         assertNotNull(channel);
 
@@ -115,7 +117,7 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE));
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true);
 
         assertNotNull(channel);
 
@@ -127,15 +129,18 @@ class S3FileChannelTest
         assertNotNull(exception);
     }
 
-    @Test
-    void readNeedsToCloseChannel()
+    @ParameterizedTest
+    @ValueSource(booleans = { true,
+                              false })
+    void readNeedsToCloseChannel(final boolean tempFileRequired)
             throws IOException
     {
         client.bucket("buck").file("file1");
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = spy(new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ)));
+        final S3FileChannel channel = spy(
+                new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), tempFileRequired));
 
         assertNotNull(channel);
 
@@ -145,8 +150,10 @@ class S3FileChannelTest
         verify(client, never()).putObject(isA(PutObjectRequest.class), isA(RequestBody.class));
     }
 
-    @Test
-    void writeNeedsToCloseChannel()
+    @ParameterizedTest
+    @ValueSource(booleans = { true,
+                              false })
+    void writeNeedsToCloseChannel(final boolean tempFileRequired)
             throws IOException
     {
         client.bucket("buck").file("file1");
@@ -154,7 +161,8 @@ class S3FileChannelTest
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
 
-        final S3FileChannel channel = spy(new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE)));
+        final S3FileChannel channel = spy(
+                new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), tempFileRequired));
 
         channel.write(ByteBuffer.wrap("hoi".getBytes()));
         channel.close();
@@ -171,11 +179,11 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
 
         // We're expecting an exception here to be thrown
         final Exception exception = assertThrows(FileAlreadyExistsException.class,
-                                                 () -> new S3FileChannel(file1, EnumSet.of(
-                                                         StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)));
+                                                 () -> new S3FileChannel(file1, options, true));
 
         assertNotNull(exception);
     }
@@ -192,7 +200,8 @@ class S3FileChannelTest
         final EnumSet<StandardOpenOption> readOption = EnumSet.of(StandardOpenOption.READ);
 
         // We're expecting an exception here to be thrown
-        final Exception exception = assertThrows(RuntimeException.class, () -> new S3FileChannel(file2, readOption));
+        final Exception exception = assertThrows(RuntimeException.class,
+                                                 () -> new S3FileChannel(file2, readOption, true));
 
         assertNotNull(exception);
     }
@@ -206,7 +215,8 @@ class S3FileChannelTest
         final EnumSet<StandardOpenOption> writeOption = EnumSet.of(StandardOpenOption.WRITE);
 
         // We're expecting an exception here to be thrown
-        final Exception exception = assertThrows(NoSuchFileException.class, () -> new S3FileChannel(file2, writeOption));
+        final Exception exception = assertThrows(NoSuchFileException.class,
+                                                 () -> new S3FileChannel(file2, writeOption, true));
 
         assertNotNull(exception);
     }
