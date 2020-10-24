@@ -122,21 +122,16 @@ public abstract class S3Factory
                                final int port,
                                final Properties props)
     {
+        final String scheme = getProtocol(props);
+
         String endpointStr;
         if (port != -1)
         {
-            endpointStr = String.format("%s:%d", host, port);
+            endpointStr = String.format("%s://%s:%d", scheme, host, port);
         }
         else
         {
-            endpointStr = host;
-        }
-
-        // Endpoint may not have an scheme. E.g: 127.0.0.1:12345
-        if (!endpointStr.contains("://"))
-        {
-            final String protocol = getProtocol(props);
-            endpointStr = String.format("%s://%s", protocol, endpointStr);
+            endpointStr = String.format("%s://%s", scheme, host);
         }
 
         return URI.create(endpointStr);

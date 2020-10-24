@@ -10,6 +10,7 @@ import java.util.Properties;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.core.Protocol;
 import software.amazon.awssdk.core.SdkSystemSetting;
 import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
@@ -119,6 +120,7 @@ class S3ClientFactoryTest
 
         Properties props = new Properties();
         props.setProperty(REGION, "eu-central-1");
+        props.setProperty(PROTOCOL, Protocol.HTTPS.toString());
 
         ExposingS3Client client =
                 (ExposingS3Client) clientFactory.getS3Client(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
