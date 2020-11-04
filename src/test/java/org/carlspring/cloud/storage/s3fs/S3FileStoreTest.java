@@ -90,7 +90,9 @@ class S3FileStoreTest
     @Test
     void getUnsupportedFileStoreAttributeView()
     {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> fileStore.getFileStoreAttributeView(UnsupportedFileStoreAttributeView.class));
+        final Class<UnsupportedFileStoreAttributeView> attributeViewClass = UnsupportedFileStoreAttributeView.class;
+        final Exception exception = assertThrows(IllegalArgumentException.class,
+                                                 () -> fileStore.getFileStoreAttributeView(attributeViewClass));
 
         assertNotNull(exception);
     }

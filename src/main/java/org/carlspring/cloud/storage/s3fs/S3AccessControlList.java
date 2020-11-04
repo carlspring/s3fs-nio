@@ -46,9 +46,9 @@ public class S3AccessControlList
      */
     private boolean hasPermission(final EnumSet<Permission> permissions)
     {
-        return StreamSupport.stream(grants.spliterator(), false).anyMatch(
-                grant -> StringUtils.equals(grant.grantee().id(), owner.id()) &&
-                         permissions.contains(grant.permission()));
+        return StreamSupport.stream(grants.spliterator(), false)
+                            .anyMatch(grant -> StringUtils.equals(grant.grantee().id(), owner.id()) &&
+                                               permissions.contains(grant.permission()));
     }
 
     public void checkAccess(final AccessMode[] modes)

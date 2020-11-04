@@ -202,8 +202,8 @@ public class S3Iterator
         {
             if (!commonPrefix.prefix().equals("/"))
             {
-                listPath.add(
-                        new S3Path(fileSystem, "/" + fileStore.name(), fileSystem.key2Parts(commonPrefix.prefix())));
+                listPath.add(new S3Path(fileSystem, "/" + fileStore.name(),
+                                        fileSystem.key2Parts(commonPrefix.prefix())));
             }
         }
 

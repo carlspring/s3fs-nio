@@ -101,7 +101,9 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true);
+        final S3FileChannel channel = new S3FileChannel(file1,
+                                                        EnumSet.of(StandardOpenOption.WRITE),
+                                                        true);
 
         assertNotNull(channel);
 
@@ -139,8 +141,9 @@ class S3FileChannelTest
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
-        final S3FileChannel channel = spy(
-                new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), tempFileRequired));
+        final S3FileChannel channel = spy(new S3FileChannel(file1,
+                                                            EnumSet.of(StandardOpenOption.READ),
+                                                            tempFileRequired));
 
         assertNotNull(channel);
 

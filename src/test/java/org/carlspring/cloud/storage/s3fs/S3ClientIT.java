@@ -110,7 +110,7 @@ class S3ClientIT
     void putObjectByteArray()
             throws IOException
     {
-        final InputStream inputStream = new ByteArrayInputStream("contenido1".getBytes());
+        final InputStream inputStream = new ByteArrayInputStream("contents1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
         PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key(randomUUID().toString()).build();
         PutObjectResponse result = client.putObject(request, requestBody);

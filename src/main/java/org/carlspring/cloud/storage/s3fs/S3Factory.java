@@ -352,7 +352,8 @@ public abstract class S3Factory
     private void printWarningMessage(final Properties props,
                                      final String propertyName)
     {
-        LOGGER.warn("The '{}' property could not be loaded with this value: {}", propertyName,
+        LOGGER.warn("The '{}' property could not be loaded with this value: {}",
+                    propertyName,
                     props.getProperty(propertyName));
     }
 
