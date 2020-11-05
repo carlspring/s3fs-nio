@@ -1,30 +1,41 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.*;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3Utilities;
+import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class S3FileSystemTest
+class S3FileSystemTest
         extends S3UnitTestBase
 {
 
@@ -35,33 +46,31 @@ public class S3FileSystemTest
     public void setup()
             throws IOException
     {
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("bucketA");
         client.bucket("bucketB");
 
-        fs = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        final URI s3GlobalUriTest = S3EndpointConstant.S3_GLOBAL_URI_TEST;
+        fs = FileSystems.newFileSystem(s3GlobalUriTest, null);
     }
 
     @AfterEach
     public void tearDown()
             throws IOException
     {
-//!        super.tearDown();
-
-        //  s3fsProvider.close((S3FileSystem) fs);
         fs.close();
     }
 
 
     @Test
-    public void getPathFirst()
+    void getPathFirst()
     {
         assertEquals(fs.getPath("/bucket"), fs.getPath("/bucket"));
         assertEquals(fs.getPath("file"), fs.getPath("file"));
     }
 
     @Test
-    public void getPathFirstWithMultiplesPaths()
+    void getPathFirstWithMultiplesPaths()
     {
         assertEquals(fs.getPath("/bucket/path/to/file"), fs.getPath("/bucket/path/to/file"));
         assertNotEquals(fs.getPath("/bucket/path/other/file"), fs.getPath("/bucket/path/to/file"));
@@ -71,7 +80,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getPathFirstAndMore()
+    void getPathFirstAndMore()
     {
         Path actualAbsolute = fs.getPath("/bucket", "dir", "file");
 
@@ -85,7 +94,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getPathFirstAndMoreWithMultiplesPaths()
+    void getPathFirstAndMoreWithMultiplesPaths()
     {
         Path actual = fs.getPath("/bucket", "dir/file");
 
@@ -95,7 +104,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getPathFirstWithMultiplesPathsAndMoreWithMultiplesPaths()
+    void getPathFirstWithMultiplesPathsAndMoreWithMultiplesPaths()
     {
         Path actual = fs.getPath("/bucket/dir", "dir/file");
 
@@ -106,7 +115,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getPathRelativeAndAbsoulte()
+    void getPathRelativeAndAbsoulte()
     {
         assertNotEquals(fs.getPath("/bucket"), fs.getPath("bucket"));
         assertNotEquals(fs.getPath("/bucket/dir"), fs.getPath("bucket/dir"));
@@ -117,7 +126,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void duplicatedSlashesAreDeleted()
+    void duplicatedSlashesAreDeleted()
     {
         Path actualFirst = fs.getPath("/bucket//file");
 
@@ -133,20 +142,20 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void readOnlyAlwaysFalse()
+    void readOnlyAlwaysFalse()
     {
         assertFalse(fs.isReadOnly());
     }
 
     @Test
-    public void getSeparatorSlash()
+    void getSeparatorSlash()
     {
         assertEquals("/", fs.getSeparator());
         assertEquals("/", S3Path.PATH_SEPARATOR);
     }
 
     @Test
-    public void getPathMatcherThrowException()
+    void getPathMatcherThrowException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -157,7 +166,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getUserPrincipalLookupServiceThrowException()
+    void getUserPrincipalLookupServiceThrowException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -168,7 +177,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void newWatchServiceThrowException()
+    void newWatchServiceThrowException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -179,7 +188,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getPathWithoutBucket()
+    void getPathWithoutBucket()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
@@ -190,7 +199,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getFileStores()
+    void getFileStores()
     {
         Iterable<FileStore> result = fs.getFileStores();
 
@@ -204,7 +213,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void getRootDirectories()
+    void getRootDirectories()
     {
         Iterable<Path> paths = fs.getRootDirectories();
 
@@ -241,7 +250,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void supportedFileAttributeViewsReturnBasic()
+    void supportedFileAttributeViewsReturnBasic()
     {
         Set<String> operations = fs.supportedFileAttributeViews();
 
@@ -253,7 +262,7 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void close()
+    void close()
             throws IOException
     {
         assertTrue(fs.isOpen());
@@ -264,7 +273,8 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void comparables()
+    void comparables()
+            throws IOException
     {
         // create other vars
 
@@ -281,24 +291,16 @@ public class S3FileSystemTest
         S3FileSystem s3fs6 = (S3FileSystem) provider.newFileSystem(URI.create(
                 "s3://access_key:secret_key@mirror1.amazon.test/"), null);
 
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock s3ClientMock = S3MockFactory.getS3ClientMock();
 
-        S3FileSystem s3fs7 = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
-        S3FileSystem s3fs8 = new S3FileSystem(provider, null, amazonClientMock, null);
-        S3FileSystem s3fs9 = new S3FileSystem(provider, null, amazonClientMock, null);
-        S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", amazonClientMock, null);
+        S3FileSystem s3fs7 = new S3FileSystem(provider, null, s3ClientMock, "mirror1.amazon.test");
+        S3FileSystem s3fs8 = new S3FileSystem(provider, null, s3ClientMock, null);
+        S3FileSystem s3fs9 = new S3FileSystem(provider, null, s3ClientMock, null);
+        S3FileSystem s3fs10 = new S3FileSystem(provider, "somekey", s3ClientMock, null);
         S3FileSystem s3fs11 = new S3FileSystem(provider,
                                                "access-key@mirror2.amazon.test",
-                                               amazonClientMock,
+                                               s3ClientMock,
                                                "mirror2.amazon.test");
-
-        // FIXME: review the hashcode creation.
-        assertEquals(1483378423, s3fs1.hashCode());
-        assertEquals(684416791, s3fs2.hashCode());
-        assertEquals(182977201, s3fs3.hashCode());
-        assertEquals(-615984431, s3fs4.hashCode());
-        assertEquals(-498271993, s3fs6.hashCode());
-        assertEquals(-82123487, s3fs7.hashCode());
 
         assertNotEquals(s3fs1, s3fs2);
         assertNotEquals(s3fs1, s3fs3);
@@ -307,9 +309,7 @@ public class S3FileSystemTest
         assertNotEquals(s3fs3, s3fs4);
         assertNotEquals(s3fs3, s3fs6);
         assertNotEquals(s3fs1, s3fs6);
-        assertNotEquals(s3fs1, new S3FileStore(s3fs1, "emmer"));
         assertNotEquals(s3fs7, s3fs8);
-        assertEquals(s3fs8, s3fs8);
         assertNotEquals(s3fs8, s3fs1);
         assertEquals(s3fs8, s3fs9);
         assertNotEquals(s3fs9, s3fs10);
@@ -327,13 +327,14 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void key2Parts()
+    void key2Parts()
+            throws IOException
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
 
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock amazonClientMock = S3MockFactory.getS3ClientMock();
 
-        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
+        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test"))
         {
             String[] parts = s3fs.key2Parts("/bucket/folder with spaces/file");
 
@@ -345,11 +346,11 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void parts2Key()
+    void parts2Key()
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
 
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock amazonClientMock = S3MockFactory.getS3ClientMock();
 
         S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");
 
@@ -359,43 +360,49 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void urlWithSpecialCharacters()
+    void urlWithSpecialCharacters()
     {
         String fileName = "βeta.png";
         String expected = "https://bucket.s3.eu-west-1.amazonaws.com/%CE%B2eta.png";
 
-        AmazonS3 amazonS3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+        Region region = Region.EU_WEST_1;
+        S3Client s3Client = S3Client.builder().region(region).build();
+        S3Utilities utilities = S3Utilities.builder().region(region).build();
 
-        S3FileSystem s3FileSystem = new S3FileSystem(null, null, amazonS3Client, "mirror");
+        S3FileSystem s3FileSystem = new S3FileSystem(null, null, s3Client, "mirror");
         S3Path path = new S3Path(s3FileSystem, fileName);
 
-        String url = amazonS3Client.getUrl("bucket", path.getKey()).toString();
+        GetUrlRequest request = GetUrlRequest.builder().bucket("bucket").key(path.getKey()).build();
+        String url = utilities.getUrl(request).toString();
 
         assertEquals(expected, url);
     }
 
     @Test
-    public void urlWithSpaceCharacters()
+    void urlWithSpaceCharacters()
     {
         String fileName = "beta gaming.png";
         String expected = "https://bucket.s3.eu-west-1.amazonaws.com/beta%20gaming.png";
 
-        AmazonS3 amazonS3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.EU_WEST_1).build();
+        Region region = Region.EU_WEST_1;
+        S3Client s3Client = S3Client.builder().region(region).build();
+        S3Utilities utilities = S3Utilities.builder().region(region).build();
 
-        S3FileSystem s3FileSystem = new S3FileSystem(null, null, amazonS3Client, "mirror");
+        S3FileSystem s3FileSystem = new S3FileSystem(null, null, s3Client, "mirror");
         S3Path path = new S3Path(s3FileSystem, fileName);
 
-        String url = amazonS3Client.getUrl("bucket", path.getKey()).toString();
+        GetUrlRequest request = GetUrlRequest.builder().bucket("bucket").key(path.getKey()).build();
+        String url = utilities.getUrl(request).toString();
 
         assertEquals(expected, url);
     }
 
     @Test
-    public void createDirectory()
+    void createDirectory()
             throws IOException
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock amazonClientMock = S3MockFactory.getS3ClientMock();
 
         try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
         {
@@ -406,29 +413,33 @@ public class S3FileSystemTest
     }
 
     @Test
-    public void createDirectoryWithAttributes()
+    void createDirectoryWithAttributes()
+            throws IOException
     {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            S3FileSystemProvider provider = new S3FileSystemProvider();
-            AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3FileSystemProvider provider = new S3FileSystemProvider();
+        S3ClientMock amazonClientMock = S3MockFactory.getS3ClientMock();
 
-            try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
-            {
-                S3Path folder = s3fs.getPath("/bucket", "folder");
-                provider.createDirectory(folder,
-                                         PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwxrwxrw")));
-            }
-        });
+        try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test"))
+        {
+            S3Path folder = s3fs.getPath("/bucket", "folder");
+            Set<PosixFilePermission> posixFilePermissions = PosixFilePermissions.fromString("rwxrwxrw-");
+            FileAttribute<Set<PosixFilePermission>> fileAttribute = PosixFilePermissions.asFileAttribute(
+                    posixFilePermissions);
 
-        assertNotNull(exception);
+            // We're expecting an exception here to be thrown
+            Exception exception = assertThrows(IllegalArgumentException.class,
+                                               () -> provider.createDirectory(folder, fileAttribute));
+
+            assertNotNull(exception);
+        }
     }
 
     @Test
-    public void isSameFile()
+    void isSameFile()
+            throws IOException
     {
         S3FileSystemProvider provider = new S3FileSystemProvider();
-        AmazonS3ClientMock amazonClientMock = AmazonS3MockFactory.getAmazonClientMock();
+        S3ClientMock amazonClientMock = S3MockFactory.getS3ClientMock();
 
         try (S3FileSystem s3fs = new S3FileSystem(provider, null, amazonClientMock, "mirror1.amazon.test");)
         {

@@ -11,11 +11,24 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.*;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAclResponse;
+import software.amazon.awssdk.services.s3.model.Grant;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.Owner;
+import software.amazon.awssdk.services.s3.model.Permission;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
 /**
  * Utilities to work with Amazon S3 Objects.
@@ -23,44 +36,59 @@ import com.google.common.collect.Sets;
 public class S3Utils
 {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(S3Utils.class);
+
     /**
-     * Get the {@link S3ObjectSummary} that represent this Path or her first child if this path not exists
+     * Get the {@link S3Object} that represent this Path or her first child if this path not exists
      *
      * @param s3Path {@link S3Path}
-     * @return {@link S3ObjectSummary}
+     * @return {@link S3Object}
      * @throws NoSuchFileException if not found the path and any child
      */
-    public S3ObjectSummary getS3ObjectSummary(S3Path s3Path)
+    public S3Object getS3Object(S3Path s3Path)
             throws NoSuchFileException
     {
-        String key = s3Path.getKey();
-        String bucketName = s3Path.getFileStore().name();
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
 
-        AmazonS3 client = s3Path.getFileSystem().getClient();
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // try to find the element with the current key (maybe with end slash or maybe not.)
         try
         {
-            ObjectMetadata metadata = client.getObjectMetadata(bucketName, key);
+            final HeadObjectRequest headObjectRequest = HeadObjectRequest.builder()
+                                                                         .bucket(bucketName)
+                                                                         .key(key)
+                                                                         .build();
+            final HeadObjectResponse metadata = client.headObject(headObjectRequest);
 
-            AccessControlList objectAcl = client.getObjectAcl(bucketName, key);
+            final GetObjectAclRequest getObjectAclRequest = GetObjectAclRequest.builder()
+                                                                               .bucket(bucketName)
+                                                                               .key(key)
+                                                                               .build();
+            final GetObjectAclResponse acl = client.getObjectAcl(getObjectAclRequest);
 
-            S3ObjectSummary result = new S3ObjectSummary();
-            result.setBucketName(bucketName);
-            result.setETag(metadata.getETag());
-            result.setKey(key);
-            result.setLastModified(metadata.getLastModified());
-            result.setSize(metadata.getContentLength());
-            result.setOwner(objectAcl.getOwner());
+            final S3Object.Builder builder = S3Object.builder();
 
-            return result;
+            builder.key(key)
+                   .lastModified(metadata.lastModified())
+                   .eTag(metadata.eTag())
+                   .owner(acl.owner())
+                   .size(metadata.contentLength())
+                   .storageClass(metadata.storageClassAsString());
+
+            return builder.build();
         }
-        catch (AmazonS3Exception e)
+        catch (final S3Exception e)
         {
-            if (e.getStatusCode() != 404)
+            if (e.statusCode() != NOT_FOUND)
             {
                 throw e;
             }
+        }
+        catch (final SdkClientException e)
+        {
+           LOGGER.warn("Object could not be retrieved as a file with the given key");
         }
 
         // if not found (404 err) with the original key.
@@ -74,15 +102,16 @@ public class S3Utils
                 keyFolder += "/";
             }
 
-            ListObjectsRequest request = new ListObjectsRequest();
-            request.setBucketName(bucketName);
-            request.setPrefix(keyFolder);
-            request.setMaxKeys(1);
+            final ListObjectsV2Request request = ListObjectsV2Request.builder()
+                                                                     .bucket(bucketName)
+                                                                     .prefix(keyFolder)
+                                                                     .maxKeys(1)
+                                                                     .build();
 
-            ObjectListing current = client.listObjects(request);
-            if (!current.getObjectSummaries().isEmpty())
+            final ListObjectsV2Response current = client.listObjectsV2(request);
+            if (!current.contents().isEmpty())
             {
-                return current.getObjectSummaries().get(0);
+                return current.contents().get(0);
             }
         }
         catch (Exception e)
@@ -102,9 +131,9 @@ public class S3Utils
     public S3BasicFileAttributes getS3FileAttributes(S3Path s3Path)
             throws NoSuchFileException
     {
-        S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+        S3Object object = getS3Object(s3Path);
 
-        return toS3FileAttributes(objectSummary, s3Path.getKey());
+        return toS3FileAttributes(object, s3Path.getKey());
     }
 
     /**
@@ -117,23 +146,23 @@ public class S3Utils
     public S3PosixFileAttributes getS3PosixFileAttributes(S3Path s3Path)
             throws NoSuchFileException
     {
-        S3ObjectSummary objectSummary = getS3ObjectSummary(s3Path);
+        S3Object object = getS3Object(s3Path);
 
         String key = s3Path.getKey();
         String bucketName = s3Path.getFileStore().name();
 
-        S3BasicFileAttributes attrs = toS3FileAttributes(objectSummary, key);
+        S3BasicFileAttributes attrs = toS3FileAttributes(object, key);
         S3UserPrincipal userPrincipal = null;
         Set<PosixFilePermission> permissions = null;
 
         if (!attrs.isDirectory())
         {
-            AmazonS3 client = s3Path.getFileSystem().getClient();
-            AccessControlList acl = client.getObjectAcl(bucketName, key);
-            Owner owner = acl.getOwner();
+            S3Client client = s3Path.getFileSystem().getClient();
+            GetObjectAclResponse acl = client.getObjectAcl(GetObjectAclRequest.builder().bucket(bucketName).key(key).build());
+            Owner owner = acl.owner();
 
-            userPrincipal = new S3UserPrincipal(owner.getId() + ":" + owner.getDisplayName());
-            permissions = toPosixFilePermissions(acl.getGrantsAsList());
+            userPrincipal = new S3UserPrincipal(owner.id() + ":" + owner.displayName());
+            permissions = toPosixFilePermissions(acl.grants());
         }
 
         return new S3PosixFileAttributes((String) attrs.fileKey(),
@@ -147,7 +176,7 @@ public class S3Utils
     }
 
     /**
-     * transform com.amazonaws.services.s3.model.Grant to java.nio.file.attribute.PosixFilePermission
+     * transform software.amazon.awssdk.services.s3.model.Grant to java.nio.file.attribute.PosixFilePermission
      *
      * @param grants Set grants mandatory, must be not null
      * @return Set PosixFilePermission never null
@@ -158,14 +187,14 @@ public class S3Utils
         Set<PosixFilePermission> filePermissions = new HashSet<>();
         for (Grant grant : grants)
         {
-            filePermissions.addAll(toPosixFilePermission(grant.getPermission()));
+            filePermissions.addAll(toPosixFilePermission(grant.permission()));
         }
 
         return filePermissions;
     }
 
     /**
-     * transform a com.amazonaws.services.s3.model.Permission to a java.nio.file.attribute.PosixFilePermission
+     * transform a software.amazon.awssdk.services.s3.model.Permission to a java.nio.file.attribute.PosixFilePermission
      * We use the follow rules:
      * - transform only to the Owner permission, S3 doesnt have concepts like owner, group or other so we map only to owner.
      * - ACP is a special permission: WriteAcp are mapped to Owner execute permission and ReadAcp are mapped to owner read
@@ -177,47 +206,46 @@ public class S3Utils
     {
         switch (permission)
         {
-            case FullControl:
+            case FULL_CONTROL:
                 return Sets.newHashSet(PosixFilePermission.OWNER_EXECUTE,
                                        PosixFilePermission.OWNER_READ,
                                        PosixFilePermission.OWNER_WRITE);
-            case Write:
+            case WRITE:
                 return Sets.newHashSet(PosixFilePermission.OWNER_WRITE);
-            case Read:
+            case READ:
+            case READ_ACP:
                 return Sets.newHashSet(PosixFilePermission.OWNER_READ);
-            case ReadAcp:
-                return Sets.newHashSet(PosixFilePermission.OWNER_READ);
-            case WriteAcp:
+            case WRITE_ACP:
                 return Sets.newHashSet(PosixFilePermission.OWNER_EXECUTE);
+            default:
+                throw new IllegalStateException("Unknown Permission: " + permission);
         }
-        throw new IllegalStateException("Unknown Permission: " + permission);
     }
 
     /**
-     * transform S3ObjectSummary to S3FileAttributes
+     * transform S3Object to S3FileAttributes
      *
-     * @param objectSummary S3ObjectSummary mandatory not null, the real objectSummary with
-     *                      exactly the same key than the key param or the immediate descendant
-     *                      if it is a virtual directory
-     * @param key           String the real key that can be exactly equal than the objectSummary or
+     * @param object S3Object mandatory not null, the real object with exactly the same key than the key param
+     *               or the immediate descendant if it is a virtual directory
+     * @param key    String the real key that can be exactly equal than the object
      * @return S3FileAttributes
      */
-    public S3BasicFileAttributes toS3FileAttributes(S3ObjectSummary objectSummary, String key)
+    public S3BasicFileAttributes toS3FileAttributes(S3Object object, String key)
     {
         // parse the data to BasicFileAttributes.
         FileTime lastModifiedTime = null;
 
-        if (objectSummary.getLastModified() != null)
+        if (object.lastModified() != null)
         {
-            lastModifiedTime = FileTime.from(objectSummary.getLastModified().getTime(), TimeUnit.MILLISECONDS);
+            lastModifiedTime = FileTime.from(object.lastModified());
         }
 
-        long size = objectSummary.getSize();
+        long size = object.size() != null ? object.size() : 0;
 
         boolean directory = false;
         boolean regularFile = false;
 
-        String resolvedKey = objectSummary.getKey();
+        String resolvedKey = object.key();
 
         // check if is a directory and exists the key of this directory at amazon s3
         if (key.endsWith("/") && resolvedKey.equals(key) || resolvedKey.equals(key + "/"))

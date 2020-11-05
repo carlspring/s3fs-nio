@@ -8,7 +8,11 @@ import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import org.apache.http.client.utils.URIBuilder;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 
 /**
  * Test Helper
@@ -31,13 +35,15 @@ public abstract class EnvironmentBuilder
         String accessKey = System.getenv(ACCESS_KEY);
         String secretKey = System.getenv(SECRET_KEY);
         String region = System.getenv(REGION);
+        String protocol = System.getenv(PROTOCOL);
 
-        if (accessKey != null && secretKey != null && region != null)
+        if (accessKey != null && secretKey != null && region != null && protocol != null)
         {
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey)
-                                                        .put(SECRET_KEY, secretKey)
-                                                        .put(REGION, region)
-                                                        .build();
+                                           .put(SECRET_KEY, secretKey)
+                                           .put(REGION, region)
+                                           .put(PROTOCOL, protocol)
+                                           .build();
         }
         else
         {
@@ -55,6 +61,7 @@ public abstract class EnvironmentBuilder
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
                                            .put(SECRET_KEY, props.getProperty(SECRET_KEY))
                                            .put(REGION, props.getProperty(REGION))
+                                           .put(PROTOCOL, props.getProperty(PROTOCOL))
                                            .build();
         }
 
@@ -111,8 +118,12 @@ public abstract class EnvironmentBuilder
 
         try
         {
-            return new URIBuilder(s3GlobalUri).setUserInfo((String) env.get(ACCESS_KEY), (String) env.get(SECRET_KEY))
-                                              .build();
+            final String accessKey = (String) env.get(ACCESS_KEY);
+            final String secretKey = (String) env.get(SECRET_KEY);
+            final String region = (String) env.get(REGION);
+            final URI s3Uri = region != null ? URI.create(String.format(S3_REGION_URI_IT, region)) : s3GlobalUri;
+            return new URIBuilder(s3Uri).setUserInfo(accessKey, secretKey)
+                                        .build();
         }
         catch (URISyntaxException e)
         {

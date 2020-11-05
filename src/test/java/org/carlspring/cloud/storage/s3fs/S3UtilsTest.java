@@ -1,8 +1,8 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 import java.io.IOException;
@@ -12,15 +12,21 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.StandardOpenOption;
 
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Owner;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
+import software.amazon.awssdk.services.s3.model.Owner;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
+import static software.amazon.awssdk.http.HttpStatusCode.INTERNAL_SERVER_ERROR;
 
-public class S3UtilsTest
+class S3UtilsTest
         extends S3UnitTestBase
 {
 
@@ -31,79 +37,76 @@ public class S3UtilsTest
     {
         fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
 
-        AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+        final S3ClientMock client = S3MockFactory.getS3ClientMock();
 
         client.bucket("bucket");
     }
 
     @Test
-    public void getS3ObjectSummary()
+    void getS3Object()
             throws IOException
     {
-        S3Path root = (S3Path) fileSystem.getPath("/bucket");
-        S3Path file1 = (S3Path) root.resolve("file1");
+        final S3Path root = (S3Path) fileSystem.getPath("/bucket");
+        final S3Path file1 = (S3Path) root.resolve("file1");
 
-        String contentString = "Some content String";
+        final String contentString = "Some content String";
 
-        OutputStream outputStream = Files.newOutputStream(file1, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
+        final OutputStream outputStream = Files.newOutputStream(file1, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
         outputStream.write(contentString.getBytes());
         outputStream.close();
 
-        S3ObjectSummary file1ObjectSummary = getS3ObjectSummary(file1);
+        final S3Object file1Object = getS3Object(file1);
 
-        assertEquals("bucket", file1ObjectSummary.getBucketName());
-        assertNull(file1ObjectSummary.getETag());
-        assertEquals("file1", file1ObjectSummary.getKey());
-        assertNotNull(file1ObjectSummary.getLastModified());
+        assertNull(file1Object.eTag());
+        assertEquals("file1", file1Object.key());
+        assertNotNull(file1Object.lastModified());
 
-        Owner owner = file1ObjectSummary.getOwner();
+        final Owner owner = file1Object.owner();
 
         assertNotNull(owner);
-        assertEquals("Mock", owner.getDisplayName());
-        assertEquals("1", owner.getId());
-        assertEquals(19, file1ObjectSummary.getSize());
+        assertEquals("Mock", owner.displayName());
+        assertEquals("1", owner.id());
+        assertEquals(19, file1Object.size());
     }
 
     @Test
-    public void getS3ObjectSummary404()
+    void getS3Object404()
     {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(NoSuchFileException.class, () -> {
-            S3Path root = (S3Path) fileSystem.getPath("/bucket");
-            S3Path file1 = (S3Path) root.resolve("file1");
+        final S3Path root = (S3Path) fileSystem.getPath("/bucket");
+        final S3Path file1 = (S3Path) root.resolve("file1");
 
-            getS3ObjectSummary(file1);
-        });
+        // We're expecting an exception here to be thrown
+        final Exception exception = assertThrows(NoSuchFileException.class, () -> getS3Object(file1));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void getS3ObjectSummary500()
+    void getS3Object500()
+            throws IOException
     {
+        final S3ClientMock client = S3MockFactory.getS3ClientMock();
+        final AwsServiceException toBeThrown = S3Exception.builder().message("We messed up").statusCode(
+                INTERNAL_SERVER_ERROR).build();
+
+        GetObjectAclRequest request = GetObjectAclRequest.builder().bucket("bucket").key("file2").build();
+        doThrow(toBeThrown).when(client).getObjectAcl(request);
+
+        final S3Path root = (S3Path) fileSystem.getPath("/bucket");
+        final S3Path file2 = (S3Path) root.resolve("file2");
+
+        Files.createFile(file2);
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(AmazonS3Exception.class, () -> {
-            AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
-            AmazonS3Exception toBeThrown = new AmazonS3Exception("We messed up");
-
-            toBeThrown.setStatusCode(500);
-            doThrow(toBeThrown).when(client).getObjectAcl("bucket", "file2");
-
-            S3Path root = (S3Path) fileSystem.getPath("/bucket");
-            S3Path file2 = (S3Path) root.resolve("file2");
-
-            Files.createFile(file2);
-
-            getS3ObjectSummary(file2);
-        });
+        final Exception exception = assertThrows(S3Exception.class, () -> getS3Object(file2));
 
         assertNotNull(exception);
     }
 
-    public S3ObjectSummary getS3ObjectSummary(S3Path s3Path)
+    public S3Object getS3Object(S3Path s3Path)
             throws NoSuchFileException
     {
-        return new S3Utils().getS3ObjectSummary(s3Path);
+        return new S3Utils().getS3Object(s3Path);
     }
 
 }

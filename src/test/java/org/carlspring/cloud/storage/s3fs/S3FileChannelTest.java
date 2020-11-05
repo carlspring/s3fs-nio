@@ -1,34 +1,43 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3ClientMock;
-import org.carlspring.cloud.storage.s3fs.util.AmazonS3MockFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.NonReadableChannelException;
 import java.nio.channels.NonWritableChannelException;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
-public class S3FileChannelTest
+class S3FileChannelTest
         extends S3UnitTestBase
 {
 
-    private final AmazonS3ClientMock client = AmazonS3MockFactory.getAmazonClientMock();
+    private final S3ClientMock client = S3MockFactory.getS3ClientMock();
 
 
     @BeforeEach
@@ -48,13 +57,14 @@ public class S3FileChannelTest
     }
 
     @Test
-    public void constructorRead()
+    void constructorRead()
             throws IOException
     {
         client.bucket("buck").file("file1");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ));
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), true);
 
         assertNotNull(channel);
 
@@ -63,32 +73,37 @@ public class S3FileChannelTest
     }
 
     @Test
-    public void constructorReadButTryToWrite()
+    void constructorReadButTryToWrite()
+            throws IOException
     {
+        client.bucket("buck").file("file1");
+
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath(
+                "/buck/file1");
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ), true);
+
+        assertNotNull(channel);
+
+        final ByteBuffer wrap = ByteBuffer.wrap("hoi".getBytes());
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(NonWritableChannelException.class, () -> {
-            client.bucket("buck").file("file1");
-
-            S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-            S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ));
-
-            assertNotNull(channel);
-
-            channel.write(ByteBuffer.wrap("hoi".getBytes()));
-            channel.close();
-        });
+        final Exception exception = assertThrows(NonWritableChannelException.class, () -> channel.write(wrap));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void constructorWrite()
+    void constructorWrite()
             throws IOException
     {
         client.bucket("buck").file("file1");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE));
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final S3FileChannel channel = new S3FileChannel(file1,
+                                                        EnumSet.of(StandardOpenOption.WRITE),
+                                                        true);
 
         assertNotNull(channel);
 
@@ -97,107 +112,114 @@ public class S3FileChannelTest
     }
 
     @Test
-    public void constructorWriteButTryToRead()
-    {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(NonReadableChannelException.class, () -> {
-            client.bucket("buck").file("file1");
-
-            S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-            S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE));
-
-            assertNotNull(channel);
-
-            channel.read(ByteBuffer.allocate(10));
-            channel.close();
-        });
-
-        assertNotNull(exception);
-    }
-
-    @Test
-    public void readNeedsToCloseChannel()
+    void constructorWriteButTryToRead()
             throws IOException
     {
         client.bucket("buck").file("file1");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3FileChannel channel = spy(new S3FileChannel(file1, EnumSet.of(StandardOpenOption.READ)));
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final S3FileChannel channel = new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true);
+
+        assertNotNull(channel);
+
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+
+        // We're expecting an exception here to be thrown
+        Exception exception = assertThrows(NonReadableChannelException.class, () -> channel.read(byteBuffer));
+
+        assertNotNull(exception);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true,
+                              false })
+    void readNeedsToCloseChannel(final boolean tempFileRequired)
+            throws IOException
+    {
+        client.bucket("buck").file("file1");
+
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final S3FileChannel channel = spy(new S3FileChannel(file1,
+                                                            EnumSet.of(StandardOpenOption.READ),
+                                                            tempFileRequired));
 
         assertNotNull(channel);
 
         channel.close();
 
         verify(channel, times(1)).implCloseChannel();
-        verify(client, never()).putObject(anyString(), anyString(), any(InputStream.class), any(ObjectMetadata.class));
+        verify(client, never()).putObject(isA(PutObjectRequest.class), isA(RequestBody.class));
     }
 
-    @Test
-    public void writeNeedsToCloseChannel()
+    @ParameterizedTest
+    @ValueSource(booleans = { true,
+                              false })
+    void writeNeedsToCloseChannel(final boolean tempFileRequired)
             throws IOException
     {
         client.bucket("buck").file("file1");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
 
-        S3FileChannel channel = spy(new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE)));
+        final S3FileChannel channel = spy(
+                new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE), tempFileRequired));
 
         channel.write(ByteBuffer.wrap("hoi".getBytes()));
         channel.close();
 
         verify(channel, times(1)).implCloseChannel();
-        verify(client, times(1)).putObject(eq("buck"), eq("file1"), any(InputStream.class), any(ObjectMetadata.class));
+        verify(client, times(1)).putObject(isA(PutObjectRequest.class), isA(RequestBody.class));
     }
 
     @Test
-    public void alreadyExists()
+    void alreadyExists()
+            throws IOException
     {
+        client.bucket("buck").file("file1");
+
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file1 = (S3Path) fileSystem.getPath("/buck/file1");
+        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW);
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
-            client.bucket("buck").file("file1");
-
-            S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-
-            new S3FileChannel(file1, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW));
-        });
+        final Exception exception = assertThrows(FileAlreadyExistsException.class,
+                                                 () -> new S3FileChannel(file1, options, true));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void brokenNetwork()
+    void brokenNetwork()
     {
+        final GetObjectRequest request = GetObjectRequest.builder().bucket("buck").key("file2").build();
+        doThrow(new RuntimeException("network broken")).when(client).getObject(request);
+
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file2 = (S3Path) fileSystem.getPath("/buck/file2");
+
+        final EnumSet<StandardOpenOption> readOption = EnumSet.of(StandardOpenOption.READ);
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(RuntimeException.class, () -> {
-            doThrow(new RuntimeException("network broken")).when(client).getObject("buck", "file2");
-
-            S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
-            S3FileChannel channel = new S3FileChannel(file2, EnumSet.of(StandardOpenOption.READ));
-
-            channel.close();
-        });
+        final Exception exception = assertThrows(RuntimeException.class,
+                                                 () -> new S3FileChannel(file2, readOption, true));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void tempFileDisappeared()
-            throws SecurityException,
-                   IllegalArgumentException
+    void shouldNotCreateChannelWithWriteWhenTargetDoesNotExist()
+            throws SecurityException, IllegalArgumentException
     {
+        final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
+        final S3Path file2 = (S3Path) fileSystem.getPath("/buck/file2");
+        final EnumSet<StandardOpenOption> writeOption = EnumSet.of(StandardOpenOption.WRITE);
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(NoSuchFileException.class, () -> {
-            S3Path file2 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file2");
-            S3FileChannel channel = new S3FileChannel(file2, EnumSet.of(StandardOpenOption.WRITE));
-
-            Field f = channel.getClass().getDeclaredField("tempFile");
-            f.setAccessible(true);
-
-            Path tempFile = (Path) f.get(channel);
-            Files.delete(tempFile);
-
-            channel.close();
-        });
+        final Exception exception = assertThrows(NoSuchFileException.class,
+                                                 () -> new S3FileChannel(file2, writeOption, true));
 
         assertNotNull(exception);
     }

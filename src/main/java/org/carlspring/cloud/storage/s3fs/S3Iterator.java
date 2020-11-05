@@ -3,13 +3,21 @@ package org.carlspring.cloud.storage.s3fs;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
-import com.amazonaws.services.s3.model.ListObjectsRequest;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.CommonPrefix;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 /**
  * S3 iterator over folders at first level.
@@ -20,25 +28,27 @@ public class S3Iterator
         implements Iterator<Path>
 {
 
-    private S3FileSystem fileSystem;
+    public static final String ROOT_PATH = "/";
 
-    private S3FileStore fileStore;
+    private final S3FileSystem fileSystem;
 
-    private String key;
+    private final S3FileStore fileStore;
 
-    private List<S3Path> items = Lists.newArrayList();
+    private final String key;
 
-    private Set<S3Path> addedVirtualDirectories = Sets.newHashSet();
+    private final List<S3Path> items = Lists.newArrayList();
 
-    private ObjectListing current;
+    private final Set<S3Path> addedVirtualDirectories = Sets.newHashSet();
+
+    private ListObjectsV2Response current;
 
     private int cursor; // index of next element to return
 
     private int size;
 
-    private boolean incremental;
+    private final boolean incremental;
 
-    private S3Utils s3Utils = new S3Utils();
+    private final S3Utils s3Utils = new S3Utils();
 
 
     public S3Iterator(S3Path path)
@@ -55,12 +65,12 @@ public class S3Iterator
 
     public S3Iterator(S3FileStore fileStore, String key, boolean incremental)
     {
-        ListObjectsRequest listObjectsRequest = buildRequest(fileStore.name(), key, incremental);
+        final ListObjectsV2Request listObjectsV2Request = buildRequest(fileStore.name(), key, incremental);
 
         this.fileStore = fileStore;
         this.fileSystem = fileStore.getFileSystem();
         this.key = key;
-        this.current = fileSystem.getClient().listObjects(listObjectsRequest);
+        this.current = fileSystem.getClient().listObjectsV2(listObjectsV2Request);
         this.incremental = incremental;
 
         loadObjects();
@@ -77,7 +87,14 @@ public class S3Iterator
     {
         if (cursor == size && current.isTruncated())
         {
-            this.current = fileSystem.getClient().listNextBatchOfObjects(current);
+            ListObjectsV2Request request = ListObjectsV2Request.builder()
+                                                               .bucket(fileStore.name())
+                                                               .prefix(key)
+                                                               .continuationToken(current.nextContinuationToken())
+                                                               .build();
+
+            final S3Client client = fileSystem.getClient();
+            this.current = client.listObjectsV2(request);
 
             loadObjects();
         }
@@ -115,15 +132,15 @@ public class S3Iterator
 
     private void parseObjects()
     {
-        for (final S3ObjectSummary objectSummary : current.getObjectSummaries())
+        for (final S3Object object : current.contents())
         {
-            final String objectSummaryKey = objectSummary.getKey();
+            final String objectKey = object.key();
 
-            String[] keyParts = fileSystem.key2Parts(objectSummaryKey);
+            String[] keyParts = fileSystem.key2Parts(objectKey);
 
             addParentPaths(keyParts);
 
-            S3Path path = new S3Path(fileSystem, "/" + fileStore.name(), keyParts);
+            S3Path path = new S3Path(fileSystem, ROOT_PATH + fileStore.name(), keyParts);
 
             if (!items.contains(path))
             {
@@ -145,8 +162,8 @@ public class S3Iterator
 
         while (subParts.length > 0)
         {
-            S3Path path = new S3Path(fileSystem, "/" + fileStore.name(), subParts);
-            String prefix = current.getPrefix();
+            S3Path path = new S3Path(fileSystem, ROOT_PATH + fileStore.name(), subParts);
+            String prefix = current.prefix();
 
             String parentKey = path.getKey();
             if (prefix.length() > parentKey.length() && prefix.contains(parentKey))
@@ -177,32 +194,33 @@ public class S3Iterator
      *
      * @param key      the uri to parse
      * @param listPath List not null list to add
-     * @param current  ObjectListing to walk
+     * @param current  List<S3Object> to walk
      */
-    private void parseObjectListing(String key, List<S3Path> listPath, ObjectListing current)
+    private void parseObjectListing(String key, List<S3Path> listPath, ListObjectsV2Response current)
     {
-        for (String commonPrefix : current.getCommonPrefixes())
+        for (CommonPrefix commonPrefix : current.commonPrefixes())
         {
-            if (!commonPrefix.equals("/"))
+            if (!commonPrefix.prefix().equals("/"))
             {
-                listPath.add(new S3Path(fileSystem, "/" + fileStore.name(), fileSystem.key2Parts(commonPrefix)));
+                listPath.add(new S3Path(fileSystem, "/" + fileStore.name(),
+                                        fileSystem.key2Parts(commonPrefix.prefix())));
             }
         }
 
         // TODO: figure our a way to efficiently preprocess commonPrefix basicFileAttributes
-        for (final S3ObjectSummary objectSummary : current.getObjectSummaries())
+        for (final S3Object object : current.contents())
         {
-            final String objectSummaryKey = objectSummary.getKey();
+            final String objectKey = object.key();
 
             // we only want the first level
-            String immediateDescendantKey = getImmediateDescendant(key, objectSummaryKey);
+            String immediateDescendantKey = getImmediateDescendant(key, objectKey);
             if (immediateDescendantKey != null)
             {
                 S3Path descendentPart = new S3Path(fileSystem,
                                                    "/" + fileStore.name(),
                                                    fileSystem.key2Parts(immediateDescendantKey));
 
-                descendentPart.setFileAttributes(s3Utils.toS3FileAttributes(objectSummary, descendentPart.getKey()));
+                descendentPart.setFileAttributes(s3Utils.toS3FileAttributes(object, descendentPart.getKey()));
                 if (!listPath.contains(descendentPart))
                 {
                     listPath.add(descendentPart);
@@ -253,19 +271,23 @@ public class S3Iterator
         return keyChild;
     }
 
-    ListObjectsRequest buildRequest(String bucketName, String key, boolean incremental)
+    ListObjectsV2Request buildRequest(String bucketName, String key, boolean incremental)
     {
         return buildRequest(bucketName, key, incremental, null);
     }
 
-    ListObjectsRequest buildRequest(String bucketName, String key, boolean incremental, Integer maxKeys)
+    ListObjectsV2Request buildRequest(String bucketName, String key, boolean incremental, Integer maxKeys)
     {
-        if (incremental)
-        {
-            return new ListObjectsRequest(bucketName, key, null, null, maxKeys);
-        }
+        ListObjectsV2Request.Builder builder = ListObjectsV2Request.builder();
+        builder.bucket(bucketName)
+               .prefix(key)
+               .maxKeys(maxKeys);
 
-        return new ListObjectsRequest(bucketName, key, key, "/", maxKeys);
+        if (!incremental)
+        {
+            builder.delimiter("/");
+        }
+        return builder.build();
     }
 
 }

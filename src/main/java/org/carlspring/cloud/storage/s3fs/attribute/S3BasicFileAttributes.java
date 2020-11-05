@@ -22,11 +22,11 @@ public class S3BasicFileAttributes
     private long cacheCreated;
 
 
-    public S3BasicFileAttributes(String key,
-                                 FileTime lastModifiedTime,
-                                 long size,
-                                 boolean isDirectory,
-                                 boolean isRegularFile)
+    public S3BasicFileAttributes(final String key,
+                                 final FileTime lastModifiedTime,
+                                 final long size,
+                                 final boolean isDirectory,
+                                 final boolean isRegularFile)
     {
         this.key = key;
         this.lastModifiedTime = lastModifiedTime;

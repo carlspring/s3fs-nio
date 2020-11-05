@@ -1,0 +1,144 @@
+package org.carlspring.cloud.storage.s3fs.path;
+
+import org.carlspring.cloud.storage.s3fs.S3FileSystem;
+import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
+
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class EndsWithTest
+        extends S3UnitTestBase
+{
+
+
+    @BeforeEach
+    public void setup()
+            throws IOException
+    {
+        s3fsProvider = getS3fsProvider();
+        fileSystem = s3fsProvider.newFileSystem(S3_GLOBAL_URI_TEST, null);
+    }
+
+    @AfterEach
+    public void tearDown()
+    {
+        s3fsProvider.close((S3FileSystem) fileSystem);
+    }
+
+    private S3Path getPath(String path)
+    {
+        return s3fsProvider.getFileSystem(S3_GLOBAL_URI_TEST).getPath(path);
+    }
+
+    @Test
+    void endsWithAbsoluteRelative()
+    {
+        assertTrue(getPath("/bucket/file1").endsWith(getPath("file1")));
+    }
+
+    @Test
+    void endsWithAbsoluteAbsolute()
+    {
+        assertTrue(getPath("/bucket/file1").endsWith(getPath("/bucket/file1")));
+    }
+
+    @Test
+    void endsWithRelativeRelative()
+    {
+        assertTrue(getPath("file/file1").endsWith(getPath("file1")));
+    }
+
+    @Test
+    void endsWithRelativeAbsolute()
+    {
+        assertFalse(getPath("file/file1").endsWith(getPath("/bucket")));
+    }
+
+    @Test
+    void endsWithDifferentFileSystem()
+    {
+        assertFalse(getPath("/bucket/file1").endsWith(Paths.get("/bucket/file1")));
+    }
+
+    @Test
+    void endsWithBlankRelativeAbsolute()
+    {
+        assertFalse(getPath("").endsWith(getPath("/bucket")));
+    }
+
+    @Test
+    void endsWithBlankBlank()
+    {
+        assertTrue(getPath("").endsWith(getPath("")));
+    }
+
+    @Test
+    void endsWithRelativeBlankAbsolute()
+    {
+        assertFalse(getPath("/bucket/file1").endsWith(getPath("")));
+    }
+
+    @Test
+    void endsWithRelativeBlankRelative()
+    {
+        assertFalse(getPath("file1").endsWith(getPath("")));
+    }
+
+    @Test
+    void endsWithDifferent()
+    {
+        assertFalse(getPath("/bucket/dir/dir/file1").endsWith(getPath("fail/dir/file1")));
+    }
+
+    @Test
+    void endsWithDifferentProvider()
+            throws IOException
+    {
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        {
+            Path fileLinux = linux.getPath("/file");
+
+            assertFalse(getPath("/bucket/file").endsWith(fileLinux));
+        }
+
+        try (FileSystem window = MemoryFileSystemBuilder.newWindows().build("window"))
+        {
+            Path file = window.getPath("c:/file");
+
+            assertFalse(getPath("/c/file").endsWith(file));
+        }
+    }
+
+    @Test
+    void endsWithString()
+    {
+        // endsWithAbsoluteRelative(){
+        assertTrue(getPath("/bucket/file1").endsWith("file1"));
+        // endsWithAbsoluteAbsolute
+        assertTrue(getPath("/bucket/file1").endsWith("/bucket/file1"));
+        // endsWithRelativeRelative
+        assertTrue(getPath("file/file1").endsWith("file1"));
+        // endsWithRelativeAbsolute
+        assertFalse(getPath("file/file1").endsWith("/bucket"));
+        // endsWithBlankRelativeAbsolute
+        assertFalse(getPath("").endsWith("/bucket"));
+        // endsWithBlankBlank
+        assertTrue(getPath("").endsWith(""));
+        // endsWithRelativeBlankAbsolute
+        assertFalse(getPath("/bucket/file1").endsWith(""));
+        // endsWithRelativeBlankRelative
+        assertFalse(getPath("file1").endsWith(""));
+    }
+
+}

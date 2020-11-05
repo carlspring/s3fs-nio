@@ -5,37 +5,48 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
 import org.apache.tika.Tika;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static java.lang.String.format;
 
 public class S3SeekableByteChannel
         implements SeekableByteChannel
 {
 
-    private S3Path path;
+    private final S3Path path;
 
-    private Set<? extends OpenOption> options;
+    private final Set<? extends OpenOption> options;
 
-    private SeekableByteChannel seekable;
+    private final SeekableByteChannel seekable;
 
-    private Path tempFile;
+    private final Path tempFile;
 
 
     /**
      * Open or creates a file, returning a seekable byte channel
      *
-     * @param path    the path open or create
-     * @param options options specifying how the file is opened
+     * @param path             the path open or create
+     * @param options          options specifying how the file is opened
+     * @param tempFileRequired true if a temp file wanted, false in case of a in-memory solution option.
      * @throws IOException if an I/O error occurs
      */
-    public S3SeekableByteChannel(S3Path path, Set<? extends OpenOption> options)
+    public S3SeekableByteChannel(final S3Path path,
+                                 final Set<? extends OpenOption> options,
+                                 final boolean tempFileRequired)
             throws IOException
     {
         this.path = path;
@@ -55,36 +66,48 @@ public class S3SeekableByteChannel
             throw new NoSuchFileException(format("target not exists: %s", path));
         }
 
-        tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+        final Set<? extends OpenOption> seekOptions = new HashSet<>(this.options);
+        seekOptions.remove(StandardOpenOption.CREATE_NEW);
 
-        boolean removeTempFile = true;
-
-        try
+        if(tempFileRequired)
         {
-            if (exists)
+            tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+
+            boolean removeTempFile = true;
+
+            try
             {
-                try (S3Object object = path.getFileSystem().getClient().getObject(path.getFileStore()
-                                                                                      .getBucket()
-                                                                                      .getName(),
-                                                                                  key))
+                if (exists)
                 {
-                    Files.copy(object.getObjectContent(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    final S3Client client = path.getFileSystem().getClient();
+                    final String bucketName = path.getFileStore().getBucket().name();
+                    final GetObjectRequest request = GetObjectRequest.builder()
+                                                                     .bucket(bucketName)
+                                                                     .key(key)
+                                                                     .build();
+
+                    try (InputStream byteStream = client.getObject(request))
+                    {
+                        Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                    }
+
+                }
+
+                seekable = Files.newByteChannel(tempFile, seekOptions);
+
+                removeTempFile = false;
+            }
+            finally
+            {
+                if (removeTempFile)
+                {
+                    Files.deleteIfExists(tempFile);
                 }
             }
-
-            Set<? extends OpenOption> seekOptions = new HashSet<>(this.options);
-            seekOptions.remove(StandardOpenOption.CREATE_NEW);
-
-            seekable = Files.newByteChannel(tempFile, seekOptions);
-
-            removeTempFile = false;
-        }
-        finally
+        }else
         {
-            if (removeTempFile)
-            {
-                Files.deleteIfExists(tempFile);
-            }
+            this.tempFile = null;
+            this.seekable = Files.newByteChannel(path, seekOptions);
         }
     }
 
@@ -119,11 +142,17 @@ public class S3SeekableByteChannel
                 return;
             }
 
-            sync();
+            if(this.tempFile != null)
+            {
+                sync();
+            }
         }
         finally
         {
-            Files.deleteIfExists(tempFile);
+            if(tempFile != null)
+            {
+                Files.deleteIfExists(tempFile);
+            }
         }
     }
 
@@ -137,18 +166,22 @@ public class S3SeekableByteChannel
     {
         try (InputStream stream = new BufferedInputStream(Files.newInputStream(tempFile)))
         {
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentLength(Files.size(tempFile));
+            //TODO: If the temp file is larger than 5 GB then, instead of a putObject, a multi-part upload is needed.
+            PutObjectRequest.Builder builder = PutObjectRequest.builder();
+            long length = Files.size(tempFile);
+            builder.contentLength(length);
 
             if (path.getFileName() != null)
             {
-                metadata.setContentType(new Tika().detect(stream, path.getFileName().toString()));
+                builder.contentType(new Tika().detect(stream, path.getFileName().toString()));
             }
 
-            String bucket = path.getFileStore().name();
-            String key = path.getKey();
+            builder.bucket(path.getFileStore().name());
+            builder.key(path.getKey());
 
-            path.getFileSystem().getClient().putObject(bucket, key, stream, metadata);
+            S3Client client = path.getFileSystem().getClient();
+
+            client.putObject(builder.build(), RequestBody.fromInputStream(stream, length));
         }
     }
 

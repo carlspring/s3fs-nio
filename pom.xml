@@ -81,7 +81,7 @@
         <!-- Sonarcloud properties -->
 
         <version.slf4j>1.7.30</version.slf4j>
-        <version.aws-java-sdk-s3>1.11.850</version.aws-java-sdk-s3>
+        <version.software.amazon.awssdk>2.14.16</version.software.amazon.awssdk>
         <version.guava>30.0-jre</version.guava>
         <version.tika>1.24.1</version.tika>
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
@@ -166,17 +166,32 @@
         </plugins>
     </build>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.amazon.awssdk</groupId>
+                <artifactId>bom</artifactId>
+                <version>${version.software.amazon.awssdk}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
-            <groupId>com.amazonaws</groupId>
-            <artifactId>aws-java-sdk-s3</artifactId>
-            <version>${version.aws-java-sdk-s3}</version>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>commons-logging</groupId>
                     <artifactId>commons-logging</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>apache-client</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>

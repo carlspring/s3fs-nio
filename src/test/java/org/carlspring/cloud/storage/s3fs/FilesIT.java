@@ -8,20 +8,36 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class FilesIT
+class FilesIT
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
@@ -35,7 +51,7 @@ public class FilesIT
     public void setup()
             throws IOException
     {
-        System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
+        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
 
         fileSystemAmazon = build();
     }
@@ -62,7 +78,7 @@ public class FilesIT
     }
 
     @Test
-    public void notExistsDir()
+    void notExistsDir()
     {
         Path dir = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString() + "/");
 
@@ -70,7 +86,7 @@ public class FilesIT
     }
 
     @Test
-    public void notExistsFile()
+    void notExistsFile()
     {
         Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
 
@@ -78,7 +94,7 @@ public class FilesIT
     }
 
     @Test
-    public void existsFile()
+    void existsFile()
             throws IOException
     {
         Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
@@ -91,7 +107,7 @@ public class FilesIT
     }
 
     @Test
-    public void existsFileWithSpace()
+    void existsFileWithSpace()
             throws IOException
     {
         Path file = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString(), "space folder");
@@ -105,7 +121,7 @@ public class FilesIT
     }
 
     @Test
-    public void createEmptyDirTest()
+    void createEmptyDirTest()
             throws IOException
     {
         Path dir = createEmptyDir();
@@ -115,7 +131,7 @@ public class FilesIT
     }
 
     @Test
-    public void createEmptyFileTest()
+    void createEmptyFileTest()
             throws IOException
     {
         Path file = createEmptyFile();
@@ -125,7 +141,7 @@ public class FilesIT
     }
 
     @Test
-    public void createTempFile()
+    void createTempFile()
             throws IOException
     {
         Path dir = createEmptyDir();
@@ -136,7 +152,7 @@ public class FilesIT
     }
 
     @Test
-    public void createTempFileAndWrite()
+    void createTempFileAndWrite()
             throws IOException
     {
         Path dir = createEmptyDir();
@@ -152,7 +168,7 @@ public class FilesIT
     }
 
     @Test
-    public void createTempDir()
+    void createTempDir()
             throws IOException
     {
         Path dir = createEmptyDir();
@@ -163,27 +179,29 @@ public class FilesIT
     }
 
     @Test
-    public void deleteFile()
+    void deleteFile()
             throws IOException
     {
         Path file = createEmptyFile();
 
         Files.delete(file);
-        Files.notExists(file);
+
+        assertTrue(Files.notExists(file));
     }
 
     @Test
-    public void deleteDir()
+    void deleteDir()
             throws IOException
     {
         Path dir = createEmptyDir();
 
         Files.delete(dir);
-        Files.notExists(dir);
+
+        assertTrue(Files.notExists(dir));
     }
 
     @Test
-    public void copyDir()
+    void copyDir()
             throws IOException
     {
         Path dir = uploadDir();
@@ -195,7 +213,7 @@ public class FilesIT
     }
 
     @Test
-    public void directoryStreamBaseBucketFindDirectoryTest()
+    void directoryStreamBaseBucketFindDirectoryTest()
             throws IOException
     {
         Path bucketPath = fileSystemAmazon.getPath(bucket);
@@ -210,7 +228,7 @@ public class FilesIT
     }
 
     @Test
-    public void directoryStreamBaseBucketFindFileTest()
+    void directoryStreamBaseBucketFindFileTest()
             throws IOException
     {
         Path bucketPath = fileSystemAmazon.getPath(bucket);
@@ -225,7 +243,7 @@ public class FilesIT
     }
 
     @Test
-    public void directoryStreamFirstDirTest()
+    void directoryStreamFirstDirTest()
             throws IOException
     {
         Path dir = uploadDir();
@@ -248,7 +266,7 @@ public class FilesIT
     }
 
     @Test
-    public void virtualDirectoryStreamTest()
+    void virtualDirectoryStreamTest()
             throws IOException
     {
         String folder = UUID.randomUUID().toString() + "/";
@@ -259,24 +277,19 @@ public class FilesIT
         Path dir = fileSystemAmazon.getPath(bucket, folder);
 
         S3Path s3Path = (S3Path) dir;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // upload file without paths
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(0);
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = s3Path.getFileStore().name();
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(file1).build();
+        client.putObject(request, requestBody);
 
-        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(),
-                                                     file1,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata);
 
         // another file without paths
-        ObjectMetadata metadata2 = new ObjectMetadata();
-        metadata.setContentLength(0);
-
-        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(),
-                                                     file2,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata2);
+        request = PutObjectRequest.builder().bucket(bucketName).key(file2).build();
+        client.putObject(request, requestBody);
 
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir))
         {
@@ -313,7 +326,7 @@ public class FilesIT
     }
 
     @Test
-    public void virtualDirectoryStreamWithVirtualSubFolderTest()
+    void virtualDirectoryStreamWithVirtualSubFolderTest()
             throws IOException
     {
         String folder = UUID.randomUUID().toString() + "/";
@@ -324,23 +337,18 @@ public class FilesIT
         Path dir = fileSystemAmazon.getPath(bucket, folder);
 
         S3Path s3Path = (S3Path) dir;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         // upload without paths
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(0);
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = s3Path.getFileStore().name();
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(subFolder).build();
+        client.putObject(request, requestBody);
 
-        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(),
-                                                     subFolder,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata);
         // upload another file without paths
-        ObjectMetadata metadata2 = new ObjectMetadata();
-        metadata.setContentLength(0);
-
-        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(),
-                                                     file2,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata2);
+        request = PutObjectRequest.builder().bucket(bucketName).key(file2).build();
+        client.putObject(request, requestBody);
 
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir))
         {
@@ -377,7 +385,7 @@ public class FilesIT
     }
 
     @Test
-    public void deleteFullDirTest()
+    void deleteFullDirTest()
             throws IOException
     {
         Path dir = uploadDir();
@@ -410,7 +418,7 @@ public class FilesIT
     }
 
     @Test
-    public void copyUpload()
+    void copyUpload()
             throws IOException
     {
         final String content = "sample content";
@@ -422,7 +430,7 @@ public class FilesIT
     }
 
     @Test
-    public void copyDownload()
+    void copyDownload()
             throws IOException
     {
         Path result = uploadSingleFile(null);
@@ -436,7 +444,7 @@ public class FilesIT
     }
 
     @Test
-    public void moveFromDifferentProviders()
+    void moveFromDifferentProviders()
             throws IOException
     {
         final String content = "sample content";
@@ -456,7 +464,7 @@ public class FilesIT
     }
 
     @Test
-    public void move()
+    void move()
             throws IOException
     {
         final String content = "sample content";
@@ -473,52 +481,54 @@ public class FilesIT
     }
 
     @Test
-    public void createFileWithFolderAndNotExistsFolders()
+    void createFileWithFolderAndNotExistsFolders()
     {
         String fileWithFolders = UUID.randomUUID().toString() + "/folder2/file.html";
 
         Path path = fileSystemAmazon.getPath(bucket, fileWithFolders.split("/"));
 
         S3Path s3Path = (S3Path) path;
+        final S3Client client = s3Path.getFileSystem().getClient();
 
-        // upload file without paths
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(0);
-
-        s3Path.getFileSystem().getClient().putObject(s3Path.getFileStore().name(),
-                                                     fileWithFolders,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata);
+        // upload without paths
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = s3Path.getFileStore().name();
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(fileWithFolders).build();
+        client.putObject(request, requestBody);
 
         assertTrue(Files.exists(path));
         assertTrue(Files.exists(path.getParent()));
     }
 
     @Test
-    public void amazonCopyDetectContentType()
+    void amazonCopyDetectContentType()
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"),
+                                              "<html><body>html file</body></html>".getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
-            S3Path resultS3 = (S3Path) result;
-            ObjectMetadata metadata = resultS3.getFileSystem()
-                                              .getClient()
-                                              .getObjectMetadata(resultS3.getFileStore().name(),
-                                                                 resultS3.getKey());
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
-            assertEquals("text/html", metadata.getContentType());
+            assertEquals("text/html", response.contentType());
         }
     }
 
     @Test
-    public void amazonCopyNotDetectContentTypeSetDefault()
+    void amazonCopyNotDetectContentTypeSetDefault()
             throws IOException
     {
         final byte[] data = new byte[]{ (byte) 0xe0,
@@ -538,47 +548,49 @@ public class FilesIT
                                         0x30,
                                         (byte) 0x9d };
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
+            final Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
-            S3Path resultS3 = (S3Path) result;
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
-            ObjectMetadata metadata = resultS3.getFileSystem()
-                                              .getClient()
-                                              .getObjectMetadata(resultS3.getFileStore().name(), resultS3.getKey());
-
-            assertEquals("application/octet-stream", metadata.getContentType());
+            assertEquals("application/octet-stream", response.contentType());
         }
     }
 
     @Test
-    public void amazonOutpuStreamDetectContentType()
+    void amazonOutpuStreamDetectContentType()
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket,
-                                                   UUID.randomUUID().toString() + htmlFile.getFileName().toString());
+            final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
+            final Path result = fileSystemAmazon.getPath(bucket, fileName);
 
-            try (OutputStream out = Files.newOutputStream(result))
+            try (final OutputStream out = Files.newOutputStream(result))
             {
                 // copied from Files.write
-                byte[] bytes = Files.readAllBytes(htmlFile);
+                final byte[] bytes = Files.readAllBytes(htmlFile);
 
-                int len = bytes.length;
+                final int len = bytes.length;
                 int rem = len;
 
                 while (rem > 0)
                 {
-                    int n = Math.min(rem, 8192);
+                    final int n = Math.min(rem, 8192);
 
                     out.write(bytes, (len - rem), n);
 
@@ -586,18 +598,20 @@ public class FilesIT
                 }
             }
 
-            S3Path resultS3 = (S3Path) result;
-            ObjectMetadata metadata = resultS3.getFileSystem()
-                                              .getClient()
-                                              .getObjectMetadata(resultS3.getFileStore().name(),
-                                                                 resultS3.getKey());
+            final S3Path resultS3 = (S3Path) result;
+            final String bucketName = resultS3.getFileStore().name();
+            final String key = resultS3.getKey();
+            final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
+            final HeadObjectResponse response = resultS3.getFileSystem()
+                                                        .getClient()
+                                                        .headObject(request);
 
-            assertEquals("text/html", metadata.getContentType());
+            assertEquals("text/html", response.contentType());
         }
     }
 
     @Test
-    public void readAttributesFile()
+    void readAttributesFile()
             throws IOException
     {
         final String content = "sample content";
@@ -615,7 +629,7 @@ public class FilesIT
     }
 
     @Test
-    public void readAttributesString()
+    void readAttributesString()
             throws IOException
     {
         final String content = "sample content";
@@ -636,7 +650,7 @@ public class FilesIT
     }
 
     @Test
-    public void readAttributesDirectory()
+    void readAttributesDirectory()
             throws IOException
     {
         Path dir;
@@ -659,8 +673,6 @@ public class FilesIT
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent().getParent(), dir));
         }
 
-        //dir = fileSystemAmazon.getPath("/upp-sources", "DES", "skeleton");
-
         BasicFileAttributes fileAttributes = Files.readAttributes(dir.resolve("lib").resolve("angular"),
                                                                   BasicFileAttributes.class);
         assertNotNull(fileAttributes);
@@ -669,7 +681,7 @@ public class FilesIT
     }
 
     @Test
-    public void seekableCloseTwice()
+    void seekableCloseTwice()
             throws IOException
     {
         Path file = createEmptyFile();
@@ -682,22 +694,22 @@ public class FilesIT
     }
 
     @Test
-    public void bucketIsDirectory()
+    void bucketIsDirectory()
             throws IOException
     {
-        Path path = fileSystemAmazon.getPath(bucket);
+        Path path = fileSystemAmazon.getPath(bucket, "/");
 
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
 
         assertEquals(0, attrs.size());
-        assertNull(attrs.creationTime());
-        assertNull(attrs.lastAccessTime());
-        assertNull(attrs.lastModifiedTime());
+        assertNotNull(attrs.creationTime());
+        assertNotNull(attrs.lastAccessTime());
+        assertNotNull(attrs.lastModifiedTime());
         assertTrue(attrs.isDirectory());
     }
 
     @Test
-    public void fileIsReadableBucket()
+    void fileIsReadableBucket()
     {
         Path path = fileSystemAmazon.getPath(bucket, "/");
 
@@ -707,7 +719,7 @@ public class FilesIT
     }
 
     @Test
-    public void fileIsReadableBucketFile()
+    void fileIsReadableBucketFile()
             throws IOException
     {
         Path file = createEmptyFile();

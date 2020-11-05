@@ -6,22 +6,33 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.regions.Region;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * A test to search using ServiceLoader for available FileSystemsProvider-s and call them with newFileSystem.
  *
  * @author jarnaiz
  */
-public class InstallProviderTest
+class InstallProviderTest
 {
 
 
@@ -40,14 +51,14 @@ public class InstallProviderTest
     }
 
     @Test
-    public void useZipProvider()
+    void useZipProvider()
             throws IOException
     {
         Path path = createZipTempFile();
         String pathFinal = pathToString(path);
 
         FileSystem fs = FileSystems.newFileSystem(URI.create("jar:file:" + pathFinal),
-                                                  new HashMap<String, Object>(),
+                                                  new HashMap<>(),
                                                   this.getClass().getClassLoader());
 
         Path zipPath = fs.getPath("test.zip");
@@ -55,31 +66,31 @@ public class InstallProviderTest
         assertNotNull(zipPath);
         assertNotNull(zipPath.getFileSystem());
         assertNotNull(zipPath.getFileSystem().provider());
-        //assertTrue(zipPath.getFileSystem().provider() instanceof com.sun.nio.zipfs.ZipFileSystemProvider);
     }
 
     @Test
-    public void useZipProviderPathNotExists()
+    void useZipProviderPathNotExists()
     {
+        final URI uri = URI.create("jar:file:/not/exists/zip.zip");
+        final HashMap<String, Object> envMap = new HashMap<>();
+        final ClassLoader classLoader = this.getClass().getClassLoader();
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
-            FileSystems.newFileSystem(URI.create("jar:file:/not/exists/zip.zip"),
-                                      new HashMap<String, Object>(),
-                                      this.getClass().getClassLoader());
-        });
+        Exception exception = assertThrows(FileSystemNotFoundException.class,
+                                           () -> FileSystems.newFileSystem(uri, envMap, classLoader));
 
         assertNotNull(exception);
     }
 
     @Test
-    public void useAlternativeZipProvider()
+    void useAlternativeZipProvider()
             throws IOException
     {
         Path path = createZipTempFile();
         String pathFinal = pathToString(path);
 
         FileSystem fs = FileSystems.newFileSystem(URI.create("zipfs:file:" + pathFinal),
-                                                  new HashMap<String, Object>(),
+                                                  new HashMap<>(),
                                                   this.getClass().getClassLoader());
 
         Path zipPath = fs.getPath("test.zip");
@@ -92,15 +103,19 @@ public class InstallProviderTest
     }
 
     @Test
-    public void newS3Provider()
+    void newS3Provider()
             throws IOException
     {
-        URI uri = URI.create("s3:///hello/there/");
+        final URI uri = URI.create("s3:///hello/there/");
 
-        // if meta-inf/services/java.ni.spi.FileSystemProvider is not present with
+        // Region property is needed to create S3 client.
+        final Map<String, Object> envMap = ImmutableMap.<String, Object>builder().put(REGION, Region.US_EAST_1.id())
+                                                                                 .build();
+
+        // if META-INF/services/java.nio.file.spi.FileSystemProvider is not present with
         // the content: org.carlspring.cloud.storage.s3fs.S3FileSystemProvider
         // this method return ProviderNotFoundException
-        FileSystem fs = FileSystems.newFileSystem(uri, new HashMap<String, Object>(), this.getClass().getClassLoader());
+        FileSystem fs = FileSystems.newFileSystem(uri, envMap, this.getClass().getClassLoader());
 
         Path path = fs.getPath("test.zip");
 
@@ -114,37 +129,36 @@ public class InstallProviderTest
     }
 
     @Test
-    public void getZipProvider()
+    void getZipProvider()
     {
+        final URI uri = URI.create("jar:file:/file.zip");
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
-            URI uri = URI.create("jar:file:/file.zip");
-            FileSystems.getFileSystem(uri);
-        });
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> FileSystems.getFileSystem(uri));
 
         assertNotNull(exception);
     }
 
     // deviation from spec
     @Test
-    public void getZipPath()
+    void getZipPath()
     {
+        final URI uri = URI.create("jar:file:/file.zip!/BAR");
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
-            Paths.get(URI.create("jar:file:/file.zip!/BAR"));
-        });
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> Paths.get(uri));
 
         assertNotNull(exception);
     }
 
     // deviation from spec
     @Test
-    public void getMemoryPath()
+    void getMemoryPath()
     {
+        final URI uri = URI.create("memory:hellou:/file.zip");
+
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> {
-            Paths.get(URI.create("memory:hellou:/file.zip"));
-        });
+        Exception exception = assertThrows(FileSystemNotFoundException.class, () -> Paths.get(uri));
 
         assertNotNull(exception);
     }

@@ -9,22 +9,31 @@ import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.util.UUID;
 
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
-public class S3UtilsIT
+class S3UtilsIT
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
@@ -44,7 +53,7 @@ public class S3UtilsIT
     private static FileSystem build()
             throws IOException
     {
-        System.clearProperty(S3FileSystemProvider.AMAZON_S3_FACTORY_CLASS);
+        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
         System.clearProperty(ACCESS_KEY);
         System.clearProperty(SECRET_KEY);
 
@@ -67,19 +76,19 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3ObjectWhenS3PathIsFile()
+    void lookupS3ObjectWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = getS3ObjectSummary(s3Path);
+        S3Object result = getS3ObjectSummary(s3Path);
 
-        assertEquals(s3Path.getKey(), result.getKey());
+        assertEquals(s3Path.getKey(), result.key());
     }
 
     @Test
-    public void lookupS3ObjectWhenS3PathIsFileAndExistsOtherStartsWithSameName()
+    void lookupS3ObjectWhenS3PathIsFileAndExistsOtherStartsWithSameName()
             throws IOException
     {
         Path path;
@@ -99,13 +108,13 @@ public class S3UtilsIT
         }
 
         S3Path s3Path = (S3Path) path.resolve("file");
-        S3ObjectSummary result = getS3ObjectSummary(s3Path);
+        S3Object result = getS3ObjectSummary(s3Path);
 
-        assertEquals(s3Path.getKey(), result.getKey());
+        assertEquals(s3Path.getKey(), result.key());
     }
 
     @Test
-    public void lookupS3ObjectWhenS3PathIsADirectory()
+    void lookupS3ObjectWhenS3PathIsADirectory()
             throws IOException
     {
         Path path;
@@ -122,58 +131,60 @@ public class S3UtilsIT
 
         S3Path s3Path = (S3Path) path.resolve("dir");
 
-        S3ObjectSummary result = getS3ObjectSummary(s3Path);
+        S3Object result = getS3ObjectSummary(s3Path);
 
-        assertEquals(s3Path.getKey() + "/", result.getKey());
+        assertEquals(s3Path.getKey() + "/", result.key());
     }
 
     @Test
-    public void lookupS3ObjectWhenS3PathIsADirectoryAndExistsOtherDirectoryStartsSameName()
+    void lookupS3ObjectWhenS3PathIsADirectoryAndExistsOtherDirectoryStartsSameName()
             throws IOException
     {
         final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
 
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(0L);
+        final RequestBody requestBody = RequestBody.fromInputStream(new ByteArrayInputStream("".getBytes()), 0L);
 
-        s3FileSystem.getClient().putObject(bucket.replace("/", ""),
-                                           startPath + "lib/angular/",
-                                           new ByteArrayInputStream("".getBytes()),
-                                           metadata);
-        s3FileSystem.getClient().putObject(bucket.replace("/", ""),
-                                           startPath + "lib/angular-dynamic-locale/",
-                                           new ByteArrayInputStream("".getBytes()),
-                                           metadata);
+        String bucketName = bucket.replace("/", "");
+        String key1 = startPath + "lib/angular/";
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key1).build();
+        s3FileSystem.getClient().putObject(request, requestBody);
+
+        String key2 = startPath + "lib/angular-dynamic-locale/";
+        request = PutObjectRequest.builder().bucket(bucketName).key(key2).build();
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = s3FileSystem.getPath(bucket, startPath, "lib", "angular");
-        S3ObjectSummary result = getS3ObjectSummary(s3Path);
+        S3Object result = getS3ObjectSummary(s3Path);
 
-        assertEquals(startPath + "lib/angular/", result.getKey());
+        assertEquals(startPath + "lib/angular/", result.key());
     }
 
     @Test
-    public void lookupS3ObjectWhenS3PathIsADirectoryAndIsVirtual()
+    void lookupS3ObjectWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
         String key = folder + "/content.js";
 
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
-        s3FileSystem.getClient().putObject(bucket.replace("/", ""),
-                                           key,
-                                           new ByteArrayInputStream("content1".getBytes()),
-                                           new ObjectMetadata());
+
+        String bucketName = bucket.replace("/", "");
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
-        S3ObjectSummary result = getS3ObjectSummary(s3Path);
+        S3Object result = getS3ObjectSummary(s3Path);
 
-        assertEquals(key, result.getKey());
+        assertEquals(key, result.key());
     }
 
     @Test
-    public void lookupS3BasicFileAttributesWhenS3PathIsFile()
+    void lookupS3BasicFileAttributesWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
@@ -194,17 +205,19 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
+    void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
         String key = folder + "/content.js";
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
-        s3FileSystem.getClient().putObject(bucket.replace("/", ""),
-                                           key,
-                                           new ByteArrayInputStream("content1".getBytes()),
-                                           new ObjectMetadata());
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = bucket.replace("/", "");
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
@@ -222,22 +235,20 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
+    void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
         String folder = "folder" + UUID.randomUUID().toString();
         String key = folder + "/";
 
-        final ObjectMetadata om = new ObjectMetadata();
-        om.setContentLength(0L);
-
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket.replace("/", ""),
-                                                                 key,
-                                                                 new ByteArrayInputStream("".getBytes()),
-                                                                 om);
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("contenido1".getBytes());
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = bucket.replace("/", "");
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
-        s3FileSystem.getClient().putObject(putObjectRequest);
+
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
 
@@ -256,7 +267,7 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3PosixFileAttributesWhenS3PathIsFile()
+    void lookupS3PosixFileAttributesWhenS3PathIsFile()
             throws IOException
     {
         Path path = getPathFile();
@@ -282,17 +293,21 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
+    void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
         String folder = "angular" + UUID.randomUUID().toString();
         String key = folder + "/content.js";
 
+
+        ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
+        String bucketName = bucket.replace("/", "");
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
-        s3FileSystem.getClient().putObject(bucket.replace("/", ""),
-                                           key,
-                                           new ByteArrayInputStream("content1".getBytes()),
-                                           new ObjectMetadata());
+
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
@@ -315,22 +330,20 @@ public class S3UtilsIT
     }
 
     @Test
-    public void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
+    void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
         String folder = "folder" + UUID.randomUUID().toString();
         String key = folder + "/";
 
-        final ObjectMetadata om = new ObjectMetadata();
-        om.setContentLength(0L);
-
-        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket.replace("/", ""),
-                                                                 key,
-                                                                 new ByteArrayInputStream("".getBytes()),
-                                                                 om);
+        final RequestBody requestBody = RequestBody.fromInputStream(new ByteArrayInputStream("".getBytes()),
+                                                                    0L);
+        String bucketName = bucket.replace("/", "");
+        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
-        s3FileSystem.getClient().putObject(putObjectRequest);
+
+        s3FileSystem.getClient().putObject(request, requestBody);
 
         S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
@@ -352,10 +365,10 @@ public class S3UtilsIT
         assertNull(result.permissions());
     }
 
-    public S3ObjectSummary getS3ObjectSummary(S3Path s3Path)
+    public S3Object getS3ObjectSummary(final S3Path s3Path)
             throws NoSuchFileException
     {
-        return new S3Utils().getS3ObjectSummary(s3Path);
+        return new S3Utils().getS3Object(s3Path);
     }
 
     private Path getPathFile()

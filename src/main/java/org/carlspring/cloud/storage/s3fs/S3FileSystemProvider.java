@@ -6,34 +6,94 @@ import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributeView;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.util.AttributesUtils;
 import org.carlspring.cloud.storage.s3fs.util.Cache;
+import org.carlspring.cloud.storage.s3fs.util.Constants;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.AccessMode;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.CopyOption;
+import java.nio.file.DirectoryNotEmptyException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.internal.Constants;
-import com.amazonaws.services.s3.model.AmazonS3Exception;
-import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.S3Object;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.Grant;
+import software.amazon.awssdk.services.s3.model.Owner;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.*;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_ERROR_RETRY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_DOMAIN;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_HOST;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
+import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
 /**
  * Spec:
@@ -69,7 +129,7 @@ public class S3FileSystemProvider
 
     public static final String CHARSET_KEY = "s3fs_charset";
 
-    public static final String AMAZON_S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
+    public static final String S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
 
     private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
@@ -86,15 +146,16 @@ public class S3FileSystemProvider
                                                                         PROXY_PORT,
                                                                         PROXY_USERNAME,
                                                                         PROXY_WORKSTATION,
+                                                                        REGION,
                                                                         SOCKET_SEND_BUFFER_SIZE_HINT,
                                                                         SOCKET_RECEIVE_BUFFER_SIZE_HINT,
                                                                         SOCKET_TIMEOUT,
                                                                         USER_AGENT,
-                                                                        AMAZON_S3_FACTORY_CLASS,
+                                                                        S3_FACTORY_CLASS,
                                                                         SIGNER_OVERRIDE,
                                                                         PATH_STYLE_ACCESS);
 
-    private S3Utils s3Utils = new S3Utils();
+    private final S3Utils s3Utils = new S3Utils();
 
     private Cache cache = new Cache();
 
@@ -181,7 +242,7 @@ public class S3FileSystemProvider
     {
         // we don`t use uri.getUserInfo and uri.getHost because secret key and access key have special chars
         // and dont return the correct strings
-        String uriString = uri.toString().replace("s3://", "");
+        String uriString = uri.toString().replaceAll("s3://", "");
         String authority = null;
 
         int authoritySeparator = uriString.indexOf("@");
@@ -236,9 +297,10 @@ public class S3FileSystemProvider
             overloadProperty(props, env, key);
         }
 
-        for (String key : env.keySet())
+        for (Map.Entry<String, ?> entry : env.entrySet())
         {
-            Object value = env.get(key);
+            final String key = entry.getKey();
+            final Object value = entry.getValue();
 
             if (!PROPS_TO_OVERLOAD.contains(key))
             {
@@ -279,7 +341,7 @@ public class S3FileSystemProvider
      */
     protected boolean overloadPropertiesWithEnv(Properties props, Map<String, ?> env, String key)
     {
-        if (env.get(key) != null && env.get(key) instanceof String)
+        if (env.get(key) instanceof String)
         {
             props.setProperty(key, (String) env.get(key));
 
@@ -426,8 +488,9 @@ public class S3FileSystemProvider
                                       OpenOption... options)
             throws IOException
     {
-        S3Path s3Path = toS3Path(path);
-        String key = s3Path.getKey();
+        final S3Path s3Path = toS3Path(path);
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
 
         Preconditions.checkArgument(options.length == 0,
                                     "OpenOptions not yet supported: %s",
@@ -436,25 +499,31 @@ public class S3FileSystemProvider
 
         try
         {
-            S3Object object = s3Path.getFileSystem().getClient().getObject(s3Path.getFileStore().name(), key);
-            InputStream res = object.getObjectContent();
+            final S3Client client = s3Path.getFileSystem().getClient();
+            final GetObjectRequest request = GetObjectRequest.builder()
+                                                             .bucket(bucketName)
+                                                             .key(key)
+                                                             .build();
+            final ResponseInputStream<GetObjectResponse> res = client.getObject(request);
 
             if (res == null)
             {
-                throw new IOException(String.format("The specified path is a directory: %s", path));
+                final String message = format("The specified path is a directory: %s", path);
+                throw new IOException(message);
             }
 
             return res;
         }
-        catch (AmazonS3Exception e)
+        catch (final S3Exception e)
         {
-            if (e.getStatusCode() == 404)
+            if (e.statusCode() == NOT_FOUND)
             {
                 throw new NoSuchFileException(path.toString());
             }
 
             // otherwise throws a generic IO exception
-            throw new IOException(String.format("Cannot access file: %s", path), e);
+            final String message = format("Cannot access file: %s", path);
+            throw new IOException(message, e);
         }
     }
 
@@ -466,7 +535,7 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        return new S3SeekableByteChannel(s3Path, options);
+        return new S3SeekableByteChannel(s3Path, options, true);
     }
 
     @Override
@@ -477,7 +546,7 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        return new S3FileChannel(s3Path, options);
+        return new S3FileChannel(s3Path, options, true);
     }
 
     /**
@@ -490,7 +559,8 @@ public class S3FileSystemProvider
                                 FileAttribute<?>... attrs)
             throws IOException
     {
-        S3Path s3Path = toS3Path(dir);
+        final S3Path s3Path = toS3Path(dir);
+        final S3Client client = s3Path.getFileSystem().getClient();
 
         Preconditions.checkArgument(attrs.length == 0,
                                     "attrs not yet supported: %s",
@@ -502,23 +572,27 @@ public class S3FileSystemProvider
         }
 
         // create bucket if necessary
-        Bucket bucket = s3Path.getFileStore().getBucket();
-        String bucketName = s3Path.getFileStore().name();
+        final Bucket bucket = s3Path.getFileStore().getBucket();
+        final String bucketName = s3Path.getFileStore().name();
+
         if (bucket == null)
         {
-            s3Path.getFileSystem().getClient().createBucket(bucketName);
+            final CreateBucketRequest request = CreateBucketRequest.builder()
+                                                                   .bucket(bucketName)
+                                                                   .build();
+            client.createBucket(request);
         }
 
         // create the object as directory
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(0);
+        final String directoryKey = s3Path.getKey().endsWith("/") ? s3Path.getKey() : s3Path.getKey() + "/";
+        //TODO: If the temp file is larger than 5 GB then, instead of a putObject, a multi-part upload is needed.
+        final PutObjectRequest request = PutObjectRequest.builder()
+                                                         .bucket(bucketName)
+                                                         .key(directoryKey)
+                                                         .contentLength(0L)
+                                                         .build();
 
-        String directoryKey = s3Path.getKey().endsWith("/") ? s3Path.getKey() : s3Path.getKey() + "/";
-
-        s3Path.getFileSystem().getClient().putObject(bucketName,
-                                                     directoryKey,
-                                                     new ByteArrayInputStream(new byte[0]),
-                                                     metadata);
+        client.putObject(request, RequestBody.fromBytes(new byte[0]));
     }
 
     @Override
@@ -530,18 +604,27 @@ public class S3FileSystemProvider
         {
             throw new NoSuchFileException("the path: " + this + " not exists");
         }
-        if (Files.isDirectory(s3Path) && Files.newDirectoryStream(s3Path).iterator().hasNext())
+        if (Files.isDirectory(s3Path))
         {
-            throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
+            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(s3Path))
+            {
+                if (stream.iterator().hasNext())
+                {
+                    throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
+                }
+            }
         }
 
         String key = s3Path.getKey();
         String bucketName = s3Path.getFileStore().name();
+        final S3Client client = s3Path.getFileSystem().getClient();
 
-        s3Path.getFileSystem().getClient().deleteObject(bucketName, key);
+        DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
+        client.deleteObject(request);
 
         // we delete the two objects (sometimes exists the key '/' and sometimes not)
-        s3Path.getFileSystem().getClient().deleteObject(bucketName, key + "/");
+        request = DeleteObjectRequest.builder().bucket(bucketName).key(key + "/").build();
+        client.deleteObject(request);
     }
 
     @Override
@@ -572,8 +655,34 @@ public class S3FileSystemProvider
         String keySource = s3Source.getKey();
         String bucketNameTarget = s3Target.getFileStore().name();
         String keyTarget = s3Target.getKey();
+        final S3Client client = s3Source.getFileSystem().getClient();
 
-        s3Source.getFileSystem().getClient().copyObject(bucketNameOrigin, keySource, bucketNameTarget, keyTarget);
+        final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
+
+        //TODO: If the temp file is larger than 5 GB then, instead of a copyObject, a multi-part copy is needed.
+        final CopyObjectRequest request = CopyObjectRequest.builder()
+                                                           .copySource(encodedUrl)
+                                                           .destinationBucket(bucketNameTarget)
+                                                           .destinationKey(keyTarget)
+                                                           .build();
+
+        client.copyObject(request);
+    }
+
+    private String encodeUrl(final String bucketNameOrigin,
+                             final String keySource)
+            throws UnsupportedEncodingException
+    {
+        String encodedUrl;
+        try
+        {
+            encodedUrl = URLEncoder.encode(bucketNameOrigin + "/" + keySource, StandardCharsets.UTF_8.toString());
+        }
+        catch (final UnsupportedEncodingException e)
+        {
+            throw new UnsupportedEncodingException("URL could not be encoded: " + e.getMessage());
+        }
+        return encodedUrl;
     }
 
     @Override
@@ -625,21 +734,21 @@ public class S3FileSystemProvider
             throw new NoSuchFileException(toString());
         }
 
-        String key = s3Utils.getS3ObjectSummary(s3Path).getKey();
-        S3AccessControlList accessControlList = new S3AccessControlList(s3Path.getFileStore().name(),
-                                                                        key,
-                                                                        s3Path.getFileSystem()
-                                                                              .getClient()
-                                                                              .getObjectAcl(s3Path.getFileStore()
-                                                                                                  .name(),
-                                                                                            key),
-                                                                        s3Path.getFileStore().getOwner());
+        final S3Object s3Object = s3Utils.getS3Object(s3Path);
+        final String key = s3Object.key();
+        final String bucket = s3Path.getFileStore().name();
+        final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucket).key(key).build();
+        final S3Client client = s3Path.getFileSystem().getClient();
+        final List<Grant> grants = client.getObjectAcl(request).grants();
+        final Owner owner = s3Path.getFileStore().getOwner();
+        final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key, grants, owner);
 
         accessControlList.checkAccess(modes);
     }
 
 
     @Override
+    @SuppressWarnings("unchecked")
     public <V extends FileAttributeView> V getFileAttributeView(Path path,
                                                                 Class<V> type,
                                                                 LinkOption... options)
@@ -772,33 +881,37 @@ public class S3FileSystemProvider
      */
     public S3FileSystem createFileSystem(URI uri, Properties props)
     {
-        return new S3FileSystem(this, getFileSystemKey(uri, props), getAmazonS3(uri, props), uri.getHost());
+        final String key = getFileSystemKey(uri, props);
+        final S3Client client = getS3Client(uri, props);
+        final String host = uri.getHost();
+        return new S3FileSystem(this, key, client, host);
     }
 
-    protected AmazonS3 getAmazonS3(URI uri, Properties props)
+    protected S3Client getS3Client(URI uri, Properties props)
     {
-        return getAmazonS3Factory(props).getAmazonS3(uri, props);
+        final S3Factory factory = getS3Factory(props);
+        return factory.getS3Client(uri, props);
     }
 
-    protected AmazonS3Factory getAmazonS3Factory(Properties props)
+    protected S3Factory getS3Factory(final Properties props)
     {
-        if (props.containsKey(AMAZON_S3_FACTORY_CLASS))
+        if (props.containsKey(S3_FACTORY_CLASS))
         {
-            String amazonS3FactoryClass = props.getProperty(AMAZON_S3_FACTORY_CLASS);
+            String s3FactoryClass = props.getProperty(S3_FACTORY_CLASS);
 
             try
             {
-                return (AmazonS3Factory) Class.forName(amazonS3FactoryClass).newInstance();
+                return (S3Factory) Class.forName(s3FactoryClass).getDeclaredConstructor().newInstance();
             }
-            catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException e)
+            catch (InstantiationException | IllegalAccessException | ClassNotFoundException | ClassCastException | NoSuchMethodException | InvocationTargetException e)
             {
                 throw new S3FileSystemConfigurationException("Configuration problem, couldn't instantiate " +
-                                                             "AmazonS3Factory (" + amazonS3FactoryClass + "): ",
+                                                             "S3Factory (" + s3FactoryClass + "): ",
                                                              e);
             }
         }
 
-        return new AmazonS3ClientFactory();
+        return new S3ClientFactory();
     }
 
     /**
@@ -847,7 +960,7 @@ public class S3FileSystemProvider
         S3Path s3Path = toS3Path(path);
         try
         {
-            s3Utils.getS3ObjectSummary(s3Path);
+            s3Utils.getS3Object(s3Path);
 
             return true;
         }
