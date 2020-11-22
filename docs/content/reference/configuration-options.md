@@ -19,6 +19,7 @@ A complete list of environment variables which can be set to configure the clien
 | s3fs_proxy_port <small>TODO</small>                                         | none        |
 | s3fs_proxy_username <small>TODO</small>                                     | none        |
 | s3fs_proxy_workstation <small>TODO</small>                                  | none        |
+| s3fs_region <small>The S3 region</small>                                    | none        |
 | s3fs_socket_send_buffer_size_hint <small>TODO</small>                       | TODO        |
 | s3fs_socket_receive_buffer_size_hint <small>TODO</small>                    | TODO        |
 | s3fs_socket_timeout <small>TODO</small>                                     | TODO        |
