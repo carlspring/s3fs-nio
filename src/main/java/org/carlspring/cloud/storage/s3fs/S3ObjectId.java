@@ -12,10 +12,6 @@ public class S3ObjectId
 
     private final String bucket;
     private final String key;
-    /**
-     * Optional and applicable only for get operation.
-     */
-    private final String versionId;
 
     /**
      * @param builder must not be null.
@@ -24,7 +20,6 @@ public class S3ObjectId
     {
         this.bucket = builder.getBucket();
         this.key = builder.getKey();
-        this.versionId = builder.getVersionId();
     }
 
     public static Builder builder()
@@ -47,53 +42,30 @@ public class S3ObjectId
         return key;
     }
 
-    /**
-     * Returns the version id which is optionally applicable for S3 get (but not
-     * put) operations.
-     */
-    public String getVersionId()
-    {
-        return versionId;
-    }
-
     @Override
-    public boolean equals(final Object o)
+    public boolean equals(Object o)
     {
-        if (this == o)
-        {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass())
-        {
-            return false;
-        }
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        final S3ObjectId that = (S3ObjectId) o;
+        S3ObjectId that = (S3ObjectId) o;
 
-        if (bucket != null ? !bucket.equals(that.bucket) : that.bucket != null)
-        {
-            return false;
-        }
-        if (key != null ? !key.equals(that.key) : that.key != null)
-        {
-            return false;
-        }
-        return versionId != null ? versionId.equals(that.versionId) : that.versionId == null;
+        if (getBucket() != null ? !getBucket().equals(that.getBucket()) : that.getBucket() != null) return false;
+        return getKey() != null ? getKey().equals(that.getKey()) : that.getKey() == null;
     }
 
     @Override
     public int hashCode()
     {
-        int result = bucket != null ? bucket.hashCode() : 0;
-        result = 31 * result + (key != null ? key.hashCode() : 0);
-        result = 31 * result + (versionId != null ? versionId.hashCode() : 0);
+        int result = getBucket() != null ? getBucket().hashCode() : 0;
+        result = 31 * result + (getKey() != null ? getKey().hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString()
     {
-        return "bucket: " + bucket + ", key: " + key + ", versionId: " + versionId;
+        return "bucket: " + bucket + ", key: " + key;
     }
 
     static final class Builder
@@ -101,7 +73,6 @@ public class S3ObjectId
 
         private String bucket;
         private String key;
-        private String versionId;
 
         public Builder()
         {
@@ -116,7 +87,6 @@ public class S3ObjectId
             super();
             this.bucket(src.getBucket());
             this.key(src.getKey());
-            this.versionId(src.getVersionId());
         }
 
         public String getBucket()
@@ -129,11 +99,6 @@ public class S3ObjectId
             return key;
         }
 
-        public String getVersionId()
-        {
-            return versionId;
-        }
-
         public void setBucket(final String bucket)
         {
             this.bucket = bucket;
@@ -142,11 +107,6 @@ public class S3ObjectId
         public void setKey(final String key)
         {
             this.key = key;
-        }
-
-        public void setVersionId(final String versionId)
-        {
-            this.versionId = versionId;
         }
 
         public Builder bucket(final String bucket)
@@ -158,12 +118,6 @@ public class S3ObjectId
         public Builder key(final String key)
         {
             this.key = key;
-            return this;
-        }
-
-        public Builder versionId(final String versionId)
-        {
-            this.versionId = versionId;
             return this;
         }
 
