@@ -11,6 +11,7 @@ import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -34,6 +35,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
@@ -45,6 +47,7 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -58,6 +61,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.internal.util.Mimetype;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
@@ -72,6 +76,7 @@ import software.amazon.awssdk.services.s3.model.Owner;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.utils.StringUtils;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
@@ -94,6 +99,7 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
+import static software.amazon.awssdk.http.Header.CONTENT_TYPE;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
 /**
@@ -529,6 +535,77 @@ public class S3FileSystemProvider
     }
 
     @Override
+    public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
+        final S3Path s3Path = toS3Path(path);
+
+        // validate options
+        if (options.length > 0) {
+            final Set<OpenOption> opts = new LinkedHashSet<>(Arrays.asList(options));
+
+            // cannot handle APPEND here -> use newByteChannel() implementation
+            if (opts.contains(StandardOpenOption.APPEND)) {
+                return super.newOutputStream(path, options);
+            }
+
+            if (opts.contains(StandardOpenOption.READ)) {
+                throw new IllegalArgumentException("READ not allowed");
+            }
+
+            final boolean create = opts.remove(StandardOpenOption.CREATE);
+            final boolean createNew = opts.remove(StandardOpenOption.CREATE_NEW);
+            final boolean truncateExisting = opts.remove(StandardOpenOption.TRUNCATE_EXISTING);
+
+            // remove irrelevant/ignored options
+            opts.remove(StandardOpenOption.WRITE);
+            opts.remove(StandardOpenOption.SPARSE);
+
+            if (!opts.isEmpty()) {
+                throw new UnsupportedOperationException(opts.iterator().next() + " not supported");
+            }
+
+            validateCreateAndTruncateOptions(path, s3Path, create, createNew, truncateExisting);
+        }
+
+
+        final Map<String, String> metadata = buildMetadataFromPath(path);
+        return new S3OutputStream(s3Path.getFileSystem().getClient(), s3Path.toS3ObjectId(), metadata);
+    }
+
+    private void validateCreateAndTruncateOptions(final Path path,
+                                                  final S3Path s3Path,
+                                                  final boolean create,
+                                                  final boolean createNew,
+                                                  final boolean truncateExisting)
+            throws FileAlreadyExistsException, NoSuchFileException
+    {
+        if (!(create && truncateExisting))
+        {
+            if (s3Path.getFileSystem().provider().exists(s3Path))
+            {
+                if (createNew || !truncateExisting)
+                {
+                    throw new FileAlreadyExistsException(path.toString());
+                }
+            }
+            else if (!createNew && !create)
+            {
+                throw new NoSuchFileException(path.toString());
+            }
+        }
+    }
+
+    private Map<String, String> buildMetadataFromPath(final Path path)
+    {
+        final Map<String, String> metadata = new HashMap<>();
+        final String contentType = Mimetype.getInstance().getMimetype(path);
+        if (!StringUtils.isEmpty(contentType))
+        {
+            metadata.put(CONTENT_TYPE, contentType);
+        }
+        return metadata;
+    }
+
+    @Override
     public SeekableByteChannel newByteChannel(Path path,
                                               Set<? extends OpenOption> options,
                                               FileAttribute<?>... attrs)
@@ -586,7 +663,6 @@ public class S3FileSystemProvider
 
         // create the object as directory
         final String directoryKey = s3Path.getKey().endsWith("/") ? s3Path.getKey() : s3Path.getKey() + "/";
-        //TODO: If the temp file is larger than 5 GB then, instead of a putObject, a multi-part upload is needed.
         final PutObjectRequest request = PutObjectRequest.builder()
                                                          .bucket(bucketName)
                                                          .key(directoryKey)
@@ -660,7 +736,6 @@ public class S3FileSystemProvider
 
         final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
 
-        //TODO: If the temp file is larger than 5 GB then, instead of a copyObject, a multi-part copy is needed.
         final CopyObjectRequest request = CopyObjectRequest.builder()
                                                            .copySource(encodedUrl)
                                                            .destinationBucket(bucketNameTarget)

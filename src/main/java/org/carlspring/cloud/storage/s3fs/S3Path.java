@@ -165,6 +165,14 @@ public class S3Path
         return key;
     }
 
+    public S3ObjectId toS3ObjectId()
+    {
+        return S3ObjectId.builder()
+                         .bucket(getBucketName())
+                         .key(getKey())
+                         .build();
+    }
+
     @Override
     public S3FileSystem getFileSystem()
     {

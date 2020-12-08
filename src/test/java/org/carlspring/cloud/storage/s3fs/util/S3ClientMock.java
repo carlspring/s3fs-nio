@@ -18,6 +18,7 @@ package org.carlspring.cloud.storage.s3fs.util;
  */
 
 import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,6 +36,7 @@ import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -56,12 +59,18 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.http.AbortableInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.AbortMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.CommonPrefix;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
 import software.amazon.awssdk.services.s3.model.CopyObjectResponse;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
+import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetBucketAclRequest;
@@ -91,6 +100,8 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 import software.amazon.awssdk.utils.StringUtils;
 import static java.util.Arrays.asList;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
@@ -112,6 +123,10 @@ public class S3ClientMock
 
     private final Map<String, Owner> bucketOwners;
 
+    private String uploadId;
+
+    private byte[] uploadedParts;
+
     public S3ClientMock(final Path base)
     {
         this.base = base;
@@ -122,6 +137,11 @@ public class S3ClientMock
     public String serviceName()
     {
         return null;
+    }
+
+    public byte[] getUploadedParts()
+    {
+        return uploadedParts;
     }
 
     @Override
@@ -166,6 +186,7 @@ public class S3ClientMock
                  final byte[] content)
             throws IOException
     {
+
         addFile(bucket, fileName, content, new FileAttribute<?>[0]);
     }
 
@@ -215,6 +236,30 @@ public class S3ClientMock
         bucketOwners.put(bucketName, owner);
 
         return Files.createDirectories(base.resolve(bucketName));
+    }
+
+    @Override
+    public AbortMultipartUploadResponse abortMultipartUpload(final AbortMultipartUploadRequest abortMultipartUploadRequest)
+            throws AwsServiceException, SdkClientException
+    {
+        if (StringUtils.equals(uploadId, abortMultipartUploadRequest.uploadId()))
+        {
+            uploadId = null;
+        }
+
+        return AbortMultipartUploadResponse.builder().build();
+    }
+
+    @Override
+    public CompleteMultipartUploadResponse completeMultipartUpload(final CompleteMultipartUploadRequest completeMultipartUploadRequest)
+            throws AwsServiceException, SdkClientException
+    {
+        if (StringUtils.equals(uploadId, completeMultipartUploadRequest.uploadId()))
+        {
+            uploadId = null;
+        }
+
+        return CompleteMultipartUploadResponse.builder().build();
     }
 
     @Override
@@ -277,6 +322,18 @@ public class S3ClientMock
         {
             throw SdkException.create("Error while creating the directory: " + element, e);
         }
+    }
+
+    @Override
+    public CreateMultipartUploadResponse createMultipartUpload(final CreateMultipartUploadRequest createMultipartUploadRequest)
+            throws AwsServiceException, SdkClientException
+    {
+        uploadId = UUID.randomUUID().toString();
+        uploadedParts = null;
+
+        return CreateMultipartUploadResponse.builder()
+                                            .uploadId(uploadId)
+                                            .build();
     }
 
     @Override
@@ -875,8 +932,51 @@ public class S3ClientMock
 
         persist(bucketName, element);
 
-        final String eTag = "3a5c8b1ad448bca04584ecb55b836264";
+        final String eTag = generateETag();
         return PutObjectResponse.builder().eTag(eTag).build();
+    }
+
+    @Override
+    public UploadPartResponse uploadPart(final UploadPartRequest uploadPartRequest,
+                                         final RequestBody requestBody)
+            throws AwsServiceException, SdkClientException
+    {
+        if (StringUtils.equals(uploadId, uploadPartRequest.uploadId()))
+        {
+            final long contentLength = requestBody.contentLength();
+            final int offset = resizeUploadedPartsBy((int) contentLength);
+
+            try (final InputStream inputStream = requestBody.contentStreamProvider().newStream();
+                 final DataInputStream dataInputStream = new DataInputStream(inputStream))
+            {
+                dataInputStream.readFully(uploadedParts, offset, (int) contentLength);
+            }
+            catch (final IOException e)
+            {
+                throw new IllegalStateException("the inputStream is closed", e);
+            }
+        }
+
+        final String eTag = generateETag();
+        return UploadPartResponse.builder().eTag(eTag).build();
+    }
+
+    private String generateETag()
+    {
+        return UUID.randomUUID().toString().replaceAll("-", "");
+    }
+
+    private int resizeUploadedPartsBy(final int contentLength)
+    {
+        if (uploadedParts == null)
+        {
+            uploadedParts = new byte[contentLength];
+            return 0;
+        }
+
+        final int offset = uploadedParts.length;
+        uploadedParts = Arrays.copyOf(uploadedParts, offset + contentLength);
+        return offset;
     }
 
     private S3Element parse(final InputStream inputStream,
@@ -1021,4 +1121,5 @@ public class S3ClientMock
             return 31 * (s3Object != null && s3Object.key() != null ? s3Object.key().hashCode() : 0);
         }
     }
+
 }
