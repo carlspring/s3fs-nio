@@ -535,19 +535,25 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public OutputStream newOutputStream(final Path path, final OpenOption... options) throws IOException {
+    public OutputStream newOutputStream(final Path path,
+                                        final OpenOption... options)
+            throws IOException
+    {
         final S3Path s3Path = toS3Path(path);
 
         // validate options
-        if (options.length > 0) {
+        if (options.length > 0)
+        {
             final Set<OpenOption> opts = new LinkedHashSet<>(Arrays.asList(options));
 
             // cannot handle APPEND here -> use newByteChannel() implementation
-            if (opts.contains(StandardOpenOption.APPEND)) {
+            if (opts.contains(StandardOpenOption.APPEND))
+            {
                 return super.newOutputStream(path, options);
             }
 
-            if (opts.contains(StandardOpenOption.READ)) {
+            if (opts.contains(StandardOpenOption.READ))
+            {
                 throw new IllegalArgumentException("READ not allowed");
             }
 
@@ -559,7 +565,8 @@ public class S3FileSystemProvider
             opts.remove(StandardOpenOption.WRITE);
             opts.remove(StandardOpenOption.SPARSE);
 
-            if (!opts.isEmpty()) {
+            if (!opts.isEmpty())
+            {
                 throw new UnsupportedOperationException(opts.iterator().next() + " not supported");
             }
 
