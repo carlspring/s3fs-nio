@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
+import java.nio.file.NoSuchFileException;
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
@@ -18,12 +19,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectAclResponse;
-import software.amazon.awssdk.services.s3.model.Owner;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
 
 class CheckAccessTest
         extends S3UnitTestBase
@@ -64,27 +61,6 @@ class CheckAccessTest
         s3fsProvider.checkAccess(file1, AccessMode.READ);
     }
 
-    @Test
-    void checkAccessReadWithoutPermission()
-            throws IOException
-    {
-        // fixtures
-        final S3ClientMock client = S3MockFactory.getS3ClientMock();
-        final String bucketName = "bucketA";
-        final String directory = "dir";
-        client.bucket(bucketName).dir(directory);
-
-        final FileSystem fs = createNewS3FileSystem();
-        final String path = String.format("/%s/%s", bucketName, directory);
-        final Path file1 = fs.getPath(path);
-
-        // We're expecting an exception here to be thrown
-        final Exception exception = assertThrows(AccessDeniedException.class,
-                                                 () -> s3fsProvider.checkAccess(file1, AccessMode.READ));
-
-        // TODO: Assert that the exception message is as expected
-        assertNotNull(exception);
-    }
 
     @Test
     void checkAccessWrite()
@@ -105,58 +81,25 @@ class CheckAccessTest
     }
 
     @Test
-    void checkAccessWriteDifferentUser()
-            throws IOException
+    void checkAccessMissingFile()
+        throws IOException
     {
         // fixtures
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         final String bucketName = "bucketA";
         final String directory = "dir";
-        final String filePath = directory + "/readOnly";
-        client.bucket(bucketName).dir(directory).file(filePath);
-
-        // return empty list
-        final Owner owner = Owner.builder().id("2").displayName("Read Only").build();
-        final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucketName).key(filePath).build();
-        final GetObjectAclResponse response = GetObjectAclResponse.builder().owner(owner).build();
-        doReturn(response).when(client).getObjectAcl(request);
-
-        final S3FileSystem fs = createNewS3FileSystem();
-        final String path = String.format("/%s/%s", bucketName, filePath);
-        final S3Path file1 = fs.getPath(path);
-
-        // We're expecting an exception here to be thrown
-        final Exception exception = assertThrows(AccessDeniedException.class,
-                                                 () -> s3fsProvider.checkAccess(file1, AccessMode.WRITE));
-
-        assertNotNull(exception);
-    }
-
-    @Test
-    void checkAccessWriteWithoutPermission()
-            throws IOException
-    {
-        // fixtures
-        final S3ClientMock client = S3MockFactory.getS3ClientMock();
-        final String bucketName = "bucketA";
-        final String directory = "dir";
-        client.bucket("bucketA").dir(directory);
-
-        // return empty list
-        final GetObjectAclResponse response = GetObjectAclResponse.builder().build();
-        final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucketName).key(
-                directory + "/").build();
-        doReturn(response).when(client).getObjectAcl(request);
+        client.bucket("bucketA");
 
         final String path = String.format("/%s/%s", bucketName, directory);
         final Path file1 = createNewS3FileSystem().getPath(path);
 
         // We're expecting an exception here to be thrown
-        final Exception exception = assertThrows(AccessDeniedException.class,
-                                                 () -> s3fsProvider.checkAccess(file1, AccessMode.WRITE));
+        final Exception exception = assertThrows(NoSuchFileException.class,
+            () -> s3fsProvider.checkAccess(file1, AccessMode.WRITE));
 
         assertNotNull(exception);
     }
+
 
     @Test
     void checkAccessExecute()

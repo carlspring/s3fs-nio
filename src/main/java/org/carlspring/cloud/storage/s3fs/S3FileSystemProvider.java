@@ -718,32 +718,26 @@ public class S3FileSystemProvider
 
     @Override
     public void checkAccess(Path path, AccessMode... modes)
-            throws IOException
+        throws IOException
     {
         S3Path s3Path = toS3Path(path);
 
         Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
 
-        if (modes.length == 0)
+        if (!exists(s3Path))
         {
-            if (exists(s3Path))
-            {
-                return;
-            }
-
             throw new NoSuchFileException(toString());
         }
 
-        final S3Object s3Object = s3Utils.getS3Object(s3Path);
-        final String key = s3Object.key();
-        final String bucket = s3Path.getFileStore().name();
-        final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucket).key(key).build();
-        final S3Client client = s3Path.getFileSystem().getClient();
-        final List<Grant> grants = client.getObjectAcl(request).grants();
-        final Owner owner = s3Path.getFileStore().getOwner();
-        final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key, grants, owner);
+        if (modes.length > 0)
+        {
+            final S3Object s3Object = s3Utils.getS3Object(s3Path);
+            final String key = s3Object.key();
+            final String bucket = s3Path.getFileStore().name();
+            final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key);
 
-        accessControlList.checkAccess(modes);
+            accessControlList.checkAccess(modes);
+        }
     }
 
 
