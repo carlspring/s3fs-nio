@@ -57,6 +57,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
@@ -943,6 +944,11 @@ public class S3FileSystemProvider
         Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
     }
 
+    private static boolean isBucketRoot(S3Path s3Path) {
+        String key = s3Path.getKey();
+        return key.equals("") || key.equals("/");
+    }
+
     /**
      * check that the paths exists or not
      *
@@ -952,6 +958,17 @@ public class S3FileSystemProvider
     boolean exists(S3Path path)
     {
         S3Path s3Path = toS3Path(path);
+
+        if(isBucketRoot(s3Path)) {
+            // check to see if bucket exists
+            try {
+                s3Utils.listS3Objects(s3Path);
+                return true;
+            } catch (SdkException e) {
+                return false;
+            }
+        }
+
         try
         {
             s3Utils.getS3Object(s3Path);
