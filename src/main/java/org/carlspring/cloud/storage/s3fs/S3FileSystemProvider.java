@@ -944,7 +944,8 @@ public class S3FileSystemProvider
         Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
     }
 
-    private static boolean isBucketRoot(S3Path s3Path) {
+    private static boolean isBucketRoot(S3Path s3Path)
+    {
         String key = s3Path.getKey();
         return key.equals("") || key.equals("/");
     }
@@ -959,12 +960,16 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        if(isBucketRoot(s3Path)) {
+        if(isBucketRoot(s3Path))
+        {
             // check to see if bucket exists
-            try {
+            try
+            {
                 s3Utils.listS3Objects(s3Path);
                 return true;
-            } catch (SdkException e) {
+            }
+            catch (SdkException e)
+            {
                 return false;
             }
         }

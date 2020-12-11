@@ -69,10 +69,10 @@ public class S3Utils
         }
 
         final ListObjectsV2Request request = ListObjectsV2Request.builder()
-            .bucket(bucketName)
-            .prefix(keyFolder)
-            .maxKeys(1)
-            .build();
+                                                                 .bucket(bucketName)
+                                                                 .prefix(keyFolder)
+                                                                 .maxKeys(1)
+                                                                 .build();
 
         return client.listObjectsV2(request).contents();
     }
