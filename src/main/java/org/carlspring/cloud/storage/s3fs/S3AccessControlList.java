@@ -62,7 +62,6 @@ public class S3AccessControlList
             {
                 throw new AccessDeniedException(fileName(), null, "file is not executable");
             }
-            }
         }
     }
 
