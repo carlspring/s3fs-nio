@@ -50,6 +50,51 @@ class NewOutputStreamTest
     }
 
     @Test
+    void outputStreamFileExists()
+            throws IOException
+    {
+        final Path base = getS3Directory();
+
+        final Path file = base.resolve("file1");
+        Files.createFile(file);
+        final String content = "sample content";
+
+        try (final OutputStream stream = s3fsProvider.newOutputStream(file))
+        {
+            stream.write(content.getBytes());
+            stream.flush();
+        }
+
+        // get the input
+        final byte[] buffer = Files.readAllBytes(file);
+
+        // check
+        assertArrayEquals(content.getBytes(), buffer);
+    }
+
+    @Test
+    void outputStreamFileNotExists()
+            throws IOException
+    {
+        final Path base = getS3Directory();
+
+        final Path file = base.resolve("file1");
+        final String content = "sample content";
+
+        try (final OutputStream stream = s3fsProvider.newOutputStream(file))
+        {
+            stream.write(content.getBytes());
+            stream.flush();
+        }
+
+        // get the input
+        final byte[] buffer = Files.readAllBytes(file);
+
+        // check
+        assertArrayEquals(content.getBytes(), buffer);
+    }
+
+    @Test
     void outputStreamWithCreateNew()
             throws IOException
     {
@@ -100,14 +145,15 @@ class NewOutputStreamTest
 
     @Test
     void outputStreamWithCreateNewAndFileExists()
+            throws IOException
     {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
-            Path base = getS3Directory();
-            Path file = Files.createFile(base.resolve("file1"));
+        final Path base = getS3Directory();
+        final Path file = Files.createFile(base.resolve("file1"));
 
-            s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW);
-        });
+        // We're expecting an exception here to be thrown
+        final Exception exception = assertThrows(FileAlreadyExistsException.class,
+                                                 () -> s3fsProvider.newOutputStream(file,
+                                                                                    StandardOpenOption.CREATE_NEW));
 
         assertNotNull(exception);
     }
@@ -116,24 +162,15 @@ class NewOutputStreamTest
     void outputStreamWithCreateAndFileExists()
             throws IOException
     {
-        Path base = getS3Directory();
+        final Path base = getS3Directory();
+        final Path file = Files.createFile(base.resolve("file1"));
 
-        Path file = base.resolve("file1");
-        Files.createFile(file);
+        // We're expecting an exception here to be thrown
+        final Exception exception = assertThrows(FileAlreadyExistsException.class,
+                                                 () -> s3fsProvider.newOutputStream(file,
+                                                                                    StandardOpenOption.CREATE));
 
-        final String content = "sample content";
-
-        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE))
-        {
-            stream.write(content.getBytes());
-            stream.flush();
-        }
-
-        // get the input
-        byte[] buffer = Files.readAllBytes(file);
-
-        // check
-        assertArrayEquals(content.getBytes(), buffer);
+        assertNotNull(exception);
     }
 
     @Test

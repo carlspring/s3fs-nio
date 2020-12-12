@@ -166,7 +166,6 @@ public class S3SeekableByteChannel
     {
         try (InputStream stream = new BufferedInputStream(Files.newInputStream(tempFile)))
         {
-            //TODO: If the temp file is larger than 5 GB then, instead of a putObject, a multi-part upload is needed.
             PutObjectRequest.Builder builder = PutObjectRequest.builder();
             long length = Files.size(tempFile);
             builder.contentLength(length);
