@@ -82,7 +82,7 @@ class CheckAccessTest
 
     @Test
     void checkAccessMissingFile()
-        throws IOException
+            throws IOException
     {
         // fixtures
         final S3ClientMock client = S3MockFactory.getS3ClientMock();

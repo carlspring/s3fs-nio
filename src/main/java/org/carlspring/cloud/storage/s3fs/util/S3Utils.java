@@ -56,7 +56,6 @@ public class S3Utils
      */
     public List<S3Object> listS3Objects(S3Path s3Path)
     {
-
         final String key = s3Path.getKey();
         final String bucketName = s3Path.getFileStore().name();
         final S3Client client = s3Path.getFileSystem().getClient();
