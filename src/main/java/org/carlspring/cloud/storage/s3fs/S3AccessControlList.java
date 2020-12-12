@@ -58,10 +58,10 @@ public class S3AccessControlList
         {
             // Checking the ACL grants is not sufficient to determine access as bucket policy may override ACL.
             // Any permission problems will have to be handled at time of access.
-            switch (accessMode)
+            if (accessMode == AccessMode.EXECUTE)
             {
-                case EXECUTE:
-                    throw new AccessDeniedException(fileName(), null, "file is not executable");
+                throw new AccessDeniedException(fileName(), null, "file is not executable");
+            }
             }
         }
     }

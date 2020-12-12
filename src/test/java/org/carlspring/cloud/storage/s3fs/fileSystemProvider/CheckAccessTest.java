@@ -95,7 +95,7 @@ class CheckAccessTest
 
         // We're expecting an exception here to be thrown
         final Exception exception = assertThrows(NoSuchFileException.class,
-            () -> s3fsProvider.checkAccess(file1, AccessMode.WRITE));
+                                                 () -> s3fsProvider.checkAccess(file1, AccessMode.WRITE));
 
         assertNotNull(exception);
     }
