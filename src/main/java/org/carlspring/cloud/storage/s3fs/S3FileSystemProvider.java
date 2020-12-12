@@ -57,6 +57,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
@@ -718,32 +719,26 @@ public class S3FileSystemProvider
 
     @Override
     public void checkAccess(Path path, AccessMode... modes)
-            throws IOException
+        throws IOException
     {
         S3Path s3Path = toS3Path(path);
 
         Preconditions.checkArgument(s3Path.isAbsolute(), "path must be absolute: %s", s3Path);
 
-        if (modes.length == 0)
+        if (!exists(s3Path))
         {
-            if (exists(s3Path))
-            {
-                return;
-            }
-
             throw new NoSuchFileException(toString());
         }
 
-        final S3Object s3Object = s3Utils.getS3Object(s3Path);
-        final String key = s3Object.key();
-        final String bucket = s3Path.getFileStore().name();
-        final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucket).key(key).build();
-        final S3Client client = s3Path.getFileSystem().getClient();
-        final List<Grant> grants = client.getObjectAcl(request).grants();
-        final Owner owner = s3Path.getFileStore().getOwner();
-        final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key, grants, owner);
+        if (modes.length > 0)
+        {
+            final S3Object s3Object = s3Utils.getS3Object(s3Path);
+            final String key = s3Object.key();
+            final String bucket = s3Path.getFileStore().name();
+            final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key);
 
-        accessControlList.checkAccess(modes);
+            accessControlList.checkAccess(modes);
+        }
     }
 
 
@@ -949,6 +944,12 @@ public class S3FileSystemProvider
         Preconditions.checkArgument(unsupported.isEmpty(), "the following options are not supported: %s", unsupported);
     }
 
+    private static boolean isBucketRoot(S3Path s3Path)
+    {
+        String key = s3Path.getKey();
+        return key.equals("") || key.equals("/");
+    }
+
     /**
      * check that the paths exists or not
      *
@@ -958,6 +959,21 @@ public class S3FileSystemProvider
     boolean exists(S3Path path)
     {
         S3Path s3Path = toS3Path(path);
+
+        if(isBucketRoot(s3Path))
+        {
+            // check to see if bucket exists
+            try
+            {
+                s3Utils.listS3Objects(s3Path);
+                return true;
+            }
+            catch (SdkException e)
+            {
+                return false;
+            }
+        }
+
         try
         {
             s3Utils.getS3Object(s3Path);

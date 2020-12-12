@@ -16,6 +16,7 @@ import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAclResponse;
@@ -23,7 +24,7 @@ import software.amazon.awssdk.services.s3.model.Grant;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
-import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.Owner;
 import software.amazon.awssdk.services.s3.model.Permission;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -37,6 +38,43 @@ public class S3Utils
 {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Utils.class);
+
+    /**
+     * Returns a list of {@link S3Object}s for the given path.
+     *
+     * @param s3Path {@link S3Path}
+     * @return {@link List} of {@link S3Object}
+     * @throws NoSuchBucketException
+     *     The specified bucket does not exist.
+     * @throws SdkException
+     *    Base class for all exceptions that can be thrown by the SDK (both service and client). Can be used for
+     *    catch all scenarios.
+     * @throws SdkClientException
+     *     If any client side error occurs such as an IO related failure, failure to get credentials, etc.
+     * @throws S3Exception
+     *     Base class for all service exceptions.
+     */
+    public List<S3Object> listS3Objects(S3Path s3Path)
+    {
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
+        final S3Client client = s3Path.getFileSystem().getClient();
+
+        // is a virtual directory
+        String keyFolder = key;
+        if (!keyFolder.endsWith("/"))
+        {
+            keyFolder += "/";
+        }
+
+        final ListObjectsV2Request request = ListObjectsV2Request.builder()
+                                                                 .bucket(bucketName)
+                                                                 .prefix(keyFolder)
+                                                                 .maxKeys(1)
+                                                                 .build();
+
+        return client.listObjectsV2(request).contents();
+    }
 
     /**
      * Get the {@link S3Object} that represent this Path or her first child if this path not exists
@@ -95,23 +133,10 @@ public class S3Utils
         // try to find the element as a directory.
         try
         {
-            // is a virtual directory
-            String keyFolder = key;
-            if (!keyFolder.endsWith("/"))
+            List<S3Object> s3Objects = listS3Objects(s3Path);
+            if (!s3Objects.isEmpty())
             {
-                keyFolder += "/";
-            }
-
-            final ListObjectsV2Request request = ListObjectsV2Request.builder()
-                                                                     .bucket(bucketName)
-                                                                     .prefix(keyFolder)
-                                                                     .maxKeys(1)
-                                                                     .build();
-
-            final ListObjectsV2Response current = client.listObjectsV2(request);
-            if (!current.contents().isEmpty())
-            {
-                return current.contents().get(0);
+                return s3Objects.get(0);
             }
         }
         catch (Exception e)
