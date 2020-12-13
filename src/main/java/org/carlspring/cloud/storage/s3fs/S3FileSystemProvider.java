@@ -16,7 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URLEncoder;
-import java.nio.channels.FileChannel;
+import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessMode;
@@ -54,6 +54,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -624,14 +625,15 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public FileChannel newFileChannel(Path path,
-                                      Set<? extends OpenOption> options,
-                                      FileAttribute<?>... attrs)
+    public AsynchronousFileChannel newAsynchronousFileChannel(Path path,
+                                                              Set<? extends OpenOption> options,
+                                                              ExecutorService executor,
+                                                              FileAttribute<?>... attrs)
             throws IOException
     {
         S3Path s3Path = toS3Path(path);
 
-        return new S3FileChannel(s3Path, options, true);
+        return new S3FileChannel(s3Path, options, executor, true);
     }
 
     /**

@@ -4,11 +4,10 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.nio.channels.AsynchronousFileChannel;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
-import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -19,8 +18,16 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.tika.Tika;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -30,234 +37,428 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static java.lang.String.format;
 
 public class S3FileChannel
-        extends FileChannel
+        extends AsynchronousFileChannel
 {
+
+    private final Logger logger = LoggerFactory.getLogger(S3FileChannel.class);
 
     private final S3Path path;
 
     private final Set<? extends OpenOption> options;
 
-    private final FileChannel filechannel;
+    private final AsynchronousFileChannel fileChannel;
 
-    private final Path tempFile;
+    private Path tempFile = null;
+
+    /**
+     * Read write lock.
+     */
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+
+    /**
+     * Lock for opening and closing. Has to be the write lock, because the state of channel is
+     * changing.
+     */
+    private final Lock openCloseLock = readWriteLock.writeLock();
+
+    /**
+     * Lock for writing. This lock only has to be closed, when the {@link #openCloseLock} is locked.
+     * Thus, we can use read lock.
+     */
+    private final Lock writeReadChannelLock = readWriteLock.readLock();
 
     /**
      * Open or creates a file, returning a file channel.
      *
      * @param path             the path open or create.
      * @param options          options specifying how the file is opened.
+     * @param executor         the thread pool or null to associate the channel with the default thread pool.
      * @param tempFileRequired true if a temp file wanted, false in case of a in-memory solution option.
      * @throws IOException if an I/O error occurs
      */
     public S3FileChannel(final S3Path path,
                          final Set<? extends OpenOption> options,
+                         final ExecutorService executor,
                          final boolean tempFileRequired)
             throws IOException
     {
+        openCloseLock.lock();
+
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
         boolean exists = path.getFileSystem().provider().exists(path);
+        boolean removeTempFile = false;
 
-        if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
+        try
         {
-            throw new FileAlreadyExistsException(format("target already exists: %s", path));
-        }
-        else if (!exists && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
-                 !this.options.contains(StandardOpenOption.CREATE))
-        {
-            throw new NoSuchFileException(format("target not exists: %s", path));
-        }
-
-        final Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
-        fileChannelOptions.remove(StandardOpenOption.CREATE_NEW);
-
-        if(tempFileRequired)
-        {
-            final String key = path.getKey();
-            this.tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
-            boolean removeTempFile = true;
-            try
+            if (!isOpen())
             {
-                if (exists)
+                if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
                 {
-                    final S3Client client = path.getFileSystem().getClient();
-                    final GetObjectRequest request = GetObjectRequest.builder()
-                                                                     .bucket(path.getFileStore().name())
-                                                                     .key(key)
-                                                                     .build();
-                    try (ResponseInputStream<GetObjectResponse> byteStream = client.getObject(request))
+                    throw new FileAlreadyExistsException(format("The target already exists: %s", path));
+                }
+                else if (!exists && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
+                         !this.options.contains(StandardOpenOption.CREATE))
+                {
+                    throw new NoSuchFileException(format("The target does not exist: %s", path));
+                }
+
+                final Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
+                fileChannelOptions.remove(StandardOpenOption.CREATE_NEW);
+
+                if (tempFileRequired)
+                {
+                    final String key = path.getKey();
+                    this.tempFile = Files.createTempFile("temp-s3-", key.replaceAll("/", "_"));
+                    removeTempFile = true;
+
+                    if (exists)
                     {
-                        Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                        final S3Client client = path.getFileSystem().getClient();
+                        final GetObjectRequest request = GetObjectRequest.builder()
+                                                                         .bucket(path.getFileStore().name())
+                                                                         .key(key)
+                                                                         .build();
+                        try (ResponseInputStream<GetObjectResponse> byteStream = client.getObject(request))
+                        {
+                            Files.copy(byteStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                        }
+
+                        removeTempFile = false;
                     }
-                }
 
-                this.filechannel = FileChannel.open(tempFile, fileChannelOptions);
-                removeTempFile = false;
-            }
-            finally
-            {
-                if (removeTempFile)
+                    this.fileChannel = AsynchronousFileChannel.open(tempFile.toAbsolutePath(),
+                                                                    fileChannelOptions,
+                                                                    executor);
+                }
+                else
                 {
-                    Files.deleteIfExists(tempFile);
+                    this.tempFile = null;
+                    this.fileChannel = AsynchronousFileChannel.open(path, fileChannelOptions, executor);
                 }
             }
+            else
+            {
+                throw new FileAlreadyExistsException(format("Tried to open already opened channel for path %s", path));
+            }
         }
-        else
+        finally
         {
-            this.tempFile = null;
-            this.filechannel = FileChannel.open(path, fileChannelOptions);
+            openCloseLock.unlock();
+
+            if (removeTempFile)
+            {
+                Files.deleteIfExists(tempFile);
+            }
         }
     }
 
+    /**
+     * Reads a sequence of bytes from this channel into the given buffer, starting at the given file position.
+     *
+     * @param dst      The buffer into which bytes are to be transferred.
+     * @param position The file position at which the transfer is to begin; must be non-negative.
+     * @return a Future representing the pending result of the operation. The Future's get method returns the number
+     * of bytes read or -1 if the given position is greater than or equal to the file's size at the time that
+     * the read is attempted.
+     */
     @Override
-    public int read(final ByteBuffer dst)
-            throws IOException
+    public Future<Integer> read(final ByteBuffer dst,
+                                final long position)
     {
-        return filechannel.read(dst);
+        writeReadChannelLock.lock();
+        try
+        {
+            if (isOpen())
+            {
+                return fileChannel.read(dst, position);
+            }
+            else
+            {
+                return CompletableFuture.completedFuture(0);
+            }
+        }
+        finally
+        {
+            writeReadChannelLock.unlock();
+        }
     }
 
+    /**
+     * Reads a sequence of bytes from this channel into the given buffer, starting at the given file position.
+     *
+     * @param dst        The buffer into which bytes are to be transferred.
+     * @param position   The file position at which the transfer is to begin; must be non-negative.
+     * @param attachment The object to attach to the I/O operation; can be null
+     * @param handler    The handler for consuming the result
+     */
     @Override
-    public long read(final ByteBuffer[] dsts,
-                     final int offset,
-                     final int length)
-            throws IOException
+    public <A> void read(final ByteBuffer dst,
+                         final long position,
+                         final A attachment,
+                         final CompletionHandler<Integer, ? super A> handler)
     {
-        return filechannel.read(dsts, offset, length);
+        writeReadChannelLock.lock();
+        try
+        {
+            if (isOpen())
+            {
+                fileChannel.read(dst, position, attachment, handler);
+            }
+        }
+        finally
+        {
+            writeReadChannelLock.unlock();
+        }
     }
 
+    /**
+     * Writes a sequence of bytes to this channel from the given buffer, starting at the given file position.
+     * Writing is performed if, and only if, the channel is open.
+     *
+     * @param src      The buffer from which bytes are to be transferred.
+     * @param position The file position at which the transfer is to begin; must be non-negative.
+     * @return a Future representing the pending result of the write operation. The Future's get method returns
+     * the number of bytes written.
+     */
     @Override
-    public int write(final ByteBuffer src)
-            throws IOException
+    public Future<Integer> write(final ByteBuffer src,
+                                 final long position)
     {
-        return filechannel.write(src);
+        writeReadChannelLock.lock();
+        try
+        {
+            if (isOpen())
+            {
+                return fileChannel.write(src, position);
+            }
+            else
+            {
+                return CompletableFuture.completedFuture(0);
+            }
+        }
+        finally
+        {
+            writeReadChannelLock.unlock();
+        }
     }
 
+    /**
+     * Writes a sequence of bytes to this channel from the given buffer, starting at the given file position.
+     * Writing is performed if, and only if, the channel is open.
+     *
+     * @param src        The buffer from which bytes are to be transferred.
+     * @param position   The file position at which the transfer is to begin; must be non-negative.
+     * @param attachment The object to attach to the I/O operation; can be null.
+     * @param handler    The handler for consuming the result.
+     */
     @Override
-    public long write(final ByteBuffer[] srcs,
-                      final int offset,
-                      final int length)
-            throws IOException
+    public <A> void write(final ByteBuffer src,
+                          final long position,
+                          final A attachment,
+                          final CompletionHandler<Integer, ? super A> handler)
     {
-        return filechannel.write(srcs, offset, length);
+        writeReadChannelLock.lock();
+        try
+        {
+            if (isOpen())
+            {
+                fileChannel.write(src, position, attachment, handler);
+            }
+        }
+        finally
+        {
+            writeReadChannelLock.unlock();
+        }
     }
 
-    @Override
-    public long position()
-            throws IOException
-    {
-        return filechannel.position();
-    }
-
-    @Override
-    public FileChannel position(final long newPosition)
-            throws IOException
-    {
-        return filechannel.position(newPosition);
-    }
-
+    /**
+     * Returns the current size of this channel's file.
+     *
+     * @return The current size of this channel's file, measured in bytes.
+     * @throws IOException If some other I/O error occurs.
+     */
     @Override
     public long size()
             throws IOException
     {
-        return filechannel.size();
+        return fileChannel.size();
     }
 
+    /**
+     * Truncates this channel's file to the given size.
+     * If the given size is less than the file's current size then the file is truncated, discarding any bytes beyond
+     * the new end of the file. If the given size is greater than or equal to the file's current size then the file
+     * is not modified.
+     *
+     * @param size The new size, a non-negative byte count.
+     * @return This file channel.
+     * @throws IOException If some other I/O error occurs.
+     */
     @Override
-    public FileChannel truncate(final long size)
+    public AsynchronousFileChannel truncate(final long size)
             throws IOException
     {
-        return filechannel.truncate(size);
+        return fileChannel.truncate(size);
     }
 
+    /**
+     * Forces any updates to this channel's file to be written to the storage device that contains it.
+     * If this channel's file resides on a local storage device then when this method returns it is guaranteed that
+     * all changes made to the file since this channel was created, or since this method was last invoked, will have
+     * been written to that device. This is useful for ensuring that critical information is not lost in the event of
+     * a system crash.
+     * <p>
+     * Invoking this method may cause an I/O operation to occur even if the channel was only opened for reading.
+     * <p>
+     * This method is only guaranteed to force changes that were made to this channel's file via the methods defined
+     * in this class.
+     *
+     * @param metaData If true then this method is required to force changes to both the file's content and metadata
+     *                 to be written to storage; otherwise, it need only force content changes to be written.
+     * @throws IOException If some other I/O error occurs.
+     */
     @Override
     public void force(final boolean metaData)
             throws IOException
     {
-        filechannel.force(metaData);
+        fileChannel.force(metaData);
     }
 
+    /**
+     * Acquires a lock on the given region of this channel's file.
+     * This method initiates an operation to acquire a lock on the given region of this channel's file.
+     * The handler parameter is a completion handler that is invoked when the lock is acquired (or the operation fails).
+     * The result passed to the completion handler is the resulting FileLock.
+     *
+     * @param position The position at which the locked region is to start; must be non-negative.
+     * @param size     The size of the locked region; must be non-negative, and the sum position + size must be
+     *                 non-negative.
+     * @param shared   true to request a shared lock, in which case this channel must be open for reading (and possibly
+     *                 writing); false to request an exclusive lock, in which case this channel must be open for
+     *                 writing (and possibly reading).
+     * @return a Future representing the pending result. The Future's get method returns the FileLock on successful
+     * completion.
+     */
     @Override
-    public long transferTo(final long position,
-                           final long count,
-                           WritableByteChannel target)
-            throws IOException
+    public Future<FileLock> lock(final long position,
+                                 final long size,
+                                 final boolean shared)
     {
-        return filechannel.transferTo(position, count, target);
+        return this.fileChannel.lock(position, size, shared);
     }
 
+    /**
+     * Acquires a lock on the given region of this channel's file.
+     * This method initiates an operation to acquire a lock on the given region of this channel's file.
+     * The handler parameter is a completion handler that is invoked when the lock is acquired (or the operation fails).
+     * The result passed to the completion handler is the resulting FileLock.
+     *
+     * @param position   The position at which the locked region is to start; must be non-negative.
+     * @param size       The size of the locked region; must be non-negative, and the sum position + size must be
+     *                   non-negative.
+     * @param shared     true to request a shared lock, in which case this channel must be open for reading (and
+     *                   possibly writing); false to request an exclusive lock, in which case this channel must be open
+     *                   for writing (and possibly reading).
+     * @param attachment The object to attach to the I/O operation; can be null.
+     * @param handler    The handler for consuming the result.
+     */
     @Override
-    public long transferFrom(final ReadableByteChannel src,
-                             final long position,
-                             final long count)
-            throws IOException
-    {
-        return filechannel.transferFrom(src, position, count);
-    }
-
-    @Override
-    public int read(final ByteBuffer dst,
-                    final long position)
-            throws IOException
-    {
-        return filechannel.read(dst, position);
-    }
-
-    @Override
-    public int write(final ByteBuffer src,
-                     final long position)
-            throws IOException
-    {
-        return filechannel.write(src, position);
-    }
-
-    @Override
-    public MappedByteBuffer map(final MapMode mode,
-                                final long position,
-                                final long size)
-            throws IOException
-    {
-        return filechannel.map(mode, position, size);
-    }
-
-    @Override
-    public FileLock lock(final long position,
+    public <A> void lock(final long position,
                          final long size,
-                         final boolean shared)
-            throws IOException
+                         final boolean shared,
+                         final A attachment,
+                         final CompletionHandler<FileLock, ? super A> handler)
     {
-        return filechannel.lock(position, size, shared);
+        this.fileChannel.lock(position, size, shared, attachment, handler);
     }
 
+    /**
+     * Attempts to acquire a lock on the given region of this channel's file.
+     * This method does not block. An invocation always returns immediately, either having acquired a lock on the
+     * requested region or having failed to do so. If it fails to acquire a lock because an overlapping lock is held
+     * by another program then it returns null. If it fails to acquire a lock for any other reason then an appropriate
+     * exception is thrown.
+     *
+     * @param position The position at which the locked region is to start; must be non-negative.
+     * @param size     The size of the locked region; must be non-negative, and the sum position + size must be
+     *                 non-negative.
+     * @param shared   true to request a shared lock, false to request an exclusive lock.
+     * @return A lock object representing the newly-acquired lock, or null if the lock could not be acquired because
+     * another program holds an overlapping lock.
+     * @throws IOException If some other I/O error occurs.
+     */
     @Override
     public FileLock tryLock(final long position,
                             final long size,
                             final boolean shared)
             throws IOException
     {
-        return filechannel.tryLock(position, size, shared);
+        return this.fileChannel.tryLock(position, size, shared);
     }
 
+    /**
+     * Tells whether or not this channel is open.
+     *
+     * @return true if, and only if, this channel is open.
+     */
     @Override
-    protected void implCloseChannel()
+    public boolean isOpen()
+    {
+        return this.fileChannel != null && this.fileChannel.isOpen();
+    }
+
+    /**
+     * Closes this channel.
+     * After a channel is closed, any further attempt to invoke I/O operations upon it will cause a {@link ClosedChannelException} to be thrown.
+     * <p>
+     * If this channel is already closed then invoking this method has no effect.
+     * <p>
+     * This method may be invoked at any time. If some other thread has already invoked it, however, then another invocation will block until the first invocation is complete, after which it will return without effect.
+     *
+     * @throws IOException If {@link IOException} happens during closing.
+     */
+    @Override
+    public void close()
             throws IOException
     {
-        super.close();
-        this.filechannel.close();
-        if(this.tempFile != null)
+        openCloseLock.lock();
+
+        try
         {
-            if (!this.options.contains(StandardOpenOption.READ))
+            if (isOpen())
             {
-                sync();
+                fileChannel.force(true);
+                fileChannel.close();
+                if (this.tempFile != null && Files.exists(tempFile))
+                {
+                    if (!this.options.contains(StandardOpenOption.READ))
+                    {
+                        sync();
+                    }
+
+                    Files.delete(tempFile);
+                }
+            }
+            else
+            {
+                if (logger.isDebugEnabled())
+                {
+                    logger.info("Tried to close already closed channel for path {}.", path);
+                }
             }
 
-            Files.deleteIfExists(tempFile);
+        }
+        finally
+        {
+            openCloseLock.unlock();
         }
     }
 
     /**
-     * try to sync the temp file with the remote s3 path.
+     * Tries to sync the temp file with the remote S3 path.
      *
-     * @throws IOException if the tempFile fails to open a newInputStream
+     * @throws IOException if the tempFile fails to open a newInputStream.
      */
     protected void sync()
             throws IOException
