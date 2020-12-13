@@ -56,11 +56,9 @@ class S3FileChannelTest
 
     private static Stream<Arguments> positionAndBytesReadForReadProvider()
     {
-        return Stream.of(
-                Arguments.of(0, 10),
-                Arguments.of(5, 9),
-                Arguments.of(15, -1)
-        );
+        return Stream.of(Arguments.of(0, 10),
+                         Arguments.of(5, 9),
+                         Arguments.of(15, -1));
     }
 
     @BeforeEach

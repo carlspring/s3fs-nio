@@ -95,12 +95,12 @@ public class S3FileChannel
             {
                 if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
                 {
-                    throw new FileAlreadyExistsException(format("target already exists: %s", path));
+                    throw new FileAlreadyExistsException(format("The target already exists: %s", path));
                 }
                 else if (!exists && !this.options.contains(StandardOpenOption.CREATE_NEW) &&
                          !this.options.contains(StandardOpenOption.CREATE))
                 {
-                    throw new NoSuchFileException(format("target not exists: %s", path));
+                    throw new NoSuchFileException(format("The target does not exist: %s", path));
                 }
 
                 final Set<? extends OpenOption> fileChannelOptions = new HashSet<>(this.options);
