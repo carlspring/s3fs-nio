@@ -39,7 +39,7 @@ The possible configuration settings can be found [here][Configuration Options].
 
 ### Using A Service Locator And System Variables
 
-Check that `s3fs_access_key` and `s3fs_secret_key` system vars are present with the correct values to have full access
+Check that `s3fs.access.key` and `s3fs.secret.key` system vars are present with the correct values to have full access
 to your Amazon S3 bucket.
 
 Use the following code to create the `FileSystem` and set to a concrete end-point.
@@ -55,8 +55,8 @@ FileSystems.newFileSystem("s3:///",
 In your `src/main/resources/amazon.properties`, add the following settings:
 
 ```
-s3fs_access_key=access-key
-s3fs_secret_key=secret-key
+s3fs.access.key=access-key
+s3fs.secret.key=secret-key
 ```
 
 Use the following code to create the `FileSystem` and set it to a specific end-point.
