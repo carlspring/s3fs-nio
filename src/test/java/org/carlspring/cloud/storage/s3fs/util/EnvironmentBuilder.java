@@ -20,7 +20,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGIO
 public abstract class EnvironmentBuilder
 {
 
-    public static final String BUCKET_NAME_KEY = "bucket_name";
+    public static final String BUCKET_NAME_KEY = "s3fs.bucket.name";
 
 
     /**

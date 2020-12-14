@@ -604,7 +604,7 @@ public class S3Path
         }
 
         final S3Client s3client = this.getFileSystem().getClient();
-        //TODO: How to get s3fs_protocol property value?
+        //TODO: How to get s3fs.protocol property value?
         final String protocol = Protocol.HTTPS.name();
         final String endpointStr = String.format("%s://%s", protocol, this.getFileSystem().getEndpoint());
         final URI endpoint = URI.create(endpointStr);

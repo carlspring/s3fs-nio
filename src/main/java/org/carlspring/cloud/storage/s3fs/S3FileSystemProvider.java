@@ -135,9 +135,9 @@ public class S3FileSystemProvider
         extends FileSystemProvider
 {
 
-    public static final String CHARSET_KEY = "s3fs_charset";
+    public static final String CHARSET_KEY = "s3fs.charset";
 
-    public static final String S3_FACTORY_CLASS = "s3fs_amazon_s3_factory";
+    public static final String S3_FACTORY_CLASS = "s3fs.amazon.s3.factory.class";
 
     private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
@@ -418,7 +418,7 @@ public class S3FileSystemProvider
 
         Properties props = getProperties(uri, env);
 
-        String key = this.getFileSystemKey(uri, props); // s3fs_access_key is part of the key here.
+        String key = this.getFileSystemKey(uri, props); // s3fs.access.key is part of the key here.
 
         if (fileSystems.containsKey(key))
         {

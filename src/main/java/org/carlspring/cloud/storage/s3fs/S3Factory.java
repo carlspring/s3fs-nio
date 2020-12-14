@@ -35,53 +35,53 @@ import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.
 public abstract class S3Factory
 {
 
-    public static final String REGION = "s3fs_region";
+    public static final String REGION = "s3fs.region";
 
-    public static final String ACCESS_KEY = "s3fs_access_key";
+    public static final String ACCESS_KEY = "s3fs.access.key";
 
-    public static final String SECRET_KEY = "s3fs_secret_key";
+    public static final String SECRET_KEY = "s3fs.secret.key";
 
-    public static final String REQUEST_METRIC_COLLECTOR_CLASS = "s3fs_request_metric_collector_class";
+    public static final String REQUEST_METRIC_COLLECTOR_CLASS = "s3fs.request.metric.collector.class";
 
-    public static final String CONNECTION_TIMEOUT = "s3fs_connection_timeout";
+    public static final String CONNECTION_TIMEOUT = "s3fs.connection.timeout";
 
-    public static final String MAX_CONNECTIONS = "s3fs_max_connections";
+    public static final String MAX_CONNECTIONS = "s3fs.max.connections";
 
-    public static final String MAX_ERROR_RETRY = "s3fs_max_retry_error";
+    public static final String MAX_ERROR_RETRY = "s3fs.max.retry.error";
 
-    public static final String PROTOCOL = "s3fs_protocol";
+    public static final String PROTOCOL = "s3fs.protocol";
 
-    public static final String PROXY_DOMAIN = "s3fs_proxy_domain";
+    public static final String PROXY_DOMAIN = "s3fs.proxy.domain";
 
-    public static final String PROXY_HOST = "s3fs_proxy_host";
+    public static final String PROXY_HOST = "s3fs.proxy.host";
 
-    public static final String PROXY_PASSWORD = "s3fs_proxy_password";
+    public static final String PROXY_PASSWORD = "s3fs.proxy.password";
 
-    public static final String PROXY_PORT = "s3fs_proxy_port";
+    public static final String PROXY_PORT = "s3fs.proxy.port";
 
-    public static final String PROXY_USERNAME = "s3fs_proxy_username";
+    public static final String PROXY_USERNAME = "s3fs.proxy.username";
 
-    public static final String PROXY_WORKSTATION = "s3fs_proxy_workstation";
-
-    /**
-     * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
-     */
-    @Deprecated
-    public static final String SOCKET_SEND_BUFFER_SIZE_HINT = "s3fs_socket_send_buffer_size_hint";
+    public static final String PROXY_WORKSTATION = "s3fs.proxy.workstation";
 
     /**
      * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
      */
     @Deprecated
-    public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs_socket_receive_buffer_size_hint";
+    public static final String SOCKET_SEND_BUFFER_SIZE_HINT = "s3fs.socket.send.buffer.size.hint";
 
-    public static final String SOCKET_TIMEOUT = "s3fs_socket_timeout";
+    /**
+     * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
+     */
+    @Deprecated
+    public static final String SOCKET_RECEIVE_BUFFER_SIZE_HINT = "s3fs.socket.receive.buffer.size.hint";
 
-    public static final String USER_AGENT = "s3fs_user_agent";
+    public static final String SOCKET_TIMEOUT = "s3fs.socket.timeout";
 
-    public static final String SIGNER_OVERRIDE = "s3fs_signer_override";
+    public static final String USER_AGENT = "s3fs.user.agent";
 
-    public static final String PATH_STYLE_ACCESS = "s3fs_path_style_access";
+    public static final String SIGNER_OVERRIDE = "s3fs.signer.override";
+
+    public static final String PATH_STYLE_ACCESS = "s3fs.path.style.access";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Factory.class);
 
