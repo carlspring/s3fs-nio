@@ -86,6 +86,7 @@
         <version.tika>1.25</version.tika>
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
         <version.mockito>3.6.28</version.mockito>
+        <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
     </properties>
 
     <build>
@@ -244,7 +245,7 @@
         <dependency>
             <groupId>com.github.marschall</groupId>
             <artifactId>memoryfilesystem</artifactId>
-            <version>0.9.1</version>
+            <version>${version.marschall.memoryfilesystem}</version>
             <scope>test</scope>
         </dependency>
 
