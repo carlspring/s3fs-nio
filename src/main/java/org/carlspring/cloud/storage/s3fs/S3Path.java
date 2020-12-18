@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
@@ -735,11 +736,20 @@ public class S3Path
      */
     private String encode(String uri)
     {
-        // remove special case URI starting with //
-        uri = uri.replace("//", "/");
-        uri = uri.replaceAll(" ", "%20");
-
-        return uri;
+        try
+        {
+            // URL encode all characters, but then convert known allowed characters back
+            return URLEncoder.encode(uri, "UTF-8")
+                    .replace("%3A", ":")
+                    .replace("%2F", "/")
+                    .replace("+", "%20");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            // This should never happen unless there is something
+            // fundamentally broken with the running JVM.
+            throw new RuntimeException(e);
+        }
     }
 
     /**
