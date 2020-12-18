@@ -190,7 +190,9 @@ public class S3Utils
             owner = acl.owner();
             permissions = toPosixFilePermissions(acl.grants());
 
-        } else {
+        }
+        else
+        {
             final GetBucketAclRequest request = GetBucketAclRequest.builder().bucket(bucketName).build();
             final GetBucketAclResponse acl = client.getBucketAcl(request);
             owner = acl.owner();
