@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetBucketAclRequest;
+import software.amazon.awssdk.services.s3.model.GetBucketAclResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAclResponse;
 import software.amazon.awssdk.services.s3.model.Grant;
@@ -168,27 +170,34 @@ public class S3Utils
      * @return S3PosixFileAttributes never null
      * @throws NoSuchFileException if the Path doesnt exists
      */
-    public S3PosixFileAttributes getS3PosixFileAttributes(S3Path s3Path)
+    public S3PosixFileAttributes getS3PosixFileAttributes(final S3Path s3Path)
             throws NoSuchFileException
     {
-        S3Object object = getS3Object(s3Path);
+        final S3Object object = getS3Object(s3Path);
 
-        String key = s3Path.getKey();
-        String bucketName = s3Path.getFileStore().name();
+        final String key = s3Path.getKey();
+        final String bucketName = s3Path.getFileStore().name();
 
-        S3BasicFileAttributes attrs = toS3FileAttributes(object, key);
-        S3UserPrincipal userPrincipal = null;
-        Set<PosixFilePermission> permissions = null;
+        final S3BasicFileAttributes attrs = toS3FileAttributes(object, key);
 
+        final S3Client client = s3Path.getFileSystem().getClient();
+        final Owner owner;
+        final Set<PosixFilePermission> permissions;
         if (!attrs.isDirectory())
         {
-            S3Client client = s3Path.getFileSystem().getClient();
-            GetObjectAclResponse acl = client.getObjectAcl(GetObjectAclRequest.builder().bucket(bucketName).key(key).build());
-            Owner owner = acl.owner();
+            final GetObjectAclRequest request = GetObjectAclRequest.builder().bucket(bucketName).key(key).build();
+            final GetObjectAclResponse acl = client.getObjectAcl(request);
+            owner = acl.owner();
+            permissions = toPosixFilePermissions(acl.grants());
 
-            userPrincipal = new S3UserPrincipal(owner.id() + ":" + owner.displayName());
+        } else {
+            final GetBucketAclRequest request = GetBucketAclRequest.builder().bucket(bucketName).build();
+            final GetBucketAclResponse acl = client.getBucketAcl(request);
+            owner = acl.owner();
             permissions = toPosixFilePermissions(acl.grants());
         }
+
+        final S3UserPrincipal userPrincipal = new S3UserPrincipal(owner.id() + ":" + owner.displayName());
 
         return new S3PosixFileAttributes((String) attrs.fileKey(),
                                          attrs.lastModifiedTime(),
