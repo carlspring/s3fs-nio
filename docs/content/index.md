@@ -52,8 +52,8 @@
 === "2. Code"
 
     ```java
-    FileSystems.newFileSystem("s3:///",
-                              new HashMap<String,Object>(),
+    FileSystems.newFileSystem(URI.create("s3:///"),
+                              new HashMap<>(),
                               Thread.currentThread().getContextClassLoader());
     
     ```

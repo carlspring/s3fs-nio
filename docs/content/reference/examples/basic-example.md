@@ -45,8 +45,8 @@ to your Amazon S3 bucket.
 Use the following code to create the `FileSystem` and set to a concrete end-point.
 
 ```java
-FileSystems.newFileSystem("s3:///",
-                          new HashMap<String,Object>(),
+FileSystems.newFileSystem(URI.create("s3:///"),
+                          new HashMap<>(),
                           Thread.currentThread().getContextClassLoader());
 ```
 
@@ -62,8 +62,8 @@ s3fs.secret.key=secret-key
 Use the following code to create the `FileSystem` and set it to a specific end-point.
 
 ```java
-FileSystems.newFileSystem("s3:///",
-                          new HashMap<String,Object>(),
+FileSystems.newFileSystem(URI.create("s3:///"),
+                          new HashMap<>(),
                           Thread.currentThread().getContextClassLoader());
 ```
 
@@ -72,16 +72,16 @@ FileSystems.newFileSystem("s3:///",
 Create a map with the authentication and use it to create the `FileSystem` and set to a concrete end-point.
 
 ```java
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 
 ...
 
 Map<String, ?> env = ImmutableMap.<String, Object> builder().put(ACCESS_KEY, "access key")
                                                             .put(SECRET_KEY, "secret key")
-                                                            .build()
+                                                            .build();
 
-FileSystems.newFileSystem("s3:///",
+FileSystems.newFileSystem(URI.create("s3:///"),
                           env,
                           Thread.currentThread().getContextClassLoader());
 ```
@@ -90,15 +90,29 @@ FileSystems.newFileSystem("s3:///",
 
 ```java
 // Northern Virginia or Pacific Northwest
-FileSystems.newFileSystem("s3://s3.amazonaws.com/", env, Thread.currentThread().getContextClassLoader());
+FileSystems.newFileSystem(URI.create("s3://s3.amazonaws.com/"), 
+                          env,
+                          Thread.currentThread().getContextClassLoader());
+
 // Northern Virginia only
-FileSystems.newFileSystem("s3://s3-external-1.amazonaws.com/", env, Thread.currentThread().getContextClassLoader());
+FileSystems.newFileSystem(URI.create("s3://s3-external-1.amazonaws.com/"),
+                          env,
+                          Thread.currentThread().getContextClassLoader());
+
 // US West (Oregon) Region
-FileSystems.newFileSystem("s3://s3-us-west-2.amazonaws.com/", env, Thread.currentThread().getContextClassLoader());
+FileSystems.newFileSystem(URI.create("s3://s3-us-west-2.amazonaws.com/"),
+                          env,
+                          Thread.currentThread().getContextClassLoader());
+
 // US West (Northern California) Region
-FileSystems.newFileSystem("s3://s3-us-west-1.amazonaws.com/", env, Thread.currentThread().getContextClassLoader());
+FileSystems.newFileSystem(URI.create("s3://s3-us-west-1.amazonaws.com/"),
+                          env,
+                          Thread.currentThread().getContextClassLoader());
+
 // EU (Ireland) Region
-FileSystems.newFileSystem("s3://s3-eu-west-1.amazonaws.com/", env, Thread.currentThread().getContextClassLoader());
+FileSystems.newFileSystem(URI.create("s3://s3-eu-west-1.amazonaws.com/"),
+                          env,
+                          Thread.currentThread().getContextClassLoader());
 ```
 
 For a complete list of available regions, you can check the [AWS S3 Reference].
