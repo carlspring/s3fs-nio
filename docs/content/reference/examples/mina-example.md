@@ -35,16 +35,15 @@ The possible configuration settings can be found [here][Configuration Options].
 You can use our library with MINA like this:
 
 ```java
-public FileSystemFactory createFileSystemFactory(String bucketName)
-            throws IOException,
-                   URISyntaxException
+public FileSystemFactory createFileSystemFactory(final String bucketName)
+        throws IOException
 {
-    FileSystem fileSystem = FileSystems.newFileSystem(new URI("s3:///"),
-                                                      env,
-                                                      Thread.currentThread()
-                                                            .getContextClassLoader());
-    
-    String bucketPath = fileSystem.getPath("/" + bucketName);
+    final FileSystem fileSystem = FileSystems.newFileSystem(URI.create("s3:///"),
+                                                            env,
+                                                            Thread.currentThread()
+                                                                  .getContextClassLoader());
+
+    final Path bucketPath = fileSystem.getPath(bucketName);
 
     return new VirtualFileSystemFactory(bucketPath);
 }

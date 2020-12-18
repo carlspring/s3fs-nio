@@ -33,8 +33,8 @@ The possible configuration settings can be found [here][Configuration Options].
 ## Spring Code Example
 
 ```java
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.AmazonS3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 
 @Configuration
 public class AwsConfig
@@ -48,7 +48,8 @@ public class AwsConfig
 
 
     @Bean
-    public FileSystem s3FileSystem() throws IOException
+    public FileSystem s3FileSystem()
+            throws IOException
     {
         Map<String, String> env = new HashMap<>();
         env.put(ACCESS_KEY, accessKey);

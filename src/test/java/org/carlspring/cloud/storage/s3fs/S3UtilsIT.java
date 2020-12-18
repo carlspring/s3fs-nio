@@ -21,6 +21,7 @@ import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
@@ -270,21 +271,20 @@ class S3UtilsIT
     void lookupS3PosixFileAttributesWhenS3PathIsFile()
             throws IOException
     {
-        Path path = getPathFile();
+        //given
+        final Path path = getPathFile();
 
-        S3Path s3Path = (S3Path) path.resolve("file");
-        S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
+        final S3Path s3Path = (S3Path) path.resolve("file");
 
+        //when
+        final S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
+
+        //then
         assertFalse(result.isDirectory());
         assertTrue(result.isRegularFile());
-        assertFalse(result.isSymbolicLink());
-        assertFalse(result.isOther());
-        assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
-        assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
+        assertEquals(0, result.size());
 
         // posix
         assertNotNull(result.owner());
@@ -296,73 +296,70 @@ class S3UtilsIT
     void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
-        String folder = "angular" + UUID.randomUUID().toString();
-        String key = folder + "/content.js";
+        //given
+        final String folder = "angular" + UUID.randomUUID().toString();
+        final String key = folder + "/content.js";
 
-
-        ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = bucket.replace("/", "");
-        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+        final String bucketName = bucket.replace("/", "");
+        final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
-        S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
+        final S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
+        final S3Client client = s3FileSystem.getClient();
 
-        s3FileSystem.getClient().putObject(request, requestBody);
+        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
 
-        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        //when
+        client.putObject(request, requestBody);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
 
+        //then
         assertTrue(result.isDirectory());
         assertFalse(result.isRegularFile());
-        assertFalse(result.isSymbolicLink());
-        assertFalse(result.isOther());
-        assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
-        assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
+        assertEquals(0, result.size());
 
         // posix
-        assertNull(result.owner());
+        assertNotNull(result.owner());
         assertNull(result.group());
-        assertNull(result.permissions());
+        assertNotNull(result.permissions());
     }
 
     @Test
     void lookupS3PosixFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
-        String folder = "folder" + UUID.randomUUID().toString();
-        String key = folder + "/";
+        //given
+        final String folder = "folder" + UUID.randomUUID().toString();
+        final String key = folder + "/";
 
-        final RequestBody requestBody = RequestBody.fromInputStream(new ByteArrayInputStream("".getBytes()),
-                                                                    0L);
-        String bucketName = bucket.replace("/", "");
-        PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
+        final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, 0L);
+        final String bucketName = bucket.replace("/", "");
+        final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
-        S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
+        final S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
+        final S3Client client = s3FileSystem.getClient();
 
-        s3FileSystem.getClient().putObject(request, requestBody);
+        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
 
-        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        //when
+        client.putObject(request, requestBody);
         S3PosixFileAttributes result = new S3Utils().getS3PosixFileAttributes(s3Path);
 
+        //then
         assertTrue(result.isDirectory());
         assertFalse(result.isRegularFile());
-        assertFalse(result.isSymbolicLink());
-        assertFalse(result.isOther());
-        assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
-        assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
+        assertEquals(0, result.size());
 
         // posix
-        assertNull(result.owner());
+        assertNotNull(result.owner());
         assertNull(result.group());
-        assertNull(result.permissions());
+        assertNotNull(result.permissions());
     }
 
     public S3Object getS3ObjectSummary(final S3Path s3Path)
@@ -378,11 +375,11 @@ class S3UtilsIT
 
         Path path;
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            Path base = Files.createDirectory(linux.getPath("/base"));
-
-            Files.createFile(base.resolve("file"));
+            final Path base = Files.createDirectory(linux.getPath("/base"));
+            final Path file = base.resolve("file");
+            Files.createFile(file);
 
             path = fileSystemAmazon.getPath(bucket, startPath);
 
