@@ -23,8 +23,8 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGIO
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-@Tag("foo")
-public class ToURLIT
+@Tag("s3-integration-test")
+public class ToURLITTest
 {
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);

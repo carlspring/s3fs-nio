@@ -9,12 +9,14 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-class FileSystemsIT
+@Tag("s3-integration-test")
+class FileSystemsITTest
 {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");

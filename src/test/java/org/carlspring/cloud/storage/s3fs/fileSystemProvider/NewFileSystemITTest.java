@@ -12,6 +12,7 @@ import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
@@ -27,7 +28,8 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-class NewFileSystemIT
+@Tag("s3-integration-test")
+class NewFileSystemITTest
 {
 
     private S3FileSystemProvider provider;

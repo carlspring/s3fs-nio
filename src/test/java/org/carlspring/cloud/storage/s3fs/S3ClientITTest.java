@@ -11,6 +11,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
@@ -28,7 +29,8 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class S3ClientIT
+@Tag("s3-integration-test")
+class S3ClientITTest
 {
 
     S3Client client;

@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -29,7 +30,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class NewByteChannelIT
+@Tag("s3-integration-test")
+class NewByteChannelITTest
         extends S3UnitTestBase
 {
 
