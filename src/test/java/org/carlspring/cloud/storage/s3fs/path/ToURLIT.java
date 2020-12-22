@@ -13,6 +13,7 @@ import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
@@ -22,6 +23,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGIO
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@Tag("foo")
 public class ToURLIT
 {
 

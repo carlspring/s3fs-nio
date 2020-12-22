@@ -85,6 +85,8 @@
         <version.guava>30.1-jre</version.guava>
         <version.tika>1.25</version.tika>
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
+        <version.junit>5.7.0</version.junit>
+        <version.junit.platform.runner>1.7.0</version.junit.platform.runner>
         <version.mockito>3.6.28</version.mockito>
         <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
     </properties>
@@ -232,7 +234,13 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.7.0</version>
+            <version>${version.junit}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-runner</artifactId>
+            <version>${version.junit.platform.runner}</version>
             <scope>test</scope>
         </dependency>
 
@@ -284,7 +292,7 @@
                         <version>3.0.0-M5</version>
                         <configuration>
                             <includes>
-                                <include>**/*IT.java</include>
+                                <include>**/*ITSuite.java</include>
                             </includes>
                             <excludes>
                                 <exclude>**/**Test.java</exclude>
