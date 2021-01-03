@@ -8,21 +8,14 @@ import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DeleteTest
         extends S3UnitTestBase
@@ -38,19 +31,44 @@ class DeleteTest
     }
 
     @Test
+    void deleteFolder()
+            throws IOException
+    {
+        // fixtures
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket("bucketA")
+              .dir("dir")
+              .file("dir/file")
+              .dir("subDir")
+              .file("dir/subDir/subFile");
+
+        // act
+        Path file = createNewS3FileSystem().getPath("/bucketA/dir");
+        s3fsProvider.delete(file);
+
+        // assertions
+        assertTrue(Files.notExists(file));
+        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/subDir")));
+        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/file")));
+        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/subDir/subFile")));
+    }
+
+    @Test
     void deleteFile()
             throws IOException
     {
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file");
+        client.bucket("bucketA")
+              .dir("dir")
+              .file("dir/file");
 
         // act
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
         s3fsProvider.delete(file);
 
         // assertions
-        assertTrue(Files.notExists(file));
+        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/file")));
     }
 
     @Test
@@ -70,23 +88,6 @@ class DeleteTest
 
         // assert
         assertTrue(Files.notExists(base));
-    }
-
-    @Test
-    void deleteDirectoryWithEntries()
-            throws IOException
-    {
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file");
-
-        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-
-        Exception exception = assertThrows(DirectoryNotEmptyException.class, () -> {
-            s3fsProvider.delete(file.getParent());
-        });
-
-        assertNotNull(exception);
     }
 
     @Test

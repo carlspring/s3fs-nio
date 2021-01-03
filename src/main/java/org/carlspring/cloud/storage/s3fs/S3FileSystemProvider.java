@@ -19,42 +19,14 @@ import java.net.URLEncoder;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AccessMode;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.CopyOption;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -65,41 +37,11 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.internal.util.Mimetype;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.Bucket;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectAclRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.Grant;
-import software.amazon.awssdk.services.s3.model.Owner;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.utils.StringUtils;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_ERROR_RETRY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_DOMAIN;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_HOST;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.*;
 import static software.amazon.awssdk.http.Header.CONTENT_TYPE;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
@@ -135,6 +77,7 @@ public class S3FileSystemProvider
         extends FileSystemProvider
 {
 
+
     public static final String CHARSET_KEY = "s3fs.charset";
 
     public static final String S3_FACTORY_CLASS = "s3fs.amazon.s3.factory.class";
@@ -163,6 +106,8 @@ public class S3FileSystemProvider
                                                                         SIGNER_OVERRIDE,
                                                                         PATH_STYLE_ACCESS);
 
+    private static final int MAX_OBJECT_PER_REQUEST = 1000;
+
     private final S3Utils s3Utils = new S3Utils();
 
     private Cache cache = new Cache();
@@ -175,7 +120,8 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public FileSystem newFileSystem(URI uri, Map<String, ?> env)
+    public FileSystem newFileSystem(URI uri,
+                                    Map<String, ?> env)
     {
         validateUri(uri);
 
@@ -209,7 +155,8 @@ public class S3FileSystemProvider
                                     SECRET_KEY);
     }
 
-    private Properties getProperties(URI uri, Map<String, ?> env)
+    private Properties getProperties(URI uri,
+                                     Map<String, ?> env)
     {
         Properties props = loadAmazonProperties();
 
@@ -246,7 +193,8 @@ public class S3FileSystemProvider
      * @param props with the access key property
      * @return String
      */
-    protected String getFileSystemKey(URI uri, Properties props)
+    protected String getFileSystemKey(URI uri,
+                                      Properties props)
     {
         // we don`t use uri.getUserInfo and uri.getHost because secret key and access key have special chars
         // and dont return the correct strings
@@ -292,7 +240,8 @@ public class S3FileSystemProvider
         Preconditions.checkArgument(uri.getScheme().equals(getScheme()), "uri scheme must be 's3': '%s'", uri);
     }
 
-    protected void addEnvProperties(Properties props, Map<String, ?> env)
+    protected void addEnvProperties(Properties props,
+                                    Map<String, ?> env)
     {
         if (env == null)
         {
@@ -329,7 +278,9 @@ public class S3FileSystemProvider
      * @param env   Map the first option
      * @param key   String the key
      */
-    private void overloadProperty(Properties props, Map<String, ?> env, String key)
+    private void overloadProperty(Properties props,
+                                  Map<String, ?> env,
+                                  String key)
     {
         boolean overloaded = overloadPropertiesWithEnv(props, env, key);
 
@@ -347,7 +298,9 @@ public class S3FileSystemProvider
     /**
      * @return true if the key are overloaded by the map parameter
      */
-    protected boolean overloadPropertiesWithEnv(Properties props, Map<String, ?> env, String key)
+    protected boolean overloadPropertiesWithEnv(Properties props,
+                                                Map<String, ?> env,
+                                                String key)
     {
         if (env.get(key) instanceof String)
         {
@@ -362,7 +315,8 @@ public class S3FileSystemProvider
     /**
      * @return true if the key are overloaded by a system property
      */
-    public boolean overloadPropertiesWithSystemProps(Properties props, String key)
+    public boolean overloadPropertiesWithSystemProps(Properties props,
+                                                     String key)
     {
         if (System.getProperty(key) != null)
         {
@@ -382,7 +336,8 @@ public class S3FileSystemProvider
      * @param key   String
      * @return true if the key are overloaded by a system property
      */
-    public boolean overloadPropertiesWithSystemEnv(Properties props, String key)
+    public boolean overloadPropertiesWithSystemEnv(Properties props,
+                                                   String key)
     {
         if (systemGetEnv(key) != null)
         {
@@ -412,7 +367,8 @@ public class S3FileSystemProvider
      * @param env environment settings.
      * @return new or existing filesystem.
      */
-    public FileSystem getFileSystem(URI uri, Map<String, ?> env)
+    public FileSystem getFileSystem(URI uri,
+                                    Map<String, ?> env)
     {
         validateUri(uri);
 
@@ -471,7 +427,8 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter)
+    public DirectoryStream<Path> newDirectoryStream(Path dir,
+                                                    DirectoryStream.Filter<? super Path> filter)
     {
         final S3Path s3Path = toS3Path(dir);
 
@@ -685,36 +642,103 @@ public class S3FileSystemProvider
     public void delete(Path path)
             throws IOException
     {
+        final S3Path rootPath = toS3Path(path);
+        final S3Client client = rootPath.getFileSystem().getClient();
+        final String bucketName = rootPath.getFileStore().name();
+
+        LinkedList<Deque<S3Path>> s3Paths = getPathsByBatch(rootPath);
+
+        s3Paths.forEach(batch -> deleteBatch(client, batch, bucketName));
+    }
+
+    private void deleteBatch(S3Client client,
+                             Deque<S3Path> batch,
+                             String bucketName)
+    {
+
+        List<ObjectIdentifier> keys = batch.stream()
+                                           .map(s3Path -> ObjectIdentifier.builder().key(s3Path.getKey()).build())
+                                           .collect(Collectors.toList());
+
+        DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest
+                                                                .builder()
+                                                                .bucket(bucketName)
+                                                                .delete(Delete.builder().objects(keys).build())
+                                                                .build();
+        client.deleteObjects(multiObjectDeleteRequest);
+
+        // we delete the two objects (sometimes exists the key '/' and sometimes not)
+        keys = batch.stream()
+                    .map(s3Path -> ObjectIdentifier.builder().key(s3Path.getKey() + '/').build())
+                    .collect(Collectors.toList());
+        multiObjectDeleteRequest = DeleteObjectsRequest
+                                           .builder()
+                                           .bucket(bucketName)
+                                           .delete(Delete.builder().objects(keys).build())
+                                           .build();
+
+        client.deleteObjects(multiObjectDeleteRequest);
+    }
+
+    private LinkedList<Deque<S3Path>> getPathsByBatch(S3Path path)
+            throws IOException
+    {
+        LinkedList<S3Path> allPaths = new LinkedList<>();
+        visitAllFiles(path, allPaths);
+
+        return splitByBatchWithOrder(allPaths, MAX_OBJECT_PER_REQUEST);
+    }
+
+    private <T> LinkedList<Deque<T>> splitByBatchWithOrder(List<T> list,
+                                                           int size)
+    {
+        LinkedList<Deque<T>> pathsByBatch = new LinkedList<>();
+        Deque<T> deque = new ArrayDeque<>();
+        for (T t : list)
+        {
+            if (deque.size() < size)
+            {
+                deque.push(t);
+            }
+            else
+            {
+                pathsByBatch.add(deque);
+                deque = new ArrayDeque<>();
+            }
+        }
+        pathsByBatch.add(deque); // add the last batch
+
+        return pathsByBatch;
+    }
+
+    private void visitAllFiles(Path path,
+                               LinkedList<S3Path> paths)
+            throws IOException
+    {
         S3Path s3Path = toS3Path(path);
         if (Files.notExists(s3Path))
         {
-            throw new NoSuchFileException("the path: " + this + " not exists");
+            throw new NoSuchFileException("the path: " + s3Path + " not exists");
         }
+
+        paths.add(s3Path);
+
         if (Files.isDirectory(s3Path))
         {
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(s3Path))
             {
-                if (stream.iterator().hasNext())
+                for (Path child : stream)
                 {
-                    throw new DirectoryNotEmptyException("the path: " + this + " is a directory and is not empty");
+                    visitAllFiles(child, paths);
                 }
             }
         }
-
-        String key = s3Path.getKey();
-        String bucketName = s3Path.getFileStore().name();
-        final S3Client client = s3Path.getFileSystem().getClient();
-
-        DeleteObjectRequest request = DeleteObjectRequest.builder().bucket(bucketName).key(key).build();
-        client.deleteObject(request);
-
-        // we delete the two objects (sometimes exists the key '/' and sometimes not)
-        request = DeleteObjectRequest.builder().bucket(bucketName).key(key + "/").build();
-        client.deleteObject(request);
     }
 
     @Override
-    public void copy(Path source, Path target, CopyOption... options)
+    public void copy(Path source,
+                     Path target,
+                     CopyOption... options)
             throws IOException
     {
         if (isSameFile(source, target))
@@ -771,7 +795,9 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public void move(Path source, Path target, CopyOption... options)
+    public void move(Path source,
+                     Path target,
+                     CopyOption... options)
             throws IOException
     {
         if (options != null && Arrays.asList(options).contains(StandardCopyOption.ATOMIC_MOVE))
@@ -784,7 +810,8 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public boolean isSameFile(Path path1, Path path2)
+    public boolean isSameFile(Path path1,
+                              Path path2)
     {
         return path1.isAbsolute() && path2.isAbsolute() && path1.equals(path2);
     }
@@ -802,8 +829,9 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public void checkAccess(Path path, AccessMode... modes)
-        throws IOException
+    public void checkAccess(Path path,
+                            AccessMode... modes)
+            throws IOException
     {
         S3Path s3Path = toS3Path(path);
 
@@ -852,7 +880,9 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
+    public <A extends BasicFileAttributes> A readAttributes(Path path,
+                                                            Class<A> type,
+                                                            LinkOption... options)
             throws IOException
     {
         S3Path s3Path = toS3Path(path);
@@ -896,7 +926,9 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public Map<String, Object> readAttributes(Path path, String attributes, LinkOption... options)
+    public Map<String, Object> readAttributes(Path path,
+                                              String attributes,
+                                              LinkOption... options)
             throws IOException
     {
         if (attributes == null)
@@ -944,7 +976,10 @@ public class S3FileSystemProvider
     }
 
     @Override
-    public void setAttribute(Path path, String attribute, Object value, LinkOption... options)
+    public void setAttribute(Path path,
+                             String attribute,
+                             Object value,
+                             LinkOption... options)
     {
         throw new UnsupportedOperationException();
     }
@@ -958,7 +993,8 @@ public class S3FileSystemProvider
      * @param props Properties
      * @return S3FileSystem never null
      */
-    public S3FileSystem createFileSystem(URI uri, Properties props)
+    public S3FileSystem createFileSystem(URI uri,
+                                         Properties props)
     {
         final String key = getFileSystemKey(uri, props);
         final S3Client client = getS3Client(uri, props);
@@ -966,7 +1002,8 @@ public class S3FileSystemProvider
         return new S3FileSystem(this, key, client, host);
     }
 
-    protected S3Client getS3Client(URI uri, Properties props)
+    protected S3Client getS3Client(URI uri,
+                                   Properties props)
     {
         final S3Factory factory = getS3Factory(props);
         return factory.getS3Client(uri, props);
@@ -1021,7 +1058,8 @@ public class S3FileSystemProvider
 
     // ~~~
 
-    private <T> void verifySupportedOptions(Set<? extends T> allowedOptions, Set<? extends T> actualOptions)
+    private <T> void verifySupportedOptions(Set<? extends T> allowedOptions,
+                                            Set<? extends T> actualOptions)
     {
         Sets.SetView<? extends T> unsupported = difference(actualOptions, allowedOptions);
 
@@ -1044,7 +1082,7 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        if(isBucketRoot(s3Path))
+        if (isBucketRoot(s3Path))
         {
             // check to see if bucket exists
             try
