@@ -178,7 +178,7 @@ class S3SeekableByteChannelTest
         //given
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         final String longDirectoryName = "FuscetellusodiodapibusidfermentumquissuscipitideratEtiamquisquamVestibulumeratnullaullamcorpernecrutrumnonnon";
-        final String longFileName = "ummyaceratSedutperspiciatisundeomnisisfasdfasdfasfsafdtenatuserrorsitvoluptatemaccusantiumdoloremquelaudantiumtotamremaperiameaqueipsaq";
+        final String longFileName = "ummyaceratSedutperspiciatisundeomnisisfasdfasdfasfsafdtenatuserrorsitvoluptatemaccusantiumdoloremquelaudantiumtotamremaperiameaqueipsaqummyaceratSedutperspiciatisundeomnisisfasdfasdfasfsafdtenatuserrorsitvoluptatemaccusantiumdoloremquelaudantiumtotamremaperiameaqueipsaq";
         final String bucketName = "buck";
         final String fileName = longDirectoryName + "/" + longFileName;
         client.bucket(bucketName).file(fileName);

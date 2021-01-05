@@ -53,7 +53,6 @@ public class S3SeekableByteChannel
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
 
         final String key = path.getKey();
-        final Path fileName = path.getFileName();
         final boolean exists = path.getFileSystem().provider().exists(path);
 
         if (exists && this.options.contains(StandardOpenOption.CREATE_NEW))
@@ -71,7 +70,7 @@ public class S3SeekableByteChannel
 
         if(tempFileRequired)
         {
-            tempFile = Files.createTempFile("temp-s3-", fileName == null ? key : fileName.toString());
+            tempFile = Files.createTempFile("s3fs-", ".tmp");
 
             boolean removeTempFile = true;
 
