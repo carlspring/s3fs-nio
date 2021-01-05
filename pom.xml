@@ -87,7 +87,7 @@
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
         <version.junit>5.7.0</version.junit>
         <version.junit.platform.runner>1.7.0</version.junit.platform.runner>
-        <version.mockito>3.6.28</version.mockito>
+        <version.mockito>3.7.0</version.mockito>
         <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
     </properties>
 
