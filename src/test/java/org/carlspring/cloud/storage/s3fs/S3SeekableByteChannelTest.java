@@ -173,7 +173,8 @@ class S3SeekableByteChannelTest
     }
 
     @Test
-    void writeFileWithReallyLongName() throws IOException {
+    void writeFileWithReallyLongName() throws IOException
+    {
 
         //given
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
@@ -181,13 +182,13 @@ class S3SeekableByteChannelTest
         final String longFileName = "ummyaceratSedutperspiciatisundeomnisisfasdfasdfasfsafdtenatuserrorsitvoluptatemaccusantiumdoloremquelaudantiumtotamremaperiameaqueipsaqummyaceratSedutperspiciatisundeomnisisfasdfasdfasfsafdtenatuserrorsitvoluptatemaccusantiumdoloremquelaudantiumtotamremaperiameaqueipsaq";
         final String bucketName = "buck";
         final String fileName = longDirectoryName + "/" + longFileName;
+        
         client.bucket(bucketName).file(fileName);
 
         final FileSystem fileSystem = FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         final String pathStr = String.format("/%s/%s", bucketName, fileName);
         final S3Path file1 = (S3Path) fileSystem.getPath(pathStr);
-        final S3SeekableByteChannel channel = spy(
-                new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true));
+        final S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.WRITE), true));
         final String content = "hoi";
         final ByteBuffer byteBuffer = ByteBuffer.wrap(content.getBytes());
 
