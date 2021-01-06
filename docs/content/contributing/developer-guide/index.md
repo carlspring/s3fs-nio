@@ -4,14 +4,13 @@
 
 Before you start writing code, please read:
 
-1. [Coding Conventions](./contributing/coding-convention.md)
-2. [Code of Conduct](../CODE-OF-CONDUCT.md)
+1. [Coding Conventions](./coding-convention.md)
+2. [Code of Conduct](../code-of-conduct.md)
 
 ## System requirements
 
 1. Maven 3.6.3, or higher
-2. `JDK8` or `JDK11` 
-
+2. `JDK8` or `JDK11`
 
 ## Finding issues to work on
 
@@ -24,13 +23,22 @@ contributors to help with are marked with the following labels:
 
 ## Building the code
 
-#### Run unit tests
+
+### Cloning
+
+```
+git clone {{ repo_url }}
+cd s3fs-nio
+```
+
+
+### Run unit tests
 
 ```
 mvn clean install
 ```
 
-#### Run unit and integration tests 
+### Run unit and integration tests 
 
 1. Copy `amazon-test-sample.properties` and replace credentials with real S3 ones.
 

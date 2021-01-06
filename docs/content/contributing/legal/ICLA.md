@@ -1,7 +1,9 @@
 
 
-<p align="center">
+<h2 align="center">
             Carlspring Consulting & Development Ltd.
+</h2>
+<p align="center">
       Individual Contributor License Agreement ("Agreement")
 </p>
 
@@ -45,8 +47,8 @@ This document is available as a PDF [here][ICLA PDF].
    <td width="70%"></td>
  </tr>
  <tr>
-   <td width="20%" valign="top">Mailing address</td>
-   <td width="70%" height="100"></td>
+   <td width="20%">Mailing address</td>
+   <td width="70%"></td>
  </tr>
  <tr>
    <td width="20%">Country</td>
@@ -164,5 +166,5 @@ Please sign: __________________________________ Date: ________________
 ```
 
 <!--  Please keep the empty line above! -->
-[ICLA PDF]: {{ resourcesUrl }}/pdfs/ICLA.pdf
+[ICLA PDF]: {{ resourcesPath }}/pdfs/ICLA.pdf
 <!-- Please keep the empty line below! -->
