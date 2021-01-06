@@ -1,6 +1,6 @@
-site_name: S3FS NIO
-site_url: https://carlspring.github.com/s3fs-nio
-repo_url: https://github.com/carlspring/s3fs-nio
+site_name: &site_name S3FS NIO
+site_url: &site_url https://s3fs-nio.carlspring.org/
+repo_url: &repo_url https://github.com/carlspring/s3fs-nio
 
 edit_uri: edit/master/docs/content/
 docs_dir: content
@@ -87,15 +87,11 @@ extra_css:
 
 extra:
   url: &url !!python/object/apply:os.getenv ["DEPLOY_URL", "http://localhost:8000"]
-  assetsPath: &assetsPath "assets/"
-  resourcesPath: &resourcesPath !!python/object/apply:urllib.parse.urljoin [*assetsPath, "resources"]
-  assetsUrl: !!python/object/apply:urllib.parse.urljoin [*url, *assetsPath]
-  resourcesUrl: !!python/object/apply:urllib.parse.urljoin [*url, *resourcesPath]
-  site_name: &site_name S3FS NIO
+  assetsPath: &assetsPath "/assets"
+  resourcesPath: &resourcesPath "/assets/resources"
   project_name: *site_name
-  repo_url: &repo_url https://github.com/carlspring/s3fs-nio
+  repo_url: *repo_url
   chat_url: &chat_url https://chat.carlspring.org/channel/s3fs-nio-community
-  docs_url: https://s3fs-nio.carlspring.org
   social:
   - icon: fontawesome/brands/github-alt
     link: *repo_url
@@ -111,6 +107,7 @@ nav:
   - Contributing:
     - Getting Started: contributing/index.md
     - Code of Conduct: contributing/code-of-conduct.md
+    - Coding Conventions: contributing/developer-guide/coding-convention.md
     - Guides:
       - Developers: contributing/developer-guide/index.md
       - Security Advisers: contributing/security-advisers.md

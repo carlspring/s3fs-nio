@@ -2,7 +2,7 @@
 
 ## Yet another fork !?!
 
-![fixed-the-code-will-be-meme]({{assetsUrl}}/fixed-the-code-will-be.jpg)
+![fixed-the-code-will-be-meme]({{assetsPath}}/fixed-the-code-will-be.jpg)
 
 In the past, there have been several attempts to implement an S3 `FileSystem` provider. Initially, the work on this was
 started by Martin Traverso in his project [martint/s3fs]. This work was later continued by Javier Arnáiz and his fork

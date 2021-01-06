@@ -258,5 +258,5 @@ Please, consider the following an example of how to indent your code.
 
 We have created code style profiles which you can import into your IDE:
 
-* <a href="{{resources}}/codestyles/s3fs-idea.xml" target="_blank">s3fs-idea.xml</a>
-* <a href="{{resources}}/codestyles/s3fs-eclipse.xml" target="_blank">s3fs-eclipse.xml</a>
+* <a href="{{resourcesPath}}/codestyles/s3fs-idea.xml" target="_blank">s3fs-idea.xml</a>
+* <a href="{{resourcesPath}}/codestyles/s3fs-eclipse.xml" target="_blank">s3fs-eclipse.xml</a>

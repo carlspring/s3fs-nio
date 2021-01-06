@@ -59,7 +59,7 @@ passport/ID details. We will not send you any spam, or share your details with t
 [martint/s3fs]: https://github.com/martint/s3fs
 [Upplication/Amazon-S3-FileSystem-NIO2]: https://github.com/Upplication/Amazon-S3-FileSystem-NIO2
 [Individual Contributor's License Agreement (ICLA)]: ICLA.md
-[ICLA PDF]: {{ resourcesUrl }}/pdfs/ICLA.pdf
+[ICLA PDF]: {{ resourcesPath }}/pdfs/ICLA.pdf
 [Individual Contributor's License Agreement (ICLA)]: ICLA.md
 [Apache 2.0]: ./license-Apache-2.0.md
 [MIT]: ./license-MIT.md
