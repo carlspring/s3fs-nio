@@ -2,7 +2,7 @@
 name: Bug Report
 about: Create a report to help us improve
 title: ''
-labels: 'bug', 'needs triage'
+labels: bug, needs triage
 assignees: ''
 ---
 
@@ -19,14 +19,16 @@ Describe the bug/issue you have.
 
 # Expected Behavior
 
-
-# Screenshots
-
-
 # Environment
 
 * `s3fs-nio` version:
 * OS: 
+* JDK: 
+  ```
+  full output of mvn -version (or java -version)
+  ```
+
+# Screenshots <!-- Remove if unrelated -->
 
 # Additional context <!-- Remove if unrelated -->
 
