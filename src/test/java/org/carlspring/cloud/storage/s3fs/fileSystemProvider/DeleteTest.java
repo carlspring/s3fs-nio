@@ -8,14 +8,20 @@ import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.*;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeleteTest
         extends S3UnitTestBase
@@ -43,14 +49,16 @@ class DeleteTest
               .file("dir/subDir/subFile");
 
         // act
-        Path file = createNewS3FileSystem().getPath("/bucketA/dir");
+        S3FileSystem s3FileSystem = createNewS3FileSystem();
+
+        Path file = s3FileSystem.getPath("/bucketA/dir");
         s3fsProvider.delete(file);
 
         // assertions
         assertTrue(Files.notExists(file));
-        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/subDir")));
-        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/file")));
-        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/subDir/subFile")));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/subDir")));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/file")));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/subDir/subFile")));
     }
 
     @Test

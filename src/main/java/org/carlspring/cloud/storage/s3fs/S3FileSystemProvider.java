@@ -19,10 +19,41 @@ import java.net.URLEncoder;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.file.AccessMode;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.FileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -37,11 +68,40 @@ import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.internal.util.Mimetype;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.Bucket;
+import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
+import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
+import software.amazon.awssdk.services.s3.model.Delete;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.utils.StringUtils;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.*;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_ERROR_RETRY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_DOMAIN;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_HOST;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
 import static software.amazon.awssdk.http.Header.CONTENT_TYPE;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
@@ -657,25 +717,29 @@ public class S3FileSystemProvider
     {
 
         List<ObjectIdentifier> keys = batch.stream()
-                                           .map(s3Path -> ObjectIdentifier.builder().key(s3Path.getKey()).build())
+                                           .map(s3Path -> ObjectIdentifier.builder()
+                                                                          .key(s3Path.getKey())
+                                                                          .build())
                                            .collect(Collectors.toList());
 
-        DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest
-                                                                .builder()
-                                                                .bucket(bucketName)
-                                                                .delete(Delete.builder().objects(keys).build())
-                                                                .build();
+        DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder()
+                                                                            .bucket(bucketName)
+                                                                            .delete(Delete.builder()
+                                                                                          .objects(keys)
+                                                                                          .build())
+                                                                            .build();
         client.deleteObjects(multiObjectDeleteRequest);
 
         // we delete the two objects (sometimes exists the key '/' and sometimes not)
         keys = batch.stream()
                     .map(s3Path -> ObjectIdentifier.builder().key(s3Path.getKey() + '/').build())
                     .collect(Collectors.toList());
-        multiObjectDeleteRequest = DeleteObjectsRequest
-                                           .builder()
-                                           .bucket(bucketName)
-                                           .delete(Delete.builder().objects(keys).build())
-                                           .build();
+        multiObjectDeleteRequest = DeleteObjectsRequest.builder()
+                                                       .bucket(bucketName)
+                                                       .delete(Delete.builder()
+                                                                     .objects(keys)
+                                                                     .build())
+                                                       .build();
 
         client.deleteObjects(multiObjectDeleteRequest);
     }
@@ -690,13 +754,13 @@ public class S3FileSystemProvider
     }
 
     private <T> LinkedList<Deque<T>> splitByBatchWithOrder(List<T> list,
-                                                           int size)
+                                                           int maxSize)
     {
         LinkedList<Deque<T>> pathsByBatch = new LinkedList<>();
         Deque<T> deque = new ArrayDeque<>();
         for (T t : list)
         {
-            if (deque.size() < size)
+            if (deque.size() < maxSize)
             {
                 deque.push(t);
             }
