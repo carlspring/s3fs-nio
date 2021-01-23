@@ -20,7 +20,8 @@ import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
+import software.amazon.awssdk.regions.providers.AwsRegionProvider;
+import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -161,14 +162,19 @@ public abstract class S3Factory
 
         try
         {
-            return new DefaultAwsRegionProviderChain().getRegion();
+            return getAwsRegionProvider().getRegion();
         }
         catch (final SdkClientException e)
         {
-            LOGGER.warn("Unable to load region from any of the providers in the chain");
+            LOGGER.warn("Unable to load region from any of the providers in the chain", e);
         }
 
         return DEFAULT_REGION;
+    }
+
+    private AwsRegionProvider getAwsRegionProvider()
+    {
+        return S3AwsRegionProviderChain.builder().build();
     }
 
     protected SdkHttpClient getHttpClient(final Properties props)
