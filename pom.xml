@@ -86,7 +86,6 @@
         <version.tika>1.25</version.tika>
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
         <version.junit>5.7.0</version.junit>
-        <version.junit.platform.runner>1.7.0</version.junit.platform.runner>
         <version.mockito>3.7.7</version.mockito>
         <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
     </properties>
@@ -107,11 +106,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
-                <configuration>
-                    <excludes>
-                        <exclude>**/*ITTest*</exclude>
-                    </excludes>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -242,12 +236,6 @@
             <version>${version.junit}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.junit.platform</groupId>
-            <artifactId>junit-platform-runner</artifactId>
-            <version>${version.junit.platform.runner}</version>
-            <scope>test</scope>
-        </dependency>
 
         <dependency>
             <groupId>com.github.marschall</groupId>
@@ -297,7 +285,7 @@
                         <version>3.0.0-M5</version>
                         <configuration>
                             <includes>
-                                <include>**/*ITSuite.java</include>
+                                <include>**/*IT.java</include>
                             </includes>
                             <excludes>
                                 <exclude>**/**Test.java</exclude>

@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -38,8 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Tag("s3-integration-test")
-class FilesITTest
+class FilesIT
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();

@@ -9,7 +9,7 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-class EnvironmentITTest
+class EnvironmentIT
 {
     @Test
     void couldCreateFileSystem()
