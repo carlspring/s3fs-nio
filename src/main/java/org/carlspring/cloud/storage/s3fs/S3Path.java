@@ -64,7 +64,7 @@ public class S3Path
      */
     public S3Path(S3FileSystem fileSystem, String first, String... more)
     {
-        Preconditions.checkArgument(first != null, "first path must be not null");
+        Preconditions.checkArgument(first != null, "first path must be not null, maybe you forgot to set the bucket name?");
         Preconditions.checkArgument(!first.startsWith("//"), "first path doesnt start with '//'. Miss bucket");
         // see tests org.carlspring.cloud.storage.s3fs.Path.EndsWithTest#endsWithRelativeBlankAbsolute()
 
