@@ -7,7 +7,11 @@ import java.util.Map;
 import java.util.Properties;
 
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
+
+import javax.annotation.Nonnull;
+
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
@@ -32,17 +36,19 @@ public abstract class EnvironmentBuilder
     {
         Map<String, Object> env;
 
-        String accessKey = System.getenv(ACCESS_KEY);
-        String secretKey = System.getenv(SECRET_KEY);
-        String region = System.getenv(REGION);
-        String protocol = System.getenv(PROTOCOL);
+        String accessKey = getEnvValue(ACCESS_KEY);
+        String secretKey = getEnvValue(SECRET_KEY);
+        String region = getEnvValue(REGION);
+        String protocol = getEnvValue(PROTOCOL);
+        String bucket = getEnvValue(BUCKET_NAME_KEY);
 
-        if (accessKey != null && secretKey != null && region != null && protocol != null)
+        if (accessKey != null && secretKey != null && region != null && protocol != null && bucket != null)
         {
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey)
                                            .put(SECRET_KEY, secretKey)
                                            .put(REGION, region)
                                            .put(PROTOCOL, protocol)
+                                           .put(BUCKET_NAME_KEY, bucket)
                                            .build();
         }
         else
@@ -69,13 +75,41 @@ public abstract class EnvironmentBuilder
     }
 
     /**
+     * Attempt to retrieve OS Environment Variable
+     * @return
+     */
+    private static String getEnvValue(@Nonnull String key)
+    {
+        String envKeyName = getS3EnvName(key);
+        String value = System.getenv(envKeyName);
+
+        return value;
+    }
+
+    /**
+     * @param key Non-prefixed environment name (i.e. bucket.name)
+     * @return Prefixed uppercase environment name (i.e. S3FS_BUCKET_NAME)
+     */
+    private static String getS3EnvName(@Nonnull String key)
+    {
+        // Sometimes the key will contain `S3FS_` or `s3fs.property.name` which is why we need to sanitize the string
+        // to ensure consistency.
+        String sanitized = StringUtils.removeStartIgnoreCase(key, "S3FS.");
+        sanitized = StringUtils.removeStartIgnoreCase(sanitized, "S3FS_");
+        sanitized = sanitized.replaceAll("\\.", "_").toUpperCase();
+        sanitized = "S3FS_" + sanitized;
+
+        return sanitized;
+    }
+
+    /**
      * get default bucket name
      *
      * @return String without end separator
      */
     public static String getBucket()
     {
-        String bucketName = System.getenv(BUCKET_NAME_KEY);
+        String bucketName = getEnvValue(BUCKET_NAME_KEY);
         if (bucketName != null)
         {
             if (!bucketName.endsWith("/"))

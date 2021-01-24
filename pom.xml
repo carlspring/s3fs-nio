@@ -238,6 +238,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.github.marschall</groupId>
             <artifactId>zipfilesystem-standalone</artifactId>
             <version>1.0.1</version>
