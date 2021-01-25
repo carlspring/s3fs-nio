@@ -6,12 +6,12 @@ import org.carlspring.cloud.storage.s3fs.junit.examples.*;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class S3IntegrationTestAnnotationTest
+class S3IntegrationTestAnnotationTest
         extends BaseAnnotationTest
 {
 
     @Test
-    public void testClassLevelAnnotation()
+    void testClassLevelAnnotation()
     {
         assertTrue(hasS3Annotation(S3ClassAnnotationIT.class));
         assertTrue(hasS3Annotation(CombinedS3MinioIT.class));
@@ -23,7 +23,7 @@ public class S3IntegrationTestAnnotationTest
     }
 
     @Test
-    public void testMethodLevelAnnotation()
+    void testMethodLevelAnnotation()
             throws NoSuchMethodException
     {
         assertTrue(hasS3Annotation(S3MethodAnnotationIT.class, "testShouldExecuteBecauseOfMethodAnnotation"));

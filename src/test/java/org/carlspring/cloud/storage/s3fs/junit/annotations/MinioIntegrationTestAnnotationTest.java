@@ -7,12 +7,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MinioIntegrationTestAnnotationTest
+class MinioIntegrationTestAnnotationTest
         extends BaseAnnotationTest
 {
 
     @Test
-    public void testClassLevelAnnotation()
+    void testClassLevelAnnotation()
     {
         assertTrue(hasMinioAnnotation(MinioClassAnnotationIT.class));
         assertTrue(hasMinioAnnotation(CombinedMinioS3IT.class));
@@ -24,7 +24,7 @@ public class MinioIntegrationTestAnnotationTest
     }
 
     @Test
-    public void testMethodLevelAnnotation()
+    void testMethodLevelAnnotation()
             throws NoSuchMethodException
     {
         assertTrue(hasMinioAnnotation(MinioMethodAnnotationIT.class, "testShouldExecuteBecauseOfMethodAnnotation"));
