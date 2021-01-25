@@ -2,6 +2,7 @@ package org.carlspring.cloud.storage.s3fs.path;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGIO
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+@S3IntegrationTest
 public class ToURLIT
 {
 

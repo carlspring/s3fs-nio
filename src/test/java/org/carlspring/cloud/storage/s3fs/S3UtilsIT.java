@@ -2,6 +2,7 @@ package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-
+@S3IntegrationTest
 class S3UtilsIT
 {
 

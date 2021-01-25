@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.IOException;
@@ -14,6 +15,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+@S3IntegrationTest
 class FileSystemsIT
 {
 

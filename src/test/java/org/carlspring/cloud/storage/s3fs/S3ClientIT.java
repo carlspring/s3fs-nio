@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -28,6 +29,7 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+@S3IntegrationTest
 class S3ClientIT
 {
 

@@ -2,6 +2,7 @@ package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@S3IntegrationTest
 class NewByteChannelIT
         extends S3UnitTestBase
 {

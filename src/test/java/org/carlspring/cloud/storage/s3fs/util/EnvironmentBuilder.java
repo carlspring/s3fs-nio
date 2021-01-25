@@ -88,7 +88,7 @@ public abstract class EnvironmentBuilder
 
     /**
      * @param key Non-prefixed environment name (i.e. bucket.name)
-     * @return Prefixed uppercase environment name (i.e. S3FS_BUCKET_NAME)
+     * @return Prefixed uppercase environment name (i.e. S3FS_BUCKET_NAME || S3FS_MINIO_BUCKET_NAME)
      */
     private static String getS3EnvName(@Nonnull String key)
     {
@@ -97,6 +97,13 @@ public abstract class EnvironmentBuilder
         String sanitized = StringUtils.removeStartIgnoreCase(key, "S3FS.");
         sanitized = StringUtils.removeStartIgnoreCase(sanitized, "S3FS_");
         sanitized = sanitized.replaceAll("\\.", "_").toUpperCase();
+
+        String integrationSuite = System.getProperty("running.it");
+        if(integrationSuite != null && integrationSuite.equalsIgnoreCase("minio"))
+        {
+            sanitized = "MINIO_" + sanitized;
+        }
+
         sanitized = "S3FS_" + sanitized;
 
         return sanitized;

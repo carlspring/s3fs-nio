@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
+@S3IntegrationTest
 class NewFileSystemIT
 {
 

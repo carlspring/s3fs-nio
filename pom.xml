@@ -106,6 +106,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
+                <configuration>
+                    <!-- Make sure the build fails if no tests are executed! -->
+                    <failIfNoTests>true</failIfNoTests>
+                    <!-- Since we are not tagging unit tests, this actually means "execute all non-tagged tests" -->
+                    <excludedGroups>*</excludedGroups>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -282,8 +288,7 @@
 
     <profiles>
         <profile>
-            <id>integration-tests</id>
-
+            <id>it-s3</id>
             <build>
                 <plugins>
                     <plugin>
@@ -291,20 +296,30 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <version>3.0.0-M5</version>
                         <configuration>
+                            <!-- Make sure the build fails if no tests are executed! -->
+                            <failIfNoTests>true</failIfNoTests>
                             <includes>
                                 <include>**/*IT.java</include>
                             </includes>
-                            <excludes>
-                                <exclude>**/**Test.java</exclude>
-                            </excludes>
+                            <systemPropertyVariables>
+                                <!-- used in EnvironmentBuilder.java -->
+                                <running.it>s3</running.it>
+                            </systemPropertyVariables>
                         </configuration>
                         <executions>
                             <execution>
-                                <id>integration-test</id>
+                                <id>it-s3</id>
                                 <phase>integration-test</phase>
                                 <goals>
                                     <goal>integration-test</goal>
                                 </goals>
+                                <!-- This configuration must happen at execution level, otherwise you'll get: -->
+                                <!-- Skipping execution of surefire because it has already been run for this configuration -->
+                                <configuration>
+                                    <!-- Include only s3 tagged integration tests -->
+                                    <groups>it-s3</groups>
+                                    <excludedGroups>*</excludedGroups>
+                                </configuration>
                             </execution>
                             <execution>
                                 <id>verify</id>
@@ -318,6 +333,55 @@
                 </plugins>
             </build>
         </profile>
+
+        <profile>
+            <!-- This should work but is not tested since it depends on https://github.com/carlspring/s3fs-nio/issues/60 -->
+            <id>it-minio</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <!-- Make sure the build fails if no tests are executed! -->
+                            <failIfNoTests>true</failIfNoTests>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <!-- used in EnvironmentBuilder.java -->
+                                <running.it>minio</running.it>
+                            </systemPropertyVariables>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>it-minio</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                </goals>
+                                <!-- This configuration must happen at execution level, otherwise you'll get: -->
+                                <!-- Skipping execution of surefire because it has already been run for this configuration -->
+                                <configuration>
+                                    <!-- Include only s3 tagged integration tests -->
+                                    <groups>it-minio</groups>
+                                    <excludedGroups>*</excludedGroups>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>verify</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>verify</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>jacoco-code-coverage</id>
 
