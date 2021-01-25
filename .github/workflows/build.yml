@@ -19,8 +19,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Commenting Windows out in order to preserve our free minutes.
-        # We can re-enable it, if we get a sponsor.
         os: [ubuntu-latest, windows-latest, macos-latest]
         java: [ 8, 11.0.3 ]
     env:
@@ -44,11 +42,21 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          # https://github.com/actions/cache/issues/2#issuecomment-673493515
+          # Example: unix timestamp
+          key: ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-
+      - name: Maven Version
+        run: mvn --version
       - name: Build with Maven
-        run: mvn clean install -Pjacoco-code-coverage
+        run: mvn clean install -Pit-s3 -Pjacoco-code-coverage
+        env:
+          S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
+          S3FS_ACCESS_KEY: ${{ secrets.S3FS_ACCESS_KEY }}
+          S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
+          S3FS_REGION: ${{ secrets.S3FS_REGION }}
+          S3FS_PROTOCOL: "https"
       - name: Publish code analysis to Sonarcloud
         # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
         #           it from October 2020. Please update to at least Java 11.
