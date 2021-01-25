@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
+import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.IOException;
@@ -16,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
 @S3IntegrationTest
-class FileSystemsIT
+class FileSystemsIT extends BaseIntegrationTest
 {
 
     private static final URI uriEurope = URI.create("s3://s3-eu-west-1.amazonaws.com/");

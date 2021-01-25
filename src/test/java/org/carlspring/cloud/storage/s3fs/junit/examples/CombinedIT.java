@@ -2,6 +2,7 @@ package org.carlspring.cloud.storage.s3fs.junit.examples;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.MinioIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
+import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -13,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @MinioIntegrationTest
 @S3IntegrationTest
-public class CombinedIT
+public class CombinedIT extends BaseIntegrationTest
 {
 
     private static final Logger logger = LoggerFactory.getLogger(S3MethodAnnotationIT.class);

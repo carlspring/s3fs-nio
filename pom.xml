@@ -266,6 +266,14 @@
             <scope>test</scope>
         </dependency>
 
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>1.15.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- needs extra dependencies: objenesis & hamcrest -->
         <dependency>
             <groupId>org.mockito</groupId>

@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
+import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +31,7 @@ import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealE
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @S3IntegrationTest
-class S3ClientIT
+class S3ClientIT extends BaseIntegrationTest
 {
 
     S3Client client;

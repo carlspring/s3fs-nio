@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
+import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
@@ -27,7 +28,7 @@ import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBA
 import static org.junit.jupiter.api.Assertions.*;
 
 @S3IntegrationTest
-class FilesIT
+class FilesIT extends BaseIntegrationTest
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
