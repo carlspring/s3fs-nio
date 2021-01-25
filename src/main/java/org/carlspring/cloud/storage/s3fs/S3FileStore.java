@@ -117,6 +117,12 @@ public class S3FileStore
         return getBucket(name);
     }
 
+    /**
+     * This code requires `s3:ListAllMyBuckets` permission.
+     *
+     * @param bucketName
+     * @return
+     */
     private Bucket getBucket(final String bucketName)
     {
         for (Bucket buck : getClient().listBuckets().buckets())

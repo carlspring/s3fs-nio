@@ -322,7 +322,7 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>verify</id>
+                                <id>it-s3-verify</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>verify</goal>
@@ -370,7 +370,7 @@
                                 </configuration>
                             </execution>
                             <execution>
-                                <id>verify</id>
+                                <id>it-minio-verify</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>verify</goal>
