@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
@@ -11,16 +12,18 @@ import java.net.URI;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeleteTest
@@ -102,17 +105,22 @@ class DeleteTest
     void deleteFileNotExists()
             throws IOException
     {
+        // create and start a ListAppender
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+
+        Logger testLogger = (Logger) LoggerFactory.getLogger(S3FileSystemProvider.class);
+        testLogger.addAppender(appender);
+
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("bucketA").dir("dir");
-
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+        s3fsProvider.delete(file);
 
-        Exception exception = assertThrows(NoSuchFileException.class, () -> {
-            s3fsProvider.delete(file);
-        });
-
-        assertNotNull(exception);
+        // JUnit assertions
+        List<ILoggingEvent> logsList = appender.list;
+        assertTrue(logsList.get(0).getMessage().contains(" was skipped because the path was not found."));
     }
 
     /**

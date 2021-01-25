@@ -63,6 +63,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.internal.util.Mimetype;
@@ -167,6 +169,8 @@ public class S3FileSystemProvider
                                                                         PATH_STYLE_ACCESS);
 
     private static final int MAX_OBJECT_PER_REQUEST = 1000;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(S3FileSystemProvider.class);
 
     private final S3Utils s3Utils = new S3Utils();
 
@@ -708,12 +712,16 @@ public class S3FileSystemProvider
 
         LinkedList<Deque<S3Path>> s3Paths = getPathsByBatch(rootPath);
 
-        s3Paths.forEach(batch -> deleteBatch(client, batch, bucketName));
+        for (Deque<S3Path> batch : s3Paths)
+        {
+            deleteBatch(client, batch, bucketName);
+        }
     }
 
     private void deleteBatch(S3Client client,
                              Deque<S3Path> batch,
                              String bucketName)
+            throws IOException
     {
 
         List<ObjectIdentifier> keys = batch.stream()
@@ -728,7 +736,15 @@ public class S3FileSystemProvider
                                                                                           .objects(keys)
                                                                                           .build())
                                                                             .build();
-        client.deleteObjects(multiObjectDeleteRequest);
+
+        try
+        {
+            client.deleteObjects(multiObjectDeleteRequest);
+        }
+        catch (SdkException e)
+        {
+            throw new IOException(e);
+        }
 
         // we delete the two objects (sometimes exists the key '/' and sometimes not)
         keys = batch.stream()
@@ -741,7 +757,14 @@ public class S3FileSystemProvider
                                                                      .build())
                                                        .build();
 
-        client.deleteObjects(multiObjectDeleteRequest);
+        try
+        {
+            client.deleteObjects(multiObjectDeleteRequest);
+        }
+        catch (SdkException e)
+        {
+            throw new IOException(e);
+        }
     }
 
     private LinkedList<Deque<S3Path>> getPathsByBatch(S3Path path)
@@ -787,18 +810,24 @@ public class S3FileSystemProvider
         S3Path s3Path = toS3Path(path);
         if (Files.notExists(s3Path))
         {
-            throw new NoSuchFileException("the path: " + s3Path + " not exists");
+            LOGGER.warn("Deleting " + s3Path + " was skipped because the path was not found.");
         }
-
-        paths.add(s3Path);
-
-        if (Files.isDirectory(s3Path))
+        else
         {
-            try (final DirectoryStream<Path> stream = Files.newDirectoryStream(s3Path))
+            paths.add(s3Path);
+
+            if (Files.isDirectory(s3Path))
             {
-                for (Path child : stream)
+                try (final DirectoryStream<Path> stream = Files.newDirectoryStream(s3Path))
                 {
-                    visitAllFiles(child, paths);
+                    for (Path child : stream)
+                    {
+                        visitAllFiles(child, paths);
+                    }
+                }
+                catch (SecurityException e)
+                {
+                    LOGGER.warn("Deleting " + s3Path + " was skipped because the path could not be read-accessed.");
                 }
             }
         }
