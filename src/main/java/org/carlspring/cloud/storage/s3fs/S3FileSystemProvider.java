@@ -757,20 +757,25 @@ public class S3FileSystemProvider
                                                            int maxSize)
     {
         LinkedList<Deque<T>> pathsByBatch = new LinkedList<>();
-        Deque<T> deque = new ArrayDeque<>();
-        for (T t : list)
+
+        if (!list.isEmpty())
         {
-            if (deque.size() < maxSize)
+            Deque<T> deque = new ArrayDeque<>();
+            for (T t : list)
             {
-                deque.push(t);
+                if (deque.size() < maxSize)
+                {
+                    deque.push(t);
+                }
+                else
+                {
+                    pathsByBatch.add(deque);
+                    deque = new ArrayDeque<>();
+                }
             }
-            else
-            {
-                pathsByBatch.add(deque);
-                deque = new ArrayDeque<>();
-            }
+            pathsByBatch.add(deque); // add the last batch
+
         }
-        pathsByBatch.add(deque); // add the last batch
 
         return pathsByBatch;
     }
