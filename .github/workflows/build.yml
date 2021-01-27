@@ -1,7 +1,7 @@
 name: Build and test
 on:
-  # Build PRs
-  pull_request: ~
+  # Build PRs (allows for forks to build using upstream build.yml)
+  pull_request_target: ~
   # On push event
   push:
     # Build only changes pushed into the `master` branch.
