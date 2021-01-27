@@ -810,7 +810,7 @@ public class S3FileSystemProvider
         S3Path s3Path = toS3Path(path);
         if (Files.notExists(s3Path))
         {
-            LOGGER.warn("Deleting " + s3Path + " was skipped because the path was not found.");
+            LOGGER.warn("Deleting {} was skipped because the path was not found.", s3Path);
         }
         else
         {
@@ -827,7 +827,7 @@ public class S3FileSystemProvider
                 }
                 catch (SecurityException e)
                 {
-                    LOGGER.warn("Deleting " + s3Path + " was skipped because the path could not be read-accessed.");
+                    LOGGER.warn("Deleting {} was skipped because the path could not be read-accessed.", s3Path);
                 }
             }
         }
