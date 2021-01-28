@@ -6,7 +6,8 @@ import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 public abstract class BaseIntegrationTest
 {
 
-    static {
+    static
+    {
         if (isMinioEnv())
         {
             final String accessKey = (String) EnvironmentBuilder.getRealEnv().get(ACCESS_KEY);

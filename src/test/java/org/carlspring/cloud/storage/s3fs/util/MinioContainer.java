@@ -27,10 +27,9 @@ public class MinioContainer
         withEnv(MINIO_ACCESS_KEY, accessKey);
         withEnv(MINIO_SECRET_KEY, secretKey);
         withCommand("server", DEFAULT_STORAGE_DIRECTORY);
-        setWaitStrategy(new HttpWaitStrategy()
-                                .forPort(DEFAULT_PORT)
-                                .forPath(HEALTH_ENDPOINT)
-                                .withStartupTimeout(Duration.ofMinutes(2)));
+        setWaitStrategy(new HttpWaitStrategy().forPort(DEFAULT_PORT)
+                                              .forPath(HEALTH_ENDPOINT)
+                                              .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
 }
