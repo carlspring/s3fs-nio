@@ -1,0 +1,10 @@
+
+[default]
+region = us-west-2
+
+[profile test-no-region]
+test-no-region = test-no-region
+
+[profile test]
+region = eu-central-1
+
