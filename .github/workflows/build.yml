@@ -27,7 +27,7 @@ jobs:
       PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
       # format: boolean
       # check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'carlspring/s3fs-nio' }}
+      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -125,7 +125,7 @@ jobs:
 
   run-it-s3:
     # Do not run for forks.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'carlspring/s3fs-nio' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: [run-it-minio]
     runs-on: ${{ matrix.os }}
     strategy:
