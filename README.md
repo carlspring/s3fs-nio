@@ -23,6 +23,9 @@
 [![GitHub issues by-label](https://img.shields.io/github/issues-raw/carlspring/s3fs-nio/hacktoberfest.svg?label=hacktoberfest&color=orange)](https://github.com/carlspring/s3fs-nio/issues?q=is%3Aissue+is%3Aopen+label%3A%22hacktoberfest%22)
 [![GitHub issues by-label](https://img.shields.io/badge/stackoverflow-ask-orange.svg)](https://stackoverflow.com/tags/s3fs-nio/)
 
+
+IGNORE
+
 This is an implementation of an **Amazon AWS S3** `FileSystem` provider using **[JSR-203]** (a.k.a. NIO2) for Java 8.
 
 Amazon Simple Storage Service provides a fully redundant data storage infrastructure for storing and retrieving any
