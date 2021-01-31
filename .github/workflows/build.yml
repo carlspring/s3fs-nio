@@ -126,6 +126,8 @@ jobs:
   run-it-s3:
     needs: [run-it-minio]
     runs-on: ${{ matrix.os }}
+    environment:
+      name: approve-it-s3
     strategy:
       fail-fast: true
       matrix:
