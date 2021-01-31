@@ -109,7 +109,7 @@ jobs:
       - name: MinIO integration tests.
         run: mvn clean install -Pit-minio
         env:
-          S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
+          S3FS_BUCKET_NAME: "s3fs-nio-minio"
           # access key must be >= 3 chars or authentication will fail.
           S3FS_ACCESS_KEY: "access_key"
           # secret key must be >= 8 chars or authentication will fail.
