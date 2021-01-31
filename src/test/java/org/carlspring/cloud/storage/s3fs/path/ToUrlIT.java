@@ -4,7 +4,6 @@ import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -18,7 +17,6 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -28,7 +26,7 @@ class ToUrlIT
         extends BaseIntegrationTest
 {
 
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
+    private static final URI URI_GLOBAL = ENVIRONMENT_CONFIGURATION.getGlobalUrl();
 
     public FileSystem getS3FileSystem(Entry... props)
             throws IOException
@@ -46,13 +44,13 @@ class ToUrlIT
 
         try
         {
-            return FileSystems.newFileSystem(uriGlobal, env);
+            return FileSystems.newFileSystem(URI_GLOBAL, env);
         }
         catch (FileSystemAlreadyExistsException e)
         {
-            FileSystems.getFileSystem(uriGlobal).close();
+            FileSystems.getFileSystem(URI_GLOBAL).close();
 
-            return FileSystems.newFileSystem(uriGlobal, env);
+            return FileSystems.newFileSystem(URI_GLOBAL, env);
         }
     }
 

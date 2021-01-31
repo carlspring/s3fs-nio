@@ -5,7 +5,6 @@ import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
-import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
 import java.io.ByteArrayInputStream;
@@ -28,7 +27,6 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -40,12 +38,10 @@ class S3UtilsIT
         extends BaseIntegrationTest
 {
 
-    private static final String bucket = ENVIRONMENT_CONFIGURATION.getBucketName();
-
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
+    private static final String BUCKET_NAME = ENVIRONMENT_CONFIGURATION.getBucketName();
+    private static final URI URI_GLOBAL = ENVIRONMENT_CONFIGURATION.getGlobalUrl();
 
     private FileSystem fileSystemAmazon;
-
 
     @BeforeEach
     public void setup()
@@ -63,7 +59,7 @@ class S3UtilsIT
 
         try
         {
-            FileSystems.getFileSystem(uriGlobal).close();
+            FileSystems.getFileSystem(URI_GLOBAL).close();
 
             return createNewFileSystem();
         }
@@ -76,7 +72,7 @@ class S3UtilsIT
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, ENVIRONMENT_CONFIGURATION.asMap());
+        return FileSystems.newFileSystem(URI_GLOBAL, ENVIRONMENT_CONFIGURATION.asMap());
     }
 
     @Test
@@ -106,7 +102,7 @@ class S3UtilsIT
             Files.createFile(base.resolve("file"));
             Files.createFile(base.resolve("file1"));
 
-            path = fileSystemAmazon.getPath(bucket, startPath);
+            path = fileSystemAmazon.getPath(BUCKET_NAME, startPath);
 
             Files.walkFileTree(base, new CopyDirVisitor(base, path));
         }
@@ -128,7 +124,7 @@ class S3UtilsIT
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
             Path base = Files.createDirectories(linux.getPath("/base").resolve("dir"));
-            path = fileSystemAmazon.getPath(bucket, startPath);
+            path = fileSystemAmazon.getPath(BUCKET_NAME, startPath);
 
             Files.walkFileTree(base.getParent(), new CopyDirVisitor(base.getParent(), path));
         }
@@ -150,7 +146,7 @@ class S3UtilsIT
 
         final RequestBody requestBody = RequestBody.fromInputStream(new ByteArrayInputStream("".getBytes()), 0L);
 
-        String bucketName = bucket.replace("/", "");
+        String bucketName = BUCKET_NAME.replace("/", "");
         String key1 = startPath + "lib/angular/";
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key1).build();
         s3FileSystem.getClient().putObject(request, requestBody);
@@ -159,7 +155,7 @@ class S3UtilsIT
         request = PutObjectRequest.builder().bucket(bucketName).key(key2).build();
         s3FileSystem.getClient().putObject(request, requestBody);
 
-        S3Path s3Path = s3FileSystem.getPath(bucket, startPath, "lib", "angular");
+        S3Path s3Path = s3FileSystem.getPath(BUCKET_NAME, startPath, "lib", "angular");
         S3Object result = getS3ObjectSummary(s3Path);
 
         assertEquals(startPath + "lib/angular/", result.key());
@@ -177,11 +173,11 @@ class S3UtilsIT
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
 
-        String bucketName = bucket.replace("/", "");
+        String bucketName = BUCKET_NAME.replace("/", "");
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
         s3FileSystem.getClient().putObject(request, requestBody);
 
-        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(BUCKET_NAME, folder);
         S3Object result = getS3ObjectSummary(s3Path);
 
         assertEquals(key, result.key());
@@ -219,11 +215,11 @@ class S3UtilsIT
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = bucket.replace("/", "");
+        String bucketName = BUCKET_NAME.replace("/", "");
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
         s3FileSystem.getClient().putObject(request, requestBody);
 
-        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(BUCKET_NAME, folder);
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
 
         assertTrue(result.isDirectory());
@@ -247,14 +243,14 @@ class S3UtilsIT
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream("contenido1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = bucket.replace("/", "");
+        String bucketName = BUCKET_NAME.replace("/", "");
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
 
         s3FileSystem.getClient().putObject(request, requestBody);
 
-        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        S3Path s3Path = (S3Path) fileSystemAmazon.getPath(BUCKET_NAME, folder);
 
         S3BasicFileAttributes result = new S3Utils().getS3FileAttributes(s3Path);
 
@@ -305,13 +301,13 @@ class S3UtilsIT
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        final String bucketName = bucket.replace("/", "");
+        final String bucketName = BUCKET_NAME.replace("/", "");
         final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
         final S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
         final S3Client client = s3FileSystem.getClient();
 
-        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(BUCKET_NAME, folder);
 
         //when
         client.putObject(request, requestBody);
@@ -340,13 +336,13 @@ class S3UtilsIT
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, 0L);
-        final String bucketName = bucket.replace("/", "");
+        final String bucketName = BUCKET_NAME.replace("/", "");
         final PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(key).build();
 
         final S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
         final S3Client client = s3FileSystem.getClient();
 
-        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(bucket, folder);
+        final S3Path s3Path = (S3Path) fileSystemAmazon.getPath(BUCKET_NAME, folder);
 
         //when
         client.putObject(request, requestBody);
@@ -384,7 +380,7 @@ class S3UtilsIT
             final Path file = base.resolve("file");
             Files.createFile(file);
 
-            path = fileSystemAmazon.getPath(bucket, startPath);
+            path = fileSystemAmazon.getPath(BUCKET_NAME, startPath);
 
             Files.walkFileTree(base, new CopyDirVisitor(base, path));
         }
