@@ -289,6 +289,8 @@
     </dependencies>
 
     <profiles>
+        <!-- Reminder: To run all tests use -Punit-tests,it-minio,it-s3 since activeByDefault is disabled when `-P`
+                       is being used.  -->
         <profile>
             <id>unit-tests</id>
             <activation>
@@ -311,6 +313,56 @@
                                 <id>unit-tests</id>
                                 <goals>
                                     <goal>test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Note: Ordering of it-minio and it-s3 is important since we want for it-minio to execute first so we -->
+        <!--       can catch issues earlier and hit the S3 API endpoints less often which optimizes costs. -->
+        <profile>
+            <!-- This should work but is not tested since it depends on https://github.com/carlspring/s3fs-nio/issues/60 -->
+            <id>it-minio</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <!-- Make sure the build fails if no tests are executed! -->
+                            <failIfNoTests>true</failIfNoTests>
+                            <includes>
+                                <include>**/*IT.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <!-- used in EnvironmentBuilder.java -->
+                                <running.it>minio</running.it>
+                            </systemPropertyVariables>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>it-minio</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                </goals>
+                                <!-- This configuration must happen at execution level, otherwise you'll get: -->
+                                <!-- Skipping execution of surefire because it has already been run for this configuration -->
+                                <configuration>
+                                    <!-- Include only s3 tagged integration tests -->
+                                    <groups>it-minio</groups>
+                                    <excludedGroups>*</excludedGroups>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>it-minio-verify</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>verify</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -355,54 +407,6 @@
                             </execution>
                             <execution>
                                 <id>it-s3-verify</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>verify</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <!-- This should work but is not tested since it depends on https://github.com/carlspring/s3fs-nio/issues/60 -->
-            <id>it-minio</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>3.0.0-M5</version>
-                        <configuration>
-                            <!-- Make sure the build fails if no tests are executed! -->
-                            <failIfNoTests>true</failIfNoTests>
-                            <includes>
-                                <include>**/*IT.java</include>
-                            </includes>
-                            <systemPropertyVariables>
-                                <!-- used in EnvironmentBuilder.java -->
-                                <running.it>minio</running.it>
-                            </systemPropertyVariables>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>it-minio</id>
-                                <phase>integration-test</phase>
-                                <goals>
-                                    <goal>integration-test</goal>
-                                </goals>
-                                <!-- This configuration must happen at execution level, otherwise you'll get: -->
-                                <!-- Skipping execution of surefire because it has already been run for this configuration -->
-                                <configuration>
-                                    <!-- Include only s3 tagged integration tests -->
-                                    <groups>it-minio</groups>
-                                    <excludedGroups>*</excludedGroups>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>it-minio-verify</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>verify</goal>
