@@ -27,7 +27,7 @@ jobs:
       PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
       # format: boolean
       # check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != 'carlspring/s3fs-nio' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -124,10 +124,10 @@ jobs:
         run: docker save minio/minio testcontainers/ryuk > ${{ github.workspace }}/docker-image-cache.tar
 
   run-it-s3:
+    # Do not run for forks.
+    if: ${{ env.IS_EXTERNAL_PR == 'false' }}
     needs: [run-it-minio]
     runs-on: ${{ matrix.os }}
-    environment:
-      name: approve-it-s3
     strategy:
       fail-fast: true
       matrix:
