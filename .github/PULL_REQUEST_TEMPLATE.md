@@ -4,7 +4,7 @@ This pull request closes # .
 
 # Acceptance Test
 
-* [ ] Building the code with `mvn clean install -Pintegration-tests` still works.
+* [ ] Building the code with `mvn clean install -Punit-tests,it-minio,it-s3` still works.
 
 # Questions
 
