@@ -45,11 +45,11 @@ public abstract class EnvironmentBuilder
         if (accessKey != null && secretKey != null && region != null && protocol != null && bucket != null)
         {
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey)
-                                           .put(SECRET_KEY, secretKey)
-                                           .put(REGION, region)
-                                           .put(PROTOCOL, protocol)
-                                           .put(BUCKET_NAME_KEY, bucket)
-                                           .build();
+                                                        .put(SECRET_KEY, secretKey)
+                                                        .put(REGION, region)
+                                                        .put(PROTOCOL, protocol)
+                                                        .put(BUCKET_NAME_KEY, bucket)
+                                                        .build();
         }
         else
         {
@@ -65,10 +65,11 @@ public abstract class EnvironmentBuilder
             }
 
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-                                           .put(SECRET_KEY, props.getProperty(SECRET_KEY))
-                                           .put(REGION, props.getProperty(REGION))
-                                           .put(PROTOCOL, props.getProperty(PROTOCOL))
-                                           .build();
+                                                        .put(SECRET_KEY, props.getProperty(SECRET_KEY))
+                                                        .put(REGION, props.getProperty(REGION))
+                                                        .put(PROTOCOL, props.getProperty(PROTOCOL))
+                                                        .put(BUCKET_NAME_KEY, props.getProperty(BUCKET_NAME_KEY))
+                                                        .build();
         }
 
         return env;
