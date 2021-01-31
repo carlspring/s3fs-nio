@@ -44,7 +44,7 @@ class FilesIT
         extends BaseIntegrationTest
 {
 
-    private static final String bucket = EnvironmentBuilder.getBucket();
+    private static final String bucket = ENVIRONMENT_CONFIGURATION.getBucketName();
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 

@@ -127,57 +127,6 @@ public abstract class EnvironmentBuilder
     }
 
     /**
-     * get default bucket name
-     *
-     * @return String without end separator
-     */
-    public static String getBucket()
-    {
-        String bucketNameFromEnvironmentVariable = getBucketNameFromEnvironmentVariable();
-
-        return Optional.ofNullable(bucketNameFromEnvironmentVariable)
-                       .orElseGet(EnvironmentBuilder::getBucketNameFromPropertiesFile);
-    }
-
-    private static String getBucketNameFromEnvironmentVariable()
-    {
-        String bucketName = getEnvironmentValue(BUCKET_NAME_KEY);
-        if (bucketName != null)
-        {
-            if (!bucketName.endsWith("/"))
-            {
-                bucketName += "/";
-            }
-
-            return bucketName;
-        }
-        return null;
-    }
-
-    private static String getBucketNameFromPropertiesFile()
-    {
-        final Properties properties = new Properties();
-
-        try
-        {
-            properties.load(getPropertiesResource());
-
-            String bucketName = properties.getProperty(BUCKET_NAME_KEY);
-            if (bucketName != null && !bucketName.endsWith("/"))
-            {
-                bucketName += "/";
-            }
-
-            return bucketName;
-        }
-        catch (IOException e)
-        {
-            throw new RuntimeException(
-                    "Unable to load properties file from classpath nor to find environment variables!", e);
-        }
-    }
-
-    /**
      * get the URI with the access key and secret key as authority (plain text)
      *
      * @param s3GlobalUri URI a valid s3 endpoint, look at http://docs.aws.amazon.com/general/latest/gr/rande.html#s3_region

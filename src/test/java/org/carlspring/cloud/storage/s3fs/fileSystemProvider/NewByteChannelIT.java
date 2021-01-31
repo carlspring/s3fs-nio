@@ -35,7 +35,7 @@ class NewByteChannelIT
         extends S3UnitTestBase
 {
 
-    private static final String bucket = EnvironmentBuilder.getBucket();
+    private static final String bucket = EnvironmentBuilder.getEnvironmentConfiguration().getBucketName();
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
