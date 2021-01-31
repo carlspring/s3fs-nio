@@ -125,7 +125,7 @@ jobs:
 
   run-it-s3:
     # Do not run for forks.
-    if: ${{ env.IS_EXTERNAL_PR == 'false' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != 'carlspring/s3fs-nio' }}
     needs: [run-it-minio]
     runs-on: ${{ matrix.os }}
     strategy:
