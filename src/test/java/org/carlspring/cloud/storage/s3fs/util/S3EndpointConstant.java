@@ -11,6 +11,8 @@ public class S3EndpointConstant
 
     public static final URI S3_GLOBAL_URI_IT = URI.create("s3://s3.amazonaws.com/");
 
+    public static final URI MINIO_GLOBAL_URI_IT = URI.create("s3://localhost:9000");
+
     public static final String S3_REGION_URI_IT = "s3://s3.%s.amazonaws.com/";
 
 }
