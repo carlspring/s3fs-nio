@@ -18,26 +18,24 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @S3IntegrationTest
-class ToURLIT extends BaseIntegrationTest
+class ToUrlIT
+        extends BaseIntegrationTest
 {
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
-
-    private static final Map<String, Object> realEnv = EnvironmentBuilder.getRealEnv();
 
     public FileSystem getS3FileSystem(Entry... props)
             throws IOException
     {
         System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
 
-        Map<String, Object> env = new HashMap<>(realEnv);
+        Map<String, Object> env = new HashMap<>(ENVIRONMENT_CONFIGURATION.asMap());
         if (props != null)
         {
             for (Entry entry : props)
@@ -107,9 +105,10 @@ class ToURLIT extends BaseIntegrationTest
 
     private String getHost(final String bucketName)
     {
-        final String region = (String) realEnv.get(REGION);
+        final String region = ENVIRONMENT_CONFIGURATION.getRegion();
         final URI uriWithRegion = URI.create(String.format(S3_REGION_URI_IT, region));
-        if(bucketName != null){
+        if (bucketName != null)
+        {
             return String.format("%s.%s", bucketName, uriWithRegion.getHost());
         }
 
@@ -124,7 +123,8 @@ class ToURLIT extends BaseIntegrationTest
         private String value;
 
 
-        public Entry(String key, String value)
+        public Entry(String key,
+                     String value)
         {
             this.key = key;
             this.value = value;

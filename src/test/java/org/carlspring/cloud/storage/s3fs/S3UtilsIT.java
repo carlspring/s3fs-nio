@@ -36,7 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @S3IntegrationTest
-class S3UtilsIT extends BaseIntegrationTest
+class S3UtilsIT
+        extends BaseIntegrationTest
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
@@ -75,7 +76,7 @@ class S3UtilsIT extends BaseIntegrationTest
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
+        return FileSystems.newFileSystem(uriGlobal, ENVIRONMENT_CONFIGURATION.asMap());
     }
 
     @Test

@@ -76,7 +76,7 @@ class NewAsynchronousFileChannelTestIT
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
+        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getEnvironmentConfiguration().asMap());
     }
 
     @Test

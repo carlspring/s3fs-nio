@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,31 +23,25 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import static java.util.UUID.randomUUID;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder.getRealEnv;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @S3IntegrationTest
-class S3ClientIT extends BaseIntegrationTest
+class S3ClientIT
+        extends BaseIntegrationTest
 {
 
     S3Client client;
 
-
     @BeforeEach
     public void setup()
     {
-        // s3client
-        final Map<String, Object> credentials = getRealEnv();
-
-        final AwsCredentials credentialsS3 = AwsBasicCredentials.create(credentials.get(ACCESS_KEY).toString(),
-                                                                        credentials.get(SECRET_KEY).toString());
+        final AwsCredentials credentialsS3 = AwsBasicCredentials.create(
+                ENVIRONMENT_CONFIGURATION.getAccessKey(),
+                ENVIRONMENT_CONFIGURATION.getSecretKey()
+        );
         final AwsCredentialsProvider credentialsProviderS3 = StaticCredentialsProvider.create(credentialsS3);
 
-        final String regionStr = credentials.get(REGION).toString();
-        final Region region = Region.of(regionStr);
+        final Region region = Region.of(ENVIRONMENT_CONFIGURATION.getRegion());
         client = S3Client.builder().region(region).credentialsProvider(credentialsProviderS3).build();
     }
 
@@ -89,7 +82,10 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key("/" + randomUUID().toString()).build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key("/" + randomUUID().toString())
+                                                   .build();
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);
@@ -103,7 +99,10 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key("/" + randomUUID().toString() + "/").build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key("/" + randomUUID().toString() + "/")
+                                                   .build();
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);

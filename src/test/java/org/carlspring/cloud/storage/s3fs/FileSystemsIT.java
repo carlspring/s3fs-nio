@@ -54,7 +54,7 @@ class FileSystemsIT extends BaseIntegrationTest
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
+        return FileSystems.newFileSystem(uriGlobal, ENVIRONMENT_CONFIGURATION.asMap());
     }
 
     @Test
@@ -69,7 +69,7 @@ class FileSystemsIT extends BaseIntegrationTest
     void buildEnvAnotherURIReturnDifferent()
             throws IOException
     {
-        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, EnvironmentBuilder.getRealEnv());
+        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, ENVIRONMENT_CONFIGURATION.asMap());
 
         assertNotSame(fileSystemAmazon, fileSystem);
     }

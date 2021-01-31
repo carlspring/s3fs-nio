@@ -10,7 +10,15 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
 import java.util.Map;
@@ -25,10 +33,15 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @S3IntegrationTest
-class FilesIT extends BaseIntegrationTest
+class FilesIT
+        extends BaseIntegrationTest
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
@@ -65,7 +78,7 @@ class FilesIT extends BaseIntegrationTest
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
+        return FileSystems.newFileSystem(uriGlobal, ENVIRONMENT_CONFIGURATION.asMap());
     }
 
     @Test
@@ -383,7 +396,8 @@ class FilesIT extends BaseIntegrationTest
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>()
         {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            public FileVisitResult visitFile(Path file,
+                                             BasicFileAttributes attrs)
                     throws IOException
             {
                 Files.delete(file);
@@ -391,7 +405,8 @@ class FilesIT extends BaseIntegrationTest
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path directory, IOException exc)
+            public FileVisitResult postVisitDirectory(Path directory,
+                                                      IOException exc)
                     throws IOException
             {
                 if (exc == null)
@@ -566,7 +581,8 @@ class FilesIT extends BaseIntegrationTest
     {
         try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            final Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"),
+                                              "<html><body>html file</body></html>".getBytes());
 
             final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
             final Path result = fileSystemAmazon.getPath(bucket, fileName);
@@ -788,7 +804,9 @@ class FilesIT extends BaseIntegrationTest
         }
     }
 
-    private void findFileInDirectoryStream(Path bucketPath, Path fileToFind, DirectoryStream<Path> dirStream)
+    private void findFileInDirectoryStream(Path bucketPath,
+                                           Path fileToFind,
+                                           DirectoryStream<Path> dirStream)
     {
         boolean find = false;
 

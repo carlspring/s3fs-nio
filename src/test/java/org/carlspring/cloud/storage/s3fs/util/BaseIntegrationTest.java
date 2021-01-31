@@ -1,10 +1,9 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-
 public abstract class BaseIntegrationTest
 {
+
+    protected static final EnvironmentConfiguration ENVIRONMENT_CONFIGURATION = EnvironmentBuilder.getEnvironmentConfiguration();
 
     static
     {
@@ -12,9 +11,9 @@ public abstract class BaseIntegrationTest
         {
             try
             {
-                final String accessKey = (String) EnvironmentBuilder.getRealEnv().get(ACCESS_KEY);
-                final String secretKey = (String) EnvironmentBuilder.getRealEnv().get(SECRET_KEY);
-                final String bucketName = (String) EnvironmentBuilder.getRealEnv().get(EnvironmentBuilder.BUCKET_NAME_KEY);
+                final String accessKey = ENVIRONMENT_CONFIGURATION.getAccessKey();
+                final String secretKey = ENVIRONMENT_CONFIGURATION.getSecretKey();
+                final String bucketName = ENVIRONMENT_CONFIGURATION.getBucketName();
                 final MinioContainer minioContainer = new MinioContainer(accessKey, secretKey, bucketName);
                 minioContainer.start();
             }
