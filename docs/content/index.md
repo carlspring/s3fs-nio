@@ -33,7 +33,7 @@
 2. Open [IAM] and go to `Add User`
 3. Set `Access Type` to `Programmatic Access` or you will get `403 Forbidden` errors.
 4. Select `Attach an existing policies directly`
-5. Select `AmazonS3FullAccess` policy and `Create user`
+5. Select `AmazonS3FullAccess` policy and `Create user` (if you prefer more fine-grained access [click here](./contributing/developer-guide/index.md#s3-advanced))
 6. Copy `Access key ID` and `Secret access key` - you will need them later!
 
 ### Example

@@ -164,7 +164,8 @@ public class S3Utils
     }
 
     /**
-     * get the S3PosixFileAttributes for a S3Path
+     * Get the S3PosixFileAttributes for a S3Path
+     * This requires `s3:GetBucketAcl` and `s3:GetObjectAcl`
      *
      * @param s3Path Path mandatory not null
      * @return S3PosixFileAttributes never null

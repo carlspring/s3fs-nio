@@ -2,6 +2,7 @@ package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
+import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
@@ -19,7 +20,6 @@ import java.util.UUID;
 
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -34,8 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Tag("s3-integration-test")
-class S3UtilsITTest
+@S3IntegrationTest
+class S3UtilsIT
 {
 
     private static final String bucket = EnvironmentBuilder.getBucket();
