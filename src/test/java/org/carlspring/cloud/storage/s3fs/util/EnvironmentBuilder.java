@@ -1,8 +1,11 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
@@ -10,12 +13,11 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 
-import javax.annotation.Nonnull;
-
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
+import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.MINIO_GLOBAL_URI_IT;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 
 /**
@@ -45,11 +47,11 @@ public abstract class EnvironmentBuilder
         if (accessKey != null && secretKey != null && region != null && protocol != null && bucket != null)
         {
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, accessKey)
-                                                        .put(SECRET_KEY, secretKey)
-                                                        .put(REGION, region)
-                                                        .put(PROTOCOL, protocol)
-                                                        .put(BUCKET_NAME_KEY, bucket)
-                                                        .build();
+                                           .put(SECRET_KEY, secretKey)
+                                           .put(REGION, region)
+                                           .put(PROTOCOL, protocol)
+                                           .put(BUCKET_NAME_KEY, bucket)
+                                           .build();
         }
         else
         {
@@ -57,22 +59,36 @@ public abstract class EnvironmentBuilder
 
             try
             {
-                props.load(EnvironmentBuilder.class.getResourceAsStream("/amazon-test.properties"));
+                props.load(getPropertiesResource());
             }
             catch (IOException e)
             {
-                throw new RuntimeException("not found amazon-test.properties in the classpath", e);
+                throw new RuntimeException("Unable to load properties file from classpath nor to find environment variables!", e);
             }
 
             env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-                                                        .put(SECRET_KEY, props.getProperty(SECRET_KEY))
-                                                        .put(REGION, props.getProperty(REGION))
-                                                        .put(PROTOCOL, props.getProperty(PROTOCOL))
-                                                        .put(BUCKET_NAME_KEY, props.getProperty(BUCKET_NAME_KEY))
-                                                        .build();
+                                           .put(SECRET_KEY, props.getProperty(SECRET_KEY))
+                                           .put(REGION, props.getProperty(REGION))
+                                           .put(PROTOCOL, props.getProperty(PROTOCOL))
+                                           .put(BUCKET_NAME_KEY, props.getProperty(BUCKET_NAME_KEY))
+                                           .build();
         }
 
         return env;
+    }
+
+    private static InputStream getPropertiesResource()
+            throws IOException
+    {
+        URL resourceUrl = EnvironmentBuilder.class.getResource("/amazon-test.properties");
+        if(resourceUrl != null)
+        {
+            return EnvironmentBuilder.class.getResourceAsStream("/amazon-test.properties");
+        }
+        else
+        {
+            throw new IOException("File [classpath:/amazon-test.properties] not found!");
+        }
     }
 
     /**
@@ -98,12 +114,6 @@ public abstract class EnvironmentBuilder
         String sanitized = StringUtils.removeStartIgnoreCase(key, "S3FS.");
         sanitized = StringUtils.removeStartIgnoreCase(sanitized, "S3FS_");
         sanitized = sanitized.replaceAll("\\.", "_").toUpperCase();
-
-        String integrationSuite = System.getProperty("running.it");
-        if(integrationSuite != null && integrationSuite.equalsIgnoreCase("minio"))
-        {
-            sanitized = "MINIO_" + sanitized;
-        }
 
         sanitized = "S3FS_" + sanitized;
 
@@ -132,7 +142,7 @@ public abstract class EnvironmentBuilder
 
         try
         {
-            props.load(EnvironmentBuilder.class.getResourceAsStream("/amazon-test.properties"));
+            props.load(getPropertiesResource());
 
             bucketName = props.getProperty(BUCKET_NAME_KEY);
             if (bucketName != null && !bucketName.endsWith("/"))
@@ -144,7 +154,7 @@ public abstract class EnvironmentBuilder
         }
         catch (IOException e)
         {
-            throw new RuntimeException("needed /amazon-test.properties in the classpath");
+            throw new RuntimeException("Unable to load properties file from classpath nor to find environment variables!", e);
         }
     }
 
@@ -163,7 +173,20 @@ public abstract class EnvironmentBuilder
             final String accessKey = (String) env.get(ACCESS_KEY);
             final String secretKey = (String) env.get(SECRET_KEY);
             final String region = (String) env.get(REGION);
-            final URI s3Uri = region != null ? URI.create(String.format(S3_REGION_URI_IT, region)) : s3GlobalUri;
+
+            URI s3Uri;
+
+            // When we're running -Pit-s3 - proceed as usual.
+            if(!BaseIntegrationTest.isMinioEnv())
+            {
+                s3Uri = region != null ? URI.create(String.format(S3_REGION_URI_IT, region)) : s3GlobalUri;
+            }
+            // When we're running -Pit-minio - overwrite any region configuration to localhost:9000 where minio is running.
+            else
+            {
+                s3Uri = MINIO_GLOBAL_URI_IT;
+            }
+
             return new URIBuilder(s3Uri).setUserInfo(accessKey, secretKey)
                                         .build();
         }

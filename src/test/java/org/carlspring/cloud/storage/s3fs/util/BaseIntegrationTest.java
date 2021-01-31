@@ -10,14 +10,22 @@ public abstract class BaseIntegrationTest
     {
         if (isMinioEnv())
         {
-            final String accessKey = (String) EnvironmentBuilder.getRealEnv().get(ACCESS_KEY);
-            final String secretKey = (String) EnvironmentBuilder.getRealEnv().get(SECRET_KEY);
-            final MinioContainer minioContainer = new MinioContainer(accessKey, secretKey);
-            minioContainer.start();
+            try
+            {
+                final String accessKey = (String) EnvironmentBuilder.getRealEnv().get(ACCESS_KEY);
+                final String secretKey = (String) EnvironmentBuilder.getRealEnv().get(SECRET_KEY);
+                final String bucketName = (String) EnvironmentBuilder.getRealEnv().get(EnvironmentBuilder.BUCKET_NAME_KEY);
+                final MinioContainer minioContainer = new MinioContainer(accessKey, secretKey, bucketName);
+                minioContainer.start();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
         }
     }
 
-    private static boolean isMinioEnv()
+    public static boolean isMinioEnv()
     {
         String integrationTestType = System.getProperty("running.it");
         return integrationTestType != null && integrationTestType.equalsIgnoreCase("minio");
