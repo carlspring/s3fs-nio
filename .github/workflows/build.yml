@@ -7,11 +7,21 @@ on:
     # Build only changes pushed into the `master` branch.
     branches:
       - master
+      - pipeline
     # Ignore documentation changes (Netlify will handle this)
     paths-ignore:
       - 'docs/**'
       - '-*.md'
       - '-**/*.md'
+
+# Currently you cannot use ${{ env.IS_FORK }} for some reason, which is why you might need to copy-paste some of these.
+env:
+  REPOSITORY: ${{ github.repository }}
+  IS_FORK: ${{ github.repository != 'carlspring/s3fs-nio' }}
+  IS_PR: ${{ github.event_name == 'pull_request' }}
+  EVENT_NAME: ${{ toJSON(github.event_name) }}
+  # format: username:branch
+  PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
 
 jobs:
   build-matrix:
@@ -21,13 +31,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         java: [ 8, 11.0.3 ]
-    env:
-      EVENT_NAME: ${{ toJSON(github.event_name) }}
-      # format: username:branch
-      PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
-      # format: boolean
-      # check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-      IS_EXTERNAL_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -36,7 +39,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - name: Show GitHub context
-        run: echo "$EVENT_NAME $PR_HEAD_LABEL $IS_EXTERNAL_PR"
+        run: echo "$EVENT_NAME $REPOSITORY $PR_HEAD_LABEL $IS_PR $IS_FORK"
       # https://github.com/actions/cache/blob/master/examples.md#java---maven
       - name: Cache local Maven repository
         uses: actions/cache@v2
@@ -56,7 +59,7 @@ jobs:
         #           it from October 2020. Please update to at least Java 11.
         # [WARNING] No analysis for external contributors - sorry.
         #           Check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11.0.3' && env.IS_EXTERNAL_PR == 'false' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11.0.3' && env.IS_FORK != 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -124,8 +127,6 @@ jobs:
         run: docker save minio/minio testcontainers/ryuk > ${{ github.workspace }}/docker-image-cache.tar
 
   run-it-s3:
-    # Do not run for forks since secrets will be missing and this will fail.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: [run-it-minio]
     runs-on: ${{ matrix.os }}
     strategy:
