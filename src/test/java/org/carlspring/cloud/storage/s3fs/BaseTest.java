@@ -50,7 +50,7 @@ public abstract class BaseTest
                                                  })
                                                  .collect(Collectors.toList());
 
-        if(elements.size() > 0)
+        if (elements.size() > 0)
         {
             StackTraceElement last = elements.get(elements.size() - 1);
             String className = last.getClassName();
@@ -61,11 +61,11 @@ public abstract class BaseTest
                 int modifiers = clazz.getModifiers();
                 boolean isAbstract = Modifier.isAbstract(modifiers);
 
-                if(!isAbstract)
+                if (!isAbstract)
                 {
                     Method method = clazz.getDeclaredMethod(methodName);
                     Test hasTestAnnotation = method.getDeclaredAnnotation(Test.class);
-                    if(hasTestAnnotation != null)
+                    if (hasTestAnnotation != null)
                     {
                         // Additional prefix after the class name for better differentiation.
                         String prNumber = System.getenv(PR_NUMBER_ENV_VAR);

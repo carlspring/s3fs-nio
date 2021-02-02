@@ -1,6 +1,5 @@
 package org.carlspring.cloud.storage.s3fs;
 
-
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.carlspring.cloud.storage.s3fs.util.MinioContainer;
 
