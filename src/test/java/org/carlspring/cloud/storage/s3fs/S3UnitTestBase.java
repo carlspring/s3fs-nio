@@ -17,13 +17,12 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-public class S3UnitTestBase
+public abstract class S3UnitTestBase extends BaseTest
 {
 
     protected S3FileSystemProvider s3fsProvider;
 
     protected FileSystem fileSystem;
-
 
     @BeforeEach
     public void setProperties()

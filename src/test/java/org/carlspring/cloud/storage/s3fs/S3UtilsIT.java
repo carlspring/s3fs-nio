@@ -3,7 +3,6 @@ package org.carlspring.cloud.storage.s3fs;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
-import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
@@ -22,6 +21,8 @@ import java.util.UUID;
 import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -36,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @S3IntegrationTest
+@Execution(ExecutionMode.CONCURRENT)
 class S3UtilsIT extends BaseIntegrationTest
 {
 
@@ -96,7 +98,7 @@ class S3UtilsIT extends BaseIntegrationTest
     {
         Path path;
 
-        final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+        final String startPath = getTestBasePath() + "/" + UUID.randomUUID().toString() + "/";
 
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
@@ -122,7 +124,7 @@ class S3UtilsIT extends BaseIntegrationTest
     {
         Path path;
 
-        final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+        final String startPath = getTestBasePath() + "/" + UUID.randomUUID().toString() + "/";
 
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
@@ -143,7 +145,7 @@ class S3UtilsIT extends BaseIntegrationTest
     void lookupS3ObjectWhenS3PathIsADirectoryAndExistsOtherDirectoryStartsSameName()
             throws IOException
     {
-        final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+        final String startPath = getTestBasePath() + "/" + UUID.randomUUID().toString() + "/";
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
 
@@ -168,7 +170,7 @@ class S3UtilsIT extends BaseIntegrationTest
     void lookupS3ObjectWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
-        String folder = "angular" + UUID.randomUUID().toString();
+        String folder = getTestBasePath() + "/angular/" + UUID.randomUUID().toString();
         String key = folder + "/content.js";
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
@@ -211,7 +213,7 @@ class S3UtilsIT extends BaseIntegrationTest
     void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsVirtual()
             throws IOException
     {
-        String folder = "angular" + UUID.randomUUID().toString();
+        String folder = getTestBasePath() + "/angular/" + UUID.randomUUID().toString();
         String key = folder + "/content.js";
 
         S3FileSystem s3FileSystem = (S3FileSystem) fileSystemAmazon;
@@ -241,7 +243,7 @@ class S3UtilsIT extends BaseIntegrationTest
     void lookupS3BasicFileAttributesWhenS3PathIsADirectoryAndIsNotVirtualAndNoContent()
             throws IOException
     {
-        String folder = "folder" + UUID.randomUUID().toString();
+        String folder = getTestBasePath() + "/folder/" + UUID.randomUUID().toString();
         String key = folder + "/";
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream("contenido1".getBytes());
@@ -299,7 +301,7 @@ class S3UtilsIT extends BaseIntegrationTest
             throws IOException
     {
         //given
-        final String folder = "angular" + UUID.randomUUID().toString();
+        final String folder = getTestBasePath() + "/angular/" + UUID.randomUUID().toString();
         final String key = folder + "/content.js";
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("content1".getBytes());
@@ -334,7 +336,7 @@ class S3UtilsIT extends BaseIntegrationTest
             throws IOException
     {
         //given
-        final String folder = "folder" + UUID.randomUUID().toString();
+        final String folder = getTestBasePath() + "/folder/" + UUID.randomUUID().toString();
         final String key = folder + "/";
 
         final ByteArrayInputStream inputStream = new ByteArrayInputStream("".getBytes());
@@ -373,7 +375,7 @@ class S3UtilsIT extends BaseIntegrationTest
     private Path getPathFile()
             throws IOException
     {
-        final String startPath = "0000example" + UUID.randomUUID().toString() + "/";
+        final String startPath = getTestBasePath() + "/" + UUID.randomUUID().toString() + "/";
 
         Path path;
 

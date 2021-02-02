@@ -1,5 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
+import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
+
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;

@@ -205,7 +205,7 @@ class NewAsynchronousFileChannelTestIT
 
             Files.write(file, content.getBytes());
 
-            final Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+            final Path result = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
 
             Files.copy(file, result);
 
@@ -219,7 +219,7 @@ class NewAsynchronousFileChannelTestIT
         try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
             final Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
-            final Path dir = fileSystemAmazon.getPath(bucket, "0000example" + UUID.randomUUID().toString() + "/");
+            final Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
 
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));
 

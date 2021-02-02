@@ -1,9 +1,16 @@
-package org.carlspring.cloud.storage.s3fs.util;
+package org.carlspring.cloud.storage.s3fs;
+
+
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
+import org.carlspring.cloud.storage.s3fs.util.MinioContainer;
 
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 
-public abstract class BaseIntegrationTest
+/**
+ * This abstract class holds common integration test logic.
+ */
+public abstract class BaseIntegrationTest extends BaseTest
 {
 
     static
