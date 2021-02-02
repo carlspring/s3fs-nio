@@ -1,7 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.junit.examples;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
-import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
+import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;

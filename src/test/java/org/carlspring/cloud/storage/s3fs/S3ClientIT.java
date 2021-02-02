@@ -1,7 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
-import org.carlspring.cloud.storage.s3fs.util.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.io.ByteArrayInputStream;
@@ -60,7 +59,7 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key(randomUUID().toString()).build();
+        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key(getTestBasePath() + "/" + randomUUID().toString()).build();
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);
@@ -74,8 +73,11 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key(
-                randomUUID().toString() + "/").build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key(getTestBasePathWithUUID() + "/")
+                                                   .build();
+
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);
@@ -89,7 +91,11 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key("/" + randomUUID().toString()).build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key("/" + getTestBasePathWithUUID())
+                                                   .build();
+
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);
@@ -103,7 +109,11 @@ class S3ClientIT extends BaseIntegrationTest
 
         Files.write(file, "content".getBytes(), StandardOpenOption.APPEND);
 
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key("/" + randomUUID().toString() + "/").build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key("/" + getTestBasePathWithUUID() + "/")
+                                                   .build();
+
         PutObjectResponse result = client.putObject(request, file);
 
         assertNotNull(result);
@@ -115,7 +125,11 @@ class S3ClientIT extends BaseIntegrationTest
     {
         final InputStream inputStream = new ByteArrayInputStream("contents1".getBytes());
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        PutObjectRequest request = PutObjectRequest.builder().bucket(getBucket()).key(randomUUID().toString()).build();
+        PutObjectRequest request = PutObjectRequest.builder()
+                                                   .bucket(getBucket())
+                                                   .key(getTestBasePathWithUUID())
+                                                   .build();
+
         PutObjectResponse result = client.putObject(request, requestBody);
 
         assertNotNull(result);

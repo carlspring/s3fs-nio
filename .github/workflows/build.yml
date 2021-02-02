@@ -22,6 +22,7 @@ env:
   EVENT_NAME: ${{ toJSON(github.event_name) }}
   # format: username:branch
   PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
+  PR_NUMBER: ${{ github.event.number }}
 
 jobs:
   build-matrix:

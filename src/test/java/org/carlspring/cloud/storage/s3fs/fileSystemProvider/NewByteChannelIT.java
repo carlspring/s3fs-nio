@@ -41,7 +41,6 @@ class NewByteChannelIT
 
     private FileSystem fileSystemAmazon;
 
-
     @BeforeEach
     public void setup()
             throws IOException
@@ -170,7 +169,7 @@ class NewByteChannelIT
         }
     }
 
-    private Path uploadSingleFile(String content)
+    public Path uploadSingleFile(String content)
             throws IOException
     {
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
@@ -179,7 +178,7 @@ class NewByteChannelIT
 
             Files.write(file, content.getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket, UUID.randomUUID().toString());
+            Path result = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
 
             Files.copy(file, result);
 
@@ -193,7 +192,7 @@ class NewByteChannelIT
         try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
             Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
-            Path dir = fileSystemAmazon.getPath(bucket, "0000example" + UUID.randomUUID().toString() + "/");
+            Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
 
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));
 
