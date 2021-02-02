@@ -73,6 +73,9 @@ import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
+import software.amazon.awssdk.services.s3.model.DeletedObject;
 import software.amazon.awssdk.services.s3.model.GetBucketAclRequest;
 import software.amazon.awssdk.services.s3.model.GetBucketAclResponse;
 import software.amazon.awssdk.services.s3.model.GetBucketLocationRequest;
@@ -93,6 +96,7 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.NoSuchBucketException;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.ObjectStorageClass;
 import software.amazon.awssdk.services.s3.model.Owner;
 import software.amazon.awssdk.services.s3.model.Permission;
@@ -356,7 +360,7 @@ public class S3ClientMock
             throw AwsServiceException.create("Problem deleting mock object: ", e);
         }
 
-        if(!deleteMarker)
+        if (!deleteMarker)
         {
             resolve = bucket.resolve(key.replaceAll("/", "%2F"));
             try
@@ -373,7 +377,66 @@ public class S3ClientMock
     }
 
     @Override
-    public GetBucketLocationResponse getBucketLocation(final GetBucketLocationRequest getBucketLocationRequest) throws AwsServiceException, SdkClientException, S3Exception {
+    public DeleteObjectsResponse deleteObjects(final DeleteObjectsRequest deleteObjectsRequest)
+    {
+        final String bucketName = deleteObjectsRequest.bucket();
+        Path bucket = find(bucketName);
+        List<DeletedObject> deletedObjects = new ArrayList<>();
+        List<ObjectIdentifier> toDeleteIdentifiers = deleteObjectsRequest.delete().objects();
+
+        toDeleteIdentifiers.forEach(toDelete -> {
+
+            String toDeleteKey = toDelete.key();
+            Path toDeletePath = bucket.resolve(toDeleteKey);
+            boolean deleteMarker;
+            try
+            {
+                deleteMarker = Files.deleteIfExists(toDeletePath);
+                DeletedObject deletedObject =
+                        DeletedObject.builder()
+                                     .key(toDeleteKey)
+                                     .deleteMarker(deleteMarker)
+                                     .build();
+                if (deleteMarker)
+                {
+                    deletedObjects.add(deletedObject);
+                }
+            }
+            catch (final IOException e)
+            {
+                throw AwsServiceException.create("Problem deleting mock object: ", e);
+            }
+
+            if (!deleteMarker)
+            {
+                toDeletePath = bucket.resolve(toDeleteKey.replaceAll("/", "%2F"));
+                try
+                {
+                    deleteMarker = Files.deleteIfExists(toDeletePath);
+                    DeletedObject deletedObject =
+                            DeletedObject.builder()
+                                         .key(toDeleteKey)
+                                         .deleteMarker(deleteMarker)
+                                         .build();
+                    if (deleteMarker)
+                    {
+                        deletedObjects.add(deletedObject);
+                    }
+                }
+                catch (IOException e)
+                {
+                    throw AwsServiceException.create("Problem deleting mock object: ", e);
+                }
+            }
+        });
+
+        return DeleteObjectsResponse.builder().deleted(deletedObjects).build();
+    }
+
+    @Override
+    public GetBucketLocationResponse getBucketLocation(final GetBucketLocationRequest getBucketLocationRequest)
+            throws AwsServiceException, SdkClientException, S3Exception
+    {
         throw new UnsupportedOperationException();
     }
 
@@ -438,10 +501,13 @@ public class S3ClientMock
         {
             final GetObjectResponse response;
             final boolean isDirectory = key.endsWith("/") || key.isEmpty();
-            if(isDirectory){
+            if (isDirectory)
+            {
                 Path path = find(bucketName, key);
                 response = getObject(request, path);
-            }else{
+            }
+            else
+            {
                 final ResponseInputStream<GetObjectResponse> object = getObject(request);
                 response = object.response();
             }
@@ -511,7 +577,7 @@ public class S3ClientMock
                 final GetObjectResponse response = buildGetObjectResponse(object);
 
                 final boolean isDirectory = key.endsWith("/") || key.isEmpty();
-                if(!isDirectory)
+                if (!isDirectory)
                 {
                     final InputStream inputStream = getInputStream(false, element);
                     final AbortableInputStream abortableInputStream = AbortableInputStream.create(inputStream);

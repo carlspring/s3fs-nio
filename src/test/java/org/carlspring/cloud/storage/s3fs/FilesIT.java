@@ -181,7 +181,7 @@ class FilesIT extends BaseIntegrationTest
     }
 
     @Test
-    void deleteDir()
+    void deleteEmptyDir()
             throws IOException
     {
         Path dir = createEmptyDir();
@@ -189,6 +189,23 @@ class FilesIT extends BaseIntegrationTest
         Files.delete(dir);
 
         assertTrue(Files.notExists(dir));
+    }
+
+    @Test
+    void deleteDir()
+            throws IOException
+    {
+        Path dir = createEmptyDir();
+        Path file = Files.createTempFile(dir, "", ".tmp");
+        Path subDir = Files.createTempDirectory(dir, "subFolder");
+        Path subDirFile = Files.createTempFile(subDir, "", ".tmp");
+
+        Files.delete(dir);
+
+        assertTrue(Files.notExists(dir));
+        assertTrue(Files.notExists(file));
+        assertTrue(Files.notExists(subDir));
+        assertTrue(Files.notExists(subDirFile));
     }
 
     @Test
@@ -383,7 +400,8 @@ class FilesIT extends BaseIntegrationTest
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>()
         {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+            public FileVisitResult visitFile(Path file,
+                                             BasicFileAttributes attrs)
                     throws IOException
             {
                 Files.delete(file);
@@ -391,7 +409,8 @@ class FilesIT extends BaseIntegrationTest
             }
 
             @Override
-            public FileVisitResult postVisitDirectory(Path directory, IOException exc)
+            public FileVisitResult postVisitDirectory(Path directory,
+                                                      IOException exc)
                     throws IOException
             {
                 if (exc == null)
@@ -566,7 +585,8 @@ class FilesIT extends BaseIntegrationTest
     {
         try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
         {
-            final Path htmlFile = Files.write(linux.getPath("/index.html"), "<html><body>html file</body></html>".getBytes());
+            final Path htmlFile = Files.write(linux.getPath("/index.html"),
+                                              "<html><body>html file</body></html>".getBytes());
 
             final String fileName = UUID.randomUUID().toString() + htmlFile.getFileName().toString();
             final Path result = fileSystemAmazon.getPath(bucket, fileName);
@@ -788,7 +808,9 @@ class FilesIT extends BaseIntegrationTest
         }
     }
 
-    private void findFileInDirectoryStream(Path bucketPath, Path fileToFind, DirectoryStream<Path> dirStream)
+    private void findFileInDirectoryStream(Path bucketPath,
+                                           Path fileToFind,
+                                           DirectoryStream<Path> dirStream)
     {
         boolean find = false;
 

@@ -1,6 +1,7 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
+import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
@@ -8,20 +9,21 @@ import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DeleteTest
@@ -38,19 +40,46 @@ class DeleteTest
     }
 
     @Test
+    void deleteFolder()
+            throws IOException
+    {
+        // fixtures
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket("bucketA")
+              .dir("dir")
+              .file("dir/file")
+              .dir("subDir")
+              .file("dir/subDir/subFile");
+
+        // act
+        S3FileSystem s3FileSystem = createNewS3FileSystem();
+
+        Path file = s3FileSystem.getPath("/bucketA/dir");
+        s3fsProvider.delete(file);
+
+        // assertions
+        assertTrue(Files.notExists(file));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/subDir")));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/file")));
+        assertTrue(Files.notExists(s3FileSystem.getPath("/bucketA/dir/subDir/subFile")));
+    }
+
+    @Test
     void deleteFile()
             throws IOException
     {
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file");
+        client.bucket("bucketA")
+              .dir("dir")
+              .file("dir/file");
 
         // act
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
         s3fsProvider.delete(file);
 
         // assertions
-        assertTrue(Files.notExists(file));
+        assertTrue(Files.notExists(createNewS3FileSystem().getPath("/bucketA/dir/file")));
     }
 
     @Test
@@ -73,37 +102,25 @@ class DeleteTest
     }
 
     @Test
-    void deleteDirectoryWithEntries()
-            throws IOException
-    {
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file");
-
-        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-
-        Exception exception = assertThrows(DirectoryNotEmptyException.class, () -> {
-            s3fsProvider.delete(file.getParent());
-        });
-
-        assertNotNull(exception);
-    }
-
-    @Test
     void deleteFileNotExists()
             throws IOException
     {
+        // create and start a ListAppender
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+
+        Logger testLogger = (Logger) LoggerFactory.getLogger(S3FileSystemProvider.class);
+        testLogger.addAppender(appender);
+
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("bucketA").dir("dir");
-
         Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
+        s3fsProvider.delete(file);
 
-        Exception exception = assertThrows(NoSuchFileException.class, () -> {
-            s3fsProvider.delete(file);
-        });
-
-        assertNotNull(exception);
+        // JUnit assertions
+        List<ILoggingEvent> logsList = appender.list;
+        assertTrue(logsList.get(0).getMessage().contains(" was skipped because the path was not found."));
     }
 
     /**
