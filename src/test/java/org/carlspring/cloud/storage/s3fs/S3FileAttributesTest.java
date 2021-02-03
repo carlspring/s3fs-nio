@@ -38,31 +38,4 @@ public class S3FileAttributesTest
         assertTrue(print.contains(key));
     }
 
-    @Test
-    public void anotherToStringPrintsBasicInfo()
-    {
-        final String key = "another complex key";
-
-        final FileTime fileTime = FileTime.from(472931, TimeUnit.SECONDS);
-
-        final int size = 138713;
-
-        final boolean isDirectory = false;
-        final boolean isRegularFile = false;
-
-        S3BasicFileAttributes fileAttributes = new S3BasicFileAttributes(key,
-                                                                         fileTime,
-                                                                         size,
-                                                                         isDirectory,
-                                                                         isRegularFile);
-
-        String print = fileAttributes.toString();
-
-        assertTrue(print.contains(isRegularFile + ""));
-        assertTrue(print.contains(isDirectory + ""));
-        assertTrue(print.contains(size + ""));
-        assertTrue(print.contains(fileTime.toString()));
-        assertTrue(print.contains(key));
-    }
-
 }

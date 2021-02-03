@@ -38,24 +38,4 @@ class SetAttributeTest
         assertNotNull(exception);
     }
 
-    /**
-     * create a new file system for s3 scheme with fake credentials
-     * and global endpoint
-     *
-     * @return FileSystem
-     * @throws IOException
-     */
-    private S3FileSystem createNewS3FileSystem()
-            throws IOException
-    {
-        try
-        {
-            return s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
-        }
-        catch (FileSystemNotFoundException e)
-        {
-            return (S3FileSystem) FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
-        }
-    }
-
 }

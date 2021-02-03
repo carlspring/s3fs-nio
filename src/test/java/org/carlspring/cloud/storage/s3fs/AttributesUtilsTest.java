@@ -15,18 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AttributesUtilsTest
 {
 
-    /**
-     * http://stackoverflow.com/questions/9700179/junit-testing-helper-class-with-only-static-methods
-     */
-    @Test
-    public void just_to_silence_coverage()
-    {
-        new AttributesUtils()
-        {
-            // ignore this
-        };
-    }
-
     @Test
     public void filterAll()
     {

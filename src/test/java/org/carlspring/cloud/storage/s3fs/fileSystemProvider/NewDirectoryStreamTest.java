@@ -44,21 +44,6 @@ class NewDirectoryStreamTest
     {
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").file("file1");
-
-        // act
-        Path bucket = createNewS3FileSystem().getPath("/bucketA");
-
-        // assert
-        assertNewDirectoryStream(bucket, "file1");
-    }
-
-    @Test
-    void createAnotherStreamDirectoryReader()
-            throws IOException
-    {
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("bucketA").file("file1", "file2");
 
         // act
@@ -69,7 +54,7 @@ class NewDirectoryStreamTest
     }
 
     @Test
-    void createAnotherWithDirStreamDirectoryReader()
+    void createWithDirStreamDirectoryReader()
             throws IOException
     {
         // fixtures
@@ -146,34 +131,6 @@ class NewDirectoryStreamTest
         }
 
         assertEquals(count999, count);
-    }
-
-    @Test
-    void list1050Paths()
-            throws IOException
-    {
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        MockBucket bucketA = client.bucket("bucketA");
-
-        final int count1050 = 1050;
-        for (int i = 0; i < count1050; i++)
-        {
-            bucketA.file(i + "file");
-        }
-
-        Path bucket = createNewS3FileSystem().getPath("/bucketA");
-
-        int count = 0;
-        try (DirectoryStream<Path> files = Files.newDirectoryStream(bucket))
-        {
-            for (Path ignored : files)
-            {
-                count++;
-            }
-        }
-
-        assertEquals(count1050, count);
     }
 
     /**

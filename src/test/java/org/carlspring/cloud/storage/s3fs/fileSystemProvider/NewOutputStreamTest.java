@@ -71,7 +71,6 @@ class NewOutputStreamTest
         // check
         assertArrayEquals(content.getBytes(), buffer);
     }
-
     @Test
     void outputStreamFileNotExists()
             throws IOException
@@ -192,28 +191,6 @@ class NewOutputStreamTest
 
         // check
         assertArrayEquals("sample content".getBytes(), buffer);
-    }
-
-    @Test
-    void anotherOutputStream()
-            throws IOException
-    {
-        Path base = getS3Directory();
-        Path file = base.resolve("file1");
-
-        final String content = "heyyyyyy";
-
-        try (OutputStream stream = s3fsProvider.newOutputStream(file, StandardOpenOption.CREATE_NEW))
-        {
-            stream.write(content.getBytes());
-            stream.flush();
-        }
-
-        // get the input
-        byte[] buffer = Files.readAllBytes(file);
-
-        // check
-        assertArrayEquals(content.getBytes(), buffer);
     }
 
     private Path getS3Directory()

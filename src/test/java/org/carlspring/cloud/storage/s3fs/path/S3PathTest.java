@@ -126,29 +126,7 @@ class S3PathTest
 
     // register
     @Test
-    void registerWithEventsThrowException()
-    {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            forPath("file1").register(null);
-        });
-
-        assertNotNull(exception);
-    }
-
-    @Test
     void registerThrowException()
-    {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            forPath("file1").register(null);
-        });
-
-        assertNotNull(exception);
-    }
-
-    @Test
-    void registerWithEventsAndModifierThrowException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {

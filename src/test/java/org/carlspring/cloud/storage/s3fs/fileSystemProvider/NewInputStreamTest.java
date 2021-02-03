@@ -59,28 +59,6 @@ class NewInputStreamTest
     }
 
     @Test
-    void anotherInputStreamFile()
-            throws IOException
-    {
-        String res = "another content";
-
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1", res.getBytes());
-
-        // act
-        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file1");
-
-        try (InputStream inputStream = s3fsProvider.newInputStream(file))
-        {
-            byte[] buffer = IOUtils.toByteArray(inputStream);
-
-            // check
-            assertArrayEquals(res.getBytes(), buffer);
-        }
-    }
-
-    @Test
     void newInputStreamFileNotExists()
             throws IOException
     {

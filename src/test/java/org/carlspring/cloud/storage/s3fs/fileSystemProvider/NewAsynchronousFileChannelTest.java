@@ -98,29 +98,6 @@ class NewAsynchronousFileChannelTest
     }
 
     @Test
-    void fileChannelAnotherSize()
-            throws IOException
-    {
-        //given
-        final String content = "content-more-large";
-        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
-
-        final Path base = createNewS3FileSystem().getPath("/bucketA/dir");
-        final Path file = base.resolve("file");
-        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
-
-        //when
-        final long size;
-        try (AsynchronousFileChannel fileChannel = s3fsProvider.newAsynchronousFileChannel(file, options, null))
-        {
-            size = fileChannel.size();
-        }
-
-        //then
-        assertEquals(content.length(), size);
-    }
-
-    @Test
     void fileChannelPositionRead()
             throws IOException, ExecutionException, InterruptedException, TimeoutException
     {
@@ -256,29 +233,6 @@ class NewAsynchronousFileChannelTest
 
     @Test
     void fileChannelTruncate()
-            throws IOException
-    {
-        //given
-        final String content = "content";
-        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
-
-        final Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-        final EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.READ);
-        int expected = 1;
-
-        //when
-        try (AsynchronousFileChannel fileChannel = s3fsProvider.newAsynchronousFileChannel(file, options, null))
-        {
-            // discard all content except the first c.
-            fileChannel.truncate(1);
-
-            //then
-            assertEquals(expected, fileChannel.size());
-        }
-    }
-
-    @Test
-    void fileChannelAnotherTruncate()
             throws IOException
     {
         //given
