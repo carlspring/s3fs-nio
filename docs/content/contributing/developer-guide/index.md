@@ -79,6 +79,8 @@ cd s3fs-nio
 
 ```
 mvn clean install
+OR
+mvn clean install -Punit-tests
 ```
 
 ### Run unit and integration tests 
@@ -91,16 +93,26 @@ mvn clean install
     --8<-- "../src/test/resources/amazon-test-sample.properties"
     ```
 
-
-2. Run integration tests
+2. Run unit and S3 integration tests
    ```
-   mvn clean install -Pintegration-tests
+   mvn clean install -Punit-tests,it-s3
    ``` 
 
+3. If you have docker then you can also use `-Pit-minio` to run integration tests against MinIO
+   ```
+   mvn clean install -Punit-tests,it-minio
+   ```
+   
+    !!! warning "I am getting 'No such image error'"
 
-### Docker
+        On some OS's you might run into [testcontainers/testcontainers-java#3574: "No such image"](https://github.com/testcontainers/testcontainers-java/issues/3574)
+        error. To fix this - you need to manually run `docker pull testcontainers/ryuk`.
+   
 
-TODO: Add a guide to run tests with MinIO and docker-compose
+4. Run all unit and integration tests
+   ```
+   mvn clean install -Punit-tests,it-minio,it-s3
+   ```
 
 
 [<--# Links -->]: #
