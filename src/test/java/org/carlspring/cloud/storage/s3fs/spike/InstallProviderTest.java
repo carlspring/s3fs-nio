@@ -71,7 +71,7 @@ class InstallProviderTest
         final ClassLoader classLoader = this.getClass().getClassLoader();
 
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(NoSuchFileException.class,
+        Exception exception = assertThrows(FileSystemNotFoundException.class,
                                            () -> FileSystems.newFileSystem(uri, envMap, classLoader));
 
         assertNotNull(exception);
