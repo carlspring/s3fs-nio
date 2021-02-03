@@ -79,6 +79,8 @@ cd s3fs-nio
 
 ```
 mvn clean install
+OR
+mvn clean install -Punit-tests
 ```
 
 ### Run unit and integration tests 
@@ -91,16 +93,19 @@ mvn clean install
     --8<-- "../src/test/resources/amazon-test-sample.properties"
     ```
 
-
-2. Run integration tests
+2. Run unit and S3 integration tests
    ```
-   mvn clean install -Pintegration-tests
+   mvn clean install -Punit-tests,it-s3
    ``` 
 
-
-### Docker
-
-TODO: Add a guide to run tests with MinIO and docker-compose
+3. If you have docker then you can also use `-Pit-minio` to run integration tests against MinIO
+   ```
+   mvn clean install -Punit-tests,it-minio
+   ```
+4. Run all unit and integration tests
+   ```
+   mvn clean install -Punit-tests,it-minio,it-s3
+   ```
 
 
 [<--# Links -->]: #
