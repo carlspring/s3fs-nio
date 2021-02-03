@@ -11,8 +11,8 @@ on:
     # Ignore documentation changes (Netlify will handle this)
     paths-ignore:
       - 'docs/**'
-      - '-*.md'
-      - '-**/*.md'
+      - '*.md'
+      - '**/*.md'
 
 # Currently you cannot use ${{ env.IS_FORK }} for some reason, which is why you might need to copy-paste some of these.
 env:
