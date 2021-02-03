@@ -1,12 +1,9 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
-import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
