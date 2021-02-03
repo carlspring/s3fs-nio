@@ -102,6 +102,13 @@ mvn clean install -Punit-tests
    ```
    mvn clean install -Punit-tests,it-minio
    ```
+   
+    !!! warning "I am getting 'No such image error'"
+
+        On some OS's you might run into [testcontainers/testcontainers-java#3574: "No such image"](https://github.com/testcontainers/testcontainers-java/issues/3574)
+        error. To fix this - you need to manually run `docker pull testcontainers/ryuk`.
+   
+
 4. Run all unit and integration tests
    ```
    mvn clean install -Punit-tests,it-minio,it-s3
