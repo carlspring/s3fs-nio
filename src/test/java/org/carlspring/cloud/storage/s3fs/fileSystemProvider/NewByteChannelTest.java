@@ -91,26 +91,6 @@ class NewByteChannelTest
     }
 
     @Test
-    void seekableAnotherSize()
-            throws IOException
-    {
-        final String content = "content-more-large";
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
-
-        Path base = createNewS3FileSystem().getPath("/bucketA/dir");
-        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(base.resolve("file"),
-                                                                        EnumSet.of(StandardOpenOption.WRITE,
-                                                                                   StandardOpenOption.READ)))
-        {
-            long size = seekable.size();
-
-            assertEquals(content.length(), size);
-        }
-    }
-
-    @Test
     void seekablePosition()
             throws IOException
     {
@@ -281,28 +261,6 @@ class NewByteChannelTest
                                                                         EnumSet.of(StandardOpenOption.WRITE,
                                                                                    StandardOpenOption.READ)))
         {
-            // discard all content except the first c.
-            seekable.truncate(1);
-        }
-
-        assertArrayEquals("c".getBytes(), Files.readAllBytes(file));
-    }
-
-    @Test
-    void seekableAnotherTruncate()
-            throws IOException
-    {
-        final String content = "content";
-
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file", content.getBytes());
-
-        Path file = createNewS3FileSystem().getPath("/bucketA/dir/file");
-        try (SeekableByteChannel seekable = s3fsProvider.newByteChannel(file,
-                                                                        EnumSet.of(StandardOpenOption.WRITE,
-                                                                                   StandardOpenOption.READ)))
-        {
             // discard all content except the first three chars 'con'
             seekable.truncate(3);
         }
@@ -311,7 +269,7 @@ class NewByteChannelTest
     }
 
     @Test
-    void seekableruncateGreatherThanSize()
+    void seekableTruncateGreaterThanSize()
             throws IOException
     {
         final String content = "content";

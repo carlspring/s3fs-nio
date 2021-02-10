@@ -137,23 +137,6 @@ class ReadAttributesTest
     }
 
     @Test
-    void readAnotherAttributesDirectory()
-            throws IOException
-    {
-        // fixtures
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/dir", "content".getBytes());
-
-        FileSystem fs = createNewS3FileSystem();
-        Path dir = fs.getPath("/bucketA/dir");
-
-        BasicFileAttributes fileAttributes = s3fsProvider.readAttributes(dir, BasicFileAttributes.class);
-
-        assertNotNull(fileAttributes);
-        assertTrue(fileAttributes.isDirectory());
-    }
-
-    @Test
     void readAttributesDirectoryNotExistsAtAmazon()
             throws IOException
     {
@@ -401,28 +384,6 @@ class ReadAttributesTest
 
         assertTrue(fileAttributes.permissions().contains(PosixFilePermission.OWNER_READ));
         assertTrue(fileAttributes.permissions().contains(PosixFilePermission.OWNER_WRITE));
-    }
-
-    @Test
-    void readPosixPermissionOtherExecuteAttributes()
-            throws IOException
-    {
-        // fixtures
-        S3MockFactory.getS3ClientMock()
-                     .bucket("bucketA")
-                     .file("file",
-                                 "content".getBytes(),
-                                 build("posix:permissions",
-                                       Sets.newHashSet(PosixFilePermission.OWNER_READ,
-                                                       PosixFilePermission.OTHERS_EXECUTE)));
-
-        FileSystem fs = createNewS3FileSystem();
-        Path file = fs.getPath("/bucketA/file");
-
-        PosixFileAttributes fileAttributes = s3fsProvider.readAttributes(file, PosixFileAttributes.class);
-
-        assertTrue(fileAttributes.permissions().contains(PosixFilePermission.OWNER_READ));
-        assertTrue(fileAttributes.permissions().contains(PosixFilePermission.OWNER_EXECUTE));
     }
 
     // readAttributes owner and group PosixFileAttributes

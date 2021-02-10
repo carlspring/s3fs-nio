@@ -579,7 +579,7 @@ class FilesIT extends BaseIntegrationTest
     }
 
     @Test
-    void amazonOutpuStreamDetectContentType()
+    void amazonOutputStreamDetectContentType()
             throws IOException
     {
         try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))

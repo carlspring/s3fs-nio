@@ -126,7 +126,7 @@ class S3PathTest
 
     // register
     @Test
-    void registerWithEventsThrowException()
+    void registerWatcherShouldThrowException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
@@ -136,23 +136,15 @@ class S3PathTest
         assertNotNull(exception);
     }
 
+    /**
+     * This covers {@link S3Path#register (WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers)
+     */
     @Test
-    void registerThrowException()
+    void registerWatcherWithEventsAndModifierShouldThrowUnsupportedOperationException()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            forPath("file1").register(null);
-        });
-
-        assertNotNull(exception);
-    }
-
-    @Test
-    void registerWithEventsAndModifierThrowException()
-    {
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
-            forPath("file1").register(null);
+            forPath("file1").register(null, null, null);
         });
 
         assertNotNull(exception);

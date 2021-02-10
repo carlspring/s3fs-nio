@@ -48,7 +48,7 @@ class GetFileNameTest
     }
 
     @Test
-    void getAnotherFileName()
+    void getFileNameInDir()
     {
         Path path = getPath("/bucketA/dir/another-file");
         Path fileName = path.getFileName();
@@ -59,7 +59,7 @@ class GetFileNameTest
     }
 
     @Test
-    void getFileNameBucket()
+    void getBucket()
     {
         Path path = getPath("/bucket");
         Path name = path.getFileName();

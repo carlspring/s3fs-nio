@@ -59,9 +59,9 @@ public class ProviderSpecTest
 
         // in windows throw exception
         try (SeekableByteChannel seekable = Files.newByteChannel(base.resolve("file1.html"),
-                                                                 EnumSet.of(StandardOpenOption.CREATE,
-                                                                            StandardOpenOption.WRITE,
-                                                                            StandardOpenOption.READ)))
+                EnumSet.of(StandardOpenOption.CREATE,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ)))
         {
             ByteBuffer buffer = ByteBuffer.wrap("content".getBytes());
 
@@ -94,35 +94,6 @@ public class ProviderSpecTest
                 buffer.rewind();
                 buffer.flip();
             }
-
-			/*
-			ByteBuffer buffer = ByteBuffer.allocate(1024);
-
-			  sbc.position(4);
-			  sbc.read(buffer);
-			  for (int i = 0; i < 5; i++) {
-			    System.out.print((char) buffer.get(i));
-			  }
-
-			  buffer.clear();
-			  sbc.position(0);
-			  sbc.read(buffer);
-			  for (int i = 0; i < 4; i++) {
-			    System.out.print((char) buffer.get(i));
-			  }
-			  sbc.position(0);
-			  buffer = ByteBuffer.allocate(1024);
-			  String encoding = System.getProperty("file.encoding");
-			  int numberOfBytesRead = sbc.read(buffer);
-			  System.out.println("Number of bytes read: " + numberOfBytesRead);
-			  while (numberOfBytesRead > 0) {
-			    buffer.rewind();
-			    System.out.print("[" + Charset.forName(encoding).decode(buffer) + "]");
-			    buffer.flip();
-			    numberOfBytesRead = sbc.read(buffer);
-			    System.out.println("\nNumber of bytes read: " + numberOfBytesRead);
-			  }
-			*/
         }
     }
 
