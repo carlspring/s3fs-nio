@@ -85,7 +85,7 @@
         <version.guava>30.1-jre</version.guava>
         <version.tika>1.25</version.tika>
         <version.findbugs.jsr305>3.0.2</version.findbugs.jsr305>
-        <version.junit>5.7.0</version.junit>
+        <version.junit>5.7.1</version.junit>
         <version.mockito>3.7.7</version.mockito>
         <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
         <version.surefire>3.0.0-M5</version.surefire>
