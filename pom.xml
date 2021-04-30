@@ -89,7 +89,7 @@
         <version.mockito>3.9.0</version.mockito>
         <version.marschall.memoryfilesystem>2.1.0</version.marschall.memoryfilesystem>
         <version.surefire>3.0.0-M5</version.surefire>
-        <version.testcontainers>1.15.2</version.testcontainers>
+        <version.testcontainers>1.15.3</version.testcontainers>
     </properties>
 
     <build>
