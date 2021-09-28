@@ -32,6 +32,7 @@ public class S3Path
 
     public static final String PATH_SEPARATOR = "/";
     public static final String PATH_OTHER_INSTANCE_MESSAGE = "other must be an instance of %s";
+    public static final String PATH_OTHER_INSTANCE_OR_RELATIVE_MESSAGE = "other must be an instance of %s or a relative Path";
 
     /**
      * S3FileStore which represents the Bucket this path resides in.
@@ -444,16 +445,31 @@ public class S3Path
     @Override
     public Path resolve(Path other)
     {
+        String otherUri = "";
         if (other.isAbsolute())
         {
             Preconditions.checkArgument(other instanceof S3Path,
-                                        PATH_OTHER_INSTANCE_MESSAGE,
+                                        PATH_OTHER_INSTANCE_OR_RELATIVE_MESSAGE,
                                         S3Path.class.getName());
 
             return other;
         }
+        else if (other instanceof S3Path)
+        {
+            S3Path otherS3Path = (S3Path) other;
+            otherUri = otherS3Path.uri;
+        }
+        else
+        {
+            int nameCount = other.getNameCount();
+            for (int i = 0; i < nameCount; i++)
+            {
+                if (i > 0)
+                    otherUri += PATH_SEPARATOR;
+                otherUri += other.getName(i);
+            }
+        }
 
-        S3Path otherS3Path = (S3Path) other;
         StringBuilder pathBuilder = new StringBuilder();
 
         if (this.isAbsolute())
@@ -463,9 +479,9 @@ public class S3Path
 
         pathBuilder.append(this.uri);
 
-        if (!otherS3Path.uri.isEmpty())
+        if (!otherUri.isEmpty())
         {
-            pathBuilder.append(PATH_SEPARATOR + otherS3Path.uri);
+            pathBuilder.append(PATH_SEPARATOR + otherUri);
         }
 
         return new S3Path(this.fileSystem, pathBuilder.toString());
