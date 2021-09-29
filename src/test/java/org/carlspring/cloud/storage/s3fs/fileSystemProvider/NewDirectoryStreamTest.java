@@ -105,6 +105,35 @@ class NewDirectoryStreamTest
     }
 
     @Test
+    public void directoryStreamWithFilter()
+        throws IOException
+    {
+        // fixtures
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket("bucketA")
+              .dir("dir1") //
+              .file("dir/file1.txt", "content".getBytes()) //
+              .file("dir/file2.sql", "content".getBytes()) //
+              .file("dir/file3.txt", "content".getBytes()) //
+              .file("dir/file4.sql", "content".getBytes()) //
+              .file("dir/tmp_file.txt", "content".getBytes());
+
+        // act
+        Path base = createNewS3FileSystem().getPath("/bucketA", "dir");
+        DirectoryStream.Filter<Path> filter = entry -> {
+            String filename = entry.getFileName().toString();
+            return filename.startsWith("tmp_") || filename.endsWith(".sql");
+        };
+
+        // act
+        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(base, filter))
+        {
+            // assert
+            assertDirectoryStream(dirStream, "file2.sql", "file4.sql", "tmp_file.txt");
+        }
+    }
+
+    @Test
     void list999Paths()
             throws IOException
     {
@@ -146,21 +175,27 @@ class NewDirectoryStreamTest
     {
         try (DirectoryStream<Path> dir = Files.newDirectoryStream(base))
         {
-            assertNotNull(dir);
-            assertNotNull(dir.iterator());
-            assertTrue(dir.iterator().hasNext());
-
-            Set<String> filesNamesExpected = new HashSet<>(Arrays.asList(files));
-            Set<String> filesNamesActual = new HashSet<>();
-
-            for (Path path : dir)
-            {
-                String fileName = path.getFileName().toString();
-                filesNamesActual.add(fileName);
-            }
-
-            assertEquals(filesNamesExpected, filesNamesActual);
+            assertDirectoryStream(dir, files);
         }
+    }
+
+    private void assertDirectoryStream(DirectoryStream<Path> dir,
+                                       final String... files)
+    {
+        assertNotNull(dir);
+        assertNotNull(dir.iterator());
+        assertTrue(dir.iterator().hasNext());
+
+        Set<String> filesNamesExpected = new HashSet<>(Arrays.asList(files));
+        Set<String> filesNamesActual = new HashSet<>();
+
+        for (Path path : dir)
+        {
+            String fileName = path.getFileName().toString();
+            filesNamesActual.add(fileName);
+        }
+
+        assertEquals(filesNamesExpected, filesNamesActual);
     }
 
     /**
