@@ -465,7 +465,10 @@ public class S3Path
             for (int i = 0; i < nameCount; i++)
             {
                 if (i > 0)
+                {
                     otherUri += PATH_SEPARATOR;
+                }
+                
                 otherUri += other.getName(i);
             }
         }
