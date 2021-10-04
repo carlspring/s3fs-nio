@@ -862,10 +862,14 @@ public class S3FileSystemProvider
         if (exists(s3Target))
         {
             if (!actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
+            {
                 throw new FileAlreadyExistsException(format("target already exists: %s", target));
+            }
 
             if (Files.isDirectory(source))
+            {
                 delete(s3Target);
+            }
         }
 
         if (Files.isDirectory(source))
@@ -906,6 +910,7 @@ public class S3FileSystemProvider
         {
             throw new UnsupportedEncodingException("URL could not be encoded: " + e.getMessage());
         }
+        
         return encodedUrl;
     }
 
