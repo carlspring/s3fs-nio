@@ -38,4 +38,3 @@ This task:
   * @carlspring
   * @ptirador
   * @steve-todorov
-  * @sbespalov
