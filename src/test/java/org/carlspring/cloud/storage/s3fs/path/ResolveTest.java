@@ -72,6 +72,7 @@ class ResolveTest
     {
         S3Path parent = getPath("/bucket");
         S3Path child = getPath("/bucket/rabbit");
+        S3Path deepChild = getPath("/bucket/rabbit/in/space");
         S3Path resolved = (S3Path) parent.resolve(child);
 
         assertEquals(child, resolved);
@@ -81,6 +82,9 @@ class ResolveTest
 
         resolved = (S3Path) parent.resolve(Paths.get("rabbit")); //unixPath
         assertEquals(child, resolved);
+
+        resolved = (S3Path) parent.resolve(Paths.get("rabbit").resolve("in").resolve("space"));
+        assertEquals(deepChild, resolved);
 
         resolved = (S3Path) parent.resolve(Paths.get("./rabbit")); //unixPath
         assertEquals("s3://s3.test.amazonaws.com/bucket/./rabbit", resolved.toString());
