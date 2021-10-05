@@ -89,7 +89,7 @@ class ResolveTest
         assertEquals("s3://s3.test.amazonaws.com/bucket/./rabbit%20in%20space", resolved.toString());
 
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
-                parent.resolve(Paths.get("/tmp")));
+                parent.resolve(Paths.get("tempDirectory").toAbsolutePath()));
         assertEquals("other must be an instance of org.carlspring.cloud.storage.s3fs.S3Path or a relative Path", e.getMessage());
     }
 }
