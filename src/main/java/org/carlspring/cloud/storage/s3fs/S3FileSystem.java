@@ -173,16 +173,7 @@ public class S3FileSystem
 
     public String[] key2Parts(String keyParts)
     {
-        String[] parts = keyParts.split(PATH_SEPARATOR);
-        String[] split = new String[parts.length];
-
-        int i = 0;
-        for (String part : parts)
-        {
-            split[i++] = part;
-        }
-
-        return split;
+        return keyParts.split(PATH_SEPARATOR);
     }
 
     public int getCache()
