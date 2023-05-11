@@ -435,6 +435,7 @@ public final class S3OutputStream
         final PutObjectRequest.Builder requestBuilder = PutObjectRequest.builder()
                                                                         .bucket(objectId.getBucket())
                                                                         .key(objectId.getKey())
+                                                                        .cacheControl("no-cache")
                                                                         .contentLength(contentLength)
                                                                         .contentType(contentType)
                                                                         .metadata(metadataMap);
