@@ -68,11 +68,11 @@ public abstract class EnvironmentBuilder
                 throw new RuntimeException("Unable to load properties file from classpath nor to find environment variables!", e);
             }
 
-            env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, props.getProperty(ACCESS_KEY))
-                                           .put(SECRET_KEY, props.getProperty(SECRET_KEY))
-                                           .put(REGION, props.getProperty(REGION))
-                                           .put(PROTOCOL, props.getProperty(PROTOCOL))
-                                           .put(BUCKET_NAME_KEY, props.getProperty(BUCKET_NAME_KEY))
+            env = ImmutableMap.<String, Object>builder().put(ACCESS_KEY, getPropFromSystemOrFallback(ACCESS_KEY, props))
+                                           .put(SECRET_KEY, getPropFromSystemOrFallback(SECRET_KEY, props))
+                                           .put(REGION, getPropFromSystemOrFallback(REGION, props))
+                                           .put(PROTOCOL, getPropFromSystemOrFallback(PROTOCOL, props))
+                                           .put(BUCKET_NAME_KEY, getPropFromSystemOrFallback(BUCKET_NAME_KEY, props))
                                            .build();
         }
 
@@ -91,6 +91,10 @@ public abstract class EnvironmentBuilder
         {
             throw new IOException("File [classpath:/amazon-test.properties] not found!");
         }
+    }
+
+    private static String getPropFromSystemOrFallback(String key, Properties fallback) {
+        return System.getProperty(key, null) != null ? System.getProperty(key) : fallback.getProperty(key, null);
     }
 
     /**
