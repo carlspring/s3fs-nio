@@ -45,7 +45,10 @@ public abstract class BaseTest
                                                      }
                                                      catch (ClassNotFoundException classNotFoundException)
                                                      {
-                                                         classNotFoundException.printStackTrace();
+                                                         // This is commented out, because sometimes when running
+                                                         // in debug mode from an IDE the stacktrace will contain
+                                                         // gradle classes which cannot be found.
+                                                         //classNotFoundException.printStackTrace();
                                                      }
 
                                                      return packageName != null && packageName.startsWith(basePackage);
