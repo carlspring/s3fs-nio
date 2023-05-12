@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+
 import static java.util.UUID.randomUUID;
 
 /**
@@ -63,9 +65,17 @@ public abstract class BaseTest
 
                 if (!isAbstract)
                 {
-                    Method method = clazz.getDeclaredMethod(methodName);
-                    Test hasTestAnnotation = method.getDeclaredAnnotation(Test.class);
-                    if (hasTestAnnotation != null)
+                    Method method = Arrays.stream(clazz.getDeclaredMethods())
+                                          .filter(m -> m.getName().equals(methodName))
+                                          .findFirst()
+                                          .orElse(null);
+                    if(method == null) {
+                        throw new NoSuchMethodException(className+"#"+methodName);
+                    }
+                    boolean hasTestAnnotation = Arrays.stream(method.getDeclaredAnnotations())
+                                                      .anyMatch(a -> a.annotationType() == Test.class ||
+                                                                     a.annotationType() == ParameterizedTest.class);
+                    if (hasTestAnnotation)
                     {
                         // Additional prefix after the class name for better differentiation.
                         String prNumber = System.getenv(PR_NUMBER_ENV_VAR);
