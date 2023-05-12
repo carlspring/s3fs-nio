@@ -23,6 +23,9 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
+import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -738,6 +741,95 @@ class FilesIT extends BaseIntegrationTest
 
         assertTrue(readable);
     }
+
+    @Test
+    void shouldReplaceExistingFileExample()
+            throws IOException
+    {
+
+        Path file = Files.createTempFile("file-it-srefe1-1-", "file");
+        Path dw1 = Files.createTempFile("file-it-srefe1-dw-1-", "file");
+        Path dw2 = Files.createTempFile("file-it-srefe1-dw-2-", "file");
+        Path dw3 = Files.createTempFile("file-it-srefe1-dw-3-", "file");
+
+        Files.write(file, "first".getBytes(), StandardOpenOption.APPEND);
+
+        String filename = randomUUID().toString();
+        String key = getTestBasePath() + "/" + filename;
+
+        Path s3file = fileSystemAmazon.getPath(bucket, key);
+
+        String first = "first-write";
+        Files.write(s3file, first.getBytes());
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(first.getBytes());
+
+        Files.copy(s3file, dw1, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw1).hasBinaryContent(first.getBytes());
+
+        String second = "second-write";
+        Files.write(s3file, second.getBytes());
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(second.getBytes());
+
+        Files.copy(s3file, dw2, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw2).hasBinaryContent(second.getBytes());
+
+        String third = "third-write";
+        Files.write(s3file, third.getBytes());
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(third.getBytes());
+
+        Files.copy(s3file, dw3, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw3).hasBinaryContent(third.getBytes());
+
+    }
+
+    @Test
+    void shouldReplaceExistingFileExample2()
+            throws IOException
+    {
+
+        Path file = Files.createTempFile("file-it-srefe2-1-", "file");
+        Path dw1 = Files.createTempFile("file-it-srefe2-dw-1-", "file");
+        Path dw2 = Files.createTempFile("file-it-srefe2-dw-2-", "file");
+        Path dw3 = Files.createTempFile("file-it-srefe2-dw-3-", "file");
+
+        Files.write(file, "first".getBytes(), StandardOpenOption.APPEND);
+
+        String filename = randomUUID().toString();
+        String key = getTestBasePath() + "/" + filename;
+
+        Path s3file = fileSystemAmazon.getPath(bucket, key);
+        Files.createFile(s3file);
+
+        String first = "first-write";
+
+        try(OutputStream out = Files.newOutputStream(s3file, StandardOpenOption.TRUNCATE_EXISTING)) {
+            out.write(first.getBytes());
+        }
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(first.getBytes());
+
+        Files.copy(s3file, dw1, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw1).hasBinaryContent(first.getBytes());
+
+        String second = "second-write";
+        try(OutputStream out = Files.newOutputStream(s3file, StandardOpenOption.TRUNCATE_EXISTING)) {
+            out.write(second.getBytes());
+        }
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(second.getBytes());
+
+        Files.copy(s3file, dw2, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw2).hasBinaryContent(second.getBytes());
+
+        String third = "third-write";
+        try(OutputStream out = Files.newOutputStream(s3file, StandardOpenOption.TRUNCATE_EXISTING)) {
+            out.write(third.getBytes());
+        }
+        assertThat(Files.readAllBytes(s3file)).isEqualTo(third.getBytes());
+
+        Files.copy(s3file, dw3, StandardCopyOption.REPLACE_EXISTING);
+        assertThat(dw3).hasBinaryContent(third.getBytes());
+
+    }
+
 
     // helpers
 
