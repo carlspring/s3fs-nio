@@ -5,6 +5,8 @@ tmp/
 *.versionsBackup
 .m2/
 site/
+build/
+.gradle
 
 # Java Files #
 *.jar

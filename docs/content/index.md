@@ -12,10 +12,16 @@
     </dependency>
     ```
 
-=== "Gradle"
+=== "Gradle.build.kts"
+
+    ```
+    implementation("{{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}:{{ POM_VERSION }}")
+    ```
+
+=== "Gradle.build"
     
     ```
-    compile group: '{{ POM_GROUP_ID }}', name: '{{ POM_ARTIFACT_ID }}', version: '{{ POM_VERSION }}'
+    implementation '{{ POM_GROUP_ID }}:{{ POM_ARTIFACT_ID }}:{{ POM_VERSION }}'
     ```
 
 === "SBT"

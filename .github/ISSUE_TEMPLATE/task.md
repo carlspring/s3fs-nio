@@ -36,5 +36,4 @@ This task:
 * Our [chat channel](https://chat.carlspring.org/channel/s3fs-nio-community)
 * Points of contact:
   * @carlspring
-  * @ptirador
   * @steve-todorov
