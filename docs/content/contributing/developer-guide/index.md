@@ -9,7 +9,7 @@ Before you start writing code, please read:
 
 ## System requirements
 
-1. Maven 3.6.3, or higher
+1. Gradle 8.1, or higher
 2. `JDK8` or `JDK11`
 
 ## Finding issues to work on
@@ -73,47 +73,55 @@ The easiest way to get started would be to:
 git clone {{ repo_url }}
 cd s3fs-nio
 ```
+### Custom proxy (optional)
 
-
-### Run unit tests
+If you have Nexus/Artifactory running locally you can setup Gradle to use that repository.  
+Place the following configuration in your `~/.gradle/gradle.properties`:
 
 ```
-mvn clean install
-OR
-mvn clean install -Punit-tests
+s3fs.proxy.url=https://my.local.domain/path/to/repository
 ```
 
-### Run unit and integration tests 
+### Build
 
-1. Copy `amazon-test-sample.properties` and replace credentials with real S3 ones.
+Builds the entire code and runs unit and integration tests.
+It is assumed you already have the `amazon-test.properties` configuration in place.
 
-    !!! warning "DO NOT commit these credentials into Git!"
+```
+./gradlew build
+```
 
-    ```
-    --8<-- "../src/test/resources/amazon-test-sample.properties"
-    ```
+### Run only unit tests
 
-2. Run unit and S3 integration tests
-   ```
-   mvn clean install -Punit-tests,it-s3
-   ``` 
+```
+./gradlew test
+```
 
-3. If you have docker then you can also use `-Pit-minio` to run integration tests against MinIO
-   ```
-   mvn clean install -Punit-tests,it-minio
-   ```
-   
-    !!! warning "I am getting 'No such image error'"
+### Run only integration tests 
 
-        On some OS's you might run into [testcontainers/testcontainers-java#3574: "No such image"](https://github.com/testcontainers/testcontainers-java/issues/3574)
-        error. To fix this - you need to manually run `docker pull testcontainers/ryuk`.
-   
+```
+./gradlew it-s3
+``` 
 
-4. Run all unit and integration tests
-   ```
-   mvn clean install -Punit-tests,it-minio,it-s3
-   ```
+### Run all tests 
 
+```
+./gradlew check
+``` 
+
+
+### Gradle build properties
+
+The following properties can be set in your `~/.gradle/gradle.properties` file to modify the build execution
+
+| Key                              | Default | Required                | Description                                                         |
+|----------------------------------|---------|-------------------------|---------------------------------------------------------------------|
+| `s3fs.proxy.url`                 | `null`  | No                      | Allows you to specify a close proxy to be used to resolve artifact. |
+| `s3fs.publish.internal.release`  | `null`  | No                      | Allows internal testing.                                            |
+| `s3fs.publish.internal.snapshot` | `null`  | No                      | Allows internal testing.                                            |
+| `s3fs.publish.sonar.login`       | `null`  | Yes if building with CI | Required by the `sonar` plugin to publish reports to SonarQube.     |
+| `s3fs.publish.sonatype.user`     | `null`  | Yes, when publishing    | Maven Central User                                                  |
+| `s3fs.publish.sonatype.pass`     | `null`  | Yes, when publishing    | Maven Central Secret                                                |
 
 [<--# Links -->]: #
 [Maven 3.6+]: https://maven.apache.org/download.cgi

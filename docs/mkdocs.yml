@@ -27,9 +27,9 @@ plugins:
       prebuild_index: false
       lang:
         - en
-  - mkdocs-pom-parser-plugin:
-      path: ../pom.xml
-      debug: true
+#  - mkdocs-pom-parser-plugin:
+#      path: ../pom.xml
+#      debug: true
   # This plugin should be AFTER mkdocs-pom-parser-plugin until issue is fixed.
   # https://github.com/rosscdh/mkdocs-markdownextradata-plugin/issues/26
   - markdownextradata: {}
@@ -97,6 +97,9 @@ extra:
     link: *repo_url
   - icon: fontawesome/brands/rocketchat
     link: *chat_url
+  POM_GROUP_ID: org.carlspring.cloud.aws
+  POM_ARTIFACT_ID: s3fs-nio
+  POM_VERSION: 1.0.0-SNAPSHOT
 
 nav:
   - Home:
