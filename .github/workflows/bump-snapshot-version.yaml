@@ -1,0 +1,106 @@
+on:
+  workflow_dispatch:
+    inputs:
+      VERSION:
+        required: true
+        type: string
+        description: Next snapshot version (i.e. 1.2.3, no SNAPSHOT suffix)
+
+name: Bump snapshot version
+
+env:
+  IS_FORK: ${{ github.repository != 'carlspring/s3fs-nio' }}
+  IS_ADMIN: ${{ github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov' }}
+
+jobs:
+  bump-version:
+    runs-on: ubuntu-latest
+    if: |
+      ${{ github.repository == 'carlspring/s3fs-nio' }} && 
+      ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }}
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      # git commit --allow-empty -m "Prepare for 1.0.3-SNAPSHOT" -m "Release-As: 1.0.3" && git push
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Show tags.
+        run: git tag -l
+
+      - name: Ensure tag does not exist
+        continue-on-error: false
+        shell: bash
+        run: |
+          version="${{ inputs.VERSION }}"
+          if [[ $(git tag --list | grep -Ei "^(v)?$version(-SNAPSHOT)?$") ]]; then
+            echo "Tag for $version(-SNAPSHOT)? already exists!"
+            exit 1
+          fi
+          if [[ $(git log --all -i --grep="Prepare for v$version-SNAPSHOT" --grep="Release v$version") ]]; then
+            echo "Found commit messages matching 'Prepare for $version-SNAPSHOT' or 'Release v$version'";
+            exit 1
+          fi
+
+      - name: Configure git user.
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add gh-token "https://${{ secrets.GITHUB_TOKEN}}@github.com/${{ github.action_repository }}.git"
+
+      - name: Bump version
+        run: |
+          cat <<< $(jq '."." = "${{ inputs.VERSION }}-SNAPSHOT"' .release-please-manifest.json) > .release-please-manifest.json
+          sed -i 's/version\ \= .*/version = "${{ inputs.VERSION }}-SNAPSHOT"/g' gradle.properties
+          sed -i 's/POM_VERSION: .*/POM_VERSION: "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/mkdocs.yaml
+
+      - name: Create PR
+        uses: peter-evans/create-pull-request@v5
+        id: pr
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          author: "cs-devops-bot <cs-devops-bot@carlspring.com>"
+          commit-message: "chore(snapshot): Prepare for v${{ inputs.VERSION }}\n Release-As: ${{ inputs.VERSION }}"
+          title: "chore(snapshot): Prepare for v${{ inputs.VERSION }}"
+          body: ""
+          labels: automated pr
+          branch: chore/prepare-for-${{ inputs.VERSION }}
+          delete-branch: true
+          reviewers: carlspring, steve-todorov
+
+      - name: Update comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ steps.pr.outputs.pull-request-number }}'
+            });
+            const prTitle = pr.data.title
+            
+            console.log("PR: ", pr)
+
+            const body = `## Next development cycle
+
+            This pull request prepares for the next release cycle.
+            Next snapshot version will become \`${{ inputs.VERSION }}-SNAPSHOT\`.  
+            
+            Please use \`Squash and Merge\` with the following title:
+            \`\`\`
+            ${prTitle} (#${{ steps.pr.outputs.pull-request-number }})
+            \`\`\`
+            Alternatively you can comment with \`/merge-snapshot\` which will do the same for you.
+
+            ` 
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ steps.pr.outputs.pull-request-number }}',
+              body: body,
+              headers: { 'X-GitHub-Api-Version': '2022-11-28' }
+            });
