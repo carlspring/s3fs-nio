@@ -8,16 +8,8 @@ permissions:
 
 name: Prepare release
 
-env:
-  IS_FORK: ${{ github.repository != 'carlspring/s3fs-nio' }}
-  IS_ADMIN: ${{ github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov' }}
-  IS_PR: ${{ github.event_name == 'pull_request' }}
-
 jobs:
   prepare-release:
-    if: |
-      ${{ github.repository == 'carlspring/s3fs-nio' }} &&
-      ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }}
     runs-on: ubuntu-latest
     steps:
       - uses: google-github-actions/release-please-action@v3
@@ -25,3 +17,5 @@ jobs:
         with:
           # https://github.com/googleapis/release-please/blob/main/src/changelog-notes.ts#L42
           command: manifest
+          # This is required to avoid `release-please failed: API rate limit exceeded for installation ID XYZ`
+          token: ${{ secrets.GITHUB_TOKEN }}

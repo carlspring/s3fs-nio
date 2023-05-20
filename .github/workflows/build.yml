@@ -1,7 +1,17 @@
 name: Build and test
 on:
   # Build PRs 
-  pull_request: ~
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '**/*.md'
+      - '.github/workflows/bump*.yaml'
+      - '.github/workflows/codeql*.yaml'
+      - '.github/workflows/command-*.yaml'
+      - '.github/workflows/deploy-tag.yaml'
+      - '.github/workflows/prepare-release.yaml'
+
   # On push event
   push:
     # Build only changes pushed into the `master` branch.
@@ -13,12 +23,18 @@ on:
       - 'docs/**'
       - '*.md'
       - '**/*.md'
+      - '.github/workflows/bump*.yaml'
+      - '.github/workflows/codeql*.yaml'
+      - '.github/workflows/command-*.yaml'
+      - '.github/workflows/deploy-tag.yaml'
+      - '.github/workflows/prepare-release.yaml'
+
   workflow_dispatch:
 
 # Currently you cannot use ${{ env.IS_FORK }} for some reason, which is why you might need to copy-paste some of these.
 env:
   REPOSITORY: ${{ github.repository }}
-  IS_FORK: ${{ github.repository != 'carlspring/s3fs-nio' }}
+  IS_FORK: ${{ github.repository != vars.CURRENT_REPO }}
   IS_PR: ${{ github.event_name == 'pull_request' }}
   EVENT_NAME: ${{ toJSON(github.event_name) }}
   # format: username:branch
@@ -33,6 +49,8 @@ jobs:
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
         java: [ 8, 11 ]
+        #os: [ ubuntu-latest ]
+        #java: [ 11 ]
     steps:
       - name: Show GitHub context
         run: echo "$EVENT_NAME $REPOSITORY $PR_HEAD_LABEL $IS_PR $IS_FORK"
@@ -130,9 +148,7 @@ jobs:
 
       # Publish snapshot only when on master branch, version is actually snapshot and from just one of the matrix jobs.
       - name: Publish snapshot (only on master branch)
-        # TODO: Add this back before merge.
-        # ${{ github.ref_name == 'master' }} &&
-        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
+        if: ${{ github.ref_name == 'master' }} && ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         env:
           S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
           S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"

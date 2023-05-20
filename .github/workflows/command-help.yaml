@@ -1,0 +1,31 @@
+name: command-help
+run-name: command-help PR-${{ github.event.client_payload.github.payload.issue.number }}
+
+on:
+  repository_dispatch:
+    types: [help-command]
+permissions:
+  issues: write
+  pull-requests: write
+  contents: write
+jobs:
+  help:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dump the client payload context
+        env:
+          PAYLOAD_CONTEXT: ${{ toJson(github.event.client_payload) }}
+        run: echo "$PAYLOAD_CONTEXT"
+      - name: Update comment
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          body: |
+            > Command | Description
+            > --- | ---
+            > /merge-snapshot | Squash and merge snapshot PR. 
+            > /merge-release  | Squash and merge release PR.
+            > /deploy-pr      | Deploys the PR as a snapshot version (i.e. `org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT` using ref `${{ github.event.client_payload.pull_request.head.sha }}`)
+          reaction-type: hooray

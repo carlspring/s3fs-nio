@@ -6,7 +6,7 @@ on:
         description: The tag to build and publish (as is)
 
 name: Deploy tagged release
-run-name: Deploy tagged release ${{ inputs.TAG }}
+run-name: Deploying tagged release ${{ inputs.TAG }}
 
 # gh/actions/runner/issues/1007#issuecomment-808904408
 jobs:
@@ -39,38 +39,28 @@ jobs:
             jdks
 
       - name: Setup key
-        run: |
-          # Install gpg secret key
-          cat <(echo -e "${{ secrets.GPG_KEY }}") | gpg --batch --no-tty --use-agent --import  &>/dev/null
-          # Verify gpg secret key
-          gpg --list-secret-keys --keyid-format LONG
-          # Adding fingerprint to trustdb
-          echo '${{ secrets.GPG_FINGERPRINT }}:6:' | gpg --batch --no-tty --use-agent --import-ownertrust
-          cat <<'EOF' >> ~/.gnupg/gpg.conf
-          use-agent
-          pinentry-mode loopback
-          EOF
+        uses: crazy-max/ghaction-import-gpg@v5
+        with:
+          gpg_private_key: ${{ secrets.GPG_KEY }}
+          fingerprint: ${{ secrets.GPG_KEY_ID }}
+          passphrase: ${{ secrets.GPG_PASS }}
+          trust_level: 5
 
-      - name: Build and test
+      - name: Build and deploy
         env:
           S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
           S3FS_ACCESS_KEY: ${{ secrets.S3FS_ACCESS_KEY }}
           S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
           S3FS_REGION: ${{ secrets.S3FS_REGION }}
           S3FS_PROTOCOL: "https"
-        run: ./gradlew build -PwithSignature=${{ fromJSON(steps.deploy_check.outputs.result).is_deployable }} -Psigning.gnupg.passphrase="${{ secrets.GPG_PASS }}" --warn --stacktrace
+          S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
+          S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
+        run: ./gradlew build publish -PwithSignature=true --warn --stacktrace
 
       - name: Check file signature
-        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         run: |
           ls -al ./build/libs/
           for f in ./build/libs/*.asc; do 
             echo "Verifying $f"
             gpg --verify $f          
           done
-
-      - name: Publish release to Maven Central
-        env:
-          S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
-          S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
-        run: ./gradlew publish

@@ -2,7 +2,8 @@ on:
   repository_dispatch:
     types: [ merge-release-command ]
 
-name: merge-release-command
+name: command-merge-release
+run-name: command-merge-release PR-${{ github.event.client_payload.github.payload.issue.number }}
 
 permissions:
   contents: write
@@ -11,11 +12,6 @@ permissions:
 
 jobs:
   merge-release:
-    if: |
-      ${{ github.repository == 'carlspring/s3fs-nio' }} &&
-      ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }} &&
-      ${{ github.event.client_payload.slash_command.command == 'merge-release' }} &&
-      ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v6
@@ -25,15 +21,30 @@ jobs:
           #      The method mappings can be found here: https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/src/generated/endpoints.ts
           #      Method parameters are available in the api docs: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#merge-a-pull-request
           script: |
-            const response = await github.rest.pulls.listCommits({
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ github.event.client_payload.github.payload.issue.number }}'
+            });
+            const prTitle = pr.data.title
+
+            const isRelease = prTitle.includes("Release v")
+            if(!isRelease) {
+              console.log("")
+              console.error("/merge-snapshot is supposed to be executed only on pull requests updating the version to snapshot!")
+              console.log("")
+              process.exit(1)
+            }
+
+            const listCommits = await github.rest.pulls.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: '${{ github.event.client_payload.github.payload.issue.number }}',
               headers: { 'X-GitHub-Api-Version': '2022-11-28' }
             });
-            //console.log(response.data);            
+            //console.log(listCommits.data);            
 
-            const commits = [...response.data].map(c => c.commit);
+            const commits = [...listCommits.data].map(c => c.commit);
             //console.log("Commits: ", commits);
             
             const split = commits[0].message.split('\n');
@@ -42,7 +53,8 @@ jobs:
             split.shift()
             let commit_message = (split.join('\n') + "\n\nCo-authored-by: " + commits[0].author.name + " <" + commits[0].author.email + ">").trim();
             console.log("Squash title: " + commit_title);
-            console.log("Squash message: " + commit_message);
+            console.log("Squash message: \n" + commit_message + "\n/Squash message\n");
+
             await github.rest.pulls.merge({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -79,10 +91,25 @@ jobs:
           gh workflow run deploy-tag.yaml -f TAG=v${{ fromJSON(steps.release.outputs.result).version }}
 
       # Add reaction to the comment
-      - name: Add reaction
+      - name: Add success response
         uses: peter-evans/create-or-update-comment@v2
+        if: ${{ success() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
           comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
           reaction-type: hooray
+          body: |
+            > Success: Action was successful! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Add failure response
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ failure() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reaction-type: -1
+          body: |
+            > FAILURE: Action failed! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+

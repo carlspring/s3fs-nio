@@ -7,17 +7,14 @@ on:
         description: Next snapshot version (i.e. 1.2.3, no SNAPSHOT suffix)
 
 name: Bump snapshot version
-
-env:
-  IS_FORK: ${{ github.repository != 'carlspring/s3fs-nio' }}
-  IS_ADMIN: ${{ github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov' }}
+run-name: Bump snapshot version to ${{ inputs.VERSION }}-SNAPSHOT
 
 jobs:
   bump-version:
     runs-on: ubuntu-latest
     if: |
-      ${{ github.repository == 'carlspring/s3fs-nio' }} && 
-      ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }}
+      github.repository == vars.CURRENT_REPO && 
+      contains('["carlspring", "steve-todorov"]', github.triggering_actor)
     permissions:
       contents: write
       pull-requests: write
@@ -54,8 +51,8 @@ jobs:
       - name: Bump version
         run: |
           cat <<< $(jq '."." = "${{ inputs.VERSION }}-SNAPSHOT"' .release-please-manifest.json) > .release-please-manifest.json
-          sed -i 's/version\ \= .*/version = "${{ inputs.VERSION }}-SNAPSHOT"/g' gradle.properties
-          sed -i 's/POM_VERSION: .*/POM_VERSION: "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/mkdocs.yaml
+          sed -Ei 's/version([ ]*)\=.*/version=${{ inputs.VERSION }}-SNAPSHOT/g' gradle.properties
+          sed -Ei 's/POM_VERSION:.*/POM_VERSION: "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/mkdocs.y*ml
 
       - name: Create PR
         uses: peter-evans/create-pull-request@v5

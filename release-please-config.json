@@ -1,4 +1,5 @@
 {
+  "bootstrap-sha": "01471b4b5db5274f7ba5469c63548079b5d0e369",
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
@@ -7,11 +8,12 @@
       "bump-patch-for-minor-pre-major": true,
       "pull-request-title-pattern": "Release v${version}",
       "draft": false,
-      "prerelease": true,
+      "prerelease": false,
       "include-v-in-tag": true,
       "extra-files": [
         "gradle.properties",
-        "docs/mkdocs.yaml"
+        "docs/mkdocs.yaml",
+        "docs/mkdocs.yml"
       ]
     }
   },

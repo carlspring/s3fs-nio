@@ -1,0 +1,83 @@
+on:
+  repository_dispatch:
+    types: [ deploy-pr-command ]
+
+name: command-deploy-pr
+run-name: Deploying PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT@${{ github.event.client_payload.pull_request.head.sha }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.client_payload.pull_request.head.sha }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: 11
+          distribution: "temurin"
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+        with:
+          # The Gradle wrapper's version (already the default, putting it here to clarity)
+          gradle-version: wrapper
+          # Removing unused files from Gradle User Home before saving to cache (i.e. older versions of gradle)
+          gradle-home-cache-cleanup: true
+          # Cache downloaded JDKs in addition to the default directories.
+          gradle-home-cache-includes: |
+            caches
+            notifications
+            jdks
+
+      - name: Build and deploy snapshot PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT
+        env:
+          S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
+          S3FS_ACCESS_KEY: ${{ secrets.S3FS_ACCESS_KEY }}
+          S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
+          S3FS_REGION: ${{ secrets.S3FS_REGION }}
+          S3FS_PROTOCOL: "https"
+          S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
+          S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
+        run: ./gradlew build publish --warn --stacktrace -Pversion=PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT
+
+      # Add reaction to the comment
+      - name: Add success reaction
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ success() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reaction-type: hooray
+
+      # Add comment (for historic reasons)
+      - name: Add success reaction
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ success() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          body: |
+            PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT@${{ github.event.client_payload.pull_request.head.sha }} was successfully deployed!  
+            Check the [build logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Add failure response
+        uses: peter-evans/create-or-update-comment@v2
+        if: ${{ failure() }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reaction-type: -1
+          body: |
+            > FAILURE: Action failed! Check the [logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})

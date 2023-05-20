@@ -3,11 +3,27 @@ name: "CodeQL"
 on:
   push:
     branches: [ "master" ]
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '**/*.md'
+      - '.github/workflows/bump*.yaml'
+      - '.github/workflows/command-*.yaml'
+      - '.github/workflows/deploy-tag.yaml'
+      - '.github/workflows/prepare-release.yaml'
   pull_request:
     # The branches below must be a subset of the branches above
     branches: [ "master" ]
 #  schedule:
 #    - cron: '21 3 * * 4'
+    paths-ignore:
+      - 'docs/**'
+      - '*.md'
+      - '**/*.md'
+      - '.github/workflows/bump*.yaml'
+      - '.github/workflows/command-*.yaml'
+      - '.github/workflows/deploy-tag.yaml'
+      - '.github/workflows/prepare-release.yaml'
 
 jobs:
   analyze:

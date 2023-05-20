@@ -1,17 +1,18 @@
-name: Slash Command Dispatch
+name: command-dispatch
 on:
   issue_comment:
     types: [created]
-#permissions:
-#  pull-requests: write
-#  issues: write
-#  contents: read
-#  repository-projects: read
-#  actions: write
-permissions: write-all
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+#permissions: write-all
 jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
+    if: |
+      contains('["carlspring", "steve-todorov"]', github.triggering_actor) &&
+      github.event.issue.pull_request
     steps:
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v3
@@ -26,6 +27,11 @@ jobs:
               },
               {
                 "command": "merge-release",
+                "permission": "write",
+                "issue_type": "pull-request"
+              },
+              {
+                "command": "deploy-pr",
                 "permission": "write",
                 "issue_type": "pull-request"
               },
