@@ -1,0 +1,37 @@
+name: Slash Command Dispatch
+on:
+  issue_comment:
+    types: [created]
+#permissions:
+#  pull-requests: write
+#  issues: write
+#  contents: read
+#  repository-projects: read
+#  actions: write
+permissions: write-all
+jobs:
+  slashCommandDispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Slash Command Dispatch
+        uses: peter-evans/slash-command-dispatch@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config: >
+            [
+              {
+                "command": "merge-snapshot",
+                "permission": "write",
+                "issue_type": "pull-request"
+              },
+              {
+                "command": "merge-release",
+                "permission": "write",
+                "issue_type": "pull-request"
+              },
+              {
+                "command": "help",
+                "permission": "write",
+                "issue_type": "pull-request"
+              }
+            ]

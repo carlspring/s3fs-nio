@@ -1,0 +1,70 @@
+on:
+  repository_dispatch:
+    types: [ merge-snapshot-command ]
+
+name: merge-snapshot-command
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  merge-snapshot:
+    if: |
+      ${{ github.repository == 'carlspring/s3fs-nio' }} &&
+      ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }} &&
+      ${{ github.event.client_payload.slash_command.command == 'merge-snapshot' }} &&
+      ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v6
+        with:
+          # FYI: `github.rest` exposes `octokit` client.
+          #      The method mappings can be found here: https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/src/generated/endpoints.ts
+          #      Method parameters are available in the api docs: https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#merge-a-pull-request
+          script: |
+            const response = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ github.event.client_payload.github.payload.issue.number }}',
+              headers: { 'X-GitHub-Api-Version': '2022-11-28' }
+            });
+            //console.log(response.data);            
+
+            const commits = [...response.data].map(c => c.commit);
+            //console.log("Commits: ", commits);
+            
+            const split = commits[0].message.split('\n');
+            const commit_raw_title = split[0];
+            const commit_title = commit_raw_title + " (#${{ github.event.client_payload.github.payload.issue.number }})"
+            split.shift()
+            let commit_message = (split.join('\n') + "\n\nCo-authored-by: " + commits[0].author.name + " <" + commits[0].author.email + ">").trim();
+            console.log("Squash title: " + commit_title);
+            console.log("Squash message: " + commit_message);
+            await github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: '${{ github.event.client_payload.github.payload.issue.number }}',
+              merge_method: 'squash',
+              commit_title: commit_title,
+              commit_message: commit_message,
+              headers: { 'X-GitHub-Api-Version': '2022-11-28' }
+            });
+
+      - uses: actions/checkout@v3
+
+      - name: Trigger prepare-release workflow.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run prepare-release.yaml
+
+      # Add reaction to the comment
+      - name: Add reaction
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          comment-id: ${{ github.event.client_payload.github.payload.comment.id }}
+          reaction-type: hooray

@@ -5,9 +5,9 @@ on:
   # On push event
   push:
     # Build only changes pushed into the `master` branch.
-    branches:
-      - master
-      - pipeline
+    #branches:
+    #  - master
+    #  - pipeline
     # Ignore documentation changes (Netlify will handle this)
     paths-ignore:
       - 'docs/**'
@@ -40,7 +40,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          fetch-depth: '0'
+          fetch-depth: '1'
 
       - name: Setup Java ${{ matrix.java }}
         uses: actions/setup-java@v3
@@ -61,6 +61,42 @@ jobs:
             notifications
             jdks
 
+      - name: Check if code is eligible for deploying snapshot version
+        id: deploy_check
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');  
+            const manifest = JSON.parse(fs.readFileSync('.release-please-manifest.json'));
+            
+            const data = {
+              "version": manifest["."],
+              "is_snapshot": manifest["."].toLowerCase().includes("snapshot"),
+              "matrix": "${{ matrix.os }}",
+              "jdk": "${{ matrix.java }}",
+              "is_fork": "${{ env.IS_FORK }}"
+            }
+
+            const is_deployable = data.matrix == "ubuntu-latest" && data.jdk == "11" && data.is_fork == "false" && data.is_snapshot == true
+            
+            console.log("Data: ", data);
+            console.log("Is deployable: " + is_deployable);
+            
+            return {
+              version: data.version,
+              is_snapshot: '' + data.is_snapshot,
+              is_deployable: '' + is_deployable
+            }
+
+      - name: Setup key
+        uses: crazy-max/ghaction-import-gpg@v5
+        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
+        with:
+          gpg_private_key: ${{ secrets.GPG_KEY }}
+          fingerprint: ${{ secrets.GPG_KEY_ID }}
+          passphrase: ${{ secrets.GPG_PASS }}
+          trust_level: 5
+
       - name: Build and test
         env:
           S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
@@ -68,14 +104,14 @@ jobs:
           S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
           S3FS_REGION: ${{ secrets.S3FS_REGION }}
           S3FS_PROTOCOL: "https"
-        run: ./gradlew test jacocoTestReport --scan
+        run: ./gradlew build jacocoTestReport -PwithSignature=${{ fromJSON(steps.deploy_check.outputs.result).is_deployable }} --warn --stacktrace
 
       - name: Publish code analysis to Sonarcloud
         # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
         #           it from October 2020. Please update to at least Java 11.
         # [WARNING] No analysis for external contributors - sorry.
         #           Check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' && env.IS_FORK != 'true' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' && env.IS_FORK == 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -83,12 +119,25 @@ jobs:
         run: ./gradlew sonar
         continue-on-error: true
 
-      - name: Publish snapshot (master branch)
-        if: ${{ env.IS_FORK == 'false' && github.ref_name == 'master' }}
+      - name: Check file signature
+        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
+        run: |
+          ls -al ./build/libs/
+          for f in ./build/libs/*.asc; do 
+            echo "Verifying $f"
+            gpg --verify $f          
+          done
+
+      # Publish snapshot only when on master branch, version is actually snapshot and from just one of the matrix jobs.
+      - name: Publish snapshot (only on master branch)
+        # TODO: Add this back before merge.
+        # ${{ github.ref_name == 'master' }} &&
+        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         env:
-          S3FS_PUBLISH_SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
-          S3FS_PUBLISH_SONATYPE_PASS: ${{ secrets.SONATYPE_PASS }}
-        run: ./gradew publish
+          S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
+          S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
+        run: |
+          ./gradlew publish
 
 #  run-it-minio:
 #    runs-on: ${{ matrix.os }}
