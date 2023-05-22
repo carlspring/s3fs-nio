@@ -39,7 +39,7 @@ java {
 }
 
 dependencies {
-    api(platform("software.amazon.awssdk:bom:2.16.28")) {
+    api(platform("software.amazon.awssdk:bom:2.20.70")) {
         // Change the `AWS_VERSION` in ./docs/mkocs.yaml file.
     }
     api("software.amazon.awssdk:s3") {
