@@ -148,7 +148,7 @@ jobs:
 
       # Publish snapshot only when on master branch, version is actually snapshot and from just one of the matrix jobs.
       - name: Publish snapshot (only on master branch)
-        if: ${{ github.ref_name == 'master' }} && ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
+        if: ${{ github.ref_name == 'master' && fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         env:
           S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
           S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
