@@ -597,7 +597,10 @@ public class S3FileSystemProvider
 
 
         final Map<String, String> metadata = buildMetadataFromPath(path);
-        return new S3OutputStream(s3Path.getFileSystem().getClient(), s3Path.toS3ObjectId(), metadata);
+
+        S3FileSystem fileSystem = s3Path.getFileSystem();
+
+        return new S3OutputStream(fileSystem.getClient(), s3Path.toS3ObjectId(), null, metadata, fileSystem.getRequestHeaderCacheControlProperty());
     }
 
     private void validateCreateAndTruncateOptions(final Path path,
@@ -696,6 +699,7 @@ public class S3FileSystemProvider
         final PutObjectRequest request = PutObjectRequest.builder()
                                                          .bucket(bucketName)
                                                          .key(directoryKey)
+                                                         .cacheControl(s3Path.getFileSystem().getRequestHeaderCacheControlProperty())
                                                          .contentLength(0L)
                                                          .build();
 
@@ -869,6 +873,7 @@ public class S3FileSystemProvider
 
         final CopyObjectRequest request = CopyObjectRequest.builder()
                                                            .copySource(encodedUrl)
+                                                           .cacheControl(s3Target.getFileSystem().getRequestHeaderCacheControlProperty())
                                                            .destinationBucket(bucketNameTarget)
                                                            .destinationKey(keyTarget)
                                                            .build();
@@ -1097,7 +1102,8 @@ public class S3FileSystemProvider
         final String key = getFileSystemKey(uri, props);
         final S3Client client = getS3Client(uri, props);
         final String host = uri.getHost();
-        return new S3FileSystem(this, key, client, host);
+        final Properties properties = new Properties(props);
+        return new S3FileSystem(this, key, client, host, properties);
     }
 
     protected S3Client getS3Client(URI uri,

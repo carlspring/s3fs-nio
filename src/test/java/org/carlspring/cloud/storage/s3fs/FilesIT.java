@@ -12,6 +12,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
@@ -67,7 +68,9 @@ class FilesIT extends BaseIntegrationTest
     private static FileSystem createNewFileSystem()
             throws IOException
     {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
+        Map<String, Object> env = new HashMap<>(EnvironmentBuilder.getRealEnv());
+        env.put(S3Factory.REQUEST_HEADER_CACHE_CONTROL, "no-cache");
+        return FileSystems.newFileSystem(uriGlobal, env);
     }
 
     @Test
@@ -456,6 +459,19 @@ class FilesIT extends BaseIntegrationTest
     }
 
     @Test
+    void copyAsNewFileInS3()
+            throws IOException
+    {
+        Path sourceFile = uploadSingleFile(null);
+        Path targetFile = sourceFile.getParent().resolve("copyAsNewFileInS3-" + UUID.randomUUID());
+
+        Files.copy(sourceFile, targetFile);
+
+        assertTrue(Files.exists(targetFile));
+        assertArrayEquals(Files.readAllBytes(sourceFile), Files.readAllBytes(targetFile));
+    }
+
+    @Test
     void moveFromDifferentProviders()
             throws IOException
     {
@@ -743,7 +759,7 @@ class FilesIT extends BaseIntegrationTest
     }
 
     @Test
-    void shouldReplaceExistingFileExample()
+    void shouldReplaceExistingFileExample1()
             throws IOException
     {
 
