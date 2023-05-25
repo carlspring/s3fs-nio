@@ -61,15 +61,28 @@ jobs:
           reaction-type: hooray
 
       # Add comment (for historic reasons)
-      - name: Add success reaction
+      - name: Add success comment
         uses: peter-evans/create-or-update-comment@v2
         if: ${{ success() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.event.client_payload.github.payload.repository.full_name }}
+          issue-number: ${{ github.event.client_payload.github.payload.issue.number }}
           body: |
-            PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT@${{ github.event.client_payload.pull_request.head.sha }} was successfully deployed!  
-            Check the [build logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            ### Status 
+
+            Snapshot was successfully deployed!    
+            Build logs are available [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})    
+
+            ### Snapshot artifact coordinates:
+            ```
+            org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT
+            ```
+
+            ### WARNING
+            
+            **DO NOT USE IN PRODUCTION AS IT WILL BE DELETED AFTER MERGE!**    
+            This is a temporary snapshot preview available only for convenience.
 
       - name: Add failure response
         uses: peter-evans/create-or-update-comment@v2
