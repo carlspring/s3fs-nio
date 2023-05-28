@@ -1,6 +1,6 @@
 version: '3'
 services:
-  mkdocs:
+  serve:
     build:
       context: .
       dockerfile: ./docs.Dockerfile
@@ -11,3 +11,12 @@ services:
       - ../:/workspace
     ports:
       - 8000:8000
+  build:
+    build:
+      context: .
+      dockerfile: ./docs.Dockerfile
+    image: squidfunk/mkdocs-material:5.5.9-custom
+    working_dir: /workspace/docs
+    command: [ "build" ]
+    volumes:
+      - ../:/workspace

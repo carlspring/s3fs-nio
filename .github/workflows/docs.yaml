@@ -1,0 +1,62 @@
+name: Build docs
+on:
+  # Build PRs 
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yaml'
+
+  # On push event
+  push:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yaml'
+
+  workflow_dispatch:
+
+env:
+  REPOSITORY: ${{ github.repository }}
+  IS_FORK: ${{ github.repository != vars.CURRENT_REPO }}
+  IS_PR: ${{ github.event_name == 'pull_request' }}
+  EVENT_NAME: ${{ toJSON(github.event_name) }}
+  # format: username:branch
+  PR_HEAD_LABEL: ${{ toJSON(github.event.pull_request.head.label) }}
+  PR_NUMBER: ${{ github.event.number }}
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build docks
+        working-directory: docs
+        run: docker-compose run build
+
+      - name: Publish
+        working-directory: docs
+        id: publish
+        env:
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          npm install -g netlify
+          is_master=${{ github.ref_name == 'master' }}
+          [[ "$is_master" == "true" ]] && args=" --prod "
+          netlify deploy -d site/ $args | tee build.log
+          url=$(cat build.log | grep -iE  "website(.+)url" | cut -f 2- -d":" | xargs)
+          echo "Url: $url"
+          echo "url=$url" >> $GITHUB_OUTPUT
+
+      - name: Post job result
+        uses: Sibz/github-status-action@v1
+        if: always()
+        with:
+          authToken: ${{ secrets.GITHUB_TOKEN }}
+          context: Build docs / docs / netlify preview
+          state: ${{ job.status }}
+          sha: ${{ github.event.pull_request.head.sha || github.sha }}
+          target_url: ${{ steps.publish.outputs.url }}
+
