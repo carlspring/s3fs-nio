@@ -21,7 +21,6 @@ import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.AwsRegionProvider;
-import software.amazon.awssdk.regions.providers.AwsRegionProviderChain;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.S3Configuration;
@@ -83,6 +82,8 @@ public abstract class S3Factory
     public static final String SIGNER_OVERRIDE = "s3fs.signer.override";
 
     public static final String PATH_STYLE_ACCESS = "s3fs.path.style.access";
+
+    public static final String REQUEST_HEADER_CACHE_CONTROL = "s3fs.request.header.cache-control";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3Factory.class);
 

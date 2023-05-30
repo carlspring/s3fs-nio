@@ -2,21 +2,7 @@ package org.carlspring.cloud.storage.s3fs;
 
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
-
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -28,28 +14,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.http.Header;
-import software.amazon.awssdk.services.s3.model.AbortMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CompleteMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
-import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.UploadPartRequest;
+import software.amazon.awssdk.services.s3.model.*;
+
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.UUID.randomUUID;
 import static org.carlspring.cloud.storage.s3fs.S3OutputStream.MAX_ALLOWED_UPLOAD_PARTS;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class S3OutputStreamTest
+class S3OutputStreamTest extends BaseTest
 {
 
     private static final String BUCKET_NAME = "s3OutputStreamTest";
@@ -59,8 +42,6 @@ class S3OutputStreamTest
 
     @Captor
     private ArgumentCaptor<RequestBody> requestBodyCaptor;
-
-    private String key;
 
     private static Stream<Arguments> offsetAndLengthForWriteProvider()
     {
@@ -73,20 +54,13 @@ class S3OutputStreamTest
         );
     }
 
-    @BeforeEach
-    void init(final TestInfo testInfo)
-    {
-        final Optional<Method> method = testInfo.getTestMethod();
-        key = method.map(Method::getName).orElseThrow(() -> new IllegalStateException("No method name ?"));
-    }
-
     @Test
     void openAndCloseProducesEmptyObject()
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
-
         final S3ObjectId objectId = S3ObjectId.builder()
                                               .bucket(BUCKET_NAME)
                                               .key(key)
@@ -107,8 +81,8 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
-
         final S3ObjectId objectId = S3ObjectId.builder()
                                               .bucket(BUCKET_NAME)
                                               .key(key)
@@ -131,8 +105,8 @@ class S3OutputStreamTest
                                                                           final int length)
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
-
         final S3ObjectId objectId = S3ObjectId.builder()
                                               .bucket(BUCKET_NAME)
                                               .key(key)
@@ -155,6 +129,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -187,6 +162,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -219,6 +195,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -243,6 +220,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -272,6 +250,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -311,6 +290,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -352,6 +332,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 
@@ -386,6 +367,7 @@ class S3OutputStreamTest
             throws IOException
     {
         //given
+        final String key = getTestBasePath() + "/" + randomUUID();
         final S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket(BUCKET_NAME).file(key);
 

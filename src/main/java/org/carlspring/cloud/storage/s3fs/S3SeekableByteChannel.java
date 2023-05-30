@@ -35,6 +35,8 @@ public class S3SeekableByteChannel
 
     private final Path tempFile;
 
+    private final String requestCacheControlHeader;
+
 
     /**
      * Open or creates a file, returning a seekable byte channel
@@ -51,6 +53,7 @@ public class S3SeekableByteChannel
     {
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
+        this.requestCacheControlHeader = path.getFileSystem().getRequestHeaderCacheControlProperty();
 
         final String key = path.getKey();
         final boolean exists = path.getFileSystem().provider().exists(path);
@@ -176,6 +179,7 @@ public class S3SeekableByteChannel
 
             builder.bucket(path.getFileStore().name());
             builder.key(path.getKey());
+            builder.cacheControl(requestCacheControlHeader);
 
             S3Client client = path.getFileSystem().getClient();
 

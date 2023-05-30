@@ -100,6 +100,8 @@ public final class S3OutputStream
      */
     private List<String> partETags;
 
+    private final String requestCacheControlHeader;
+
     /**
      * Creates a new {@code S3OutputStream} that writes data directly into the S3 object with the given {@code objectId}.
      * No special object metadata or storage class will be attached to the object.
@@ -115,6 +117,7 @@ public final class S3OutputStream
         this.objectId = requireNonNull(objectId);
         this.metadata = new HashMap<>();
         this.storageClass = null;
+        this.requestCacheControlHeader = "";
     }
 
     /**
@@ -132,8 +135,9 @@ public final class S3OutputStream
     {
         this.s3Client = requireNonNull(s3Client);
         this.objectId = requireNonNull(objectId);
-        this.storageClass = storageClass;
         this.metadata = new HashMap<>();
+        this.storageClass = storageClass;
+        this.requestCacheControlHeader = "";
     }
 
     /**
@@ -154,6 +158,7 @@ public final class S3OutputStream
         this.objectId = requireNonNull(objectId);
         this.storageClass = null;
         this.metadata = new HashMap<>(metadata);
+        this.requestCacheControlHeader = "";
     }
 
     /**
@@ -175,6 +180,31 @@ public final class S3OutputStream
         this.objectId = requireNonNull(objectId);
         this.storageClass = storageClass;
         this.metadata = new HashMap<>(metadata);
+        this.requestCacheControlHeader = "";
+    }
+
+    /**
+     * Creates a new {@code S3OutputStream} that writes data directly into the S3 object with the given {@code objectId}.
+     * The given {@code metadata} will be attached to the written object.
+     *
+     * @param s3Client     S3 ClientAPI to use
+     * @param objectId     ID of the S3 object to store data into
+     * @param storageClass S3 Client storage class to apply to the newly created S3 object, if any
+     * @param metadata     metadata to attach to the written object
+     * @param requestCacheControlHeader Controls
+     * @throws NullPointerException if at least one parameter except {@code storageClass} is {@code null}
+     */
+    public S3OutputStream(final S3Client s3Client,
+                          final S3ObjectId objectId,
+                          final StorageClass storageClass,
+                          final Map<String, String> metadata,
+                          final String requestCacheControlHeader)
+    {
+        this.s3Client = requireNonNull(s3Client);
+        this.objectId = requireNonNull(objectId);
+        this.storageClass = storageClass;
+        this.metadata = new HashMap<>(metadata);
+        this.requestCacheControlHeader = requestCacheControlHeader;
     }
 
     //protected for testing purposes
@@ -435,6 +465,7 @@ public final class S3OutputStream
         final PutObjectRequest.Builder requestBuilder = PutObjectRequest.builder()
                                                                         .bucket(objectId.getBucket())
                                                                         .key(objectId.getKey())
+                                                                        .cacheControl(requestCacheControlHeader)
                                                                         .contentLength(contentLength)
                                                                         .contentType(contentType)
                                                                         .metadata(metadataMap);

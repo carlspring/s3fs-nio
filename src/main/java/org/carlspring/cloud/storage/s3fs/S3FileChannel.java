@@ -15,9 +15,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -67,6 +65,15 @@ public class S3FileChannel
      */
     private final Lock writeReadChannelLock = readWriteLock.readLock();
 
+    public S3FileChannel(final S3Path path,
+                         final Set<? extends OpenOption> options,
+                         final ExecutorService executor,
+                         final boolean tempFileRequired)
+            throws IOException
+    {
+        this(path, options, executor, tempFileRequired, new HashMap<>());
+    }
+
     /**
      * Open or creates a file, returning a file channel.
      *
@@ -79,13 +86,15 @@ public class S3FileChannel
     public S3FileChannel(final S3Path path,
                          final Set<? extends OpenOption> options,
                          final ExecutorService executor,
-                         final boolean tempFileRequired)
+                         final boolean tempFileRequired,
+                         final Map<String, String> properties)
             throws IOException
     {
         openCloseLock.lock();
 
         this.path = path;
         this.options = Collections.unmodifiableSet(new HashSet<>(options));
+        String headerCacheControlProperty = path.getFileSystem().getRequestHeaderCacheControlProperty();
         boolean exists = path.getFileSystem().provider().exists(path);
         boolean removeTempFile = false;
 

@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
@@ -35,16 +36,28 @@ public class S3FileSystem
 
     private final int cache;
 
+    private final Properties properties;
+
     public S3FileSystem(final S3FileSystemProvider provider,
                         final String key,
                         final S3Client client,
-                        final String endpoint)
+                        final String endpoint,
+                        Properties properties)
     {
         this.provider = provider;
         this.key = key;
         this.client = client;
         this.endpoint = endpoint;
         this.cache = 60000; // 1 minute cache for the s3Path
+        this.properties = properties;
+    }
+
+    public S3FileSystem(final S3FileSystemProvider provider,
+                        final String key,
+                        final S3Client client,
+                        final String endpoint)
+    {
+        this(provider, key, client, endpoint, new Properties());
     }
 
     @Override
@@ -172,6 +185,20 @@ public class S3FileSystem
         return split;
     }
 
+    public int getCache()
+    {
+        return cache;
+    }
+
+
+    /**
+     * @return The value of the {@link S3Factory#REQUEST_HEADER_CACHE_CONTROL} property. Default is empty.
+     */
+    public String getRequestHeaderCacheControlProperty()
+    {
+        return properties.getProperty(S3Factory.REQUEST_HEADER_CACHE_CONTROL, ""); // default is nothing.
+    }
+
     @Override
     public int hashCode()
     {
@@ -230,8 +257,4 @@ public class S3FileSystem
         return key.compareTo(o.getKey());
     }
 
-    public int getCache()
-    {
-        return cache;
-    }
 }
