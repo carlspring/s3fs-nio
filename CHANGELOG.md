@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.1](https://github.com/carlspring/s3fs-nio/compare/v1.0.0...v1.0.1) (2023-05-30)
+
+### Features
+
+* Allow configuring cacheControl via s3fs.request.header.cache-control flag ([#711](https://github.com/carlspring/s3fs-nio/issues/711)) ([f1cb117](https://github.com/carlspring/s3fs-nio/commit/f1cb1170a824b879228eda3fb1cdfbf5d322b8d2))
+
+### Miscellaneous
+
+* **snapshot:** Prepare for v1.0.1 ([#709](https://github.com/carlspring/s3fs-nio/issues/709)) ([97ce1fe](https://github.com/carlspring/s3fs-nio/commit/97ce1fe384cce3c77d2fe05c3dad1a88d1b8c5d2))
+
+
 ## 1.0.0 (2023-05-23)
 
 
