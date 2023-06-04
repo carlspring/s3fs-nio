@@ -144,7 +144,7 @@ public class S3FileSystemProvider
 
     public static final String S3_FACTORY_CLASS = "s3fs.amazon.s3.factory.class";
 
-    private static final ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
+    private volatile static ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
     private static final List<String> PROPS_TO_OVERLOAD = Arrays.asList(ACCESS_KEY,
                                                                         SECRET_KEY,
@@ -198,8 +198,13 @@ public class S3FileSystemProvider
         String key = getFileSystemKey(uri, props);
         if (fileSystems.containsKey(key))
         {
-            throw new FileSystemAlreadyExistsException(
-                    "File system " + uri.getScheme() + ':' + key + " already exists");
+            String safeName = uri.getScheme() + "://";
+            String userInfo = uri.getUserInfo();
+            if(userInfo != null) {
+                safeName += uri.getUserInfo().split(":")[0] + ":__REDACTED__@";
+            }
+            safeName += uri.getHost() + (uri.getPort() > -1 ? ":" + uri.getPort() : "" ) + uri.getPath();
+            throw new FileSystemAlreadyExistsException("File system " + safeName + " already exists");
         }
 
         // create the filesystem with the final properties, store and return
