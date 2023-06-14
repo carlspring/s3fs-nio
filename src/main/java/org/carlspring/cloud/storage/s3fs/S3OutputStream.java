@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -77,7 +78,7 @@ public final class S3OutputStream
     /**
      * Indicates if the stream has been closed.
      */
-    private volatile boolean closed;
+    private volatile AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
      * Internal buffer. May be {@code null} if no bytes are buffered.
@@ -221,11 +222,23 @@ public final class S3OutputStream
     }
 
     @Override
+    public void write(byte[] bytes) throws IOException
+    {
+        write(bytes, 0, bytes.length);
+    }
+
+    @Override
     public void write(final byte[] bytes,
                       final int offset,
                       final int length)
             throws IOException
     {
+
+        if (closed.get())
+        {
+            throw new StreamAlreadyClosedException();
+        }
+
         if ((offset < 0) || (offset > bytes.length) || (length < 0) || ((offset + length) > bytes.length) ||
             ((offset + length) < 0))
         {
@@ -235,11 +248,6 @@ public final class S3OutputStream
         if (length == 0)
         {
             return;
-        }
-
-        if (closed)
-        {
-            throw new IOException("Already closed");
         }
 
         synchronized (this)
@@ -267,11 +275,19 @@ public final class S3OutputStream
         }
     }
 
+    /**
+     * @return True if the stream has been closed, false if the stream is still open.
+     */
+    public boolean isClosed()
+    {
+        return this.closed.get();
+    }
+
     @Override
     public void close()
             throws IOException
     {
-        if (closed)
+        if (closed.get())
         {
             return;
         }
@@ -292,7 +308,7 @@ public final class S3OutputStream
                 completeMultipartUpload();
             }
 
-            closed = true;
+            closed.set(true);
         }
     }
 
@@ -374,13 +390,14 @@ public final class S3OutputStream
         {
             if (!success)
             {
-                closed = true;
+                closed.set(true);
                 abortMultipartUpload();
             }
         }
 
         if (partNumber >= MAX_ALLOWED_UPLOAD_PARTS)
         {
+            LOGGER.warn("Uploaded part is out of max allowed parts, stream closed.");
             close();
         }
     }
@@ -525,4 +542,12 @@ public final class S3OutputStream
 
         return null;
     }
+
+    public static class StreamAlreadyClosedException extends IOException
+    {
+        public StreamAlreadyClosedException() {
+            super("Stream has already been closed.");
+        }
+    }
+
 }

@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import org.assertj.core.api.Assertions;
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 import org.junit.jupiter.api.Test;
@@ -22,10 +23,16 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.UUID.randomUUID;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.S3OutputStream.MAX_ALLOWED_UPLOAD_PARTS;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,6 +81,108 @@ class S3OutputStreamTest extends BaseTest
 
         //then
         assertThatBytesHaveBeenPut(client, data);
+    }
+
+    @Test
+    void writeToClosedStreamShouldProduceExceptionThreadSafe()
+            throws ExecutionException, InterruptedException, IOException
+    {
+        //given
+        final String key = getTestBasePath() + "/" + randomUUID();
+        final S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket(BUCKET_NAME).file(key);
+        final S3ObjectId objectId = S3ObjectId.builder().bucket(BUCKET_NAME).key(key).build();
+
+        final S3OutputStream outputStream = new S3OutputStream(client, objectId);
+
+        // Simulate closing the outputStream from another thread.
+        Runnable closeStreamRunnable = () -> {
+            try
+            {
+                outputStream.close();
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+        };
+        closeStreamRunnable.run();
+
+        CountDownLatch count = new CountDownLatch(1);
+        AtomicBoolean alreadyClosedException = new AtomicBoolean(false);
+        Runnable runnable = () -> {
+            count.countDown();
+            try
+            {
+                outputStream.write(new byte[0]);
+            }
+            catch (S3OutputStream.StreamAlreadyClosedException e)
+            {
+                alreadyClosedException.set(true);
+            }
+            catch (Exception e)
+            {
+                throw new RuntimeException(e);
+            }
+        };
+
+        CompletableFuture[] futures = new CompletableFuture[] {
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+        };
+        count.countDown();
+
+        CompletableFuture.allOf(futures).get();
+        assertTrue(alreadyClosedException.get());
+    }
+
+    @Test
+    void closingStreamShouldBeThreadSafe()
+            throws ExecutionException, InterruptedException, IOException
+    {
+        //given
+        final String key = getTestBasePath() + "/" + randomUUID();
+        final S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket(BUCKET_NAME).file(key);
+        final S3ObjectId objectId = S3ObjectId.builder().bucket(BUCKET_NAME).key(key).build();
+
+        final S3OutputStream outputStream = new S3OutputStream(client, objectId);
+
+        // Simulate closing the outputStream from another thread.
+        Runnable closeStreamRunnable = () -> {
+            try
+            {
+                outputStream.close();
+            }
+            catch (IOException e)
+            {
+                throw new RuntimeException(e);
+            }
+        };
+        closeStreamRunnable.run();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger counter = new AtomicInteger();
+        Runnable runnable = () -> {
+            latch.countDown();
+            if(outputStream.isClosed()) {
+                counter.incrementAndGet();
+            }
+        };
+
+        CompletableFuture[] futures = new CompletableFuture[] {
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+                CompletableFuture.runAsync(runnable),
+        };
+        latch.countDown();
+
+        CompletableFuture.allOf(futures).get();
+        assertThat(counter).hasValue(5);
     }
 
     @Test
