@@ -27,5 +27,6 @@ jobs:
             > --- | ---
             > /merge-snapshot | Squash and merge snapshot PR. 
             > /merge-release  | Squash and merge release PR.
+            > /update-release | Updates the changelog of a release PR.
             > /deploy-pr      | Deploys the PR as a snapshot version (i.e. `org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT` using ref `${{ github.event.client_payload.pull_request.head.sha }}`)
           reaction-type: hooray
