@@ -31,7 +31,7 @@ jobs:
             const isRelease = prTitle.includes("Release v")
             if(!isRelease) {
               console.log("")
-              console.error("/merge-snapshot is supposed to be executed only on pull requests updating the version to snapshot!")
+              console.error("/merge-release is supposed to be executed only on pull requests updating the version to a release!")
               console.log("")
               process.exit(1)
             }

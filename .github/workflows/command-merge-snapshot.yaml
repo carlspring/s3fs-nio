@@ -51,7 +51,7 @@ jobs:
             const commit_raw_title = split[0];
             const commit_title = commit_raw_title + " (#${{ github.event.client_payload.github.payload.issue.number }})"
             split.shift()
-            let commit_message = (split.join('\n') + "\n\nCo-authored-by: " + commits[0].author.name + " <" + commits[0].author.email + ">").trim();
+            let commit_message = (split.join('\n') + "\nCo-authored-by: " + commits[0].author.name + " <" + commits[0].author.email + ">").trim();
             console.log("Squash title: " + commit_title);
             console.log("Squash message: \n" + commit_message + "\n/Squash message\n");
             await github.rest.pulls.merge({

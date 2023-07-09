@@ -60,7 +60,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           author: "cs-devops-bot <cs-devops-bot@carlspring.com>"
-          commit-message: "chore(snapshot): Prepare for v${{ inputs.VERSION }}\n Release-As: ${{ inputs.VERSION }}"
+          commit-message: "chore(snapshot): Prepare for v${{ inputs.VERSION }}\n\nRelease-As: ${{ inputs.VERSION }}"
           title: "chore(snapshot): Prepare for v${{ inputs.VERSION }}"
           body: ""
           labels: automated pr
