@@ -1,7 +1,8 @@
 name: Build and test
 on:
   # Build PRs 
-  pull_request:
+  pull_request_target:
+    types: [ opened, synchronize, reopened ]
     paths-ignore:
       - 'docs/**'
       - '*.md'
@@ -10,6 +11,7 @@ on:
       - '.github/workflows/docs.yaml'
       - '.github/workflows/codeql*.yaml'
       - '.github/workflows/command-*.yaml'
+      - '.github/workflows/clear-cache.yaml'
       - '.github/workflows/deploy-tag.yaml'
       - '.github/workflows/prepare-release.yaml'
 
@@ -28,6 +30,7 @@ on:
       - '.github/workflows/docs.yaml'
       - '.github/workflows/codeql*.yaml'
       - '.github/workflows/command-*.yaml'
+      - '.github/workflows/clear-cache.yaml'
       - '.github/workflows/deploy-tag.yaml'
       - '.github/workflows/prepare-release.yaml'
 
@@ -45,6 +48,7 @@ env:
 
 jobs:
   build-and-test:
+    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO && 'external-collaborators' || '' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -55,11 +59,12 @@ jobs:
         #java: [ 11 ]
     steps:
       - name: Show GitHub context
-        run: echo "$EVENT_NAME $REPOSITORY $PR_HEAD_LABEL $IS_PR $IS_FORK"
+        run: echo "$EVENT_NAME $REPOSITORY $PR_HEAD_LABEL $IS_PR $IS_FORK ${{ github.event.pull_request.head.sha || github.sha }}"
 
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: '1'
 
       - name: Setup Java ${{ matrix.java }}
@@ -94,10 +99,11 @@ jobs:
               "is_snapshot": manifest["."].toLowerCase().includes("snapshot"),
               "matrix": "${{ matrix.os }}",
               "jdk": "${{ matrix.java }}",
-              "is_fork": "${{ env.IS_FORK }}"
+              "is_fork": "${{ env.IS_FORK }}",
+              "branch" : "${{ github.head_ref || github.ref_name }}"
             }
 
-            const is_deployable = data.matrix == "ubuntu-latest" && data.jdk == "11" && data.is_fork == "false" && data.is_snapshot == true
+            const is_deployable = data.matrix == "ubuntu-latest" && data.jdk == "11" && data.is_fork == "false" && data.branch == "master" && data.is_snapshot == true
             
             console.log("Data: ", data);
             console.log("Is deployable: " + is_deployable);
@@ -112,8 +118,8 @@ jobs:
         uses: crazy-max/ghaction-import-gpg@v5
         if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         with:
+          fingerprint: ${{ vars.GPG_FINGERPRINT }}
           gpg_private_key: ${{ secrets.GPG_KEY }}
-          fingerprint: ${{ secrets.GPG_KEY_ID }}
           passphrase: ${{ secrets.GPG_PASS }}
           trust_level: 5
 
@@ -131,7 +137,7 @@ jobs:
         #           it from October 2020. Please update to at least Java 11.
         # [WARNING] No analysis for external contributors - sorry.
         #           Check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' && env.IS_FORK == 'false' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -150,104 +156,9 @@ jobs:
 
       # Publish snapshot only when on master branch, version is actually snapshot and from just one of the matrix jobs.
       - name: Publish snapshot (only on master branch)
-        if: ${{ github.ref_name == 'master' && fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
+        if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         env:
           S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
           S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
         run: |
           ./gradlew publish
-
-#  run-it-minio:
-#    runs-on: ${{ matrix.os }}
-#    needs: [build-matrix]
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        os: [ubuntu-latest]
-#        java: [ 8, 11.0.3 ]
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#      - name: Setup Java ${{ matrix.java }}
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: ${{ matrix.java }}
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.m2/repository
-#          # https://github.com/actions/cache/issues/2#issuecomment-673493515
-#          # Example: unix timestamp
-#          key: ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-
-#      - name: Cache Docker images
-#        id: docker-cache
-#        uses: actions/cache@v2
-#        with:
-#          path: ${{ github.workspace }}/docker-image-cache.tar
-#          # https://github.com/actions/cache/issues/2#issuecomment-673493515
-#          # Example: unix timestamp
-#          key: ${{ runner.os }}-docker-${{ secrets.DOCKER_CACHE_VERSION }}-${{ hashFiles('${{ github.workspace }}/docker-image-cache.tar') }}
-#          restore-keys: |
-#            ${{ runner.os }}-docker-${{ secrets.DOCKER_CACHE_VERSION }}-
-#      - name: Load docker image cache
-#        if: steps.docker-cache.outputs.cache-hit == 'true'
-#        run: |
-#          cat ${{ github.workspace }}/docker-image-cache.tar | docker load
-#          docker images | grep -iE "minio|testcontainers"
-#      - name: Docker info
-#        run: docker info
-#      - name: Maven Version
-#        run: mvn --version
-#      - name: MinIO integration tests.
-#        run: mvn clean install -Pit-minio
-#        env:
-#          S3FS_BUCKET_NAME: "s3fs-nio-minio"
-#          # access key must be >= 3 chars or authentication will fail.
-#          S3FS_ACCESS_KEY: "access_key"
-#          # secret key must be >= 8 chars or authentication will fail.
-#          S3FS_SECRET_KEY: "secret_key"
-#          S3FS_PROTOCOL: "http"
-#          # TODO: These are necessary since the current logic in EnvironmentBuilder assumes we are using S3.
-#          S3FS_REGION: "local"
-#          # TODO: Adding this env var in advance, we might or might not need it after the test containers task is completed.
-#          #       https://github.com/carlspring/s3fs-nio/issues/60
-#          S3FS_PORT: 9000
-#      - name: Save docker images
-#        run: docker save minio/minio testcontainers/ryuk > ${{ github.workspace }}/docker-image-cache.tar
-
-#  run-it-s3:
-#    runs-on: ${{ matrix.os }}
-#    strategy:
-#      fail-fast: true
-#      matrix:
-#        # TODO: We should, at some point, have the same matrix as `build-matrix`.
-#        os: [ubuntu-latest, windows-latest]
-#        java: [ 8 ]
-#    steps:
-#      - name: Checkout
-#        uses: actions/checkout@v2
-#      - name: Setup Java ${{ matrix.java }}
-#        uses: actions/setup-java@v1
-#        with:
-#          java-version: ${{ matrix.java }}
-#      - name: Cache local Maven repository
-#        uses: actions/cache@v2
-#        with:
-#          path: ~/.m2/repository
-#          # https://github.com/actions/cache/issues/2#issuecomment-673493515
-#          # Example: unix timestamp
-#          key: ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-${{ hashFiles('**/pom.xml') }}
-#          restore-keys: |
-#            ${{ runner.os }}-maven-${{ secrets.MVN_CACHE_VERSION }}-
-#      - name: Maven Version
-#        run: mvn --version
-#      - name: S3 integration tests.
-#        run: mvn clean install -Pit-s3
-#        env:
-#          S3FS_BUCKET_NAME: ${{ secrets.S3FS_BUCKET_NAME }}
-#          S3FS_ACCESS_KEY: ${{ secrets.S3FS_ACCESS_KEY }}
-#          S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
-#          S3FS_REGION: ${{ secrets.S3FS_REGION }}
-#          S3FS_PROTOCOL: "https"
