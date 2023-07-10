@@ -25,11 +25,14 @@ env:
 
 jobs:
   docs:
+    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO && 'external-collaborators' || '' }}
     runs-on: ubuntu-latest
     steps:
 
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Build docks
         working-directory: docs
