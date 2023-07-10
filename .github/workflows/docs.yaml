@@ -2,21 +2,29 @@ name: Build docs
 on:
   # Build PRs 
   pull_request_target:
+    types: [ opened, synchronize, reopened ]
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yaml'
 
   # On push event
   push:
+    # Build only changes pushed into the `master` branch -- avoids double builds when you push in a branch which has a PR.
+    branches:
+      - master
+      - pipeline
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yaml'
 
   workflow_dispatch:
 
+permissions:
+  statuses: write
+
 env:
   REPOSITORY: ${{ github.repository }}
-  IS_FORK: ${{ github.repository != vars.CURRENT_REPO }}
+  IS_FORK: ${{ github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO || github.repository != vars.CURRENT_REPO }}
   IS_PR: ${{ github.event_name == 'pull_request' }}
   EVENT_NAME: ${{ toJSON(github.event_name) }}
   # format: username:branch
@@ -47,7 +55,8 @@ jobs:
         run: |
           npm install -g netlify
           is_master=${{ github.ref_name == 'master' }}
-          [[ "$is_master" == "true" ]] && args=" --prod "
+          is_fork=${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO && 'true' || 'false' }}
+          [[ "$is_master" == "true" && "$is_fork" == "false" ]] && args=" --prod "
           netlify deploy -d site/ $args | tee build.log
           url=$(cat build.log | grep -iE  "website(.+)url" | cut -f 2- -d":" | xargs)
           echo "Url: $url"
@@ -59,7 +68,7 @@ jobs:
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           context: Build docs / docs / netlify preview
-          owner: ${{ vars.ORIGIN_OWNER }}
+          repository: ${{ vars.CURRENT_REPO }}
           state: ${{ job.status }}
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           target_url: ${{ steps.publish.outputs.url }}

@@ -8,7 +8,9 @@ on:
       - '*.md'
       - '**/*.md'
       - '.github/workflows/bump*.yaml'
+      - '.github/workflows/docs.yaml'
       - '.github/workflows/command-*.yaml'
+      - '.github/workflows/clear-cache.yaml'
       - '.github/workflows/deploy-tag.yaml'
       - '.github/workflows/prepare-release.yaml'
   pull_request:
@@ -21,7 +23,9 @@ on:
       - '*.md'
       - '**/*.md'
       - '.github/workflows/bump*.yaml'
+      - '.github/workflows/docs.yaml'
       - '.github/workflows/command-*.yaml'
+      - '.github/workflows/clear-cache.yaml'
       - '.github/workflows/deploy-tag.yaml'
       - '.github/workflows/prepare-release.yaml'
 
