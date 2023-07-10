@@ -1,7 +1,7 @@
 name: Build docs
 on:
   # Build PRs 
-  pull_request:
+  pull_request_target:
     paths:
       - 'docs/**'
       - '.github/workflows/docs.yaml'
@@ -59,6 +59,7 @@ jobs:
         with:
           authToken: ${{ secrets.GITHUB_TOKEN }}
           context: Build docs / docs / netlify preview
+          owner: ${{ vars.ORIGIN_OWNER }}
           state: ${{ job.status }}
           sha: ${{ github.event.pull_request.head.sha || github.sha }}
           target_url: ${{ steps.publish.outputs.url }}
