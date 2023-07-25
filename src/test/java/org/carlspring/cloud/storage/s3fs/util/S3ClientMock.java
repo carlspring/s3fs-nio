@@ -32,6 +32,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.time.Instant;
@@ -207,10 +208,22 @@ public class S3ClientMock
 
         Path file = Files.createFile(bucket.resolve(fileName.replaceAll("/", "%2F")), attrs);
 
+        // This is needed for marschall/memoryfilesystem >= 2.6.1+
+        PosixFileAttributeView fileAttributeView = file.getFileSystem().provider().getFileAttributeView(file, PosixFileAttributeView.class);
+
+        Set<PosixFilePermission> perms = new HashSet<>();
+        perms.add(PosixFilePermission.OWNER_WRITE);
+        perms.add(PosixFilePermission.OWNER_READ);
+        perms.add(PosixFilePermission.OWNER_EXECUTE);
+
+        fileAttributeView.setPermissions(perms);
+        // /This is needed for marschall/memoryfilesystem >= 2.6.1+
+
         try (OutputStream outputStream = Files.newOutputStream(file))
         {
             outputStream.write(content);
         }
+
     }
 
     void addDirectory(final Path bucket,
