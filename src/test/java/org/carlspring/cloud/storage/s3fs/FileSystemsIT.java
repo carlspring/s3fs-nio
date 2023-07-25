@@ -12,8 +12,7 @@ import java.nio.file.FileSystems;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.jupiter.api.Assertions.assertNotSame;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 @S3IntegrationTest
 class FileSystemsIT extends BaseIntegrationTest
@@ -71,6 +70,21 @@ class FileSystemsIT extends BaseIntegrationTest
         FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, EnvironmentBuilder.getRealEnv());
 
         assertNotSame(fileSystemAmazon, fileSystem);
+    }
+
+    @Test
+    void shouldReturnExistingFileSystem()
+            throws IOException
+    {
+        FileSystem retrieveFileSystem = FileSystems.getFileSystem(uriGlobal);
+        assertSame(fileSystemAmazon, retrieveFileSystem);
+    }
+
+    @Test
+    void shouldReturnThrowExceptionOnMissingFileSystem()
+            throws IOException
+    {
+        assertThrows(FileSystemNotFoundException.class,() -> FileSystems.getFileSystem(uriEurope));
     }
 
 }
