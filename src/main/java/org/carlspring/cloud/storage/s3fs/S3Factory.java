@@ -63,6 +63,9 @@ public abstract class S3Factory
 
     public static final String PROXY_WORKSTATION = "s3fs.proxy.workstation";
 
+    /**
+     * Allows you to specify the proxy protocol (http, https, etc)
+     */
     public static final String PROXY_PROTOCOL = "s3fs.proxy.protocol";
 
     /**
