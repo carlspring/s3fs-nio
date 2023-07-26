@@ -64,6 +64,11 @@ public abstract class S3Factory
     public static final String PROXY_WORKSTATION = "s3fs.proxy.workstation";
 
     /**
+     * Allows you to specify the proxy protocol (http, https, etc)
+     */
+    public static final String PROXY_PROTOCOL = "s3fs.proxy.protocol";
+
+    /**
      * @deprecated Not supported according to https://github.com/aws/aws-sdk-java-v2/blob/master/docs/LaunchChangelog.md#133-client-override-configuration
      */
     @Deprecated
@@ -329,7 +334,18 @@ public abstract class S3Factory
                 printWarningMessage(props, PROXY_PORT);
             }
 
-            final URI uri = getEndpointUri(host, port, props);
+        	// Calls the getEndpointUri method after setting the PROTOCOL property to the value of PROXY_PROTOCOL.
+            final Properties propsCopy = new Properties();
+            for (String key : props.stringPropertyNames()) {
+                propsCopy.setProperty(key, props.getProperty(key));
+            }
+
+            if (propsCopy.getProperty(PROXY_PROTOCOL) != null)
+            {
+                propsCopy.setProperty(PROTOCOL, props.getProperty(PROXY_PROTOCOL));
+            }
+
+            final URI uri = getEndpointUri(host, port, propsCopy);
             builder.endpoint(uri);
         }
 

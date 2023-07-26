@@ -1,13 +1,19 @@
 package org.carlspring.cloud.storage.s3fs;
 
-import org.carlspring.cloud.storage.s3fs.util.ExposingS3Client;
-import org.carlspring.cloud.storage.s3fs.util.ExposingS3ClientFactory;
-import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.*;
+import static software.amazon.awssdk.core.client.config.SdkClientOption.*;
 
 import java.net.URI;
 import java.util.Properties;
 
+import org.carlspring.cloud.storage.s3fs.util.ExposingS3Client;
+import org.carlspring.cloud.storage.s3fs.util.ExposingS3ClientFactory;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.junit.jupiter.api.Test;
+
 import software.amazon.awssdk.auth.credentials.AwsCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.core.Protocol;
@@ -16,35 +22,6 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
 import software.amazon.awssdk.http.apache.ProxyConfiguration;
 import software.amazon.awssdk.services.s3.S3Configuration;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_ERROR_RETRY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_DOMAIN;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_HOST;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.SIGNER;
-import static software.amazon.awssdk.core.client.config.SdkAdvancedClientOption.USER_AGENT_PREFIX;
-import static software.amazon.awssdk.core.client.config.SdkClientOption.ENDPOINT;
 
 class S3ClientFactoryTest
 {
@@ -56,8 +33,7 @@ class S3ClientFactoryTest
         Properties props = new Properties();
         props.setProperty(ACCESS_KEY, "some_access_key");
         props.setProperty(SECRET_KEY, "super_secret_key");
-        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS,
-                          "org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector");
+        props.setProperty(REQUEST_METRIC_COLLECTOR_CLASS, "org.carlspring.cloud.storage.s3fs.util.NoOpRequestMetricCollector");
         props.setProperty(CONNECTION_TIMEOUT, "10");
         props.setProperty(MAX_CONNECTIONS, "50");
         props.setProperty(MAX_ERROR_RETRY, "3");
@@ -68,6 +44,7 @@ class S3ClientFactoryTest
         props.setProperty(PROXY_PORT, "12345");
         props.setProperty(PROXY_USERNAME, "proxy_username");
         props.setProperty(PROXY_WORKSTATION, "what.does.this.do.localhost");
+        props.setProperty(PROXY_PROTOCOL, "https");
         props.setProperty(SOCKET_SEND_BUFFER_SIZE_HINT, "48000");
         props.setProperty(SOCKET_RECEIVE_BUFFER_SIZE_HINT, "49000");
         props.setProperty(SOCKET_TIMEOUT, "30");
@@ -99,12 +76,13 @@ class S3ClientFactoryTest
 
         ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
 
-        assertEquals("127.0.0.1", proxyConfiguration.host());
-        assertEquals(12345, proxyConfiguration.port());
-        assertEquals("proxy_username", proxyConfiguration.username());
-        assertEquals("proxy_password", proxyConfiguration.password());
-        assertEquals("localhost", proxyConfiguration.ntlmDomain());
-        assertEquals("what.does.this.do.localhost", proxyConfiguration.ntlmWorkstation());
+        assertThat(proxyConfiguration.host()).isEqualTo(props.getProperty(PROXY_HOST));
+        assertThat(proxyConfiguration.port()).isEqualTo(Integer.valueOf(props.getProperty(PROXY_PORT)));
+        assertThat(proxyConfiguration.username()).isEqualTo(props.getProperty(PROXY_USERNAME));
+        assertThat(proxyConfiguration.password()).isEqualTo(props.getProperty(PROXY_PASSWORD));
+        assertThat(proxyConfiguration.ntlmDomain()).isEqualTo(props.getProperty(PROXY_DOMAIN));
+        assertThat(proxyConfiguration.ntlmWorkstation()).isEqualTo(props.getProperty(PROXY_WORKSTATION));
+        assertThat(proxyConfiguration.scheme()).isEqualTo(props.getProperty(PROXY_PROTOCOL));
 
         S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
         assertTrue(serviceConfiguration.pathStyleAccessEnabled());
@@ -149,6 +127,7 @@ class S3ClientFactoryTest
         assertNull(proxyConfiguration.password());
         assertNull(proxyConfiguration.ntlmDomain());
         assertNull(proxyConfiguration.ntlmWorkstation());
+        assertNull(proxyConfiguration.scheme());
 
         S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
         assertFalse(serviceConfiguration.pathStyleAccessEnabled());
@@ -218,4 +197,26 @@ class S3ClientFactoryTest
         assertEquals(8001, endpoint.getPort());
     }
 
+    @Test
+    void shouldAllowUsingHTTPProxyAndHTTPSProtocolForS3Connections()
+    {
+        S3ClientFactory clientFactory = new ExposingS3ClientFactory();
+
+        Properties props = new Properties();
+        props.setProperty(REGION, "eu-central-1");
+        props.setProperty(PROTOCOL, "https");
+        props.setProperty(PROXY_DOMAIN, "localhost");
+        props.setProperty(PROXY_HOST, "127.0.0.1");
+        props.setProperty(PROXY_PROTOCOL, "http");
+
+        ExposingS3Client client =
+                (ExposingS3Client) clientFactory.getS3Client(S3EndpointConstant.S3_GLOBAL_URI_TEST, props);
+        final SdkClientConfiguration clientConfiguration = client.getClientConfiguration();
+
+        final URI endpoint = clientConfiguration.option(ENDPOINT);
+        assertEquals("https", endpoint.getScheme());
+
+        ProxyConfiguration proxyConfiguration = clientFactory.getProxyConfiguration(props);
+        assertEquals("http", proxyConfiguration.scheme());
+    }
 }

@@ -5,7 +5,7 @@
 A complete list of environment variables which can be set to configure the client.
 
 | Key                                       | Default | Description                                                                                                             |
-| ------------------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
+|-------------------------------------------|---------|-------------------------------------------------------------------------------------------------------------------------|
 | s3fs.access.key                           | none    | <small>AWS access key, used to identify the user interacting with AWS</small>                                           |
 | s3fs.secret.key                           | none    | <small>AWS secret access key, used to authenticate the user interacting with AWS</small>                                |
 | s3fs.request.metric.collector.class       | TODO    | <small>Fully-qualified class name to instantiate an AWS SDK request/response metric collector</small>                   |
@@ -14,6 +14,7 @@ A complete list of environment variables which can be set to configure the clien
 | s3fs.max.retry.error                      | TODO    | <small>Maximum number of times that a single request should be retried, assuming it fails for a retryable error</small> |
 | s3fs.protocol                             | TODO    | <small>Protocol (HTTP or HTTPS) to use when connecting to AWS</small>                                                   |
 | s3fs.proxy.domain                         | none    | <small>For NTLM proxies: The Windows domain name to use when authenticating with the proxy</small>                      |
+| s3fs.proxy.protocol                       | none    | <small>Proxy connection protocol.</small>                                                                               |
 | s3fs.proxy.host                           | none    | <small>Proxy host name either from the configured endpoint or from the "http.proxyHost" system property</small>         |
 | s3fs.proxy.password                       | none    | <small>The password to use when connecting through a proxy</small>                                                      |
 | s3fs.proxy.port                           | none    | <small>Proxy port either from the configured endpoint or from the "http.proxyPort" system property</small>              |
