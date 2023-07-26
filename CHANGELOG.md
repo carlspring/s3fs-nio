@@ -1,5 +1,39 @@
 # Changelog
 
+## [1.0.2](https://github.com/carlspring/s3fs-nio/compare/v1.0.1...v1.0.2) (2023-07-26)
+
+
+### Features
+
+* Allow specifying a different protocol for proxies. ([#719](https://github.com/carlspring/s3fs-nio/issues/719)) ([47139ca](https://github.com/carlspring/s3fs-nio/commit/47139caa6055e91e5f59f8a8a7efd16dcd583612))
+
+
+### Bug Fixes
+
+* FileSystems.getFileSystem does not return existing filesystem. ([#717](https://github.com/carlspring/s3fs-nio/issues/717)) ([66f3cdf](https://github.com/carlspring/s3fs-nio/commit/66f3cdf38aa4f8f4c1c90c4170de1bd5ff1352c7))
+* S3OutputStream write/close checks should be thread-safe. ([#721](https://github.com/carlspring/s3fs-nio/issues/721)) ([64c5ed8](https://github.com/carlspring/s3fs-nio/commit/64c5ed83a290bb55847adb98263d635b3cb4f9ab))
+
+
+### Dependencies
+
+* **upgrade:** bump junit to 5.10.0 ([#732](https://github.com/carlspring/s3fs-nio/issues/732)) ([86cebb0](https://github.com/carlspring/s3fs-nio/commit/86cebb0f9eb9a0f33f72c258f8bda9c80b404f3c))
+* **upgrade:** bump org.apache.tika:tika-core from 2.5.0 to 2.8.0 ([#700](https://github.com/carlspring/s3fs-nio/issues/700)) ([f132151](https://github.com/carlspring/s3fs-nio/commit/f1321519638e77e257661ecdbfb4898fbbba77e4))
+
+
+### Miscellaneous Chores
+
+* Clean up the S3FileSystem.key2Parts method. ([#476](https://github.com/carlspring/s3fs-nio/issues/476)) ([1dff817](https://github.com/carlspring/s3fs-nio/commit/1dff817a7dcc7086cf5f12db160ec01acae647a4))
+* **snapshot:** Prepare for v1.0.2 ([#722](https://github.com/carlspring/s3fs-nio/issues/722)) ([fc7d1ac](https://github.com/carlspring/s3fs-nio/commit/fc7d1ac7c026b9a7d86ecaf7d208426560c2f58f))
+
+
+### Build System
+
+* Allow builds from external contributors ([#728](https://github.com/carlspring/s3fs-nio/issues/728)) ([ff7d3a3](https://github.com/carlspring/s3fs-nio/commit/ff7d3a3fbfe4a36b88d47399b58ff87abc89a5bc))
+* Allow builds from external contributors ([#729](https://github.com/carlspring/s3fs-nio/issues/729)) ([f1fa773](https://github.com/carlspring/s3fs-nio/commit/f1fa7732a688c682e56b6734d4921b1a1791add5))
+* Customize changelog sections. ([a28f66f](https://github.com/carlspring/s3fs-nio/commit/a28f66f92ea946ecb43ecca1be1a3b691111acc8))
+* Fine-tune build triggers. ([#728](https://github.com/carlspring/s3fs-nio/issues/728)) ([4cbffaa](https://github.com/carlspring/s3fs-nio/commit/4cbffaaa5c6edc56d2d5b2c9e9c71cd1027ca5f3))
+* Incorrect change logs are auto-generated in release prs ([#727](https://github.com/carlspring/s3fs-nio/issues/727)) ([7b45fa2](https://github.com/carlspring/s3fs-nio/commit/7b45fa289eb75203ae78e0dff78b3a0b9b11c250))
+
 ## [1.0.1](https://github.com/carlspring/s3fs-nio/compare/v1.0.0...v1.0.1) (2023-05-30)
 
 ### Features
