@@ -29,4 +29,4 @@ jobs:
 
       - name: Release
         run: |
-          release-please --token=${{ secrets.GITHUB_TOKEN }} --repo-url=${{ vars.CURRENT_REPO }} release-pr --release-type simple --pull-request-title-pattern "Release v\${version}" --extra-files gradle.properties,docs/mkdocs.yaml,docs/mkdocs.yml
+          release-please --token=${{ secrets.GITHUB_TOKEN }} --repo-url=${{ vars.CURRENT_REPO }} release-pr --release-type simple --pull-request-title-pattern "Release v\${version}" --extra-files gradle.properties,docs/mkdocs.yaml,docs/mkdocs.yml --changelog-sections feat,fix,docs,deprecated,removed,deps,chore,build
