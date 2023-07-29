@@ -8,7 +8,7 @@ import java.util.List;
 import com.google.common.base.Splitter;
 import org.junit.jupiter.api.Test;
 
-public class URISpikeTest
+class URISpikeTest
 {
 
     private List<String> s3Path_cases = Arrays.asList("/bucket//folder//folder2/file",

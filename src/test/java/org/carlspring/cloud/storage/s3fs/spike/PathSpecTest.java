@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class PathSpecTest
+class PathSpecTest
 {
 
     FileSystem fs;
@@ -44,7 +44,7 @@ public class PathSpecTest
     // first and more
 
     @Test
-    public void firstAndMore()
+    void firstAndMore()
     {
         assertEquals(fs.getPath("/dir", "dir", "file"), fs.getPath("/dir", "dir/file"));
         assertEquals(fs.getPath("/dir/dir/file"), fs.getPath("/dir", "dir/file"));
@@ -53,13 +53,13 @@ public class PathSpecTest
     // absolute relative
 
     @Test
-    public void relative()
+    void relative()
     {
         assertFalse(get("file").isAbsolute());
     }
 
     @Test
-    public void absolute()
+    void absolute()
     {
         assertTrue(get("/file/file2").isAbsolute());
     }
@@ -67,62 +67,62 @@ public class PathSpecTest
     // test starts with
 
     @Test
-    public void startsWith()
+    void startsWith()
     {
         assertTrue(get("/file/file1").startsWith(get("/file")));
     }
 
     @Test
-    public void startsWithBlank()
+    void startsWithBlank()
     {
         assertFalse(get("/file").startsWith(get("")));
     }
 
     @Test
-    public void startsWithBlankRelative()
+    void startsWithBlankRelative()
     {
         assertFalse(get("file1").startsWith(get("")));
     }
 
     @Test
-    public void startsWithBlankBlank()
+    void startsWithBlankBlank()
     {
         assertTrue(get("").startsWith(get("")));
     }
 
     @Test
-    public void startsWithRelativeVsAbsolute()
+    void startsWithRelativeVsAbsolute()
     {
         assertFalse(get("/file/file1").startsWith(get("file")));
     }
 
     @Test
-    public void startsWithFalse()
+    void startsWithFalse()
     {
         assertFalse(get("/file/file1").startsWith(get("/file/file1/file2")));
         assertTrue(get("/file/file1/file2").startsWith(get("/file/file1")));
     }
 
     @Test
-    public void startsWithNotNormalize()
+    void startsWithNotNormalize()
     {
         assertFalse(get("/file/file1/file2").startsWith(get("/file/file1/../")));
     }
 
     @Test
-    public void startsWithNormalize()
+    void startsWithNormalize()
     {
         assertTrue(get("/file/file1/file2").startsWith(get("/file/file1/../").normalize()));
     }
 
     @Test
-    public void startsWithRelative()
+    void startsWithRelative()
     {
         assertTrue(get("file/file1").startsWith(get("file")));
     }
 
     @Test
-    public void startsWithString()
+    void startsWithString()
     {
         assertTrue(get("/file/file1").startsWith("/file"));
     }
@@ -130,67 +130,67 @@ public class PathSpecTest
     // ends with
 
     @Test
-    public void endsWithAbsoluteRelative()
+    void endsWithAbsoluteRelative()
     {
         assertTrue(get("/file/file1").endsWith(get("file1")));
     }
 
     @Test
-    public void endsWithAbsoluteAbsolute()
+    void endsWithAbsoluteAbsolute()
     {
         assertTrue(get("/file/file1").endsWith(get("/file/file1")));
     }
 
     @Test
-    public void endsWithRelativeRelative()
+    void endsWithRelativeRelative()
     {
         assertTrue(get("file/file1").endsWith(get("file1")));
     }
 
     @Test
-    public void endsWithRelativeAbsolute()
+    void endsWithRelativeAbsolute()
     {
         assertFalse(get("file/file1").endsWith(get("/file")));
     }
 
     @Test
-    public void endsWithDifferentFileSystem()
+    void endsWithDifferentFileSystem()
     {
         assertFalse(get("/file/file1").endsWith(Paths.get("/file/file1")));
     }
 
     @Test
-    public void endsWithBlankRelativeAbsolute()
+    void endsWithBlankRelativeAbsolute()
     {
         assertFalse(get("").endsWith(get("/bucket")));
     }
 
     @Test
-    public void endsWithBlankBlank()
+    void endsWithBlankBlank()
     {
         assertTrue(get("").endsWith(get("")));
     }
 
     @Test
-    public void endsWithRelativeBlankAbsolute()
+    void endsWithRelativeBlankAbsolute()
     {
         assertFalse(get("/bucket/file1").endsWith(get("")));
     }
 
     @Test
-    public void endsWithRelativeBlankRelative()
+    void endsWithRelativeBlankRelative()
     {
         assertFalse(get("file1").endsWith(get("")));
     }
 
     @Test
-    public void getParentNull()
+    void getParentNull()
     {
         assertNull(get("/").getParent());
     }
 
     @Test
-    public void getParentWindowsNull()
+    void getParentWindowsNull()
     {
         assertNull(fsWindows.getPath("C://").getParent());
     }
@@ -198,7 +198,7 @@ public class PathSpecTest
     // file name
 
     @Test
-    public void getFileName()
+    void getFileName()
             throws IOException
     {
         try (FileSystem windows = MemoryFileSystemBuilder.newWindows().build("widows"))
@@ -212,7 +212,7 @@ public class PathSpecTest
     }
 
     @Test
-    public void getFileNameRootIsNull()
+    void getFileNameRootIsNull()
     {
         Path fileNameRoot = fs.getRootDirectories().iterator().next().getFileName();
 
@@ -222,13 +222,13 @@ public class PathSpecTest
     // root
 
     @Test
-    public void getRootReturnBucket()
+    void getRootReturnBucket()
     {
         assertEquals(get("/"), get("/dir/dir/file").getRoot());
     }
 
     @Test
-    public void fileWithSameNameAsDir()
+    void fileWithSameNameAsDir()
             throws IOException
     {
         // We're expecting an exception here to be thrown
@@ -241,7 +241,7 @@ public class PathSpecTest
     }
 
     @Test
-    public void dirWithSameNameAsFile()
+    void dirWithSameNameAsFile()
     {
         // We're expecting an exception here to be thrown
         Exception exception = assertThrows(FileAlreadyExistsException.class, () -> {
@@ -253,7 +253,7 @@ public class PathSpecTest
     }
 
     @Test
-    public void createDirWithoutEndSlash()
+    void createDirWithoutEndSlash()
             throws IOException
     {
         Path dir = Files.createDirectory(fs.getPath("/tmp"));
@@ -261,13 +261,13 @@ public class PathSpecTest
     }
 
     @Test
-    public void getRootRelativeReturnNull()
+    void getRootRelativeReturnNull()
     {
         assertNull(get("dir/file").getRoot());
     }
 
     @Test
-    public void getRoot()
+    void getRoot()
     {
         System.out.println("Default:");
         System.out.println("-------");

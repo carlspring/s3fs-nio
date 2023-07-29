@@ -90,8 +90,23 @@ sonarqube {
         property("sonar.host.url", "https://sonarcloud.io")
         property("sonar.projectKey", "carlspring_s3fs-nio")
         property("sonar.organization", "carlspring")
-        property("sonar.login", project.findProperty("s3fs.publish.sonar.login") ?: System.getenv("S3FS_PUBLISH_SONAR_LOGIN") ?: System.getenv("SONAR_TOKEN") as String)
+        property("sonar.token", project.findProperty("s3fs.publish.sonar.token") ?: System.getenv("S3FS_PUBLISH_SONAR_TOKEN") ?: System.getenv("SONAR_TOKEN") as String)
         property("sonar.java.target", java.targetCompatibility)
+
+        val branch = project.findProperty("s3fs.publish.sonar.branch") ?: System.getenv("S3FS_PUBLISH_SONAR_BRANCH")
+        val prNumber = project.findProperty("s3fs.publish.sonar.pr.number") ?: System.getenv("S3FS_PUBLISH_SONAR_PR_NUMBER")
+        val prBranch = project.findProperty("s3fs.publish.sonar.pr.branch") ?: System.getenv("S3FS_PUBLISH_SONAR_PR_BRANCH")
+        val prBase = project.findProperty("s3fs.publish.sonar.pr.base") ?: System.getenv("S3FS_PUBLISH_SONAR_PR_BASE")
+
+        if(branch != "") {
+            property("sonar.branch.name", branch)
+        } else if(prNumber != "") {
+            property("sonar.pullrequest.key", prNumber)
+            property("sonar.pullrequest.branch", prBranch)
+            property("sonar.pullrequest.base", prBase)
+        } else {
+            property("sonar.branch.name", "undefined-branch")
+        }
     }
 }
 

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class FileStoreTest
+class FileStoreTest
 {
 
     FileSystem fs;
@@ -40,7 +40,7 @@ public class FileStoreTest
     }
 
     @Test
-    public void getFileStore()
+    void getFileStore()
     {
         System.out.println("Default:");
         System.out.println("-------");

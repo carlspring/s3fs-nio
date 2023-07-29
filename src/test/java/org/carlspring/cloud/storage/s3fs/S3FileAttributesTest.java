@@ -8,12 +8,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class S3FileAttributesTest
+class S3FileAttributesTest
 {
 
 
     @Test
-    public void toStringPrintsBasicInfo()
+    void toStringPrintsBasicInfo()
     {
         final String key = "a key";
         final FileTime fileTime = FileTime.from(100, TimeUnit.SECONDS);
