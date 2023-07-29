@@ -102,7 +102,7 @@ class S3PathTest
     }
 
     @Test
-    public void normalize()
+    void normalize()
     {
         assertEquals(forPath("/bucket"), forPath("/bucket").normalize());
         assertEquals(forPath("/bucket/"), forPath("/bucket/").normalize());

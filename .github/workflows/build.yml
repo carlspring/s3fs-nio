@@ -140,8 +140,11 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          S3FS_PUBLISH_SONAR_LOGIN: ${{ secrets.SONAR_TOKEN }}
+          S3FS_PUBLISH_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          S3FS_PUBLISH_SONAR_BRANCH: ${{ github.event_name == 'pull_request_target' && '' || github.head_ref || github.ref_name }}
+          S3FS_PUBLISH_SONAR_PR_NUMBER: ${{ env.PR_NUMBER }}
+          S3FS_PUBLISH_SONAR_PR_BRANCH: ${{ github.event.pull_request.head.ref }}
+          S3FS_PUBLISH_SONAR_PR_BASE: ${{ github.event.pull_request.base.ref }}
         run: ./gradlew sonar
         continue-on-error: true
 

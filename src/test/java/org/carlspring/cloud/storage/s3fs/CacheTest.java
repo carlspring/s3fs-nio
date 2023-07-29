@@ -9,12 +9,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-public class CacheTest
+class CacheTest
 {
 
-
     @Test
-    public void cacheIsInclusive()
+    void cacheIsInclusive()
     {
         Cache cache = spy(new Cache());
 
@@ -29,7 +28,7 @@ public class CacheTest
     }
 
     @Test
-    public void outOfTime()
+    void outOfTime()
     {
         Cache cache = spy(new Cache());
 
@@ -44,7 +43,7 @@ public class CacheTest
     }
 
     @Test
-    public void infinite()
+    void infinite()
     {
         Cache cache = spy(new Cache());
 

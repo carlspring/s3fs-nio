@@ -11,15 +11,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class SpecTest
+class SpecTest
 {
 
 
     @Test
-    public void parentOfRelativeSinglePathIsNull()
+    void parentOfRelativeSinglePathIsNull()
     {
         Path path = FileSystems.getDefault().getPath("relative");
 
@@ -27,7 +28,7 @@ public class SpecTest
     }
 
     @Test
-    public void readAttributes()
+    void readAttributes()
             throws IOException
     {
         Path path = Files.createTempFile("asdas", "sdasda");
@@ -37,7 +38,7 @@ public class SpecTest
     }
 
     @Test
-    public void installedFileSystemsLoadFromMetaInf()
+    void installedFileSystemsLoadFromMetaInf()
     {
         List<FileSystemProvider> providers = FileSystemProvider.installedProviders();
         boolean installed = false;
