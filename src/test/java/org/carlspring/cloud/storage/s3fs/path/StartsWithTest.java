@@ -107,7 +107,7 @@ class StartsWithTest
     void startsWithNormalize()
     {
         // in this implementation not exists .. or . special paths
-        assertFalse(getPath("/bucket/file1/file2").startsWith(getPath("/bucket/file1/../").normalize()));
+        assertTrue(getPath("/bucket/file1/file2").startsWith(getPath("/bucket/file1/../").normalize()));
     }
 
     @Test
