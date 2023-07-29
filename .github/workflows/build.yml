@@ -65,7 +65,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: '1'
+          fetch-depth: '0' # 0 because of sonar needs git blame.
 
       - name: Setup Java ${{ matrix.java }}
         uses: actions/setup-java@v3
