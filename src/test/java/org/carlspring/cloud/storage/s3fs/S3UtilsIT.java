@@ -203,10 +203,8 @@ class S3UtilsIT extends BaseIntegrationTest
         assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
     }
 
     @Test
@@ -233,10 +231,8 @@ class S3UtilsIT extends BaseIntegrationTest
         assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
     }
 
     @Test
@@ -265,10 +261,8 @@ class S3UtilsIT extends BaseIntegrationTest
         assertFalse(result.isOther());
         assertNotNull(result.creationTime());
         assertNotNull(result.fileKey());
-        assertNotNull(result.getCacheCreated());
         assertNotNull(result.lastAccessTime());
         assertNotNull(result.lastModifiedTime());
-        assertNotNull(result.size());
     }
 
     @Test

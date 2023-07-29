@@ -175,7 +175,7 @@ class S3FileStoreTest
         assertNotEquals(other, store);
         assertNotEquals(differentHost, store);
         assertEquals(shouldBeTheSame, store);
-        assertNotEquals(shouldBeTheSame.getOwner(), store);
+        assertEquals(shouldBeTheSame.getOwner(), store.getOwner());
         assertNotEquals(noFs1, store);
         assertNotEquals(store, noFs1);
         assertNotEquals(noFs2, noFs1);
