@@ -121,9 +121,8 @@ tasks {
     }
 
     named<Jar>("jar") {
+        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss zzz").apply { timeZone = TimeZone.getTimeZone("UTC") }
         val attrs = HashMap<String, String?>()
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss zzz")
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
         attrs["Build-Date"] = sdf.format(Date())
         attrs["Build-JDK"] = System.getProperty("java.version")
         attrs["Build-Gradle"] = project.gradle.gradleVersion
