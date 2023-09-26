@@ -130,7 +130,6 @@ tasks {
         attrs["Build-Gradle"] = project.gradle.gradleVersion
         attrs["Build-OS"] = System.getProperty("os.name")
         attrs["Build-CI"] = System.getProperty("CI", "false")
-        attrs["Build-Automatic"] = System.getProperty("CI", "false")
         attrs["Version"] = version.toString()
         manifest.attributes(attrs)
         exclude("**/*.RSA", "**/*.SF", "**/*.DSA", "**/amazon-*.properties")
