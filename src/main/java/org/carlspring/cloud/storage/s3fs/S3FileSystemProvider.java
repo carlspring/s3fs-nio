@@ -855,35 +855,46 @@ public class S3FileSystemProvider
 
         S3Path s3Source = toS3Path(source);
         S3Path s3Target = toS3Path(target);
-        // TODO: implements support for copying directories
-
-        Preconditions.checkArgument(!Files.isDirectory(source), "copying directories is not yet supported: %s", source);
-        Preconditions.checkArgument(!Files.isDirectory(target), "copying directories is not yet supported: %s", target);
 
         ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
         verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
 
-        if (exists(s3Target) && !actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
+        if (exists(s3Target))
         {
-            throw new FileAlreadyExistsException(format("target already exists: %s", target));
+            if (!actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
+            {
+                throw new FileAlreadyExistsException(format("target already exists: %s", target));
+            }
+
+            if (Files.isDirectory(source))
+            {
+                delete(s3Target);
+            }
         }
 
-        String bucketNameOrigin = s3Source.getFileStore().name();
-        String keySource = s3Source.getKey();
-        String bucketNameTarget = s3Target.getFileStore().name();
-        String keyTarget = s3Target.getKey();
-        final S3Client client = s3Source.getFileSystem().getClient();
+        if (Files.isDirectory(source))
+        {
+            createDirectory(s3Target);
+        }
+        else
+        {
+            String bucketNameOrigin = s3Source.getFileStore().name();
+            String keySource = s3Source.getKey();
+            String bucketNameTarget = s3Target.getFileStore().name();
+            String keyTarget = s3Target.getKey();
+            final S3Client client = s3Source.getFileSystem().getClient();
 
-        final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
+            final String encodedUrl = encodeUrl(bucketNameOrigin, keySource);
 
-        final CopyObjectRequest request = CopyObjectRequest.builder()
-                                                           .copySource(encodedUrl)
-                                                           .cacheControl(s3Target.getFileSystem().getRequestHeaderCacheControlProperty())
-                                                           .destinationBucket(bucketNameTarget)
-                                                           .destinationKey(keyTarget)
-                                                           .build();
+            final CopyObjectRequest request = CopyObjectRequest.builder()
+                                                               .copySource(encodedUrl)
+                                                               .cacheControl(s3Target.getFileSystem().getRequestHeaderCacheControlProperty())
+                                                               .destinationBucket(bucketNameTarget)
+                                                               .destinationKey(keyTarget)
+                                                               .build();
 
-        client.copyObject(request);
+            client.copyObject(request);
+        }
     }
 
     private String encodeUrl(final String bucketNameOrigin,
@@ -899,6 +910,7 @@ public class S3FileSystemProvider
         {
             throw new UnsupportedEncodingException("URL could not be encoded: " + e.getMessage());
         }
+        
         return encodedUrl;
     }
 
