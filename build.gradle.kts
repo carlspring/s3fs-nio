@@ -132,6 +132,7 @@ tasks {
         attrs["Build-CI"] = System.getProperty("CI", "false")
         attrs["Version"] = version.toString()
         manifest.attributes(attrs)
+        exclude("**/*.RSA", "**/*.SF", "**/*.DSA", "**/amazon-*.properties")
     }
 
     named<Task>("build") {
@@ -202,19 +203,6 @@ tasks {
 
     named<Task>("check") {
         dependsOn(named("it-s3"))
-    }
-
-    named<Jar>("jar") {
-        val attrs = HashMap<String, String?>()
-        val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss zzz")
-        sdf.timeZone = TimeZone.getTimeZone("UTC")
-        attrs["Build-Date"] = sdf.format(Date())
-        attrs["Build-JDK"] = System.getProperty("java.version")
-        attrs["Build-Gradle"] = project.gradle.gradleVersion
-        attrs["Build-OS"] = System.getProperty("os.name")
-        attrs["Build-Automatic"] = System.getProperty("CI", "false")
-        manifest.attributes(attrs)
-        exclude("**/*.RSA", "**/*.SF", "**/*.DSA", "**/amazon-*.properties")
     }
 
     withType<Sign> {
