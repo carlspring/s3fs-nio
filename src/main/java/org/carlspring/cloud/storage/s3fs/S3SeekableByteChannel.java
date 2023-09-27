@@ -177,7 +177,7 @@ public class S3SeekableByteChannel
                 builder.contentType(new Tika().detect(stream, path.getFileName().toString()));
             }
 
-            builder.bucket(path.getFileStore().name());
+            builder.bucket(path.getBucketName());
             builder.key(path.getKey());
             builder.cacheControl(requestCacheControlHeader);
 

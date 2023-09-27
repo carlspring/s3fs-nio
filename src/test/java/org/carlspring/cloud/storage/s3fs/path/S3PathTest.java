@@ -42,7 +42,7 @@ class S3PathTest
     {
         S3Path path = forPath("/bucket");
 
-        assertEquals("bucket", path.getFileStore().name());
+        assertEquals("bucket", path.getBucketName());
         assertEquals("", path.getKey());
     }
 
@@ -51,7 +51,7 @@ class S3PathTest
     {
         S3Path path = forPath("/bucket/");
 
-        assertEquals(path.getFileStore().name(), "bucket");
+        assertEquals(path.getBucketName(), "bucket");
         assertEquals(path.getKey(), "");
     }
 
@@ -60,7 +60,7 @@ class S3PathTest
     {
         S3Path path = forPath("/bucket/path/to/file");
 
-        assertEquals(path.getFileStore().name(), "bucket");
+        assertEquals(path.getBucketName(), "bucket");
         assertEquals(path.getKey(), "path/to/file");
     }
 
@@ -69,7 +69,7 @@ class S3PathTest
     {
         S3Path path = forPath("/bucket/path/to/dir/");
 
-        assertEquals("bucket", path.getFileStore().name());
+        assertEquals("bucket", path.getBucketName());
         assertEquals("path/to/dir/", path.getKey());
     }
 
@@ -78,7 +78,7 @@ class S3PathTest
     {
         S3Path path = forPath("/bucket/path/to/dir/");
 
-        assertEquals("bucket", path.getFileStore().name());
+        assertEquals("bucket", path.getBucketName());
         assertEquals("path/to/dir/", path.getKey());
     }
 
@@ -266,24 +266,24 @@ class S3PathTest
         S3FileSystem fileSystem = s3fsProvider.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST);
         S3Path path = new S3Path(fileSystem, "/buckname");
 
-        assertEquals("buckname", path.getFileStore().name());
+        assertEquals("buckname", path.getBucketName());
         assertEquals("", path.getKey());
         assertNull(path.getParent());
         assertEquals("", path.getKey());
 
         path = new S3Path(fileSystem, "/buckname/");
 
-        assertEquals("buckname", path.getFileStore().name());
+        assertEquals("buckname", path.getBucketName());
         assertEquals("", path.getKey());
 
         path = new S3Path(fileSystem, "/buckname/file");
 
-        assertEquals("buckname", path.getFileStore().name());
+        assertEquals("buckname", path.getBucketName());
         assertEquals("file", path.getKey());
 
         path = new S3Path(fileSystem, "/buckname/dir/file");
 
-        assertEquals("buckname", path.getFileStore().name());
+        assertEquals("buckname", path.getBucketName());
         assertEquals("dir/file", path.getKey());
 
         path = new S3Path(fileSystem, "dir/file");
