@@ -74,6 +74,17 @@ class FilesIT extends BaseIntegrationTest
     }
 
     @Test
+    void fileStore()
+            throws IOException
+    {
+        Path dir = fileSystemAmazon.getPath(bucket);
+
+        FileStore fileStore = Files.getFileStore(dir);
+
+        assertInstanceOf(S3FileStore.class, fileStore);
+    }
+
+    @Test
     void notExistsDir()
     {
         Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
