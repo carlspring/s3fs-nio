@@ -933,7 +933,7 @@ public class S3FileSystemProvider
     @Override
     public FileStore getFileStore(Path path)
     {
-        throw new UnsupportedOperationException();
+        return toS3Path(path).getFileStore();
     }
 
     @Override
