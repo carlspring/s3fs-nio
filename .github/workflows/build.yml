@@ -103,7 +103,7 @@ jobs:
               "branch" : "${{ github.head_ref || github.ref_name }}"
             }
 
-            const is_deployable = data.matrix == "ubuntu-latest" && data.jdk == "11" && data.is_fork == "false" && data.branch == "master" && data.is_snapshot == true
+            const is_deployable = data.matrix == "ubuntu-latest" && data.jdk == "17" && data.is_fork == "false" && data.branch == "master" && data.is_snapshot == true
             
             console.log("Data: ", data);
             console.log("Is deployable: " + is_deployable);
