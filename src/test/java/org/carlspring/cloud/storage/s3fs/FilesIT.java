@@ -306,7 +306,7 @@ class FilesIT extends BaseIntegrationTest
         // upload file without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = s3Path.getFileStore().name();
+        String bucketName = s3Path.getBucketName();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(file1).build();
         client.putObject(request, requestBody);
 
@@ -366,7 +366,7 @@ class FilesIT extends BaseIntegrationTest
         // upload without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = s3Path.getFileStore().name();
+        String bucketName = s3Path.getBucketName();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(subFolder).build();
         client.putObject(request, requestBody);
 
@@ -532,7 +532,7 @@ class FilesIT extends BaseIntegrationTest
         // upload without paths
         final ByteArrayInputStream inputStream = new ByteArrayInputStream(new byte[0]);
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, inputStream.available());
-        String bucketName = s3Path.getFileStore().name();
+        String bucketName = s3Path.getBucketName();
         PutObjectRequest request = PutObjectRequest.builder().bucket(bucketName).key(fileWithFolders).build();
         client.putObject(request, requestBody);
 
@@ -555,7 +555,7 @@ class FilesIT extends BaseIntegrationTest
             Files.copy(htmlFile, result);
 
             final S3Path resultS3 = (S3Path) result;
-            final String bucketName = resultS3.getFileStore().name();
+            final String bucketName = resultS3.getBucketName();
             final String key = resultS3.getKey();
             final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
             final HeadObjectResponse response = resultS3.getFileSystem()
@@ -597,7 +597,7 @@ class FilesIT extends BaseIntegrationTest
             Files.copy(htmlFile, result);
 
             final S3Path resultS3 = (S3Path) result;
-            final String bucketName = resultS3.getFileStore().name();
+            final String bucketName = resultS3.getBucketName();
             final String key = resultS3.getKey();
             final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
             final HeadObjectResponse response = resultS3.getFileSystem()
@@ -639,7 +639,7 @@ class FilesIT extends BaseIntegrationTest
             }
 
             final S3Path resultS3 = (S3Path) result;
-            final String bucketName = resultS3.getFileStore().name();
+            final String bucketName = resultS3.getBucketName();
             final String key = resultS3.getKey();
             final HeadObjectRequest request = HeadObjectRequest.builder().bucket(bucketName).key(key).build();
             final HeadObjectResponse response = resultS3.getFileSystem()

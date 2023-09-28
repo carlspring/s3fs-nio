@@ -75,11 +75,4 @@ class FileStoreTest
         }
     }
 
-    // ~ helper methods
-
-    private Path get(String path)
-    {
-        return fs.getPath(path);
-    }
-
 }

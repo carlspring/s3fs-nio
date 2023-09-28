@@ -524,7 +524,7 @@ public class S3FileSystemProvider
     {
         final S3Path s3Path = toS3Path(path);
         final String key = s3Path.getKey();
-        final String bucketName = s3Path.getFileStore().name();
+        final String bucketName = s3Path.getBucketName();
 
         Preconditions.checkArgument(options.length == 0,
                                     "OpenOptions not yet supported: %s",
@@ -689,7 +689,7 @@ public class S3FileSystemProvider
 
         // create bucket if necessary
         final Bucket bucket = s3Path.getFileStore().getBucket();
-        final String bucketName = s3Path.getFileStore().name();
+        final String bucketName = s3Path.getBucketName();
 
         if (bucket == null)
         {
@@ -717,7 +717,7 @@ public class S3FileSystemProvider
     {
         final S3Path rootPath = toS3Path(path);
         final S3Client client = rootPath.getFileSystem().getClient();
-        final String bucketName = rootPath.getFileStore().name();
+        final String bucketName = rootPath.getBucketName();
 
         LinkedList<Deque<S3Path>> s3Paths = getPathsByBatch(rootPath);
 
@@ -868,9 +868,9 @@ public class S3FileSystemProvider
             throw new FileAlreadyExistsException(format("target already exists: %s", target));
         }
 
-        String bucketNameOrigin = s3Source.getFileStore().name();
+        String bucketNameOrigin = s3Source.getBucketName();
         String keySource = s3Source.getKey();
-        String bucketNameTarget = s3Target.getFileStore().name();
+        String bucketNameTarget = s3Target.getBucketName();
         String keyTarget = s3Target.getKey();
         final S3Client client = s3Source.getFileSystem().getClient();
 
@@ -954,7 +954,7 @@ public class S3FileSystemProvider
         {
             final S3Object s3Object = s3Utils.getS3Object(s3Path);
             final String key = s3Object.key();
-            final String bucket = s3Path.getFileStore().name();
+            final String bucket = s3Path.getBucketName();
             final S3AccessControlList accessControlList = new S3AccessControlList(bucket, key);
 
             accessControlList.checkAccess(modes);

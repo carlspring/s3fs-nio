@@ -228,7 +228,7 @@ class S3FileSystemTest
         {
             S3Path s3Path = (S3Path) path;
 
-            String fileStore = s3Path.getFileStore().name();
+            String fileStore = s3Path.getBucketName();
 
             Path fileName = s3Path.getFileName();
 

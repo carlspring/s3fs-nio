@@ -125,7 +125,7 @@ public class S3FileChannel
                     {
                         final S3Client client = path.getFileSystem().getClient();
                         final GetObjectRequest request = GetObjectRequest.builder()
-                                                                         .bucket(path.getFileStore().name())
+                                                                         .bucket(path.getBucketName())
                                                                          .key(key)
                                                                          .build();
                         try (ResponseInputStream<GetObjectResponse> byteStream = client.getObject(request))
@@ -476,7 +476,7 @@ public class S3FileChannel
         {
             final PutObjectRequest.Builder builder = PutObjectRequest.builder();
             final long length = Files.size(tempFile);
-            builder.bucket(path.getFileStore().name())
+            builder.bucket(path.getBucketName())
                    .key(path.getKey())
                    .contentLength(length)
                    .contentType(new Tika().detect(stream, path.getFileName().toString()));
