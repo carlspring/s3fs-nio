@@ -81,12 +81,10 @@ public class S3Path
             Preconditions.checkArgument(!pathsURI.isEmpty(), "path must start with bucket name");
             Preconditions.checkArgument(!pathsURI.get(0).isEmpty(), "bucket name must be not empty");
 
-            String bucket = pathsURI.get(0);
+            // the filestore (bucket) is not part of the uri
+            String bucket = pathsURI.remove(0);
 
             this.fileStore = new S3FileStore(fileSystem, bucket);
-
-            // the filestore is not part of the uri
-            pathsURI.remove(0);
         }
         else
         {
