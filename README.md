@@ -2,7 +2,7 @@
 # S3FS NIO
 
 [![Master Build Status](https://github.com/carlspring/s3fs-nio/workflows/Build%20and%20test/badge.svg)](https://github.com/carlspring/s3fs-nio/actions?query=branch%3Amaster)
-![JDK support badge](https://img.shields.io/badge/JDK-8%20and%2011-blue)
+![JDK support badge](https://img.shields.io/badge/JDK-8%20,%2011%20,%2017-blue)
 [![Maven Release Version](https://img.shields.io/maven-central/v/org.carlspring.cloud.aws/s3fs-nio)](https://repo.maven.apache.org/maven2/org/carlspring/cloud/aws/s3fs-nio/)
 [![Docs](https://img.shields.io/badge/docs-current-brightgreen.svg)](https://s3fs-nio.carlspring.org) 
 [![License](https://img.shields.io/badge/License-Apache%202.0-brightgreen.svg)](https://github.com/carlspring/s3fs-nio/blob/master/LICENSE.Apache-2.0.md) 
@@ -33,7 +33,7 @@ This project provides a complete API implementation, for managing files and fold
 
 ## Compatibility
 
-We support both JDK 8 and 11.
+We support JDK 8, 11 and 17.
 
 ## Documentation
 

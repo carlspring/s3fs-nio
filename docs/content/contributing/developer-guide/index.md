@@ -10,7 +10,7 @@ Before you start writing code, please read:
 ## System requirements
 
 1. Gradle 8.1, or higher
-2. `JDK8` or `JDK11`
+2. `JDK8`, `JDK11` or `JDK17`
 
 ## Finding issues to work on
 
