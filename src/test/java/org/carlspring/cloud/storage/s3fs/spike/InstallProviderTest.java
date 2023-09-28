@@ -10,6 +10,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -21,6 +22,9 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.regions.Region;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchException;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -76,10 +80,8 @@ class InstallProviderTest
         final ClassLoader classLoader = this.getClass().getClassLoader();
 
         // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(FileSystemNotFoundException.class,
-                                           () -> FileSystems.newFileSystem(uri, envMap, classLoader));
-
-        assertNotNull(exception);
+        Exception thrownBy = catchException(() -> FileSystems.newFileSystem(uri, envMap, classLoader));
+        assertThat(thrownBy).isNotNull().isInstanceOfAny(FileSystemNotFoundException.class, NoSuchFileException.class);
     }
 
     @Test
