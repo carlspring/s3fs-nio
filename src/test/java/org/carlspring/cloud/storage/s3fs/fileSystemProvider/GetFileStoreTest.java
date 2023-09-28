@@ -1,5 +1,6 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
+import org.carlspring.cloud.storage.s3fs.S3FileStore;
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
@@ -7,14 +8,15 @@ import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
+import java.nio.file.FileStore;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 class GetFileStoreTest
         extends S3UnitTestBase
@@ -30,7 +32,7 @@ class GetFileStoreTest
     }
 
     @Test
-    void getFileStore()
+    void shouldReturnS3FileStore()
             throws IOException
     {
         // fixtures
@@ -40,10 +42,8 @@ class GetFileStoreTest
         // act
         Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
 
-        // We're expecting an exception here to be thrown
-        Exception exception = assertThrows(UnsupportedOperationException.class, () -> s3fsProvider.getFileStore(file1));
-
-        assertNotNull(exception);
+        FileStore fileStore = s3fsProvider.getFileStore(file1);
+        assertInstanceOf(S3FileStore.class, fileStore);
     }
 
     /**
