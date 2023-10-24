@@ -11,7 +11,7 @@ jobs:
   slashCommandDispatch:
     runs-on: ubuntu-latest
     if: |
-      contains('["carlspring", "steve-todorov"]', github.triggering_actor) &&
+      contains(FromJSON('["carlspring", "steve-todorov"]'), github.triggering_actor) &&
       github.event.issue.pull_request
     steps:
       - name: Slash Command Dispatch
