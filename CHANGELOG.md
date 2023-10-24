@@ -1,5 +1,47 @@
 # Changelog
 
+## [1.0.3](https://github.com/carlspring/s3fs-nio/compare/v1.0.2...v1.0.3) (2023-10-24)
+
+
+### Features
+
+* Implement `S3FileSystemProvider.getFileStore` ([#757](https://github.com/carlspring/s3fs-nio/issues/757)) ([8e9b332](https://github.com/carlspring/s3fs-nio/commit/8e9b332422a929b1b3be73167e28006889b75afc))
+* Implement S3Path.normalize() method. ([#383](https://github.com/carlspring/s3fs-nio/issues/383)) ([2be9515](https://github.com/carlspring/s3fs-nio/commit/2be95157ec4b801945f540e57a55c84d60e89da0))
+* Support filtered DirectoryStream ([#381](https://github.com/carlspring/s3fs-nio/issues/381)) ([f6668ba](https://github.com/carlspring/s3fs-nio/commit/f6668bae4702583918ba7e089d06cee09cc7e126))
+
+
+### Dependencies
+
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.2.9 to 1.3.8 ([#743](https://github.com/carlspring/s3fs-nio/issues/743)) ([255c1b2](https://github.com/carlspring/s3fs-nio/commit/255c1b25d4c087a09036e0484a8710b28d33f48e))
+* **upgrade:** Bump ch.qos.logback:logback-classic from 1.3.8 to 1.3.11 ([#751](https://github.com/carlspring/s3fs-nio/issues/751)) ([71640bd](https://github.com/carlspring/s3fs-nio/commit/71640bd0f5396136d85de12854f0a6d2372dab9f))
+* **upgrade:** bump com.github.marschall:memoryfilesystem from 2.1.0 to 2.6.1 ([#733](https://github.com/carlspring/s3fs-nio/issues/733)) ([99c56c3](https://github.com/carlspring/s3fs-nio/commit/99c56c3a04db62186aa23b19d2174e5fb27363d4))
+* **upgrade:** bump org.apache.commons:commons-lang3 ([#739](https://github.com/carlspring/s3fs-nio/issues/739)) ([cf8414c](https://github.com/carlspring/s3fs-nio/commit/cf8414c00dfccb325fdc02af500c8853a600f2a6))
+* **upgrade:** Bump org.apache.tika:tika-core from 2.8.0 to 2.9.0 ([#753](https://github.com/carlspring/s3fs-nio/issues/753)) ([4c97ed0](https://github.com/carlspring/s3fs-nio/commit/4c97ed0aa7604a0496190143c9a65e540c43dab8))
+* **upgrade:** bump org.mockito:mockito-core from 3.9.0 to 4.11.0 ([#737](https://github.com/carlspring/s3fs-nio/issues/737)) ([833781c](https://github.com/carlspring/s3fs-nio/commit/833781c10cb21c4aa36df95f12884377949bfe44))
+* **upgrade:** bump org.mockito:mockito-inline from 3.9.0 to 4.11.0 ([#741](https://github.com/carlspring/s3fs-nio/issues/741)) ([f8acadc](https://github.com/carlspring/s3fs-nio/commit/f8acadc5ed3497ffaf1c806234bfa2587b21bc41))
+* **upgrade:** bump org.mockito:mockito-junit-jupiter from 3.9.0 to 4.11.0 ([#745](https://github.com/carlspring/s3fs-nio/issues/745)) ([51983e6](https://github.com/carlspring/s3fs-nio/commit/51983e6156112a610623af596ba8208d22bcba59))
+* **upgrade:** bump org.testcontainers:testcontainers ([#738](https://github.com/carlspring/s3fs-nio/issues/738)) ([3f3a51b](https://github.com/carlspring/s3fs-nio/commit/3f3a51b033696b5b0d91bc781037d790eed4a009))
+* **upgrade:** Bump org.testcontainers:testcontainers ([#752](https://github.com/carlspring/s3fs-nio/issues/752)) ([561b332](https://github.com/carlspring/s3fs-nio/commit/561b3324a5eada619067896f0fdad29e235eb12e))
+
+
+### Miscellaneous Chores
+
+* Fix sonar bug reports. ([#748](https://github.com/carlspring/s3fs-nio/issues/748)) ([7913fe2](https://github.com/carlspring/s3fs-nio/commit/7913fe274bdac7d3cf0d6f7dc3b8e92e9bb6938d))
+* JUnit5 test classes and methods should have default package visibility ([#747](https://github.com/carlspring/s3fs-nio/issues/747)) ([c74f268](https://github.com/carlspring/s3fs-nio/commit/c74f268cb2f7c0b290d8d32b54f112850a385a66))
+* **rewrite:** Use `S3Path.getBucketName` ([#758](https://github.com/carlspring/s3fs-nio/issues/758)) ([05fb2d7](https://github.com/carlspring/s3fs-nio/commit/05fb2d7fcdba904f2db0939328386fd4a11005fb))
+* **S3Path:** remove and get first part of the paths with one method call ([#759](https://github.com/carlspring/s3fs-nio/issues/759)) ([3239ec7](https://github.com/carlspring/s3fs-nio/commit/3239ec76cf1b7080b9a51c82cd067de83a9d59a5))
+* **snapshot:** Prepare for v1.0.3 ([#735](https://github.com/carlspring/s3fs-nio/issues/735)) ([9a59abb](https://github.com/carlspring/s3fs-nio/commit/9a59abbf9b9cb3587b6892409e1d27684937da4b))
+
+
+### Build System
+
+* Add JDK17 to the build matrix ([#761](https://github.com/carlspring/s3fs-nio/issues/761)) ([13c4629](https://github.com/carlspring/s3fs-nio/commit/13c4629fa7e6b748a019e80ec4e8b44adaa6fa3c))
+* Configure tz of sdf using `apply` in `build.gradle.kts` ([#756](https://github.com/carlspring/s3fs-nio/issues/756)) ([095709b](https://github.com/carlspring/s3fs-nio/commit/095709b3fb93fe457e5e7875a0544df0d27085c1))
+* Fix potential command dispatcher CI bug ([#765](https://github.com/carlspring/s3fs-nio/issues/765)) ([b9cef12](https://github.com/carlspring/s3fs-nio/commit/b9cef12de57f0920ee6abf658cac7a9320623db2))
+* Merge `jar` task configuration in build.gradle.kts ([#755](https://github.com/carlspring/s3fs-nio/issues/755)) ([5b6f838](https://github.com/carlspring/s3fs-nio/commit/5b6f8385e8e2071c2379973af4270a5704fe23b4))
+* Remove duplicate testImplementation dependency ([#754](https://github.com/carlspring/s3fs-nio/issues/754)) ([7403047](https://github.com/carlspring/s3fs-nio/commit/7403047b91176951103eedb72fc0868126a5a91b))
+* Set fetch-depth to 0 because of sonar. ([ec2da03](https://github.com/carlspring/s3fs-nio/commit/ec2da033ed06d6c5798e8f9b886c12ea34a59951))
+
 ## [1.0.2](https://github.com/carlspring/s3fs-nio/compare/v1.0.1...v1.0.2) (2023-07-26)
 
 
