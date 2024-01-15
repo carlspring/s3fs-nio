@@ -39,7 +39,7 @@ on:
 # Currently you cannot use ${{ env.IS_FORK }} for some reason, which is why you might need to copy-paste some of these.
 env:
   REPOSITORY: ${{ github.repository }}
-  IS_FORK: ${{ github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO || github.repository != vars.CURRENT_REPO }}
+  IS_FORK: ${{ github.event.pull_request.head.repo.fork == true }}
   IS_PR: ${{ github.event_name == 'pull_request' }}
   EVENT_NAME: ${{ toJSON(github.event_name) }}
   # format: username:branch
@@ -48,7 +48,7 @@ env:
 
 jobs:
   build-and-test:
-    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO && 'external-collaborators' || '' }}
+    environment: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork == true && 'external-collaborators' || '' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
