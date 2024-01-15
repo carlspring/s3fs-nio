@@ -47,7 +47,7 @@ dependencies {
     }
     api("software.amazon.awssdk:apache-client")
     api("com.google.guava:guava:30.1.1-jre")
-    api("org.apache.tika:tika-core:2.9.0") {
+    api("org.apache.tika:tika-core:2.9.1") {
         exclude("org.slf4j", "slf4j-api")
     }
     api("com.google.code.findbugs:jsr305:3.0.2")
