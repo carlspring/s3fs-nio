@@ -52,7 +52,7 @@ dependencies {
     }
     api("com.google.code.findbugs:jsr305:3.0.2")
 
-    testImplementation("ch.qos.logback:logback-classic:1.3.11")
+    testImplementation("ch.qos.logback:logback-classic:1.3.14")
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testImplementation("org.apache.commons:commons-lang3:3.14.0")
