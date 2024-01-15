@@ -9,7 +9,7 @@ plugins {
     `jacoco-report-aggregation`
     `maven-publish`
     signing
-    id("com.adarshr.test-logger") version "3.2.0"
+    id("com.adarshr.test-logger") version "4.0.0"
     id("org.sonarqube") version "4.0.0.2929"
 }
 
