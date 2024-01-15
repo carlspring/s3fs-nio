@@ -133,11 +133,8 @@ jobs:
         run: ./gradlew build jacocoTestReport -PwithSignature=${{ fromJSON(steps.deploy_check.outputs.result).is_deployable }} --warn --stacktrace
 
       - name: Publish code analysis to Sonarcloud
-        # [WARNING] The version of Java 1.8 you have used to run this analysis is deprecated and we will stop accepting
-        #           it from October 2020. Please update to at least Java 11.
-        # [WARNING] No analysis for external contributors - sorry.
-        #           Check https://github.com/carlspring/s3fs-nio/pull/77#issuecomment-686804207
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '11' }}
+        # [WARNING] The version of Java (11.0.21) you have used to run this analysis is deprecated and we will stop accepting it soon. Please update to at least Java 17.
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '17' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           S3FS_PUBLISH_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
