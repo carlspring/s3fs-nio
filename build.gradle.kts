@@ -53,8 +53,8 @@ dependencies {
     api("com.google.code.findbugs:jsr305:3.0.2")
 
     testImplementation("ch.qos.logback:logback-classic:1.3.11")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.1")
     testImplementation("org.apache.commons:commons-lang3:3.13.0")
     testImplementation("com.github.marschall:zipfilesystem-standalone:1.0.1")
     testImplementation("com.github.marschall:memoryfilesystem:2.6.1")
