@@ -6,10 +6,12 @@ import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystemAlreadyExistsException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
+import java.util.HashMap;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,69 +24,39 @@ class FileSystemsIT extends BaseIntegrationTest
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
-    private FileSystem fileSystemAmazon;
+    private static FileSystem provisionedFileSystem;
 
-
-    @BeforeEach
-    public void setup()
-            throws IOException
+    @BeforeAll
+    public static void setup() throws IOException
     {
-        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
-
-        fileSystemAmazon = build();
-    }
-
-    private static FileSystem build()
-            throws IOException
-    {
-        try
-        {
-            FileSystems.getFileSystem(uriGlobal).close();
-
-            return createNewFileSystem();
-        }
-        catch (FileSystemNotFoundException e)
-        {
-            return createNewFileSystem();
-        }
-    }
-
-    private static FileSystem createNewFileSystem()
-            throws IOException
-    {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
-    }
-
-    @Test
-    void buildEnv()
-    {
-        FileSystem fileSystem = FileSystems.getFileSystem(uriGlobal);
-
-        assertSame(fileSystemAmazon, fileSystem);
+        provisionedFileSystem = provisionFilesystem(uriGlobal);
     }
 
     @Test
     void buildEnvAnotherURIReturnDifferent()
             throws IOException
     {
-        FileSystem fileSystem = FileSystems.newFileSystem(uriEurope, EnvironmentBuilder.getRealEnv());
-
-        assertNotSame(fileSystemAmazon, fileSystem);
+        FileSystem newFileSystem = FileSystems.newFileSystem(uriEurope, EnvironmentBuilder.getRealEnv());
+        assertNotSame(provisionedFileSystem, newFileSystem);
     }
 
     @Test
     void shouldReturnExistingFileSystem()
-            throws IOException
     {
         FileSystem retrieveFileSystem = FileSystems.getFileSystem(uriGlobal);
-        assertSame(fileSystemAmazon, retrieveFileSystem);
+        assertSame(provisionedFileSystem, retrieveFileSystem);
     }
 
     @Test
     void shouldReturnThrowExceptionOnMissingFileSystem()
-            throws IOException
     {
         assertThrows(FileSystemNotFoundException.class,() -> FileSystems.getFileSystem(uriEurope));
+    }
+
+    @Test
+    void shouldThrowExceptionOnExistingFileSystem() throws IOException
+    {
+        assertThrows(FileSystemAlreadyExistsException.class,() -> createNewFileSystem(uriGlobal));
     }
 
 }

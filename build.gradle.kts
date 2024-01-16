@@ -175,8 +175,22 @@ tasks {
     }
 
     create<Test>("it-s3") {
+
+        val cpus = Runtime.getRuntime().availableProcessors();
+        var forks = cpus;
+        if(cpus - 2 > 0) {
+            forks = cpus - 2
+        }
+
         group = "verification"
         description = "Run integration tests using S3"
+        // Creates half as many forks as there are CPU cores.
+        maxParallelForks = forks
+
+        systemProperties["junit.jupiter.execution.parallel.enabled"] = true
+        systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
+        systemProperties["junit.jupiter.execution.parallel.mode.classes.default"] = "concurrent"
+
         useJUnitPlatform {
             filter {
                 includeTestsMatching("*IT")

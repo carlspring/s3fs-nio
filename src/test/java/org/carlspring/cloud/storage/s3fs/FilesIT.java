@@ -1,23 +1,10 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import com.github.marschall.memoryfilesystem.MemoryFileSystemBuilder;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -25,78 +12,69 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URI;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.UUID;
+
 import static java.util.UUID.randomUUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @S3IntegrationTest
 class FilesIT extends BaseIntegrationTest
 {
-
     private static final String bucket = EnvironmentBuilder.getBucket();
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
-    private FileSystem fileSystemAmazon;
+    private static FileSystem provisionedFileSystem;
 
-
-    @BeforeEach
-    public void setup()
-            throws IOException
+    @BeforeAll
+    public static void setup() throws IOException
     {
-        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
-
-        fileSystemAmazon = build();
-    }
-
-    private static FileSystem build()
-            throws IOException
-    {
-        try
-        {
-            FileSystems.getFileSystem(uriGlobal).close();
-
-            return createNewFileSystem();
-        }
-        catch (FileSystemNotFoundException e)
-        {
-            return createNewFileSystem();
-        }
-    }
-
-    private static FileSystem createNewFileSystem()
-            throws IOException
-    {
-        Map<String, Object> env = new HashMap<>(EnvironmentBuilder.getRealEnv());
-        env.put(S3Factory.REQUEST_HEADER_CACHE_CONTROL, "no-cache");
-        return FileSystems.newFileSystem(uriGlobal, env);
+        provisionedFileSystem = provisionFilesystem(uriGlobal);
     }
 
     @Test
-    void fileStore()
-            throws IOException
+    void fileStore() throws IOException
     {
-        Path dir = fileSystemAmazon.getPath(bucket);
-
+        Path dir = provisionedFileSystem.getPath(bucket);
         FileStore fileStore = Files.getFileStore(dir);
-
         assertInstanceOf(S3FileStore.class, fileStore);
     }
 
     @Test
-    void notExistsDir()
+    void notExistsDir() throws IOException
     {
-        Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
-
+        Path dir = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
         assertFalse(Files.exists(dir));
     }
 
     @Test
-    void notExistsFile()
+    void notExistsFile() throws IOException
     {
-        Path file = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
-
+        Path file = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
         assertFalse(Files.exists(file));
     }
 
@@ -104,65 +82,67 @@ class FilesIT extends BaseIntegrationTest
     void existsFile()
             throws IOException
     {
-        Path file = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
 
+        Path file = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
         EnumSet<StandardOpenOption> options = EnumSet.of(StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-
         Files.newByteChannel(file, options).close();
-
         assertTrue(Files.exists(file));
+
     }
 
     @Test
     void existsFileWithSpace()
             throws IOException
     {
-        Path file = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID(), "space folder");
 
+        Path file = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID(), "space folder");
         Files.createDirectories(file);
-
         for (Path p : Files.newDirectoryStream(file.getParent()))
         {
             assertTrue(Files.exists(p));
         }
+
     }
 
     @Test
     void createEmptyDirTest()
             throws IOException
     {
-        Path dir = createEmptyDir();
 
+        Path dir = createEmptyDir(provisionedFileSystem);
         assertTrue(Files.exists(dir));
         assertTrue(Files.isDirectory(dir));
+
     }
 
     @Test
     void createEmptyFileTest()
             throws IOException
     {
-        Path file = createEmptyFile();
 
+        Path file = createEmptyFile(provisionedFileSystem);
         assertTrue(Files.exists(file));
         assertTrue(Files.isRegularFile(file));
+
     }
 
     @Test
     void createTempFile()
             throws IOException
     {
-        Path dir = createEmptyDir();
 
+        Path dir = createEmptyDir(provisionedFileSystem);
         Path file = Files.createTempFile(dir, "file", "temp");
-
         assertTrue(Files.exists(file));
+
     }
 
     @Test
     void createTempFileAndWrite()
             throws IOException
     {
-        Path dir = createEmptyDir();
+
+        Path dir = createEmptyDir(provisionedFileSystem);
         Path testFile = Files.createTempFile(dir, "file-", ".tmp");
 
         assertTrue(Files.exists(testFile));
@@ -172,46 +152,48 @@ class FilesIT extends BaseIntegrationTest
         Files.write(testFile, content.getBytes());
 
         assertArrayEquals(content.getBytes(), Files.readAllBytes(testFile));
+
     }
 
     @Test
     void createTempDir()
             throws IOException
     {
-        Path dir = createEmptyDir();
 
+        Path dir = createEmptyDir(provisionedFileSystem);
         Path dir2 = Files.createTempDirectory(dir, "dir-temp");
-
         assertTrue(Files.exists(dir2));
+
     }
 
     @Test
     void deleteFile()
             throws IOException
     {
-        Path file = createEmptyFile();
 
+        Path file = createEmptyFile(provisionedFileSystem);
         Files.delete(file);
-
         assertTrue(Files.notExists(file));
+
     }
 
     @Test
     void deleteEmptyDir()
             throws IOException
     {
-        Path dir = createEmptyDir();
 
+        Path dir = createEmptyDir(provisionedFileSystem);
         Files.delete(dir);
-
         assertTrue(Files.notExists(dir));
+
     }
 
     @Test
     void deleteDir()
             throws IOException
     {
-        Path dir = createEmptyDir();
+
+        Path dir = createEmptyDir(provisionedFileSystem);
         Path file = Files.createTempFile(dir, "", ".tmp");
         Path subDir = Files.createTempDirectory(dir, "subFolder");
         Path subDirFile = Files.createTempFile(subDir, "", ".tmp");
@@ -228,20 +210,22 @@ class FilesIT extends BaseIntegrationTest
     void copyDir()
             throws IOException
     {
-        Path dir = uploadDir();
 
+        Path dir = uploadDir(provisionedFileSystem);
         assertTrue(Files.exists(dir.resolve("assets1/")));
         assertTrue(Files.exists(dir.resolve("assets1/").resolve("index.html")));
         assertTrue(Files.exists(dir.resolve("assets1/").resolve("img").resolve("Penguins.jpg")));
         assertTrue(Files.exists(dir.resolve("assets1/").resolve("js").resolve("main.js")));
+
     }
 
     @Test
     void directoryStreamBaseBucketFindDirectoryTest()
             throws IOException
     {
-        Path bucketPath = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
-        String name = "01" + UUID.randomUUID().toString();
+
+        Path bucketPath = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
+        String name = "01" + UUID.randomUUID();
 
         final Path fileToFind = Files.createDirectory(bucketPath.resolve(name));
 
@@ -249,14 +233,16 @@ class FilesIT extends BaseIntegrationTest
         {
             findFileInDirectoryStream(bucketPath, fileToFind, dirStream);
         }
+
     }
 
     @Test
     void directoryStreamBaseBucketFindFileTest()
             throws IOException
     {
-        Path bucketPath = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
-        String name = "00" + UUID.randomUUID().toString();
+
+        Path bucketPath = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
+        String name = "00" + UUID.randomUUID();
 
         final Path fileToFind = Files.createFile(bucketPath.resolve(name));
 
@@ -264,38 +250,38 @@ class FilesIT extends BaseIntegrationTest
         {
             findFileInDirectoryStream(bucketPath, fileToFind, dirStream);
         }
+
     }
 
     @Test
     void directoryStreamFirstDirTest()
             throws IOException
     {
-        Path dir = uploadDir();
 
+        Path dir = uploadDir(provisionedFileSystem);
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dir))
         {
             int number = 0;
-
             for (Path path : dirStream)
             {
                 number++;
-
                 // only first level
                 assertEquals(dir, path.getParent());
                 assertEquals("assets1", path.getFileName().toString());
             }
-
             assertEquals(1, number);
         }
+
     }
 
     @Test
     void virtualDirectoryStreamTest()
             throws IOException
     {
-        String folder = getTestBasePathWithUUID() + "/" + UUID.randomUUID().toString() + "/";
 
-        Path dir = fileSystemAmazon.getPath(bucket, folder);
+        String folder = getTestBasePathWithUUID() + "/" + UUID.randomUUID() + "/";
+
+        Path dir = provisionedFileSystem.getPath(bucket, folder);
 
         String file1 = folder + "file.html";
         String file2 = folder + "file2.html";
@@ -347,18 +333,20 @@ class FilesIT extends BaseIntegrationTest
             assertTrue(file2Find);
             assertEquals(2, number);
         }
+
     }
 
     @Test
     void virtualDirectoryStreamWithVirtualSubFolderTest()
             throws IOException
     {
+
         String folder = getTestBasePathWithUUID() + "/";
 
         String subFolder = folder + "subfolder/file.html";
         String file2 = folder + "file2.html";
 
-        Path dir = fileSystemAmazon.getPath(bucket, folder);
+        Path dir = provisionedFileSystem.getPath(bucket, folder);
 
         S3Path s3Path = (S3Path) dir;
         final S3Client client = s3Path.getFileSystem().getClient();
@@ -406,13 +394,15 @@ class FilesIT extends BaseIntegrationTest
             assertTrue(file2Find);
             assertEquals(2, number);
         }
+
     }
 
     @Test
     void deleteFullDirTest()
             throws IOException
     {
-        Path dir = uploadDir();
+
+        Path dir = uploadDir(provisionedFileSystem);
         Files.walkFileTree(dir, new SimpleFileVisitor<Path>()
         {
             @Override
@@ -441,25 +431,27 @@ class FilesIT extends BaseIntegrationTest
         });
 
         assertFalse(Files.exists(dir));
+
     }
 
     @Test
     void copyUpload()
             throws IOException
     {
+
         final String content = "sample content";
-
-        Path result = uploadSingleFile(content);
-
+        Path result = uploadSingleFile(provisionedFileSystem, content);
         assertTrue(Files.exists(result));
         assertArrayEquals(content.getBytes(), Files.readAllBytes(result));
+
     }
 
     @Test
     void copyDownload()
             throws IOException
     {
-        Path result = uploadSingleFile(null);
+
+        Path result = uploadSingleFile(provisionedFileSystem, null);
         Path localResult = Files.createTempDirectory("temp-local-file");
         Path notExistLocalResult = localResult.resolve("result");
 
@@ -473,25 +465,29 @@ class FilesIT extends BaseIntegrationTest
     void copyAsNewFileInS3()
             throws IOException
     {
-        Path sourceFile = uploadSingleFile(null);
+
+        Path sourceFile = uploadSingleFile(provisionedFileSystem, null);
         Path targetFile = sourceFile.getParent().resolve("copyAsNewFileInS3-" + UUID.randomUUID());
 
         Files.copy(sourceFile, targetFile);
 
         assertTrue(Files.exists(targetFile));
         assertArrayEquals(Files.readAllBytes(sourceFile), Files.readAllBytes(targetFile));
+
     }
 
     @Test
     void moveFromDifferentProviders()
             throws IOException
     {
+
         final String content = "sample content";
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux()
+                                                       .build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             Path sourceLocal = Files.write(linux.getPath("/index.html"), content.getBytes());
-            Path result = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
+            Path result = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
 
             Files.move(sourceLocal, result);
 
@@ -500,16 +496,18 @@ class FilesIT extends BaseIntegrationTest
 
             Files.notExists(sourceLocal);
         }
+
     }
 
     @Test
     void move()
             throws IOException
     {
+
         final String content = "sample content";
 
-        Path source = uploadSingleFile(content);
-        Path dest = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
+        Path source = uploadSingleFile(provisionedFileSystem, content);
+        Path dest = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
 
         Files.move(source, dest);
 
@@ -517,14 +515,16 @@ class FilesIT extends BaseIntegrationTest
         assertArrayEquals(content.getBytes(), Files.readAllBytes(dest));
 
         Files.notExists(source);
+
     }
 
     @Test
-    void createFileWithFolderAndNotExistsFolders()
+    void createFileWithFolderAndNotExistsFolders() throws IOException
     {
+
         String fileWithFolders = getTestBasePathWithUUID() + "/folder2/file.html";
 
-        Path path = fileSystemAmazon.getPath(bucket, fileWithFolders.split("/"));
+        Path path = provisionedFileSystem.getPath(bucket, fileWithFolders.split("/"));
 
         S3Path s3Path = (S3Path) path;
         final S3Client client = s3Path.getFileSystem().getClient();
@@ -538,19 +538,21 @@ class FilesIT extends BaseIntegrationTest
 
         assertTrue(Files.exists(path));
         assertTrue(Files.exists(path.getParent()));
+
     }
 
     @Test
     void amazonCopyDetectContentType()
             throws IOException
     {
-        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             final Path htmlFile = Files.write(linux.getPath("/index.html"),
                                               "<html><body>html file</body></html>".getBytes());
 
             final String fileName = getTestBasePathWithUUID() + "/" + htmlFile.getFileName().toString();
-            final Path result = fileSystemAmazon.getPath(bucket, fileName);
+            final Path result = provisionedFileSystem.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
@@ -564,12 +566,14 @@ class FilesIT extends BaseIntegrationTest
 
             assertEquals("text/html", response.contentType());
         }
+
     }
 
     @Test
     void amazonCopyNotDetectContentTypeSetDefault()
             throws IOException
     {
+
         final byte[] data = new byte[]{ (byte) 0xe0,
                                         0x4f,
                                         (byte) 0xd0,
@@ -587,12 +591,12 @@ class FilesIT extends BaseIntegrationTest
                                         0x30,
                                         (byte) 0x9d };
 
-        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             final Path htmlFile = Files.write(linux.getPath("/index.adsadas"), data);
 
             final String fileName = getTestBasePathWithUUID() + "/" + htmlFile.getFileName().toString();
-            final Path result = fileSystemAmazon.getPath(bucket, fileName);
+            final Path result = provisionedFileSystem.getPath(bucket, fileName);
 
             Files.copy(htmlFile, result);
 
@@ -606,19 +610,21 @@ class FilesIT extends BaseIntegrationTest
 
             assertEquals("application/octet-stream", response.contentType());
         }
+
     }
 
     @Test
     void amazonOutputStreamDetectContentType()
             throws IOException
     {
-        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             final Path htmlFile = Files.write(linux.getPath("/index.html"),
                                               "<html><body>html file</body></html>".getBytes());
 
             final String fileName = getTestBasePathWithUUID() + "/" + htmlFile.getFileName().toString();
-            final Path result = fileSystemAmazon.getPath(bucket, fileName);
+            final Path result = provisionedFileSystem.getPath(bucket, fileName);
 
             try (final OutputStream out = Files.newOutputStream(result))
             {
@@ -648,15 +654,17 @@ class FilesIT extends BaseIntegrationTest
 
             assertEquals("text/html", response.contentType());
         }
+
     }
 
     @Test
     void readAttributesFile()
             throws IOException
     {
+
         final String content = "sample content";
 
-        Path file = uploadSingleFile(content);
+        Path file = uploadSingleFile(provisionedFileSystem, content);
 
         BasicFileAttributes fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
 
@@ -666,15 +674,17 @@ class FilesIT extends BaseIntegrationTest
         assertFalse(fileAttributes.isSymbolicLink());
         assertFalse(fileAttributes.isOther());
         assertEquals(content.length(), fileAttributes.size());
+
     }
 
     @Test
     void readAttributesString()
             throws IOException
     {
+
         final String content = "sample content";
 
-        Path file = uploadSingleFile(content);
+        Path file = uploadSingleFile(provisionedFileSystem, content);
 
         BasicFileAttributes fileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
 
@@ -687,17 +697,19 @@ class FilesIT extends BaseIntegrationTest
         assertEquals(fileAttributes.creationTime(), fileAttributesMap.get("creationTime"));
         assertEquals(fileAttributes.lastModifiedTime(), fileAttributesMap.get("lastModifiedTime"));
         assertEquals(9, fileAttributesMap.size());
+
     }
 
     @Test
     void readAttributesDirectory()
             throws IOException
     {
+
         Path dir;
 
         final String startPath = getTestBasePathWithUUID() + "/";
 
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             Path dirDynamicLocale = Files.createDirectories(linux.getPath("/lib").resolve("angular-dynamic-locale"));
             Path assets = Files.createDirectories(linux.getPath("/lib").resolve("angular"));
@@ -707,7 +719,7 @@ class FilesIT extends BaseIntegrationTest
             Files.createDirectory(assets.resolve("locales"));
             Files.createFile(dirDynamicLocale.resolve("tmhDinamicLocale.min.js"));
 
-            dir = fileSystemAmazon.getPath(bucket, startPath);
+            dir = provisionedFileSystem.getPath(bucket, startPath);
 
             Files.exists(assets);
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent().getParent(), dir));
@@ -724,20 +736,23 @@ class FilesIT extends BaseIntegrationTest
     void seekableCloseTwice()
             throws IOException
     {
-        Path file = createEmptyFile();
+
+        Path file = createEmptyFile(provisionedFileSystem);
 
         SeekableByteChannel seekableByteChannel = Files.newByteChannel(file);
         seekableByteChannel.close();
         seekableByteChannel.close();
 
         assertTrue(Files.exists(file));
+
     }
 
     @Test
     void bucketIsDirectory()
             throws IOException
     {
-        Path path = fileSystemAmazon.getPath(bucket, "/");
+
+        Path path = provisionedFileSystem.getPath(bucket, "/");
 
         BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
 
@@ -746,27 +761,29 @@ class FilesIT extends BaseIntegrationTest
         assertNotNull(attrs.lastAccessTime());
         assertNotNull(attrs.lastModifiedTime());
         assertTrue(attrs.isDirectory());
+
     }
 
     @Test
     void fileIsReadableBucket()
+            throws IOException
     {
-        Path path = fileSystemAmazon.getPath(bucket, "/");
 
+        Path path = provisionedFileSystem.getPath(bucket, "/");
         boolean readable = Files.isReadable(path);
-
         assertTrue(readable);
+
     }
 
     @Test
     void fileIsReadableBucketFile()
             throws IOException
     {
-        Path file = createEmptyFile();
 
+        Path file = createEmptyFile(provisionedFileSystem);
         boolean readable = Files.isReadable(file);
-
         assertTrue(readable);
+
     }
 
     @Test
@@ -784,7 +801,7 @@ class FilesIT extends BaseIntegrationTest
         String filename = randomUUID().toString();
         String key = getTestBasePath() + "/" + filename;
 
-        Path s3file = fileSystemAmazon.getPath(bucket, key);
+        Path s3file = provisionedFileSystem.getPath(bucket, key);
 
         String first = "first-write";
         Files.write(s3file, first.getBytes());
@@ -824,7 +841,7 @@ class FilesIT extends BaseIntegrationTest
         String filename = randomUUID().toString();
         String key = getTestBasePath() + "/" + filename;
 
-        Path s3file = fileSystemAmazon.getPath(bucket, key);
+        Path s3file = provisionedFileSystem.getPath(bucket, key);
         Files.createFile(s3file);
 
         String first = "first-write";
@@ -860,30 +877,26 @@ class FilesIT extends BaseIntegrationTest
 
     // helpers
 
-    private Path createEmptyDir()
+    private Path createEmptyDir(FileSystem provisionedFileSystem)
             throws IOException
     {
-        Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
-
+        Path dir = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
         Files.createDirectory(dir);
-
         return dir;
     }
 
-    private Path createEmptyFile()
+    private Path createEmptyFile(FileSystem provisionedFileSystem)
             throws IOException
     {
-        Path file = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
-
+        Path file = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
         Files.createFile(file);
-
         return file;
     }
 
-    private Path uploadSingleFile(String content)
+    private Path uploadSingleFile(FileSystem provisionedFileSystem, String content)
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             if (content != null)
             {
@@ -894,7 +907,7 @@ class FilesIT extends BaseIntegrationTest
                 Files.createFile(linux.getPath("/index.html"));
             }
 
-            Path result = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
+            Path result = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
 
             Files.copy(linux.getPath("/index.html"), result);
 
@@ -902,10 +915,10 @@ class FilesIT extends BaseIntegrationTest
         }
     }
 
-    private Path uploadDir()
+    private Path uploadDir(FileSystem provisionedFileSystem)
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (final FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
 
@@ -917,7 +930,7 @@ class FilesIT extends BaseIntegrationTest
             Files.createDirectory(assets.resolve("js"));
             Files.createFile(assets.resolve("js").resolve("main.js"));
 
-            Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
+            Path dir = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
 
             Files.exists(assets);
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));

@@ -39,49 +39,18 @@ class NewByteChannelIT
 
     private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
 
-    private FileSystem fileSystemAmazon;
-
-    @BeforeEach
-    public void setup()
-            throws IOException
-    {
-        System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
-
-        fileSystemAmazon = build();
-    }
-
-    private static FileSystem build()
-            throws IOException
-    {
-        try
-        {
-            FileSystems.getFileSystem(uriGlobal).close();
-
-            return createNewFileSystem();
-        }
-        catch (FileSystemNotFoundException e)
-        {
-            return createNewFileSystem();
-        }
-    }
-
-    private static FileSystem createNewFileSystem()
-            throws IOException
-    {
-        return FileSystems.newFileSystem(uriGlobal, EnvironmentBuilder.getRealEnv());
-    }
-
     @Test
     void newByteChannelCreateAndWrite()
             throws IOException
     {
+        final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
         final String content = "sample content";
         Path file = uploadDir().resolve("file");
 
-        try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
-                                                                                   EnumSet.of(StandardOpenOption.WRITE,
-                                                                                              StandardOpenOption.READ,
-                                                                                              StandardOpenOption.CREATE_NEW)))
+        try (SeekableByteChannel seek = provisionedFileSystem.provider().newByteChannel(file,
+                EnumSet.of(StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE_NEW)))
         {
             ByteBuffer buffer = ByteBuffer.wrap(content.getBytes());
             seek.write(buffer);
@@ -95,12 +64,13 @@ class NewByteChannelIT
     void newByteChannelWrite()
             throws IOException
     {
+        final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
         final String content = "sample content";
         Path file = uploadSingleFile("");
 
-        try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
-                                                                                   EnumSet.of(StandardOpenOption.WRITE,
-                                                                                              StandardOpenOption.READ)))
+        try (SeekableByteChannel seek = provisionedFileSystem.provider().newByteChannel(file,
+                EnumSet.of(StandardOpenOption.WRITE,
+                        StandardOpenOption.READ)))
         {
             seek.write(ByteBuffer.wrap(content.getBytes()));
         }
@@ -112,12 +82,12 @@ class NewByteChannelIT
     void newByteChannelWriteWithoutPermission()
             throws IOException
     {
+        final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
         final String content = "sample content";
 
         Path file = uploadSingleFile("");
 
-        try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
-                                                                                   EnumSet.of(StandardOpenOption.READ)))
+        try (SeekableByteChannel seek = provisionedFileSystem.provider().newByteChannel(file, EnumSet.of(StandardOpenOption.READ)))
         {
             byte[] bytes = content.getBytes();
             ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
@@ -132,15 +102,16 @@ class NewByteChannelIT
     void newByteChannelRead()
             throws IOException
     {
+        final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
+
         final String content = "sample content";
 
         Path file = uploadSingleFile(content);
 
         ByteBuffer bufferRead = ByteBuffer.allocate(content.length());
 
-        try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
-                                                                                   EnumSet.of(StandardOpenOption.WRITE,
-                                                                                              StandardOpenOption.READ)))
+        try (SeekableByteChannel seek = provisionedFileSystem.provider().newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE,
+                                                                                                         StandardOpenOption.READ)))
         {
             seek.read(bufferRead);
         }
@@ -153,12 +124,12 @@ class NewByteChannelIT
     void newByteChannelReadWithoutPermission()
             throws IOException
     {
+        final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
+
         final String content = "sample content";
         Path file = uploadSingleFile(content);
 
-        try (SeekableByteChannel seek = fileSystemAmazon.provider().newByteChannel(file,
-                                                                                   EnumSet.of(
-                                                                                           StandardOpenOption.WRITE)))
+        try (SeekableByteChannel seek = provisionedFileSystem.provider().newByteChannel(file, EnumSet.of(StandardOpenOption.WRITE)))
         {
             int length = content.length();
             ByteBuffer byteBuffer = ByteBuffer.allocate(length);
@@ -172,13 +143,14 @@ class NewByteChannelIT
     public Path uploadSingleFile(String content)
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             Path file = Files.createFile(linux.getPath(UUID.randomUUID().toString()));
 
             Files.write(file, content.getBytes());
 
-            Path result = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID());
+            final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
+            Path result = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID());
 
             Files.copy(file, result);
 
@@ -189,10 +161,11 @@ class NewByteChannelIT
     private Path uploadDir()
             throws IOException
     {
-        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build("linux"))
+        try (FileSystem linux = MemoryFileSystemBuilder.newLinux().build(getTestBasePathWithUUID().replaceAll("/", "_")))
         {
             Path assets = Files.createDirectories(linux.getPath("/upload/assets1"));
-            Path dir = fileSystemAmazon.getPath(bucket, getTestBasePathWithUUID() + "/");
+            final FileSystem provisionedFileSystem = provisionFilesystem(uriGlobal);
+            Path dir = provisionedFileSystem.getPath(bucket, getTestBasePathWithUUID() + "/");
 
             Files.walkFileTree(assets.getParent(), new CopyDirVisitor(assets.getParent(), dir));
 

@@ -52,9 +52,7 @@ class ToURLIT extends BaseIntegrationTest
         }
         catch (FileSystemAlreadyExistsException e)
         {
-            FileSystems.getFileSystem(uriGlobal).close();
-
-            return FileSystems.newFileSystem(uriGlobal, env);
+            return FileSystems.getFileSystem(uriGlobal);
         }
     }
 

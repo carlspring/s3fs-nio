@@ -176,6 +176,7 @@ public class S3FileSystemProvider
 
     private Cache cache = new Cache();
 
+    private final Object mutex = new Object();
 
     @Override
     public String getScheme()
@@ -187,32 +188,36 @@ public class S3FileSystemProvider
     public FileSystem newFileSystem(URI uri,
                                     Map<String, ?> env)
     {
-        validateUri(uri);
-
-        // get properties for the env or properties or system
-        Properties props = getProperties(uri, env);
-
-        validateProperties(props);
-
-        // try to get the filesystem by the key
-        String key = getFileSystemKey(uri, props);
-        if (fileSystems.containsKey(key))
+        synchronized (mutex)
         {
-            String safeName = uri.getScheme() + "://";
-            String userInfo = uri.getUserInfo();
-            if(userInfo != null) {
-                safeName += uri.getUserInfo().split(":")[0] + ":__REDACTED__@";
+            validateUri(uri);
+
+            // get properties for the env or properties or system
+            Properties props = getProperties(uri, env);
+
+            validateProperties(props);
+
+            // try to get the filesystem by the key
+            String key = getFileSystemKey(uri, props);
+            if (fileSystems.containsKey(key))
+            {
+                String safeName = uri.getScheme() + "://";
+                String userInfo = uri.getUserInfo();
+                if (userInfo != null)
+                {
+                    safeName += uri.getUserInfo().split(":")[0] + ":__REDACTED__@";
+                }
+                safeName += uri.getHost() + (uri.getPort() > -1 ? ":" + uri.getPort() : "") + uri.getPath();
+                throw new FileSystemAlreadyExistsException("File system " + safeName + " already exists");
             }
-            safeName += uri.getHost() + (uri.getPort() > -1 ? ":" + uri.getPort() : "" ) + uri.getPath();
-            throw new FileSystemAlreadyExistsException("File system " + safeName + " already exists");
+
+            // create the filesystem with the final properties, store and return
+            S3FileSystem fileSystem = createFileSystem(uri, props);
+
+            fileSystems.put(fileSystem.getKey(), fileSystem);
+
+            return fileSystem;
         }
-
-        // create the filesystem with the final properties, store and return
-        S3FileSystem fileSystem = createFileSystem(uri, props);
-
-        fileSystems.put(fileSystem.getKey(), fileSystem);
-
-        return fileSystem;
     }
 
     private void validateProperties(Properties props)
