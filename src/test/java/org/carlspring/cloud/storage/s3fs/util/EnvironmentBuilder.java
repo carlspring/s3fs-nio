@@ -1,6 +1,8 @@
 package org.carlspring.cloud.storage.s3fs.util;
 
-import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -11,15 +13,10 @@ import java.net.URL;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
-
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.MINIO_GLOBAL_URI_IT;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 
 /**
@@ -180,18 +177,7 @@ public abstract class EnvironmentBuilder
             final String secretKey = (String) env.get(SECRET_KEY);
             final String region = (String) env.get(REGION);
 
-            URI s3Uri;
-
-            // When we're running -Pit-s3 - proceed as usual.
-            if(!BaseIntegrationTest.isMinioEnv())
-            {
-                s3Uri = region != null ? URI.create(String.format(S3_REGION_URI_IT, region)) : s3GlobalUri;
-            }
-            // When we're running -Pit-minio - overwrite any region configuration to localhost:9000 where minio is running.
-            else
-            {
-                s3Uri = MINIO_GLOBAL_URI_IT;
-            }
+            URI s3Uri = region != null ? URI.create(String.format(S3_REGION_URI_IT, region)) : s3GlobalUri;
 
             return new URIBuilder(s3Uri).setUserInfo(accessKey, secretKey)
                                         .build();

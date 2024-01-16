@@ -1,8 +1,8 @@
 package org.carlspring.cloud.storage.s3fs.spike;
 
+import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.MinioIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
-import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 
 import java.util.Map;

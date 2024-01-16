@@ -109,6 +109,100 @@ sonarqube {
     }
 }
 
+testing {
+    suites {
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter()
+            targets {
+                all {
+                    testTask.configure {
+                        filter {
+                            isFailOnNoMatchingTests = true
+                        }
+                    }
+                }
+            }
+        }
+
+        val testIntegrationSequential by register<JvmTestSuite>("testIntegrationSequential") {
+            dependencies {
+                implementation(project())
+            }
+
+            configurations.getting {
+                extendsFrom(configurations.compileOnly.get())
+                extendsFrom(configurations.runtimeOnly.get())
+                extendsFrom(configurations.implementation.get())
+            }
+
+            // Make sure the test classpath includes the test classpath
+            val srcSet = sourceSets.named(this.name).get()
+            srcSet.compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+            srcSet.runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+
+            targets {
+                all {
+                    testTask.configure {
+                        filter {
+                            isFailOnNoMatchingTests = true
+                        }
+                        tasks.named("check").get().dependsOn(this)
+                        mustRunAfter(test)
+                    }
+                }
+            }
+        }
+
+        register<JvmTestSuite>("testIntegrationParallel") {
+            dependencies {
+                implementation(project())
+            }
+
+            configurations.getting {
+                extendsFrom(configurations.compileOnly.get())
+                extendsFrom(configurations.runtimeOnly.get())
+                extendsFrom(configurations.implementation.get())
+            }
+
+            // Make sure the test classpath includes the test classpath
+            val srcSet = sourceSets.named(this.name).get()
+            srcSet.compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+            srcSet.runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output + sourceSets.test.get().compileClasspath
+
+            targets {
+                all {
+                    testTask.configure {
+
+                        val cpus = Runtime.getRuntime().availableProcessors();
+                        var forks = cpus
+
+                        if(cpus - 2 > 0) {
+                            forks = cpus - 2
+                        }
+
+                        group = "verification"
+                        description = "Run parallel integration tests using S3"
+
+                        // Creates half as many forks as there are CPU cores.
+                        maxParallelForks = forks
+
+                        systemProperties["junit.jupiter.execution.parallel.enabled"] = true
+                        systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
+                        systemProperties["junit.jupiter.execution.parallel.mode.classes.default"] = "concurrent"
+
+                        filter {
+                            isFailOnNoMatchingTests = true
+                        }
+
+                        tasks.named("check").get().dependsOn(this)
+                        mustRunAfter(testIntegrationSequential)
+                    }
+                }
+            }
+        }
+    }
+}
+
 tasks {
 
     withType<JavaCompile>().configureEach {
@@ -118,6 +212,10 @@ tasks {
 
     withType<Javadoc> {
         options.encoding = "UTF-8"
+    }
+
+    withType<Test> {
+        defaultCharacterEncoding = "UTF-8"
     }
 
     named<Jar>("jar") {
@@ -159,62 +257,6 @@ tasks {
 
     named<Task>("sonarqube") {
         group = "sonar"
-    }
-
-    named<Test>("test") {
-        description = "Run unit tests"
-        useJUnitPlatform {
-            filter {
-                excludeTestsMatching("*IT")
-            }
-        }
-    }
-
-    withType<Test> {
-        defaultCharacterEncoding = "UTF-8"
-    }
-
-    create<Test>("it-s3") {
-
-        val cpus = Runtime.getRuntime().availableProcessors();
-        var forks = cpus;
-        if(cpus - 2 > 0) {
-            forks = cpus - 2
-        }
-
-        group = "verification"
-        description = "Run integration tests using S3"
-        // Creates half as many forks as there are CPU cores.
-        maxParallelForks = forks
-
-        systemProperties["junit.jupiter.execution.parallel.enabled"] = true
-        systemProperties["junit.jupiter.execution.parallel.mode.default"] = "concurrent"
-        systemProperties["junit.jupiter.execution.parallel.mode.classes.default"] = "concurrent"
-
-        useJUnitPlatform {
-            filter {
-                includeTestsMatching("*IT")
-                includeTags("it-s3")
-            }
-        }
-        mustRunAfter(named("test"))
-    }
-
-    // TODO: There are some problems with using minio that overcomplicate the setup.
-    //       For the time being we'll be disabling it until we figure out the best path forward.
-//    create<Test>("it-minio") {
-//        group = "verification"
-//        description = "Run integration tests using Minio"
-//        useJUnitPlatform {
-//            filter {
-//                includeTestsMatching("*IT")
-//                includeTags("it-minio")
-//            }
-//        }
-//    }
-
-    named<Task>("check") {
-        dependsOn(named("it-s3"))
     }
 
     withType<Sign> {

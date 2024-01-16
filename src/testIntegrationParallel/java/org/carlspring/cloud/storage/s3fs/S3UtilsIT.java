@@ -6,6 +6,7 @@ import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.CopyDirVisitor;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.UUID;
 
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -39,14 +39,14 @@ class S3UtilsIT extends BaseIntegrationTest
 
     private static final String bucket = EnvironmentBuilder.getBucket();
 
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
+    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3EndpointConstant.S3_GLOBAL_URI_IT);
 
     private static FileSystem provisionedFileSystem;
 
     @BeforeAll
     public static void setup() throws IOException
     {
-        provisionedFileSystem = provisionFilesystem(uriGlobal);
+        provisionedFileSystem = BaseTest.provisionFilesystem(uriGlobal);
     }
 
     @Test

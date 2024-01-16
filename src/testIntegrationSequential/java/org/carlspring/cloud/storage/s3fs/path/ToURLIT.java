@@ -1,10 +1,12 @@
 package org.carlspring.cloud.storage.s3fs.path;
 
+import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.S3FileSystemProvider;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.junit.annotations.S3IntegrationTest;
-import org.carlspring.cloud.storage.s3fs.BaseIntegrationTest;
 import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
+import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URI;
@@ -15,12 +17,9 @@ import java.nio.file.FileSystems;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_IT;
-import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_REGION_URI_IT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -28,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class ToURLIT extends BaseIntegrationTest
 {
 
-    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3_GLOBAL_URI_IT);
+    private static final URI uriGlobal = EnvironmentBuilder.getS3URI(S3EndpointConstant.S3_GLOBAL_URI_IT);
 
     private static final Map<String, Object> realEnv = EnvironmentBuilder.getRealEnv();
 
@@ -52,7 +51,9 @@ class ToURLIT extends BaseIntegrationTest
         }
         catch (FileSystemAlreadyExistsException e)
         {
-            return FileSystems.getFileSystem(uriGlobal);
+            FileSystems.getFileSystem(uriGlobal).close();
+
+            return FileSystems.newFileSystem(uriGlobal, env);
         }
     }
 
@@ -106,7 +107,7 @@ class ToURLIT extends BaseIntegrationTest
     private String getHost(final String bucketName)
     {
         final String region = (String) realEnv.get(REGION);
-        final URI uriWithRegion = URI.create(String.format(S3_REGION_URI_IT, region));
+        final URI uriWithRegion = URI.create(String.format(S3EndpointConstant.S3_REGION_URI_IT, region));
         if(bucketName != null){
             return String.format("%s.%s", bucketName, uriWithRegion.getHost());
         }

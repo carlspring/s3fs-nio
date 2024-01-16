@@ -40,7 +40,7 @@ class S3ClientIT extends BaseIntegrationTest
     public void setup()
     {
         // s3client
-        final Map<String, Object> credentials = getRealEnv();
+        final Map<String, Object> credentials = EnvironmentBuilder.getRealEnv();
 
         final AwsCredentials credentialsS3 = AwsBasicCredentials.create(credentials.get(ACCESS_KEY).toString(),
                                                                         credentials.get(SECRET_KEY).toString());
