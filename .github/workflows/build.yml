@@ -21,6 +21,7 @@ on:
     branches:
       - master
       - pipeline
+      - issues/parallel-integration-test-execution
     # Ignore documentation changes (Netlify will handle this)
     paths-ignore:
       - 'docs/**'
