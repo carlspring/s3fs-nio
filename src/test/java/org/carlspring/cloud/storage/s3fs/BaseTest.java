@@ -1,17 +1,26 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import org.carlspring.cloud.storage.s3fs.util.EnvironmentBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 
 import static java.util.UUID.randomUUID;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 
 /**
  * This test is meant to hold common test case logic which can be used in general for unit and integration tests.
@@ -20,6 +29,8 @@ public abstract class BaseTest
 {
 
     public static final String PR_NUMBER_ENV_VAR = "PR_NUMBER";
+
+    protected static final Object mutex = new Object();
 
     /**
      * This is a helper method which can be used to generate "base" paths so that the created resources in S3 / MinIO
@@ -157,5 +168,50 @@ public abstract class BaseTest
     {
         return new TargetLengthBasedClassNameAbbreviator(5).abbreviate(fqClassName);
     }
+
+    protected static FileSystem createNewFileSystem(URI uri)
+            throws IOException
+    {
+        HashMap<String, Object> env = new HashMap<>(EnvironmentBuilder.getRealEnv());
+        if(!env.containsKey(S3Factory.REQUEST_HEADER_CACHE_CONTROL)) {
+            env.put(S3Factory.REQUEST_HEADER_CACHE_CONTROL, "no-cache");
+        }
+        return createNewFileSystem(uri, env);
+    }
+
+    protected static FileSystem createNewFileSystem(URI uri, HashMap<String, Object> env)
+            throws IOException
+    {
+        if(!env.containsKey(S3Factory.REQUEST_HEADER_CACHE_CONTROL)) {
+            env.put(S3Factory.REQUEST_HEADER_CACHE_CONTROL, "no-cache");
+        }
+
+        return FileSystems.newFileSystem(uri, env, Thread.currentThread().getContextClassLoader());
+    }
+
+
+    protected static FileSystem provisionFilesystem(URI uri) throws IOException
+    {
+        return provisionFilesystem(uri, new HashMap<>(EnvironmentBuilder.getRealEnv()));
+    }
+
+    protected static FileSystem provisionFilesystem(URI uri, HashMap<String, Object> env) throws IOException
+    {
+        synchronized (mutex) {
+            // TODO: Do we really  need this?
+            System.clearProperty(S3FileSystemProvider.S3_FACTORY_CLASS);
+            System.clearProperty(ACCESS_KEY);
+            System.clearProperty(SECRET_KEY);
+            try(FileSystem fileSystem = FileSystems.getFileSystem(uri))
+            {
+                return fileSystem;
+            }
+            catch (FileSystemNotFoundException e)
+            {
+                 return createNewFileSystem(uri, env);
+            }
+        }
+    }
+
 
 }
