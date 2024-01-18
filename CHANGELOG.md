@@ -1,5 +1,30 @@
 # Changelog
 
+## [1.0.4](https://github.com/carlspring/s3fs-nio/compare/v1.0.3...v1.0.4) (2024-01-18)
+
+
+### Dependencies
+
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.3.11 to 1.3.14 ([#780](https://github.com/carlspring/s3fs-nio/issues/780)) ([81657b3](https://github.com/carlspring/s3fs-nio/commit/81657b375b085378a796765c1004a63ebd3a1725))
+* **upgrade:** bump com.adarshr.test-logger from 3.2.0 to 4.0.0 ([#763](https://github.com/carlspring/s3fs-nio/issues/763)) ([0647085](https://github.com/carlspring/s3fs-nio/commit/06470850312e2fb1d18e8013312f7698478e6f1e))
+* **upgrade:** bump com.github.marschall:memoryfilesystem ([#782](https://github.com/carlspring/s3fs-nio/issues/782)) ([288522d](https://github.com/carlspring/s3fs-nio/commit/288522d7977cc353cdd65d43b8c5449d56615725))
+* **upgrade:** bump com.google.guava:guava from 30.1.1-jre to 33.0.0-jre ([#772](https://github.com/carlspring/s3fs-nio/issues/772)) ([6ef72b8](https://github.com/carlspring/s3fs-nio/commit/6ef72b88c1900ebaa35d44c2a7bc929043e646e8))
+* **upgrade:** bump org.apache.commons:commons-lang3 ([#779](https://github.com/carlspring/s3fs-nio/issues/779)) ([3b5b403](https://github.com/carlspring/s3fs-nio/commit/3b5b403f6755df2d75de35fd82d5b4e24a0cfe17))
+* **upgrade:** bump org.apache.tika:tika-core from 2.9.0 to 2.9.1 ([#766](https://github.com/carlspring/s3fs-nio/issues/766)) ([6beccd8](https://github.com/carlspring/s3fs-nio/commit/6beccd8aa11a4d3b9abd57b99aedf4b22f99e669))
+* **upgrade:** bump org.assertj:assertj-core from 3.24.2 to 3.25.1 ([#781](https://github.com/carlspring/s3fs-nio/issues/781)) ([14fd8a1](https://github.com/carlspring/s3fs-nio/commit/14fd8a17f3f050169b6492735946dc5c1f34158b))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter ([#767](https://github.com/carlspring/s3fs-nio/issues/767)) ([073716a](https://github.com/carlspring/s3fs-nio/commit/073716af43d597d80e6e20d69e38e96750b575d7))
+* **upgrade:** bump org.testcontainers:testcontainers ([#770](https://github.com/carlspring/s3fs-nio/issues/770)) ([d1d984e](https://github.com/carlspring/s3fs-nio/commit/d1d984e0aae5b91601585057867f0cb0d188e1df))
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v1.0.4 ([#773](https://github.com/carlspring/s3fs-nio/issues/773)) ([eaf8607](https://github.com/carlspring/s3fs-nio/commit/eaf8607468c64f508f8a4c276e20035b28dadac9))
+
+
+### Build System
+
+* Fix publishing snapshots for master branch. ([#778](https://github.com/carlspring/s3fs-nio/issues/778)) ([73a8901](https://github.com/carlspring/s3fs-nio/commit/73a89019297816636989de1b46b4cf78cab2906a))
+
 ## [1.0.3](https://github.com/carlspring/s3fs-nio/compare/v1.0.2...v1.0.3) (2023-10-24)
 
 

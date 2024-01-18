@@ -100,7 +100,7 @@ extra:
   POM_GROUP_ID: org.carlspring.cloud.aws
   POM_ARTIFACT_ID: s3fs-nio
   ## {x-release-please-start-version}
-  POM_VERSION: "1.0.4-SNAPSHOT"
+  POM_VERSION: "1.0.4"
   ## {x-release-please-end}
 
 nav:
