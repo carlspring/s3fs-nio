@@ -61,7 +61,7 @@ dependencies {
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.mockito:mockito-inline:4.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:4.11.0")
-    testImplementation("org.testcontainers:testcontainers:1.19.3")
+    testImplementation("org.testcontainers:testcontainers:1.19.4")
     testImplementation("org.assertj:assertj-core:3.25.1")
 }
 
