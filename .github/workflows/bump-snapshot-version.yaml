@@ -55,7 +55,7 @@ jobs:
           sed -Ei 's/POM_VERSION:.*/POM_VERSION: "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/mkdocs.y*ml
 
       - name: Create PR
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         id: pr
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
