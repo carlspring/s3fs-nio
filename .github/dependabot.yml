@@ -8,6 +8,14 @@ updates:
   - package-ecosystem: "gradle"
     directory: "/" # Location of package manifests
     schedule:
-      interval: "weekly"
+      # Check for updates to Gradle dependencies every day
+      interval: "daily"
+    commit-message:
+      prefix: deps(upgrade)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      # Check for updates to GitHub Actions every day
+      interval: "daily"
     commit-message:
       prefix: deps(upgrade)
