@@ -7,19 +7,43 @@ docs_dir: content
 
 theme:
   name: material
-  custom_dir: 'theme'
   icon:
-    repo: fontawesome/brands/github-alt
+    repo: fontawesome/brands/github
 
   font:
     text: Roboto
     code: Roboto Mono
 
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      primary: indigo
+      scheme: default
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
+
   features:
-    - search.highlight
+    - announce.dismiss
+    - content.tooltips
     - meta
-    # Instant should be disabled because of a bug - not redirecting pages.
-    #- instant
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
     - tabs
 
 plugins:
@@ -32,17 +56,18 @@ plugins:
 #      debug: true
   # This plugin should be AFTER mkdocs-pom-parser-plugin until issue is fixed.
   # https://github.com/rosscdh/mkdocs-markdownextradata-plugin/issues/26
-  - markdownextradata: {}
+#  - markdownextradata: {}
   - minify:
       minify_html: true
 
 markdown_extensions:
   - admonition
   - attr_list
+  - footnotes
   - meta
-  - mdx_gh_links
-  - mdx_include:
-      base_path: ./content
+#  - mdx_gh_links
+#  - mdx_include:
+#      base_path: ./content
   - toc:
       permalink: true
   - pymdownx.extra
@@ -61,9 +86,6 @@ markdown_extensions:
   - pymdownx.caret
   - pymdownx.critic
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
   - pymdownx.highlight
   - pymdownx.inlinehilite
   - pymdownx.keys
@@ -93,10 +115,10 @@ extra:
   repo_url: *repo_url
   chat_url: &chat_url https://chat.carlspring.org/channel/s3fs-nio-community
   social:
-  - icon: fontawesome/brands/github-alt
-    link: *repo_url
-  - icon: fontawesome/brands/rocketchat
-    link: *chat_url
+    - icon: fontawesome/brands/github-alt
+      link: *repo_url
+    - icon: fontawesome/brands/rocketchat
+      link: *chat_url
   POM_GROUP_ID: org.carlspring.cloud.aws
   POM_ARTIFACT_ID: s3fs-nio
   ## {x-release-please-start-version}
@@ -105,32 +127,32 @@ extra:
 
 nav:
   - Home:
-    - Getting Started: index.md
-    - History: history.md
-    - Versioning and Releases: versioning.md
-    - License: license.md
+      - Getting Started: index.md
+      - History: history.md
+      - Versioning and Releases: versioning.md
+      - License: license.md
   - Contributing:
-    - Getting Started: contributing/index.md
-    - Code of Conduct: contributing/code-of-conduct.md
-    - Coding Conventions: contributing/developer-guide/coding-convention.md
-    - Guides:
-      - Developers: contributing/developer-guide/index.md
-      - Security Advisers: contributing/security-advisers.md
-      - Writing Documentation: contributing/writing-documentation.md
-    - Legal:
-        - Overview: contributing/legal/index.md
-        - Licenses:
-          - Apache 2.0: contributing/legal/license-Apache-2.0.md
-          - MIT: contributing/legal/license-MIT.md
-        - ICLA: contributing/legal/ICLA.md
-    - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
-    - Who Can Help And How: ./contributing/who-can-help-and-how.md
+      - Getting Started: contributing/index.md
+      - Code of Conduct: contributing/code-of-conduct.md
+      - Coding Conventions: contributing/developer-guide/coding-convention.md
+      - Guides:
+          - Developers: contributing/developer-guide/index.md
+          - Security Advisers: contributing/security-advisers.md
+          - Writing Documentation: contributing/writing-documentation.md
+      - Legal:
+          - Overview: contributing/legal/index.md
+          - Licenses:
+              - Apache 2.0: contributing/legal/license-Apache-2.0.md
+              - MIT: contributing/legal/license-MIT.md
+          - ICLA: contributing/legal/ICLA.md
+      - Pull Request Guidelines: ./contributing/pull-request-guidelines.md
+      - Who Can Help And How: ./contributing/who-can-help-and-how.md
   - Reference:
-    - Configuration Options: reference/configuration-options.md
-    - Examples:
-      - Basic Example: reference/examples/basic-example.md
-      - MINA Example: reference/examples/mina-example.md
-      - Spring Example: reference/examples/spring-example.md
+      - Configuration Options: reference/configuration-options.md
+      - Examples:
+          - Basic Example: reference/examples/basic-example.md
+          - MINA Example: reference/examples/mina-example.md
+          - Spring Example: reference/examples/spring-example.md
 #  - Changelog:
 #      - Release notes:
 #        - master: changelog/release/notes-master.md
@@ -139,8 +161,3 @@ nav:
 #        - master: changelog/upgrading/master.md
   - Join chat:
       - Redirect: chat.md
-
-# Google Analytics
-google_analytics:
-  - !!python/object/apply:os.getenv ["GOOGLE_ANALYTICS_KEY"]
-  - auto
