@@ -52,7 +52,7 @@ jobs:
 
       # Add reaction to the comment
       - name: Add success reaction
-        uses: peter-evans/create-or-update-comment@v2
+        uses: peter-evans/create-or-update-comment@v4
         if: ${{ success() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -62,7 +62,7 @@ jobs:
 
       # Add comment (for historic reasons)
       - name: Add success comment
-        uses: peter-evans/create-or-update-comment@v2
+        uses: peter-evans/create-or-update-comment@v4
         if: ${{ success() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -85,7 +85,7 @@ jobs:
             This is a temporary snapshot preview available only for convenience.
 
       - name: Add failure response
-        uses: peter-evans/create-or-update-comment@v2
+        uses: peter-evans/create-or-update-comment@v4
         if: ${{ failure() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
