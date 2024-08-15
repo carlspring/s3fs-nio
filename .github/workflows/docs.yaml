@@ -44,7 +44,7 @@ jobs:
 
       - name: Build docks
         working-directory: docs
-        run: docker-compose run build
+        run: docker compose run build
 
       - name: Publish
         working-directory: docs
