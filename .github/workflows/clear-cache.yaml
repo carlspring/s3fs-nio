@@ -13,6 +13,6 @@ jobs:
     name: Clear cache
     runs-on: ubuntu-latest
     steps:
-      - uses: MyAlbum/purge-cache@v1
+      - uses: MyAlbum/purge-cache@v2
         with:
           max-age: 1
