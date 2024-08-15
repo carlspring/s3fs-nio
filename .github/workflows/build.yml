@@ -78,8 +78,6 @@ jobs:
         with:
           # The Gradle wrapper's version (already the default, putting it here to clarity)
           gradle-version: wrapper
-          # Removing unused files from Gradle User Home before saving to cache (i.e. older versions of gradle)
-          gradle-home-cache-cleanup: true
           # Cache downloaded JDKs in addition to the default directories.
           gradle-home-cache-includes: |
             caches
