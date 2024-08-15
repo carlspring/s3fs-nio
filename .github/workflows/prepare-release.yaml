@@ -17,7 +17,7 @@ jobs:
       ${{ (github.triggering_actor == 'carlspring' || github.triggering_actor == 'steve-todorov') == true }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: 'master'
           fetch-depth: 1
