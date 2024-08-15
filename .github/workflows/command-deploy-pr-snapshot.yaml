@@ -27,7 +27,7 @@ jobs:
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
         with:
           # The Gradle wrapper's version (already the default, putting it here to clarity)
           gradle-version: wrapper
