@@ -68,7 +68,7 @@ jobs:
           fetch-depth: '0' # 0 because of sonar needs git blame.
 
       - name: Setup Java ${{ matrix.java }}
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
           distribution: "temurin"
