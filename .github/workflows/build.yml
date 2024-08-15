@@ -83,6 +83,10 @@ jobs:
             caches
             notifications
             jdks
+          build-scan-publish: true
+          build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
+          build-scan-terms-of-use-agree: "yes"
+
 
       - name: Check if code is eligible for deploying snapshot version
         id: deploy_check
@@ -128,7 +132,7 @@ jobs:
           S3FS_SECRET_KEY: ${{ secrets.S3FS_SECRET_KEY }}
           S3FS_REGION: ${{ secrets.S3FS_REGION }}
           S3FS_PROTOCOL: "https"
-        run: ./gradlew build jacocoTestReport -PwithSignature=${{ fromJSON(steps.deploy_check.outputs.result).is_deployable }} --warn --stacktrace
+        run: ./gradlew build jacocoTestReport -PwithSignature=${{ fromJSON(steps.deploy_check.outputs.result).is_deployable }} --warn --stacktrace --scan
 
       - name: Publish code analysis to Sonarcloud
         # [WARNING] The version of Java (11.0.21) you have used to run this analysis is deprecated and we will stop accepting it soon. Please update to at least Java 17.
