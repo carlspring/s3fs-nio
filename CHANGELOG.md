@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.0.5](https://github.com/carlspring/s3fs-nio/compare/v1.0.4...v1.0.5) (2024-08-28)
+
+
+### Features
+
+* Add support for JDK 21 ([#830](https://github.com/carlspring/s3fs-nio/issues/830)) ([da057ec](https://github.com/carlspring/s3fs-nio/commit/da057ec993624dcc841e7acee59c20dbb629f45d))
+
+
+### Dependencies
+
+* **upgrade:** bump actions/checkout from 3 to 4 ([#795](https://github.com/carlspring/s3fs-nio/issues/795)) ([653655a](https://github.com/carlspring/s3fs-nio/commit/653655ae008236ab35ab26c7b66b727265b5881c))
+* **upgrade:** bump actions/github-script from 6 to 7 ([#796](https://github.com/carlspring/s3fs-nio/issues/796)) ([d2a7e2e](https://github.com/carlspring/s3fs-nio/commit/d2a7e2ec3a9caa7e296fbad33c113e2d374af4c0))
+* **upgrade:** bump actions/setup-java from 3 to 4 ([#793](https://github.com/carlspring/s3fs-nio/issues/793)) ([be5e3eb](https://github.com/carlspring/s3fs-nio/commit/be5e3eb5a53ace38efb870d2ca6766f6fcfcc9a7))
+* **upgrade:** bump actions/setup-node from 3 to 4 ([#815](https://github.com/carlspring/s3fs-nio/issues/815)) ([aa4d74a](https://github.com/carlspring/s3fs-nio/commit/aa4d74a0ae31c7003183f1023037ab34a78592fa))
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.3.14 to 1.5.7 ([#821](https://github.com/carlspring/s3fs-nio/issues/821)) ([3a17a50](https://github.com/carlspring/s3fs-nio/commit/3a17a5051be1adfe8b86b5dcf2e1316a5e0f794e))
+* **upgrade:** bump com.google.guava:guava from 33.0.0-jre to 33.2.1-jre ([#825](https://github.com/carlspring/s3fs-nio/issues/825)) ([4a61c19](https://github.com/carlspring/s3fs-nio/commit/4a61c19091b7e2efa426500463dfe9ebdcadfa48))
+* **upgrade:** bump com.google.guava:guava from 33.2.1-jre to 33.3.0-jre ([#828](https://github.com/carlspring/s3fs-nio/issues/828)) ([2873074](https://github.com/carlspring/s3fs-nio/commit/28730745bc584c802d38ffda621f7448d32bf38f))
+* **upgrade:** bump crazy-max/ghaction-import-gpg from 5 to 6 ([#818](https://github.com/carlspring/s3fs-nio/issues/818)) ([df33e3d](https://github.com/carlspring/s3fs-nio/commit/df33e3d96a34ddc1bc1f17d48f0ca4bdb314a774))
+* **upgrade:** bump github/codeql-action from 2 to 3 ([#819](https://github.com/carlspring/s3fs-nio/issues/819)) ([4847175](https://github.com/carlspring/s3fs-nio/commit/484717564e57996cacc2ba58ac7d9a95317e2d88))
+* **upgrade:** bump Gradle from 8.1.1 to 8.10 ([#827](https://github.com/carlspring/s3fs-nio/issues/827)) ([34ce5e2](https://github.com/carlspring/s3fs-nio/commit/34ce5e28c9d08ac6e9095907804f3556c768a016))
+* **upgrade:** bump gradle/actions from 3 to 4 ([#814](https://github.com/carlspring/s3fs-nio/issues/814)) ([b9566b1](https://github.com/carlspring/s3fs-nio/commit/b9566b1061d60a32f402f4e23ee8e4f6f0121387))
+* **upgrade:** bump gradle/gradle-build-action from 2 to 3 ([#794](https://github.com/carlspring/s3fs-nio/issues/794)) ([b4fecbf](https://github.com/carlspring/s3fs-nio/commit/b4fecbf02f0f6c71942a8ebf3a8ac9911a4f1923))
+* **upgrade:** bump MyAlbum/purge-cache from 1 to 2 ([#817](https://github.com/carlspring/s3fs-nio/issues/817)) ([609c50d](https://github.com/carlspring/s3fs-nio/commit/609c50d29823040d62621cd50a6eaa0907a471ba))
+* **upgrade:** bump org.apache.commons:commons-lang3 ([#826](https://github.com/carlspring/s3fs-nio/issues/826)) ([ffb053f](https://github.com/carlspring/s3fs-nio/commit/ffb053fa1f25542515b3e9c3f7723e2fdc1322c2))
+* **upgrade:** bump org.apache.tika:tika-core from 2.9.1 to 2.9.2 ([#823](https://github.com/carlspring/s3fs-nio/issues/823)) ([023de3f](https://github.com/carlspring/s3fs-nio/commit/023de3fe3c2268e711ec5379ebeeb6bd358eaf27))
+* **upgrade:** bump org.assertj:assertj-core from 3.25.1 to 3.26.3 ([#806](https://github.com/carlspring/s3fs-nio/issues/806)) ([8881b55](https://github.com/carlspring/s3fs-nio/commit/8881b554a2c2f8c0b73188909368225f6e2461ab))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter ([#809](https://github.com/carlspring/s3fs-nio/issues/809)) ([0d2a94d](https://github.com/carlspring/s3fs-nio/commit/0d2a94d30b2d14b9fe3beb185b5f5f57872a44b4))
+* **upgrade:** bump org.sonarqube from 4.0.0.2929 to 5.1.0.4882 ([#822](https://github.com/carlspring/s3fs-nio/issues/822)) ([c61f20e](https://github.com/carlspring/s3fs-nio/commit/c61f20e23455897eaeaaa8ade57044d960f8b63f))
+* **upgrade:** bump org.testcontainers:testcontainers ([#805](https://github.com/carlspring/s3fs-nio/issues/805)) ([fe032ae](https://github.com/carlspring/s3fs-nio/commit/fe032ae61f007ac9a2382e866bc287de0e3a93d3))
+* **upgrade:** bump peter-evans/create-or-update-comment from 2 to 4 ([#816](https://github.com/carlspring/s3fs-nio/issues/816)) ([d773d3e](https://github.com/carlspring/s3fs-nio/commit/d773d3ea3bde7398e2961f1144872bd89626ad86))
+* **upgrade:** bump peter-evans/create-pull-request from 5 to 6 ([#797](https://github.com/carlspring/s3fs-nio/issues/797)) ([025992b](https://github.com/carlspring/s3fs-nio/commit/025992b992b69fca195f8279227c1175e0da7fcd))
+* **upgrade:** bump peter-evans/slash-command-dispatch from 3 to 4 ([#820](https://github.com/carlspring/s3fs-nio/issues/820)) ([e64e82f](https://github.com/carlspring/s3fs-nio/commit/e64e82f9581a9049b2655022b81b68019f246b4d))
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v1.0.5 ([#810](https://github.com/carlspring/s3fs-nio/issues/810)) ([e25c4ff](https://github.com/carlspring/s3fs-nio/commit/e25c4ff0d8057f2c3266df9d77ef2c1ee637e351))
+
+
+### Build System
+
+* Fix Sonar reports. ([#832](https://github.com/carlspring/s3fs-nio/issues/832)) ([68df9f0](https://github.com/carlspring/s3fs-nio/commit/68df9f0dccca36b728ff2d273f9882fa4ecd58e1))
+* Migrate to docker compose instead of deprecated docker-compose ([#813](https://github.com/carlspring/s3fs-nio/issues/813)) ([97f6929](https://github.com/carlspring/s3fs-nio/commit/97f6929ecbbafa3037c502691cd4e9fad73520d4))
+
 ## [1.0.4](https://github.com/carlspring/s3fs-nio/compare/v1.0.3...v1.0.4) (2024-01-18)
 
 
