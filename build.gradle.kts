@@ -92,6 +92,9 @@ sonarqube {
         property("sonar.token", project.findProperty("s3fs.publish.sonar.token") ?: System.getenv("S3FS_PUBLISH_SONAR_TOKEN") ?: System.getenv("SONAR_TOKEN") as String)
         property("sonar.java.target", java.targetCompatibility)
 
+        val junitReports = project.layout.buildDirectory.asFile.get().resolve("test-results")
+        property("sonar.junit.reportsPath", arrayListOf(junitReports.resolve("test"), junitReports.resolve("it-s3")).joinToString(","))
+
         val branch = project.findProperty("s3fs.publish.sonar.branch") ?: System.getenv("S3FS_PUBLISH_SONAR_BRANCH")
         val prNumber = project.findProperty("s3fs.publish.sonar.pr.number") ?: System.getenv("S3FS_PUBLISH_SONAR_PR_NUMBER")
         val prBranch = project.findProperty("s3fs.publish.sonar.pr.branch") ?: System.getenv("S3FS_PUBLISH_SONAR_PR_BRANCH")
@@ -163,6 +166,7 @@ tasks {
 
     named<Test>("test") {
         description = "Run unit tests"
+        outputs.upToDateWhen { false }
         useJUnitPlatform {
             filter {
                 excludeTestsMatching("*IT")
