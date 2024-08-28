@@ -1,6 +1,8 @@
 package org.carlspring.cloud.storage.s3fs.attribute;
 
 import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.attribute.*;
@@ -11,6 +13,7 @@ public class S3PosixFileAttributeView
         implements PosixFileAttributeView
 {
 
+    private static final Logger log = LoggerFactory.getLogger(S3PosixFileAttributeView.class);
     private S3Path s3Path;
 
     private PosixFileAttributes posixFileAttributes;
@@ -44,25 +47,29 @@ public class S3PosixFileAttributeView
     @Override
     public void setOwner(UserPrincipal owner)
     {
-        throw new UnsupportedOperationException();
+        // TODO: Implement
+        log.debug(getClass() + "#setOwner() is not supported yet.");
     }
 
     @Override
     public void setPermissions(Set<PosixFilePermission> perms)
     {
-        throw new UnsupportedOperationException();
+        // TODO: Implement
+        log.debug(getClass() + "#setPermissions() is not supported yet.");
     }
 
     @Override
     public void setGroup(GroupPrincipal group)
     {
-        throw new UnsupportedOperationException();
+        // TODO: Implement
+        log.debug(getClass() + "#setGroup() is not supported yet.");
     }
 
     @Override
     public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime)
     {
-        // TODO: Not implemented
+        // TODO: Implement
+        log.debug(getClass() + "#setTimes() is not supported yet.");
     }
 
     public PosixFileAttributes read()
