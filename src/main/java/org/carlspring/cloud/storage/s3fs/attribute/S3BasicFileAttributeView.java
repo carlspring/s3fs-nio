@@ -1,6 +1,8 @@
 package org.carlspring.cloud.storage.s3fs.attribute;
 
 import org.carlspring.cloud.storage.s3fs.S3Path;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.attribute.BasicFileAttributeView;
@@ -11,6 +13,7 @@ public class S3BasicFileAttributeView
         implements BasicFileAttributeView
 {
 
+    private static final Logger log = LoggerFactory.getLogger(S3BasicFileAttributeView.class);
     private S3Path s3Path;
 
 
@@ -37,7 +40,8 @@ public class S3BasicFileAttributeView
                          FileTime lastAccessTime,
                          FileTime createTime)
     {
-        // TODO: Not implemented
+        // TODO: Implement
+        log.debug(getClass() + "#setTimes() is not supported yet.");
     }
 
 }

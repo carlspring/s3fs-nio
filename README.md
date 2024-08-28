@@ -33,7 +33,14 @@ This project provides a complete API implementation, for managing files and fold
 
 ## Compatibility
 
-We support JDK 8, 11 and 17.
+We aim to support only the latest LTS versions. At the moment this includes:
+
+* JDK 8
+* JDK 11
+* JDK 17
+* JDK 21
+
+Please note that although we support JDK 8 we have plans to drop it in one of our next **major** release (most likely `v2.0.0`).
 
 ## Documentation
 

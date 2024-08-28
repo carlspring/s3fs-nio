@@ -54,7 +54,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, windows-latest, macos-latest ]
-        java: [ 11, 17 ]
+        java: [ 11, 17, 21 ]
         #os: [ ubuntu-latest ]
         #java: [ 11 ]
     steps:
@@ -84,7 +84,7 @@ jobs:
             notifications
             jdks
           build-scan-publish: true
-          build-scan-terms-of-use-url: "https://gradle.com/help/legal-terms-of-use"
+          build-scan-terms-of-use-url: "https://gradle.com/terms-of-service"
           build-scan-terms-of-use-agree: "yes"
 
 
@@ -136,7 +136,7 @@ jobs:
 
       - name: Publish code analysis to Sonarcloud
         # [WARNING] The version of Java (11.0.21) you have used to run this analysis is deprecated and we will stop accepting it soon. Please update to at least Java 17.
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '17' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.java == '21' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           S3FS_PUBLISH_SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
