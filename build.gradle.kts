@@ -32,6 +32,7 @@ group = "org.carlspring.cloud.aws"
 val isReleaseVersion = !version.toString().lowercase(Locale.getDefault()).endsWith("snapshot")
 
 java {
+    // Hint for the CodeQL autobuilder: sourceCompatibility = 17
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
