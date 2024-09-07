@@ -29,6 +29,9 @@ on:
       - '.github/workflows/deploy-tag.yaml'
       - '.github/workflows/prepare-release.yaml'
 
+  workflow_dispatch:
+
+
 jobs:
   analyze:
     name: Analyze
