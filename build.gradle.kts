@@ -46,7 +46,7 @@ dependencies {
         exclude("commons-logging", "commons-logging")
     }
     api("software.amazon.awssdk:apache-client")
-    api("com.google.guava:guava:33.3.0-jre")
+    api("com.google.guava:guava:33.3.1-jre")
     api("org.apache.tika:tika-core:2.9.2") {
         exclude("org.slf4j", "slf4j-api")
     }
