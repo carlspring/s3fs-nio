@@ -49,7 +49,8 @@
     Create/load a properties file in your project which defines the following properties:
     
     ```
-    --8<-- "../src/test/resources/amazon-test-sample.properties"
+
+[//]: # (    --8<-- "../src/test/resources/amazon-test-sample.properties")
     ``` 
     
     These properties can also be exported as environment variables.
