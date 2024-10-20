@@ -57,7 +57,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.0")
     testImplementation("org.apache.commons:commons-lang3:3.17.0")
     testImplementation("com.github.marschall:zipfilesystem-standalone:1.0.1")
-    testImplementation("com.github.marschall:memoryfilesystem:2.8.0")
+    testImplementation("com.github.marschall:memoryfilesystem:2.8.1")
     testImplementation("org.mockito:mockito-core:4.11.0")
     testImplementation("org.mockito:mockito-inline:4.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:4.11.0")
