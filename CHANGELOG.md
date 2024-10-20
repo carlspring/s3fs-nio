@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.6](https://github.com/carlspring/s3fs-nio/compare/v1.0.5...v1.0.6) (2024-10-20)
+
+
+### Dependencies
+
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.5.7 to 1.5.11 ([#843](https://github.com/carlspring/s3fs-nio/issues/843)) ([c0a09f1](https://github.com/carlspring/s3fs-nio/commit/c0a09f142169d0b1ef5e94797d8335e9cb7db03f))
+* **upgrade:** bump com.github.marschall:memoryfilesystem ([#837](https://github.com/carlspring/s3fs-nio/issues/837)) ([60c6505](https://github.com/carlspring/s3fs-nio/commit/60c6505623a691498aee914afa4f04c819fdb7b9))
+* **upgrade:** bump com.google.guava:guava from 33.3.0-jre to 33.3.1-jre ([#838](https://github.com/carlspring/s3fs-nio/issues/838)) ([c234719](https://github.com/carlspring/s3fs-nio/commit/c23471995727c7fd6a080c27442ce6e9cebb66bf))
+* **upgrade:** bump org.apache.commons:commons-lang3 ([#833](https://github.com/carlspring/s3fs-nio/issues/833)) ([e1da051](https://github.com/carlspring/s3fs-nio/commit/e1da0517977a33d450c656586405c1a3f67bcd09))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter ([#840](https://github.com/carlspring/s3fs-nio/issues/840)) ([22cfc73](https://github.com/carlspring/s3fs-nio/commit/22cfc73481e39d5da288d038be5428ac77a9de5b))
+* **upgrade:** bump org.testcontainers:testcontainers ([#846](https://github.com/carlspring/s3fs-nio/issues/846)) ([a7e296a](https://github.com/carlspring/s3fs-nio/commit/a7e296ae8decb1fe61a3e11af16568513439832c))
+* **upgrade:** bump peter-evans/create-pull-request from 6 to 7 ([#834](https://github.com/carlspring/s3fs-nio/issues/834)) ([259ebba](https://github.com/carlspring/s3fs-nio/commit/259ebba87fe9f46eeee60f32a30024674d68eaa8))
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v1.0.6 ([#845](https://github.com/carlspring/s3fs-nio/issues/845)) ([d6fe402](https://github.com/carlspring/s3fs-nio/commit/d6fe402bc3694c19d5d9dc429b204b6e6c737132))
+
 ## [1.0.5](https://github.com/carlspring/s3fs-nio/compare/v1.0.4...v1.0.5) (2024-08-28)
 
 
