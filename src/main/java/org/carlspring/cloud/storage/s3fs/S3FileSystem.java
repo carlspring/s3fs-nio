@@ -7,11 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
@@ -171,9 +174,14 @@ public class S3FileSystem
         return endpoint;
     }
 
+    /**
+     * @deprecated Use {@link org.carlspring.cloud.storage.s3fs.util.S3Utils#key2Parts(String)} instead. To be removed in one of next majors versions.
+     * @param keyParts
+     * @return String[]
+     */
     public String[] key2Parts(String keyParts)
     {
-        return keyParts.split(PATH_SEPARATOR);
+        return S3Utils.key2Parts(keyParts);
     }
 
     public int getCache()
