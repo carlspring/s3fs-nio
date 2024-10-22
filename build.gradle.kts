@@ -38,6 +38,50 @@ java {
     withJavadocJar()
 }
 
+// Configure multiple test sources
+testing {
+    suites {
+        // Just for self reference, technically this is already configured by default.
+        val test by getting(JvmTestSuite::class) {
+            useJUnitJupiter() // already the default.
+            testType.set(TestSuiteType.UNIT_TEST) // already the default.
+        }
+
+        // testIntegration test sources
+        val testIntegration by registering(JvmTestSuite::class) {
+            val self = this
+            testType.set(TestSuiteType.INTEGRATION_TEST)
+
+            // We need to manually add the "main" sources to the classpath.
+            sourceSets {
+                named(self.name) {
+                    compileClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+                    runtimeClasspath += sourceSets.main.get().output + sourceSets.test.get().output
+                }
+            }
+
+            // Inherit implementation, runtime and test dependencies (adds them to the compile classpath)
+            configurations.named("${self.name}Implementation") {
+                extendsFrom(configurations.testImplementation.get())
+                extendsFrom(configurations.runtimeOnly.get())
+                extendsFrom(configurations.implementation.get())
+            }
+
+            // Make sure the integration test is executed as part of the "check" task.
+            tasks.named<Task>("check") {
+                dependsOn(named<JvmTestSuite>(self.name))
+            }
+
+            tasks.named<Task>(self.name) {
+                mustRunAfter(test)
+            }
+
+        }
+    }
+
+
+}
+
 dependencies {
     api(platform("software.amazon.awssdk:bom:2.29.9"))
     api("software.amazon.awssdk:s3") {
@@ -140,6 +184,10 @@ tasks {
         }
     }
 
+    named<Task>("check") {
+        dependsOn(named<Task>("testIntegration"))
+    }
+
     named<Task>("jacocoTestReport") {
         group = "jacoco"
         dependsOn(named("test")) // tests are required to run before generating the report
@@ -162,30 +210,8 @@ tasks {
         group = "sonar"
     }
 
-    named<Test>("test") {
-        description = "Run unit tests"
-        outputs.upToDateWhen { false }
-        useJUnitPlatform {
-            filter {
-                excludeTestsMatching("*IT")
-            }
-        }
-    }
-
     withType<Test> {
         defaultCharacterEncoding = "UTF-8"
-    }
-
-    create<Test>("it-s3") {
-        group = "verification"
-        description = "Run integration tests using S3"
-        useJUnitPlatform {
-            filter {
-                includeTestsMatching("*IT")
-                includeTags("it-s3")
-            }
-        }
-        mustRunAfter(named("test"))
     }
 
     // TODO: There are some problems with using minio that overcomplicate the setup.
@@ -200,10 +226,6 @@ tasks {
 //            }
 //        }
 //    }
-
-    named<Task>("check") {
-        dependsOn(named("it-s3"))
-    }
 
     withType<Sign> {
         onlyIf {
