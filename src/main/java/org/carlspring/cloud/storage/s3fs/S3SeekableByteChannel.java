@@ -184,6 +184,9 @@ public class S3SeekableByteChannel
             S3Client client = path.getFileSystem().getClient();
 
             client.putObject(builder.build(), RequestBody.fromInputStream(stream, length));
+
+            // Invalidate cache as writing to the object would change some metadata.
+            path.getFileAttributesCache().invalidate(path);
         }
     }
 

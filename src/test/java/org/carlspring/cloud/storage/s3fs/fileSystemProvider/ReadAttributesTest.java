@@ -1,20 +1,20 @@
 package org.carlspring.cloud.storage.s3fs.fileSystemProvider;
 
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
+import com.google.common.collect.Sets;
 import org.carlspring.cloud.storage.s3fs.S3FileSystem;
 import org.carlspring.cloud.storage.s3fs.S3Path;
 import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
+import org.carlspring.cloud.storage.s3fs.cache.S3FileAttributesCache;
 import org.carlspring.cloud.storage.s3fs.util.MockBucket;
 import org.carlspring.cloud.storage.s3fs.util.S3ClientMock;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
@@ -22,17 +22,9 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.google.common.collect.Sets;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.util.FileAttributeBuilder.build;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ReadAttributesTest
         extends S3UnitTestBase
@@ -173,51 +165,190 @@ class ReadAttributesTest
     }
 
     @Test
-    void readAttributesRegenerateCacheWhenNotExists()
+    void readAttributesRegenerateCacheWhenNotExistsBasic()
             throws IOException
     {
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1", "".getBytes());
+        client.bucket("bucketA").dir("dir").file("dir/file-basic", "".getBytes());
 
-        S3Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
+        S3FileSystem fs = createNewS3FileSystem();
 
-        // create the cache
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        // No cache assertion
+        S3FileAttributesCache cache = fs.getFileAttributesCache();
+        CacheStats stats = cache.stats(); // temporary snapshot
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
 
-        assertNotNull(file1.getFileAttributes());
+        // Pre-requisites (cache entry key should not exist)
+        S3Path file1 = fs.getPath("/bucketA/dir/file-basic");
+        String fileAttrCacheKey = cache.generateCacheKey(file1, BasicFileAttributes.class);
+        assertThat(cache.contains(fileAttrCacheKey)).isFalse();
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
 
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        // Reading the attributes should create the cache entry.
+        BasicFileAttributes attrs = s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(1);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        assertNull(file1.getFileAttributes());
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(3);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(5);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        assertNotNull(file1.getFileAttributes());
+        // Invalidate cache manually.
+        cache.invalidate(fileAttrCacheKey);
+        assertThat(cache.contains(fileAttrCacheKey)).isFalse();
+
+        // Should populate the cache again.
+        attrs = s3fsProvider.readAttributes(file1, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertNotNull(file1.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(6);
+        assertThat(stats.missCount()).isEqualTo(2);
     }
 
     @Test
-    void readAttributesPosixRegenerateCacheWhenNotExists()
+    void readAttributesRegenerateCacheWhenNotExistsPosix()
             throws IOException
     {
         // fixtures
         S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("bucketA").dir("dir").file("dir/file1", "".getBytes());
+        client.bucket("bucketA").dir("dir").file("dir/file-posix", "".getBytes());
 
-        S3Path file1 = createNewS3FileSystem().getPath("/bucketA/dir/file1");
+        S3FileSystem fs = createNewS3FileSystem();
 
-        // create the cache
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        // No cache assertion
+        S3FileAttributesCache cache = fs.getFileAttributesCache();
+        CacheStats stats = cache.stats(); // temporary snapshot
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
 
-        assertNotNull(file1.getFileAttributes());
+        // Pre-requisites (cache entry key should not exist)
+        S3Path file1 = fs.getPath("/bucketA/dir/file-posix");
+        String fileAttrCacheKey = cache.generateCacheKey(file1, PosixFileAttributes.class);
+        assertThat(cache.contains(fileAttrCacheKey)).isFalse();
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
 
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        // Reading the attributes should create the cache entry.
+        PosixFileAttributes attrs = s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(PosixFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(1);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        assertNull(file1.getFileAttributes());
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(PosixFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(3);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file1.getFileAttributes(PosixFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(5);
+        assertThat(stats.missCount()).isEqualTo(1);
 
-        assertNotNull(file1.getFileAttributes());
+        // Invalidate cache manually.
+        cache.invalidate(fileAttrCacheKey);
+        assertThat(cache.contains(fileAttrCacheKey)).isFalse();
+
+        // Should populate the cache again.
+        attrs = s3fsProvider.readAttributes(file1, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertNotNull(file1.getFileAttributes(PosixFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(6);
+        assertThat(stats.missCount()).isEqualTo(2);
+
+    }
+
+    @Test
+    void readAttributesCastDownFromPosixToBasic()
+            throws IOException
+    {
+        // fixtures
+        S3ClientMock client = S3MockFactory.getS3ClientMock();
+        client.bucket("bucketA").dir("dir").file("dir/file-posix2", "".getBytes());
+
+        S3FileSystem fs = createNewS3FileSystem();
+
+        // No cache assertion
+        S3FileAttributesCache cache = fs.getFileAttributesCache();
+        CacheStats stats = cache.stats(); // temporary snapshot
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
+
+        // Pre-requisites (cache entry key should not exist)
+        S3Path file = fs.getPath("/bucketA/dir/file-posix2");
+        String basicFileAttrCacheKey = cache.generateCacheKey(file, BasicFileAttributes.class);
+        String posixFileAttrCacheKey = cache.generateCacheKey(file, PosixFileAttributes.class);
+        assertThat(cache.contains(basicFileAttrCacheKey)).isFalse();
+        assertThat(cache.contains(posixFileAttrCacheKey)).isFalse();
+
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(0);
+        assertThat(stats.missCount()).isEqualTo(0);
+
+        // Reading the attributes should create the cache entry.
+        BasicFileAttributes attrs = s3fsProvider.readAttributes(file, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(1);
+        assertThat(stats.missCount()).isEqualTo(1);
+
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(3);
+        assertThat(stats.missCount()).isEqualTo(1);
+
+        // Should hit the cache.
+        attrs = s3fsProvider.readAttributes(file, BasicFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertThat(attrs).isEqualTo(file.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(5);
+        assertThat(stats.missCount()).isEqualTo(1);
+
+        // Invalidate cache manually.
+        cache.invalidate(basicFileAttrCacheKey);
+        assertThat(cache.contains(basicFileAttrCacheKey)).isFalse();
+
+        // Should populate the cache again.
+        attrs = s3fsProvider.readAttributes(file, PosixFileAttributes.class);
+        assertThat(attrs).isNotNull();
+        assertNotNull(file.getFileAttributes(BasicFileAttributes.class));
+        stats = cache.stats();
+        assertThat(stats.hitCount()).isEqualTo(6);
+        assertThat(stats.missCount()).isEqualTo(2);
     }
 
     @Test

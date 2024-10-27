@@ -68,7 +68,7 @@ public class S3ObjectId
         return "bucket: " + bucket + ", key: " + key;
     }
 
-    static final class Builder
+    public static final class Builder
     {
 
         private String bucket;

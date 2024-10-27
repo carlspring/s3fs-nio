@@ -1,13 +1,25 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributeView;
 import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributeView;
 import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.carlspring.cloud.storage.s3fs.util.AttributesUtils;
-import org.carlspring.cloud.storage.s3fs.util.Cache;
 import org.carlspring.cloud.storage.s3fs.util.Constants;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.core.internal.util.Mimetype;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.utils.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,91 +31,18 @@ import java.net.URLEncoder;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.AccessMode;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.CopyOption;
-import java.nio.file.DirectoryStream;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemAlreadyExistsException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.attribute.BasicFileAttributeView;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
-import java.nio.file.attribute.FileAttributeView;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFileAttributes;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.core.exception.SdkException;
-import software.amazon.awssdk.core.internal.util.Mimetype;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.Bucket;
-import software.amazon.awssdk.services.s3.model.CopyObjectRequest;
-import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
-import software.amazon.awssdk.services.s3.model.Delete;
-import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
-import software.amazon.awssdk.services.s3.model.S3Exception;
-import software.amazon.awssdk.services.s3.model.S3Object;
-import software.amazon.awssdk.utils.StringUtils;
 import static com.google.common.collect.Sets.difference;
 import static java.lang.String.format;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_ERROR_RETRY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PATH_STYLE_ACCESS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROTOCOL;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_DOMAIN;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_HOST;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PASSWORD;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_PORT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_USERNAME;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.PROXY_WORKSTATION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_METRIC_COLLECTOR_CLASS;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SIGNER_OVERRIDE;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_RECEIVE_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_SEND_BUFFER_SIZE_HINT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.SOCKET_TIMEOUT;
-import static org.carlspring.cloud.storage.s3fs.S3Factory.USER_AGENT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.*;
 import static software.amazon.awssdk.http.Header.CONTENT_TYPE;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
@@ -148,6 +87,8 @@ public class S3FileSystemProvider
 
     private static final List<String> PROPS_TO_OVERLOAD = Arrays.asList(ACCESS_KEY,
                                                                         SECRET_KEY,
+                                                                        CACHE_ATTRIBUTES_TTL,
+                                                                        CACHE_ATTRIBUTES_SIZE,
                                                                         REQUEST_METRIC_COLLECTOR_CLASS,
                                                                         CONNECTION_TIMEOUT,
                                                                         MAX_CONNECTIONS,
@@ -173,9 +114,6 @@ public class S3FileSystemProvider
     private static final Logger LOGGER = LoggerFactory.getLogger(S3FileSystemProvider.class);
 
     private final S3Utils s3Utils = new S3Utils();
-
-    private Cache cache = new Cache();
-
 
     @Override
     public String getScheme()
@@ -487,7 +425,7 @@ public class S3FileSystemProvider
     @Override
     public Path getPath(URI uri)
     {
-        FileSystem fileSystem = getFileSystem(uri);
+        S3FileSystem fileSystem = getFileSystem(uri);
 
         /**
          * TODO: set as a list. one s3FileSystem by region
@@ -605,7 +543,7 @@ public class S3FileSystemProvider
 
         S3FileSystem fileSystem = s3Path.getFileSystem();
 
-        return new S3OutputStream(fileSystem.getClient(), s3Path.toS3ObjectId(), null, metadata, fileSystem.getRequestHeaderCacheControlProperty());
+        return new S3OutputStream(fileSystem.getClient(), s3Path.toS3ObjectId(), null, metadata, fileSystem.getRequestHeaderCacheControlProperty(), s3Path.getFileAttributesCache());
     }
 
     private void validateCreateAndTruncateOptions(final Path path,
@@ -706,9 +644,12 @@ public class S3FileSystemProvider
                                                          .key(directoryKey)
                                                          .cacheControl(s3Path.getFileSystem().getRequestHeaderCacheControlProperty())
                                                          .contentLength(0L)
+                                                         .contentType("application/x-directory")
                                                          .build();
 
-        client.putObject(request, RequestBody.fromBytes(new byte[0]));
+        client.putObject(request, RequestBody.empty());
+
+        s3Path.getFileAttributesCache().invalidate(s3Path);
     }
 
     @Override
@@ -733,45 +674,31 @@ public class S3FileSystemProvider
             throws IOException
     {
 
-        List<ObjectIdentifier> keys = batch.stream()
-                                           .map(s3Path -> ObjectIdentifier.builder()
-                                                                          .key(s3Path.getKey())
-                                                                          .build())
-                                           .collect(Collectors.toList());
+        // Create a combined list of ObjectIdentifiers in one loop
+        List<ObjectIdentifier> objectIdentifiers = new ArrayList<>(batch.size() * 2);
 
+        for (S3Path s3Path : batch) {
+            // The original key
+            objectIdentifiers.add(ObjectIdentifier.builder().key(s3Path.getKey()).build());
+            // The key with '/' appended
+            objectIdentifiers.add(ObjectIdentifier.builder().key(s3Path.getKey() + '/').build());
+        }
+
+        // Create the multi-object delete request with both sets of keys
         DeleteObjectsRequest multiObjectDeleteRequest = DeleteObjectsRequest.builder()
                                                                             .bucket(bucketName)
                                                                             .delete(Delete.builder()
-                                                                                          .objects(keys)
+                                                                                          .objects(objectIdentifiers)
                                                                                           .build())
                                                                             .build();
 
-        try
-        {
+        // Try to delete all objects at once
+        try {
             client.deleteObjects(multiObjectDeleteRequest);
-        }
-        catch (SdkException e)
-        {
-            throw new IOException(e);
-        }
-
-        // we delete the two objects (sometimes exists the key '/' and sometimes not)
-        keys = batch.stream()
-                    .map(s3Path -> ObjectIdentifier.builder().key(s3Path.getKey() + '/').build())
-                    .collect(Collectors.toList());
-        multiObjectDeleteRequest = DeleteObjectsRequest.builder()
-                                                       .bucket(bucketName)
-                                                       .delete(Delete.builder()
-                                                                     .objects(keys)
-                                                                     .build())
-                                                       .build();
-
-        try
-        {
-            client.deleteObjects(multiObjectDeleteRequest);
-        }
-        catch (SdkException e)
-        {
+            for (S3Path path : batch) {
+                path.getFileAttributesCache().invalidate(path);
+            }
+        } catch (SdkException e) {
             throw new IOException(e);
         }
     }
@@ -855,15 +782,16 @@ public class S3FileSystemProvider
 
         S3Path s3Source = toS3Path(source);
         S3Path s3Target = toS3Path(target);
-        // TODO: implements support for copying directories
 
+        // TODO: implements support for copying directories
         Preconditions.checkArgument(!Files.isDirectory(source), "copying directories is not yet supported: %s", source);
         Preconditions.checkArgument(!Files.isDirectory(target), "copying directories is not yet supported: %s", target);
 
         ImmutableSet<CopyOption> actualOptions = ImmutableSet.copyOf(options);
         verifySupportedOptions(EnumSet.of(StandardCopyOption.REPLACE_EXISTING), actualOptions);
 
-        if (exists(s3Target) && !actualOptions.contains(StandardCopyOption.REPLACE_EXISTING))
+        // Better check before if we want to replace the file (default) or not to avoid a call to exists
+        if (!actualOptions.contains(StandardCopyOption.REPLACE_EXISTING) && exists(s3Target))
         {
             throw new FileAlreadyExistsException(format("target already exists: %s", target));
         }
@@ -884,6 +812,9 @@ public class S3FileSystemProvider
                                                            .build();
 
         client.copyObject(request);
+
+        s3Source.getFileAttributesCache().invalidate(s3Source);
+        s3Source.getFileAttributesCache().invalidate(s3Target);
     }
 
     private String encodeUrl(final String bucketNameOrigin,
@@ -993,39 +924,22 @@ public class S3FileSystemProvider
                                                             LinkOption... options)
             throws IOException
     {
-        S3Path s3Path = toS3Path(path);
-        if (type == BasicFileAttributes.class)
+        try
         {
-            if (cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes()))
+            S3Path s3Path = toS3Path(path);
+            if (type == BasicFileAttributes.class || type == S3BasicFileAttributes.class ||
+                type == PosixFileAttributes.class || type == S3PosixFileAttributes.class)
             {
-                A result = type.cast(s3Path.getFileAttributes());
-                s3Path.setFileAttributes(null);
-
-                return result;
-            }
-            else
-            {
-                S3BasicFileAttributes attrs = s3Utils.getS3FileAttributes(s3Path);
-                s3Path.setFileAttributes(attrs);
-
+                S3BasicFileAttributes attrs = s3Path.getFileAttributesCache().get(s3Path, type);
+                if(attrs == null) {
+                    throw new NoSuchFileException(path.toString());
+                }
                 return type.cast(attrs);
             }
         }
-        else if (type == PosixFileAttributes.class)
+        catch (CompletionException e)
         {
-            if (s3Path.getFileAttributes() instanceof PosixFileAttributes &&
-                cache.isInTime(s3Path.getFileSystem().getCache(), s3Path.getFileAttributes()))
-            {
-                A result = type.cast(s3Path.getFileAttributes());
-                s3Path.setFileAttributes(null);
-
-                return result;
-            }
-
-            S3PosixFileAttributes attrs = s3Utils.getS3PosixFileAttributes(s3Path);
-            s3Path.setFileAttributes(attrs);
-
-            return type.cast(attrs);
+            throw new IOException(e);
         }
 
         throw new UnsupportedOperationException(format("only %s or %s supported",
@@ -1192,36 +1106,17 @@ public class S3FileSystemProvider
     {
         S3Path s3Path = toS3Path(path);
 
-        if (isBucketRoot(s3Path))
-        {
-            // check to see if bucket exists
-            try
-            {
-                s3Utils.listS3Objects(s3Path);
-                return true;
-            }
-            catch (SdkException e)
-            {
-                return false;
-            }
-        }
+        S3BasicFileAttributes attrs = s3Path.getFileAttributesCache()
+                                            .get(s3Path, BasicFileAttributes.class);
 
-        try
-        {
-            s3Utils.getS3Object(s3Path);
-
-            return true;
-        }
-        catch (NoSuchFileException e)
-        {
-            return false;
-        }
+        return attrs != null;
     }
 
     public void close(S3FileSystem fileSystem)
     {
         if (fileSystem.getKey() != null && fileSystems.containsKey(fileSystem.getKey()))
         {
+            fileSystem.getFileAttributesCache().invalidateAll();
             fileSystems.remove(fileSystem.getKey());
         }
     }
@@ -1238,16 +1133,6 @@ public class S3FileSystemProvider
     protected static ConcurrentMap<String, S3FileSystem> getFilesystems()
     {
         return fileSystems;
-    }
-
-    public Cache getCache()
-    {
-        return cache;
-    }
-
-    public void setCache(Cache cache)
-    {
-        this.cache = cache;
     }
 
 }

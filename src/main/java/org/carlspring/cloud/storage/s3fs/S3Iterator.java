@@ -1,7 +1,9 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import org.carlspring.cloud.storage.s3fs.cache.S3FileAttributesCache;
 import org.carlspring.cloud.storage.s3fs.util.S3Utils;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +34,8 @@ public class S3Iterator
 
     private final S3FileSystem fileSystem;
 
+    private final S3FileAttributesCache fileAttributesCache;
+
     private final S3FileStore fileStore;
 
     private final String key;
@@ -50,6 +54,7 @@ public class S3Iterator
 
     private final S3Utils s3Utils = new S3Utils();
 
+    private int totalProcessed = 0;
 
     public S3Iterator(S3Path path)
     {
@@ -69,6 +74,7 @@ public class S3Iterator
 
         this.fileStore = fileStore;
         this.fileSystem = fileStore.getFileSystem();
+        this.fileAttributesCache = fileSystem.getFileAttributesCache();
         this.key = key;
         this.current = fileSystem.getClient().listObjectsV2(listObjectsV2Request);
         this.incremental = incremental;
@@ -90,11 +96,11 @@ public class S3Iterator
             ListObjectsV2Request request = ListObjectsV2Request.builder()
                                                                .bucket(fileStore.name())
                                                                .prefix(key)
+                                                               .fetchOwner(true)
                                                                .continuationToken(current.nextContinuationToken())
                                                                .build();
 
-            final S3Client client = fileSystem.getClient();
-            this.current = client.listObjectsV2(request);
+            this.current = fileSystem.getClient().listObjectsV2(request);
 
             loadObjects();
         }
@@ -104,6 +110,8 @@ public class S3Iterator
             throw new NoSuchElementException();
         }
 
+        ++totalProcessed;
+
         return items.get(cursor++);
     }
 
@@ -111,6 +119,11 @@ public class S3Iterator
     public void remove()
     {
         throw new UnsupportedOperationException();
+    }
+
+    public int getTotalProcessed()
+    {
+        return totalProcessed;
     }
 
     private void loadObjects()
@@ -136,7 +149,7 @@ public class S3Iterator
         {
             final String objectKey = object.key();
 
-            String[] keyParts = fileSystem.key2Parts(objectKey);
+            String[] keyParts = S3Utils.key2Parts(objectKey);
 
             addParentPaths(keyParts);
 
@@ -202,8 +215,13 @@ public class S3Iterator
         {
             if (!commonPrefix.prefix().equals("/"))
             {
-                listPath.add(new S3Path(fileSystem, "/" + fileStore.name(),
-                                        fileSystem.key2Parts(commonPrefix.prefix())));
+                S3Path s3Path = new S3Path(fileSystem, "/" + fileStore.name(), S3Utils.key2Parts(commonPrefix.prefix()));
+                listPath.add(s3Path);
+                try {
+                    fileAttributesCache.put(s3Path, s3Utils.getS3FileAttributes(s3Path));
+                } catch (NoSuchFileException e) { //NOPMD
+                    //NOPMD
+                }
             }
         }
 
@@ -218,12 +236,12 @@ public class S3Iterator
             {
                 S3Path descendentPart = new S3Path(fileSystem,
                                                    "/" + fileStore.name(),
-                                                   fileSystem.key2Parts(immediateDescendantKey));
+                                                   S3Utils.key2Parts(immediateDescendantKey));
 
-                descendentPart.setFileAttributes(s3Utils.toS3FileAttributes(object, descendentPart.getKey()));
                 if (!listPath.contains(descendentPart))
                 {
                     listPath.add(descendentPart);
+                    fileAttributesCache.put(descendentPart, s3Utils.toS3FileAttributes(object, descendentPart.getKey()));
                 }
             }
         }

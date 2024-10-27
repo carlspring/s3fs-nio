@@ -10,7 +10,7 @@ Before you start writing code, please read:
 ## System requirements
 
 1. Gradle 8.1, or higher
-2. `JDK8`, `JDK11` or `JDK17`
+2. `JDK8`, `JDK11`, `JDK17` or `JDK21`
 
 ## Finding issues to work on
 
@@ -85,7 +85,7 @@ s3fs.proxy.url=https://my.local.domain/path/to/repository
 ### Build
 
 Builds the entire code and runs unit and integration tests.
-It is assumed you already have the `amazon-test.properties` configuration in place.
+It is assumed you already have the `amazon-test.properties` configuration in place under the `src/test/resources` or `src/testIntegration/resources`.
 
 ```
 ./gradlew build
@@ -100,8 +100,10 @@ It is assumed you already have the `amazon-test.properties` configuration in pla
 ### Run only integration tests 
 
 ```
-./gradlew it-s3
+./gradlew testIntegration
 ``` 
+
+You can also use `./gradlew build -x testIntegration` to skip the integration tests.
 
 ### Run all tests 
 
