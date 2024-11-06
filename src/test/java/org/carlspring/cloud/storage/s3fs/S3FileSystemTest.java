@@ -16,6 +16,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
@@ -26,7 +27,13 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Utilities;
 import software.amazon.awssdk.services.s3.model.GetUrlRequest;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.ACCESS_KEY;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.CONNECTION_TIMEOUT;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.MAX_CONNECTIONS;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REGION;
+import static org.carlspring.cloud.storage.s3fs.S3Factory.REQUEST_HEADER_CACHE_CONTROL;
 import static org.carlspring.cloud.storage.s3fs.S3Factory.SECRET_KEY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -327,6 +334,17 @@ class S3FileSystemTest
     }
 
     @Test
+    void propertiesMustBePreserved()
+    {
+        S3FileSystemProvider provider = new S3FileSystemProvider();
+
+        Map<String, ?> inputProps = buildFakeEnv();
+        S3FileSystem s3fs1 = (S3FileSystem) provider.newFileSystem(URI.create("s3://mirror1.amazon.test/"), inputProps);
+        Properties outputProps = s3fs1.getProperties();
+        assertThat(outputProps).containsAllEntriesOf(inputProps);
+    }
+
+    @Test
     void key2Parts()
             throws IOException
     {
@@ -458,9 +476,15 @@ class S3FileSystemTest
 
     private Map<String, ?> buildFakeEnv()
     {
-        return ImmutableMap.<String, Object>builder().put(ACCESS_KEY, "access-key")
-                                                     .put(SECRET_KEY, "secret-key")
-                                                     .build();
+        return ImmutableMap.<String, Object>builder()
+                           //.put("s3fs.amazon.s3.factory.class", S3MockFactory.class)
+                           .put(ACCESS_KEY, "access-key")
+                           .put(SECRET_KEY, "secret-key")
+                           .put(MAX_CONNECTIONS, "1000")
+                           .put(CONNECTION_TIMEOUT, "2000")
+                           .put(REQUEST_HEADER_CACHE_CONTROL, "no-cache")
+                           .put(REGION, "eu-west-1")
+                           .build();
     }
 
 }
