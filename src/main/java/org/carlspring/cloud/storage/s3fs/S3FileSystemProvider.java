@@ -1107,7 +1107,8 @@ public class S3FileSystemProvider
         final String key = getFileSystemKey(uri, props);
         final S3Client client = getS3Client(uri, props);
         final String host = uri.getHost();
-        final Properties properties = new Properties(props);
+        final Properties properties = new Properties();
+        properties.putAll(props);
         return new S3FileSystem(this, key, client, host, properties);
     }
 

@@ -181,6 +181,16 @@ public class S3FileSystem
         return cache;
     }
 
+    /**
+     * Used for internal testing.
+     * @return the properties with which this file system was initialized.
+     */
+    protected Properties getProperties()
+    {
+        Properties copy = new Properties();
+        copy.putAll(properties);
+        return copy;
+    }
 
     /**
      * @return The value of the {@link S3Factory#REQUEST_HEADER_CACHE_CONTROL} property. Default is empty.
