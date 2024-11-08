@@ -39,7 +39,7 @@ java {
 }
 
 dependencies {
-    api(platform("software.amazon.awssdk:bom:2.17.295"))
+    api(platform("software.amazon.awssdk:bom:2.18.0"))
     api("software.amazon.awssdk:s3") {
         exclude("commons-logging", "commons-logging")
     }
