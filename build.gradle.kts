@@ -39,9 +39,7 @@ java {
 }
 
 dependencies {
-    api(platform("software.amazon.awssdk:bom:2.16.28")) {
-        // Change the `AWS_VERSION` in ./docs/mkocs.yaml file.
-    }
+    api(platform("software.amazon.awssdk:bom:2.17.295"))
     api("software.amazon.awssdk:s3") {
         exclude("commons-logging", "commons-logging")
     }
