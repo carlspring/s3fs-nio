@@ -63,7 +63,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           npm install -g netlify
-          is_master=${{ env.get_branch == 'master' }}
+          is_master=${{ env.branch_name == 'master' }}
           is_fork=${{ github.event.pull_request.head.repo.fork == true }}
           [[ "$is_master" == "true" && "$is_fork" == "false" ]] && args=" --prod "
           netlify deploy -d site/ $args | tee build.log
