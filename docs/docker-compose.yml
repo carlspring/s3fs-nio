@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: ./docs.Dockerfile
-    image: squidfunk/mkdocs-material:5.5.9-custom
+    image: squidfunk/mkdocs-material:9.5.44-custom
     container_name: s3fs-nio-docs
     working_dir: /workspace/docs
     volumes:
@@ -15,7 +15,7 @@ services:
     build:
       context: .
       dockerfile: ./docs.Dockerfile
-    image: squidfunk/mkdocs-material:5.5.9-custom
+    image: squidfunk/mkdocs-material:9.5.44-custom
     working_dir: /workspace/docs
     command: [ "build" ]
     volumes:

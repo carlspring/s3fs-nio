@@ -26,13 +26,11 @@
 }
 
 .md-typeset table:not([class]) td small:before {
-    content: '\a';
     white-space: pre-wrap;
 }
 
 .md-typeset table:not([class]) td small {
     font-size: 85%;
-    color: rgba(0,0,0,0.65);
 }
 
 .md-typeset .md-typeset__table {

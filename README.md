@@ -40,7 +40,7 @@ We aim to support only the latest LTS versions. At the moment this includes:
 * JDK 17
 * JDK 21
 
-Please note that although we support JDK 8 we have plans to drop it in one of our next **major** release (most likely `v2.0.0`).
+Please note that although we support JDK 8 we have plans to drop it in one of our next **major** release.
 
 ## Documentation
 

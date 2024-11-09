@@ -42,7 +42,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
-      - name: Build docks
+      - name: Get current branch name
+        id: get_branch
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request_target" ]; then
+            echo "branch_name=${{ github.event.pull_request.head.ref }}" >> $GITHUB_ENV
+          else
+            echo "branch_name=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+          fi
+
+      - name: Build docs
         working-directory: docs
         run: docker compose run build
 
@@ -54,8 +63,8 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           npm install -g netlify
-          is_master=${{ github.ref_name == 'master' }}
-          is_fork=${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != vars.CURRENT_REPO && 'true' || 'false' }}
+          is_master=${{ env.get_branch == 'master' }}
+          is_fork=${{ github.event.pull_request.head.repo.fork == true }}
           [[ "$is_master" == "true" && "$is_fork" == "false" ]] && args=" --prod "
           netlify deploy -d site/ $args | tee build.log
           url=$(cat build.log | grep -iE  "website(.+)url" | cut -f 2- -d":" | xargs)

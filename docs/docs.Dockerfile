@@ -1,4 +1,4 @@
-FROM squidfunk/mkdocs-material:5.5.9
+FROM squidfunk/mkdocs-material:9.5.44
 
 WORKDIR /workspace/docs
 COPY requirements.txt /workspace/docs

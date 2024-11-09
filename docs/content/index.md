@@ -1,4 +1,4 @@
-{! ../../README.md [ln:19-37] !} 
+{! ../../README.md [ln:19-47] !} 
   
 ## Installation
 
@@ -49,6 +49,7 @@
     Create/load a properties file in your project which defines the following properties:
     
     ```
+
     --8<-- "../src/test/resources/amazon-test-sample.properties"
     ``` 
     
