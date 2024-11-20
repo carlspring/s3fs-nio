@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.0.6](https://github.com/carlspring/s3fs-nio/compare/v1.0.5...v1.0.6) (2024-11-20)
+
+
+### Bug Fixes
+
+* Properties were not correctly passed down to the S3FileSystem. ([#858](https://github.com/carlspring/s3fs-nio/issues/858)) ([6d1d921](https://github.com/carlspring/s3fs-nio/commit/6d1d921120887e471dc77ce46cf9a125995e62c9))
+
+
+### Documentation
+
+* Update mkocs and add dark mode. ([#802](https://github.com/carlspring/s3fs-nio/issues/802)) ([4c09198](https://github.com/carlspring/s3fs-nio/commit/4c09198a17ed99cf340444ee61f410a88b22c978))
+
+
+### Dependencies
+
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.5.11 to 1.5.12 ([#853](https://github.com/carlspring/s3fs-nio/issues/853)) ([e359b1f](https://github.com/carlspring/s3fs-nio/commit/e359b1f58a1ec2f404fd60408aeea44064bfb2e5))
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.5.7 to 1.5.11 ([#843](https://github.com/carlspring/s3fs-nio/issues/843)) ([c0a09f1](https://github.com/carlspring/s3fs-nio/commit/c0a09f142169d0b1ef5e94797d8335e9cb7db03f))
+* **upgrade:** bump com.github.marschall:memoryfilesystem ([#837](https://github.com/carlspring/s3fs-nio/issues/837)) ([60c6505](https://github.com/carlspring/s3fs-nio/commit/60c6505623a691498aee914afa4f04c819fdb7b9))
+* **upgrade:** bump com.google.guava:guava from 33.3.0-jre to 33.3.1-jre ([#838](https://github.com/carlspring/s3fs-nio/issues/838)) ([c234719](https://github.com/carlspring/s3fs-nio/commit/c23471995727c7fd6a080c27442ce6e9cebb66bf))
+* **upgrade:** bump org.apache.commons:commons-lang3 ([#833](https://github.com/carlspring/s3fs-nio/issues/833)) ([e1da051](https://github.com/carlspring/s3fs-nio/commit/e1da0517977a33d450c656586405c1a3f67bcd09))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter ([#840](https://github.com/carlspring/s3fs-nio/issues/840)) ([22cfc73](https://github.com/carlspring/s3fs-nio/commit/22cfc73481e39d5da288d038be5428ac77a9de5b))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter ([#851](https://github.com/carlspring/s3fs-nio/issues/851)) ([a7c5818](https://github.com/carlspring/s3fs-nio/commit/a7c581867abd126fd6ac7be82b853f2b171a1d48))
+* **upgrade:** bump org.sonarqube from 5.1.0.4882 to 6.0.0.5145 ([#863](https://github.com/carlspring/s3fs-nio/issues/863)) ([69b4a81](https://github.com/carlspring/s3fs-nio/commit/69b4a81b923861adec79e11edc3630a607eed637))
+* **upgrade:** bump org.testcontainers:testcontainers ([#846](https://github.com/carlspring/s3fs-nio/issues/846)) ([a7e296a](https://github.com/carlspring/s3fs-nio/commit/a7e296ae8decb1fe61a3e11af16568513439832c))
+* **upgrade:** bump org.testcontainers:testcontainers from 1.20.2 to 1.20.3 ([#852](https://github.com/carlspring/s3fs-nio/issues/852)) ([47ffc4d](https://github.com/carlspring/s3fs-nio/commit/47ffc4d5d424174f2e3549d537d45edeaacd5b15))
+* **upgrade:** bump peter-evans/create-pull-request from 6 to 7 ([#834](https://github.com/carlspring/s3fs-nio/issues/834)) ([259ebba](https://github.com/carlspring/s3fs-nio/commit/259ebba87fe9f46eeee60f32a30024674d68eaa8))
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v1.0.6 ([#845](https://github.com/carlspring/s3fs-nio/issues/845)) ([d6fe402](https://github.com/carlspring/s3fs-nio/commit/d6fe402bc3694c19d5d9dc429b204b6e6c737132))
+
 ## [1.0.5](https://github.com/carlspring/s3fs-nio/compare/v1.0.4...v1.0.5) (2024-08-28)
 
 
