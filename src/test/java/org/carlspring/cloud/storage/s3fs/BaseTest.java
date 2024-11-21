@@ -29,7 +29,7 @@ public abstract class BaseTest
      * @return abbreviated fully-qualified class name and method (i.e. o.c.c.s.s.u.BaseIntegrationTest/methodName) or
      * <b>null</b> if it can't find .
      */
-    protected String getTestBasePath()
+    protected static String getTestBasePath()
     {
         // Filter out noise and leave only `org.carlspring.cloud.storage.s3fs` calls in the stack trace.
         List<StackTraceElement> elements = Arrays.stream(Thread.currentThread().getStackTrace())
@@ -102,7 +102,7 @@ public abstract class BaseTest
      *
      * @return o.c.c.s.s.u.BaseIntegrationTest/methodName/subPath
      */
-    protected String getTestBasePath(String subPath)
+    protected static String getTestBasePath(String subPath)
     {
         String basePath = getTestBasePath();
 
@@ -119,7 +119,7 @@ public abstract class BaseTest
      *
      * @return
      */
-    protected String getTestBasePath(Class<?> clazz,
+    protected static String getTestBasePath(Class<?> clazz,
                                      String methodName)
     {
         return abbreviateClassName(clazz.getName()) + "/" + methodName;
@@ -128,7 +128,7 @@ public abstract class BaseTest
     /**
      * @return o.c.c.s.s.u.BaseIntegrationTest/methodName/UUID
      */
-    protected String getTestBasePathWithUUID()
+    protected static String getTestBasePathWithUUID()
     {
         return getTestBasePath(randomUUID().toString());
     }
@@ -142,7 +142,7 @@ public abstract class BaseTest
      *
      * @return
      */
-    protected String getTestBasePathWithUUID(Class<?> clazz,
+    protected static String getTestBasePathWithUUID(Class<?> clazz,
                                              String methodName)
     {
         return getTestBasePath(clazz, methodName) + "/" + UUID.randomUUID();
@@ -153,7 +153,7 @@ public abstract class BaseTest
      *
      * @return abbreviated version of the fully-qualified class name (i.e. o.c.c.s.s.u.BaseIntegrationTest)
      */
-    private String abbreviateClassName(String fqClassName)
+    private static String abbreviateClassName(String fqClassName)
     {
         return new TargetLengthBasedClassNameAbbreviator(5).abbreviate(fqClassName);
     }

@@ -17,5 +17,7 @@
     </root>
 
     <logger name="com.amazonaws.http" level="ERROR"/>
+    <logger name="software.amazon.awssdk.core.interceptor" level="INFO"/>
+    <logger name="software.amazon.awssdk.auth.signer.Aws4Signer" level="INFO"/>
 
 </configuration>

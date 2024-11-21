@@ -16,9 +16,6 @@ public class S3PosixFileAttributeView
     private static final Logger log = LoggerFactory.getLogger(S3PosixFileAttributeView.class);
     private S3Path s3Path;
 
-    private PosixFileAttributes posixFileAttributes;
-
-
     public S3PosixFileAttributeView(S3Path s3Path)
     {
         this.s3Path = s3Path;
@@ -75,12 +72,7 @@ public class S3PosixFileAttributeView
     public PosixFileAttributes read()
             throws IOException
     {
-        if (posixFileAttributes == null)
-        {
-            posixFileAttributes = s3Path.getFileSystem().provider().readAttributes(s3Path, PosixFileAttributes.class);
-        }
-
-        return posixFileAttributes;
+        return s3Path.getFileSystem().provider().readAttributes(s3Path, PosixFileAttributes.class);
     }
 
 }

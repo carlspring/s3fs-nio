@@ -5,6 +5,8 @@ import java.net.URI;
 import java.time.Duration;
 import java.util.Properties;
 
+import org.carlspring.cloud.storage.s3fs.attribute.S3BasicFileAttributes;
+import org.carlspring.cloud.storage.s3fs.attribute.S3PosixFileAttributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -40,6 +42,18 @@ public abstract class S3Factory
     public static final String ACCESS_KEY = "s3fs.access.key";
 
     public static final String SECRET_KEY = "s3fs.secret.key";
+
+    /**
+     * Maximum TTL in millis to cache {@link S3BasicFileAttributes} and {@link S3PosixFileAttributes}.
+     */
+    public static final String CACHE_ATTRIBUTES_TTL = "s3fs.cache.attributes.ttl";
+    public static final int CACHE_ATTRIBUTES_TTL_DEFAULT = 60000;
+
+    /**
+     * Total size of {@link S3BasicFileAttributes} and {@link S3PosixFileAttributes} cache.
+     */
+    public static final String CACHE_ATTRIBUTES_SIZE = "s3fs.cache.attributes.size";
+    public static final int CACHE_ATTRIBUTES_SIZE_DEFAULT = 30000;
 
     public static final String REQUEST_METRIC_COLLECTOR_CLASS = "s3fs.request.metric.collector.class";
 

@@ -1,5 +1,12 @@
 package org.carlspring.cloud.storage.s3fs;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import org.carlspring.cloud.storage.s3fs.cache.S3FileAttributesCache;
+import org.carlspring.cloud.storage.s3fs.util.S3Utils;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.Bucket;
+
 import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
@@ -10,10 +17,6 @@ import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Properties;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.Bucket;
 import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
 
 /**
@@ -34,7 +37,7 @@ public class S3FileSystem
 
     private final String endpoint;
 
-    private final int cache;
+    private S3FileAttributesCache fileAttributesCache;
 
     private final Properties properties;
 
@@ -48,8 +51,12 @@ public class S3FileSystem
         this.key = key;
         this.client = client;
         this.endpoint = endpoint;
-        this.cache = 60000; // 1 minute cache for the s3Path
         this.properties = properties;
+
+        int cacheTTL = Integer.parseInt(String.valueOf(properties.getOrDefault(S3Factory.CACHE_ATTRIBUTES_TTL, S3Factory.CACHE_ATTRIBUTES_TTL_DEFAULT)));
+        int cacheSize = Integer.parseInt(String.valueOf(properties.getOrDefault(S3Factory.CACHE_ATTRIBUTES_SIZE, S3Factory.CACHE_ATTRIBUTES_SIZE_DEFAULT)));
+
+        this.fileAttributesCache = new S3FileAttributesCache(cacheTTL, cacheSize);
     }
 
     public S3FileSystem(final S3FileSystemProvider provider,
@@ -75,6 +82,7 @@ public class S3FileSystem
     public void close()
             throws IOException
     {
+        this.fileAttributesCache.invalidateAll();
         this.provider.close(this);
     }
 
@@ -171,14 +179,22 @@ public class S3FileSystem
         return endpoint;
     }
 
+    /**
+     * @deprecated Use {@link org.carlspring.cloud.storage.s3fs.util.S3Utils#key2Parts(String)} instead. To be removed in one of next majors versions.
+     * @param keyParts
+     * @return String[]
+     */
     public String[] key2Parts(String keyParts)
     {
-        return keyParts.split(PATH_SEPARATOR);
+        return S3Utils.key2Parts(keyParts);
     }
 
-    public int getCache()
+    /**
+     * @return The {@link S3FileAttributesCache} instance holding the path attributes cache for this file provider.
+     */
+    public S3FileAttributesCache getFileAttributesCache()
     {
-        return cache;
+        return fileAttributesCache;
     }
 
     /**

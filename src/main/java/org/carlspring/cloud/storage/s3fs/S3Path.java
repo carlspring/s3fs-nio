@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.carlspring.cloud.storage.s3fs.cache.S3FileAttributesCache;
 import software.amazon.awssdk.core.Protocol;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3Utilities;
@@ -53,10 +55,9 @@ public class S3Path
     private final S3FileSystem fileSystem;
 
     /**
-     * S3BasicFileAttributes cache
+     * S3FileAttributesCache cache
      */
-    private S3BasicFileAttributes fileAttributes;
-
+    private S3FileAttributesCache fileAttributesCache;
 
     /**
      * Build an S3Path from path segments. '/' are stripped from each segment.
@@ -121,6 +122,7 @@ public class S3Path
         }
         this.uri = localUri;
         this.fileSystem = fileSystem;
+        this.fileAttributesCache = fileSystem.getFileAttributesCache();
     }
 
     /**
@@ -829,14 +831,18 @@ public class S3Path
         }
     }
 
-    public S3BasicFileAttributes getFileAttributes()
+    public S3BasicFileAttributes getFileAttributes(Class<? extends BasicFileAttributes> type)
     {
-        return fileAttributes;
+        return fileAttributesCache.get(this, type);
     }
 
-    public void setFileAttributes(S3BasicFileAttributes fileAttributes)
+    /**
+     * Shortcut to getFileSystem().getFileAttributesCache()
+     * @return
+     */
+    public S3FileAttributesCache getFileAttributesCache()
     {
-        this.fileAttributes = fileAttributes;
+        return fileAttributesCache;
     }
 
 }

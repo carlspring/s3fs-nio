@@ -12,6 +12,8 @@ import java.util.HashMap;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -327,6 +329,19 @@ class S3PathTest
         });
 
         assertNotNull(exception);
+    }
+
+    @Test
+    void sameObjectsMustHaveSameHashCode()
+    {
+        S3Path first = forPath("/buck/same");
+        S3Path second = forPath("/buck/same");
+        S3Path third = forPath("/buck/other");
+
+        assertThat(first).isEqualTo(second);
+        assertThat(first.hashCode()).isEqualTo(second.hashCode());
+        assertThat(first).isNotEqualTo(third);
+        assertThat(first.hashCode()).isNotEqualTo(third.hashCode());
     }
 
 }

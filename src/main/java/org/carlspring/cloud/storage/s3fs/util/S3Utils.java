@@ -31,6 +31,8 @@ import software.amazon.awssdk.services.s3.model.Owner;
 import software.amazon.awssdk.services.s3.model.Permission;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+
+import static org.carlspring.cloud.storage.s3fs.S3Path.PATH_SEPARATOR;
 import static software.amazon.awssdk.http.HttpStatusCode.NOT_FOUND;
 
 /**
@@ -309,5 +311,11 @@ public class S3Utils
 
         return new S3BasicFileAttributes(resolvedKey, lastModifiedTime, size, directory, regularFile);
     }
+
+    public static String[] key2Parts(String keyParts)
+    {
+        return keyParts.split(PATH_SEPARATOR);
+    }
+
 
 }

@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributes;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
+import org.carlspring.cloud.storage.s3fs.cache.S3FileAttributesCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.exception.SdkException;
@@ -76,6 +79,11 @@ public final class S3OutputStream
     private final Map<String, String> metadata;
 
     /**
+     * File attribute cache
+     */
+    private final S3FileAttributesCache fileAttributesCache;
+
+    /**
      * Indicates if the stream has been closed.
      */
     private volatile AtomicBoolean closed = new AtomicBoolean(false);
@@ -114,11 +122,7 @@ public final class S3OutputStream
     public S3OutputStream(final S3Client s3Client,
                           final S3ObjectId objectId)
     {
-        this.s3Client = requireNonNull(s3Client);
-        this.objectId = requireNonNull(objectId);
-        this.metadata = new HashMap<>();
-        this.storageClass = null;
-        this.requestCacheControlHeader = "";
+        this(s3Client, objectId, null, new HashMap<>(), "", new S3FileAttributesCache(S3Factory.CACHE_ATTRIBUTES_TTL_DEFAULT, S3Factory.CACHE_ATTRIBUTES_SIZE_DEFAULT));
     }
 
     /**
@@ -134,11 +138,7 @@ public final class S3OutputStream
                           final S3ObjectId objectId,
                           final StorageClass storageClass)
     {
-        this.s3Client = requireNonNull(s3Client);
-        this.objectId = requireNonNull(objectId);
-        this.metadata = new HashMap<>();
-        this.storageClass = storageClass;
-        this.requestCacheControlHeader = "";
+        this(s3Client, objectId, storageClass, new HashMap<>(), "");
     }
 
     /**
@@ -155,11 +155,7 @@ public final class S3OutputStream
                           final S3ObjectId objectId,
                           final Map<String, String> metadata)
     {
-        this.s3Client = requireNonNull(s3Client);
-        this.objectId = requireNonNull(objectId);
-        this.storageClass = null;
-        this.metadata = new HashMap<>(metadata);
-        this.requestCacheControlHeader = "";
+        this(s3Client, objectId, null, metadata, "", new S3FileAttributesCache(S3Factory.CACHE_ATTRIBUTES_TTL_DEFAULT, S3Factory.CACHE_ATTRIBUTES_SIZE_DEFAULT));
     }
 
     /**
@@ -177,11 +173,7 @@ public final class S3OutputStream
                           final StorageClass storageClass,
                           final Map<String, String> metadata)
     {
-        this.s3Client = requireNonNull(s3Client);
-        this.objectId = requireNonNull(objectId);
-        this.storageClass = storageClass;
-        this.metadata = new HashMap<>(metadata);
-        this.requestCacheControlHeader = "";
+        this(s3Client, objectId, storageClass, metadata, "", new S3FileAttributesCache(S3Factory.CACHE_ATTRIBUTES_TTL_DEFAULT, S3Factory.CACHE_ATTRIBUTES_SIZE_DEFAULT));
     }
 
     /**
@@ -201,11 +193,33 @@ public final class S3OutputStream
                           final Map<String, String> metadata,
                           final String requestCacheControlHeader)
     {
+        this(s3Client, objectId, storageClass, metadata, requestCacheControlHeader, new S3FileAttributesCache(S3Factory.CACHE_ATTRIBUTES_TTL_DEFAULT, S3Factory.CACHE_ATTRIBUTES_SIZE_DEFAULT));
+    }
+
+    /**
+     * Creates a new {@code S3OutputStream} that writes data directly into the S3 object with the given {@code objectId}.
+     * The given {@code metadata} will be attached to the written object.
+     *
+     * @param s3Client     S3 ClientAPI to use
+     * @param objectId     ID of the S3 object to store data into
+     * @param storageClass S3 Client storage class to apply to the newly created S3 object, if any
+     * @param metadata     metadata to attach to the written object
+     * @param requestCacheControlHeader Controls
+     * @throws NullPointerException if at least one parameter except {@code storageClass} is {@code null}
+     */
+    public S3OutputStream(final S3Client s3Client,
+                          final S3ObjectId objectId,
+                          final StorageClass storageClass,
+                          final Map<String, String> metadata,
+                          final String requestCacheControlHeader,
+                          final S3FileAttributesCache fileAttributesCache)
+    {
         this.s3Client = requireNonNull(s3Client);
         this.objectId = requireNonNull(objectId);
         this.storageClass = storageClass;
         this.metadata = new HashMap<>(metadata);
         this.requestCacheControlHeader = requestCacheControlHeader;
+        this.fileAttributesCache = fileAttributesCache;
     }
 
     //protected for testing purposes
@@ -308,8 +322,22 @@ public final class S3OutputStream
                 completeMultipartUpload();
             }
 
+            invalidateAttributeCache();
+
             closed.set(true);
         }
+    }
+
+    @Override
+    public void flush() throws IOException
+    {
+        invalidateAttributeCache();
+    }
+
+    private void invalidateAttributeCache()
+    {
+        fileAttributesCache.invalidate(S3FileAttributesCache.generateCacheKey(objectId, BasicFileAttributes.class));
+        fileAttributesCache.invalidate(S3FileAttributesCache.generateCacheKey(objectId, PosixFileAttributes.class));
     }
 
     /**
