@@ -127,7 +127,7 @@ class S3ClientFactoryTest
         assertNull(proxyConfiguration.password());
         assertNull(proxyConfiguration.ntlmDomain());
         assertNull(proxyConfiguration.ntlmWorkstation());
-        assertNull(proxyConfiguration.scheme());
+        assertEquals(proxyConfiguration.scheme(), "http"); // default is now "http" instead of null.
 
         S3Configuration serviceConfiguration = clientFactory.getServiceConfiguration(props);
         assertFalse(serviceConfiguration.pathStyleAccessEnabled());
