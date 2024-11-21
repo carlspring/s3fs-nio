@@ -1,5 +1,40 @@
 # Changelog
 
+## [2.0.0](https://github.com/carlspring/s3fs-nio/compare/v1.0.6...v2.0.0) (2024-11-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* `S3Path#setFileAttributes()` was removed.
+* `S3FileSystem#getCache()` method was removed.
+* `S3FileSystemProvider#getCache()` was removed.
+* `S3FileSystemProvider#setCache()` was removed
+* `S3OutputStream` constructor signatures changed.
+
+### Features
+
+* Improve file attribute caching ([#854](https://github.com/carlspring/s3fs-nio/issues/854)) ([596434b](https://github.com/carlspring/s3fs-nio/commit/596434bfcd05c68eea53032df5960c249d38ffc0))
+
+
+### Deprecated
+
+* Move `S3FileSystem#key2Parts` into `S3Utils`. ([9ea4d32](https://github.com/carlspring/s3fs-nio/commit/9ea4d329d649c5807bf64228a01815e17222dd5e))
+
+
+### Dependencies
+
+* **upgrade:** bump org.testcontainers:testcontainers from 1.20.3 to 1.20.4 ([#865](https://github.com/carlspring/s3fs-nio/issues/865)) ([871fff3](https://github.com/carlspring/s3fs-nio/commit/871fff3a686240b8361be754a0d01b3d985f2f86))
+* **upgrade:** Upgrade AWS SDK to latest v2.29.9 ([#860](https://github.com/carlspring/s3fs-nio/pull/860)) ([03cd6fb](https://github.com/carlspring/s3fs-nio/commit/03cd6fbbd63e9a38816f1e1a67ce68ee5f07b060))
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v2.0.0 ([#864](https://github.com/carlspring/s3fs-nio/issues/864)) ([4946d83](https://github.com/carlspring/s3fs-nio/commit/4946d83e49e58706fcc951b12e071511dd73a946))
+
+
+### Build System
+
+* Move integration tests into separate test suite. ([e561e5c](https://github.com/carlspring/s3fs-nio/commit/e561e5c58c9ee70e9f349e161fd7c908915fe049))
+
 ## [1.0.6](https://github.com/carlspring/s3fs-nio/compare/v1.0.5...v1.0.6) (2024-11-20)
 
 
