@@ -93,7 +93,7 @@ dependencies {
         exclude("org.slf4j", "slf4j-api")
     }
     api("com.google.code.findbugs:jsr305:3.0.2")
-    api("com.github.ben-manes.caffeine:caffeine:2.9.3") {
+    api("com.github.ben-manes.caffeine:caffeine:3.1.8") {
         because("Last version to support JDK 8.")
     }
 
