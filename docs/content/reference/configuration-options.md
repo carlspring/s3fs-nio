@@ -10,7 +10,7 @@ A complete list of environment variables which can be set to configure the clien
 | s3fs.secret.key                     | none    | <small>AWS secret access key, used to authenticate the user interacting with AWS</small>                                |
 | s3fs.request.metric.collector.class | TODO    | <small>Fully-qualified class name to instantiate an AWS SDK request/response metric collector</small>                   |
 | s3fs.cache.attributes.ttl           | `60000` | <small>TTL for the cached file attributes (in millis)</small>                                                           | 
-| s3fs.cache.attributes.size          | `5000`  | <small>Total size of cached file attributes</small>                                                                     |
+| s3fs.cache.attributes.size          | `30000` | <small>Total size of cached file attributes</small>                                                                     |
 | s3fs.connection.timeout             | TODO    | <small>Timeout (in milliseconds) for establishing a connection to a remote service</small>                              |
 | s3fs.max.connections                | TODO    | <small>Maximum number of connections allowed in a connection pool</small>                                               |
 | s3fs.max.retry.error                | TODO    | <small>Maximum number of times that a single request should be retried, assuming it fails for a retryable error</small> |
