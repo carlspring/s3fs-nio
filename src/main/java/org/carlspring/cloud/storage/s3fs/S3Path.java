@@ -761,7 +761,9 @@ public class S3Path
     @Override
     public String toString()
     {
-        return toUri().toString();
+        final String encodedUri = normalizeURI(encode(this.uri));
+        final String toStr = normalizeURI((isAbsolute() && fileStore != null ? PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR : "") + encodedUri);
+        return toStr;
     }
 
     @Override

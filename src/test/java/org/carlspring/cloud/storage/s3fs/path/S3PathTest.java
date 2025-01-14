@@ -6,6 +6,7 @@ import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.WatchEvent;
 import java.util.HashMap;
@@ -342,6 +343,18 @@ class S3PathTest
         assertThat(first.hashCode()).isEqualTo(second.hashCode());
         assertThat(first).isNotEqualTo(third);
         assertThat(first.hashCode()).isNotEqualTo(third.hashCode());
+    }
+
+    @Test
+    void toStringTest()
+    {
+        S3Path relative = forPath("some/key/without/a/bucket");
+        assertThat(relative.toString()).isEqualTo("some/key/without/a/bucket");
+        assertThat(relative.toUri()).isEqualTo(URI.create("some/key/without/a/bucket"));
+
+        S3Path absolute = forPath("/bucket/some/key/with/a/bucket");
+        assertThat(absolute.toString()).isEqualTo("/bucket/some/key/with/a/bucket");
+        assertThat(absolute.toUri()).isEqualTo(URI.create(S3_GLOBAL_URI_TEST + "bucket/some/key/with/a/bucket"));
     }
 
 }
