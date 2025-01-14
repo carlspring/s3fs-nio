@@ -641,18 +641,15 @@ public class S3Path
     public URI toUri()
     {
         String encodedUri = encode(this.uri);
+        String builder = normalizeURI(encodedUri); // assuming path is relative.
 
-        // absolute
+        // when absolute path -- use full URI.
         if (this.isAbsolute())
         {
-            String builder = fileSystem.getKey() + PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR + encodedUri;
+            builder = "s3://" + normalizeURI(fileSystem.getKey() + PATH_SEPARATOR + getBucketName() + PATH_SEPARATOR + encodedUri);
+        }
 
-            return URI.create("s3://" + normalizeURI(builder));
-        }
-        else
-        {
-            return URI.create(encodedUri);
-        }
+        return URI.create(builder);
     }
 
     /**
