@@ -79,6 +79,10 @@ jobs:
             org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT
             ```
 
+            ### Maven Central Snapshot Link:
+
+            [org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT](https://oss.sonatype.org/content/repositories/snapshots/org/carlspring/cloud/aws/s3fs-nio/PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT/)
+
             ### WARNING
             
             **DO NOT USE IN PRODUCTION AS IT WILL BE DELETED AFTER MERGE!**    
