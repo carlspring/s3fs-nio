@@ -58,7 +58,7 @@ class CreateDirectoryTest
         Path path = Files.createDirectories(resolve);
 
         // assertions
-        assertEquals("s3://s3.test.amazonaws.com/newer-bucket/folder", path.toAbsolutePath().toString());
+        assertEquals("/newer-bucket/folder", path.toAbsolutePath().toString());
         assertTrue(Files.exists(root));
         assertTrue(Files.isDirectory(root));
         assertTrue(Files.exists(resolve));

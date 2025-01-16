@@ -122,7 +122,7 @@ class S3FileStoreTest
 
         assertNull(rootDirectory.getFileName());
         assertTrue(rootDirectory.isAbsolute());
-        assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toAbsolutePath().toString());
+        assertEquals("/bucket/", rootDirectory.toAbsolutePath().toString());
         assertEquals("s3://access-mocked@s3.test.amazonaws.com/bucket/", rootDirectory.toUri().toString());
     }
 
