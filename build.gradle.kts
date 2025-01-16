@@ -99,7 +99,7 @@ dependencies {
 
     testImplementation("ch.qos.logback:logback-classic:1.5.12")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.3")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
     testImplementation("org.apache.commons:commons-lang3:3.17.0")
     testImplementation("com.github.marschall:zipfilesystem-standalone:1.0.1")
     testImplementation("com.github.marschall:memoryfilesystem:2.8.1")
