@@ -1,5 +1,31 @@
 # Changelog
 
+## [3.0.0](https://github.com/carlspring/s3fs-nio/compare/v2.0.0...v3.0.0) (2025-01-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* `S3Path.toString()` now returns the string representation of the path instead of the URI ([#875](https://github.com/carlspring/s3fs-nio/issues/875))
+
+### Bug Fixes
+
+* `S3Path.toString()` now returns the string representation of the path instead of the URI ([#875](https://github.com/carlspring/s3fs-nio/issues/875)) ([b9cb4ba](https://github.com/carlspring/s3fs-nio/commit/b9cb4bad58d398c348cfbe13af3d51009c99118e))
+
+
+### Dependencies
+
+* **upgrade:** bump ch.qos.logback:logback-classic from 1.5.12 to 1.5.16 ([#876](https://github.com/carlspring/s3fs-nio/issues/876)) ([f028915](https://github.com/carlspring/s3fs-nio/commit/f0289158f7dad8e064154e1d186c2b6a6a2fb2e9))
+* **upgrade:** bump com.google.guava:guava from 33.3.1-jre to 33.4.0-jre ([#869](https://github.com/carlspring/s3fs-nio/issues/869)) ([0e3374d](https://github.com/carlspring/s3fs-nio/commit/0e3374df0f2c9ea6d1104cde5bd86b2c2c4419b8))
+* **upgrade:** bump org.assertj:assertj-core from 3.26.3 to 3.27.2 ([#877](https://github.com/carlspring/s3fs-nio/issues/877)) ([4e1f1ce](https://github.com/carlspring/s3fs-nio/commit/4e1f1ce05bab1b2aa8ce1eba7715509c87cf0fc3))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter from 5.11.3 to 5.11.4 ([#871](https://github.com/carlspring/s3fs-nio/issues/871)) ([34e6dd1](https://github.com/carlspring/s3fs-nio/commit/34e6dd132f41ed59e394d4f0398dd714802458d3))
+* **upgrade:** bump org.junit.jupiter:junit-jupiter-engine from 5.11.3 to 5.11.4 ([#870](https://github.com/carlspring/s3fs-nio/issues/870)) ([0ca2f56](https://github.com/carlspring/s3fs-nio/commit/0ca2f561c19a49e01457b680a1490fb367e6c2b4))
+* **upgrade:** bump org.sonarqube from 6.0.0.5145 to 6.0.1.5171 ([#868](https://github.com/carlspring/s3fs-nio/issues/868)) ([b54f502](https://github.com/carlspring/s3fs-nio/commit/b54f5026f41628fc6d47fdffa1588dde04d70d21))
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v3.0.0 ([#873](https://github.com/carlspring/s3fs-nio/issues/873)) ([710a0e4](https://github.com/carlspring/s3fs-nio/commit/710a0e436a6ad8f1acb75644e15b69fa5b23c8cf))
+
 ## [2.0.0](https://github.com/carlspring/s3fs-nio/compare/v1.0.6...v2.0.0) (2024-11-21)
 
 
