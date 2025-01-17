@@ -97,7 +97,7 @@ dependencies {
         because("Last version to support JDK 8.")
     }
 
-    testImplementation("ch.qos.logback:logback-classic:1.5.12")
+    testImplementation("ch.qos.logback:logback-classic:1.5.16")
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.11.4")
     testImplementation("org.apache.commons:commons-lang3:3.17.0")
