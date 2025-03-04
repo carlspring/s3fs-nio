@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/carlspring/s3fs-nio/compare/v3.0.0...v3.0.1) (2025-03-04)
+
+
+### Miscellaneous Chores
+
+* **snapshot:** Prepare for v3.0.1 ([#884](https://github.com/carlspring/s3fs-nio/issues/884)) ([d0beaa4](https://github.com/carlspring/s3fs-nio/commit/d0beaa49ec6ff90d55ecef16c8f6c1fb4fae3f0a))
+
 ## [3.0.0](https://github.com/carlspring/s3fs-nio/compare/v2.0.0...v3.0.0) (2025-01-17)
 
 
