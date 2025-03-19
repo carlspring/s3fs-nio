@@ -82,7 +82,7 @@ public class S3SeekableByteChannel
                 if (exists)
                 {
                     final S3Client client = path.getFileSystem().getClient();
-                    final String bucketName = path.getFileStore().getBucket().name();
+                    final String bucketName = path.getBucketName();
                     final GetObjectRequest request = GetObjectRequest.builder()
                                                                      .bucket(bucketName)
                                                                      .key(key)
