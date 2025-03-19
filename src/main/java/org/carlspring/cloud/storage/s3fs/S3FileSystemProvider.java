@@ -626,10 +626,10 @@ public class S3FileSystemProvider
         }
 
         // create bucket if necessary
-        final Bucket bucket = s3Path.getFileStore().getBucket();
+        final boolean hasBucket = s3Path.getFileStore().hasBucket();
         final String bucketName = s3Path.getBucketName();
 
-        if (bucket == null)
+        if (hasBucket)
         {
             final CreateBucketRequest request = CreateBucketRequest.builder()
                                                                    .bucket(bucketName)
