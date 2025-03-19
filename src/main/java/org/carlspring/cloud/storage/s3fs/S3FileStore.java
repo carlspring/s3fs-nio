@@ -135,6 +135,10 @@ public class S3FileStore
         return null;
     }
 
+    public boolean hasBucket() {
+        return hasBucket(name);
+    }
+
     private boolean hasBucket(final String bucketName)
     {
         // Originally getBucket was being used to determine presence of a bucket
