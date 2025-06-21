@@ -139,7 +139,7 @@ public class S3SeekableByteChannel
                 return;
             }
 
-            if (options.contains(StandardOpenOption.READ) && options.size() == 1)
+            if ((options.contains(StandardOpenOption.READ) && options.size() == 1) || options.isEmpty())
             {
                 return;
             }
