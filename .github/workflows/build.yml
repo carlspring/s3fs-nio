@@ -90,7 +90,7 @@ jobs:
 
       - name: Check if code is eligible for deploying snapshot version
         id: deploy_check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');  
