@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         with:
           # FYI: `github.rest` exposes `octokit` client.
           #      The method mappings can be found here: https://github.com/octokit/plugin-rest-endpoint-methods.js/blob/main/src/generated/endpoints.ts
