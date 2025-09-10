@@ -22,7 +22,7 @@ jobs:
           ref: 'master'
           fetch-depth: 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
 
       - name: Install release-please
         run: npm install -g release-please
