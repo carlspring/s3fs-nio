@@ -10,7 +10,7 @@ plugins {
     `maven-publish`
     signing
     id("com.adarshr.test-logger") version "4.0.0"
-    id("org.sonarqube") version "6.2.0.5505"
+    id("org.sonarqube") version "7.0.0.6105"
 }
 
 allprojects {
