@@ -7,6 +7,8 @@ public class S3EndpointConstant
 
     public static final URI S3_GLOBAL_URI_TEST = URI.create("s3://s3.test.amazonaws.com/");
 
+    public static final URI S3_GLOBAL_URI_MOCK_TEST = URI.create("s3mock://s3.test.amazonaws.com/");
+
     public static final String S3_REGION_URI_TEST = "s3://s3.test.%s.amazonaws.com/";
 
     public static final URI S3_GLOBAL_URI_IT = URI.create("s3://s3.amazonaws.com/");

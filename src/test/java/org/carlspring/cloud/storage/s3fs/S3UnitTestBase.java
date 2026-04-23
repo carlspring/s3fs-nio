@@ -5,7 +5,10 @@ import org.carlspring.cloud.storage.s3fs.util.S3MockFactory;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.spi.FileSystemProvider;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +26,7 @@ public abstract class S3UnitTestBase extends BaseTest
     protected S3FileSystemProvider s3fsProvider;
 
     protected FileSystem fileSystem;
+    protected FileSystem mockFileSystem;
 
     @BeforeEach
     public void setProperties()
@@ -49,16 +53,16 @@ public abstract class S3UnitTestBase extends BaseTest
     {
         S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.close();
-
-        for (S3FileSystem s3FileSystem : S3FileSystemProvider.getFilesystems().values())
+        ArrayList<FileSystemProvider> fileSystemProviders = FileSystemProvider.installedProviders()
+                                                                              .stream()
+                                                                              .filter(p -> p.getClass().isAssignableFrom(S3FileSystemProvider.class))
+                                                                              .collect(Collectors.toCollection(ArrayList::new));
+        for (FileSystemProvider provider : fileSystemProviders)
         {
-            try
+            if (S3FileSystemProvider.class.isAssignableFrom(provider.getClass()))
             {
-                s3FileSystem.close();
-            }
-            catch (Exception e)
-            {
-                //ignore
+                S3FileSystemProvider s3Provider = (S3FileSystemProvider) provider;
+                s3Provider.close();
             }
         }
     }
@@ -77,6 +81,10 @@ public abstract class S3UnitTestBase extends BaseTest
             if (fileSystem != null)
             {
                 fileSystem.close();
+            }
+            if (mockFileSystem != null)
+            {
+                mockFileSystem.close();
             }
         }
         catch (Throwable ignored)

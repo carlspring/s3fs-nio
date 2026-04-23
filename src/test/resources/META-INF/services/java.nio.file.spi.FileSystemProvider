@@ -1,2 +1,3 @@
 org.carlspring.cloud.storage.s3fs.S3FileSystemProvider
+org.carlspring.cloud.storage.s3fs.S3FileSystemProviderMock
 com.github.marschall.memoryfilesystem.MemoryFileSystemProvider
