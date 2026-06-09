@@ -117,7 +117,7 @@ jobs:
             }
 
       - name: Setup key
-        uses: crazy-max/ghaction-import-gpg@v6
+        uses: crazy-max/ghaction-import-gpg@v7
         if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         with:
           fingerprint: ${{ vars.GPG_FINGERPRINT }}
