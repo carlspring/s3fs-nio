@@ -107,7 +107,7 @@ dependencies {
     testImplementation("org.mockito:mockito-inline:4.11.0")
     testImplementation("org.mockito:mockito-junit-jupiter:4.11.0")
     testImplementation("org.testcontainers:testcontainers:2.0.5")
-    testImplementation("org.assertj:assertj-core:3.27.6")
+    testImplementation("org.assertj:assertj-core:3.27.7")
 }
 
 configure<com.adarshr.gradle.testlogger.TestLoggerExtension> {
