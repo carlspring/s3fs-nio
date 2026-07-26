@@ -82,7 +82,7 @@ jobs:
           npm install -g release-please
           release-please github-release --token=${{ secrets.GITHUB_TOKEN }} --repo-url="${{ github.repository }}"
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Trigger release deploy
         env:

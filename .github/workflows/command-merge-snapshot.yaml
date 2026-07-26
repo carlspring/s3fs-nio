@@ -64,7 +64,7 @@ jobs:
               headers: { 'X-GitHub-Api-Version': '2022-11-28' }
             });
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Trigger prepare-release workflow.
         env:
