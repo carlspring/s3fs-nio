@@ -161,7 +161,7 @@ public class S3ClientMock
                                                           IOException exc)
                         throws IOException
                 {
-                    if (dir != base)
+                    if (!dir.equals(base))
                     {
                         Files.delete(dir);
                     }
