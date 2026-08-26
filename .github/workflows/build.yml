@@ -62,19 +62,19 @@ jobs:
         run: echo "$EVENT_NAME $REPOSITORY $PR_HEAD_LABEL $IS_PR $IS_FORK ${{ github.event.pull_request.head.sha || github.sha }}"
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: '0' # 0 because of sonar needs git blame.
 
       - name: Setup Java ${{ matrix.java }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
         with:
           java-version: ${{ matrix.java }}
           distribution: "temurin"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6
         with:
           # The Gradle wrapper's version (already the default, putting it here to clarity)
           gradle-version: wrapper
@@ -90,7 +90,7 @@ jobs:
 
       - name: Check if code is eligible for deploying snapshot version
         id: deploy_check
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9
         with:
           script: |
             const fs = require('fs');  
@@ -117,7 +117,7 @@ jobs:
             }
 
       - name: Setup key
-        uses: crazy-max/ghaction-import-gpg@v7
+        uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd # v7
         if: ${{ fromJSON(steps.deploy_check.outputs.result).is_deployable == 'true' }}
         with:
           fingerprint: ${{ vars.GPG_FINGERPRINT }}
