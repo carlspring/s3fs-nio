@@ -59,6 +59,26 @@ class ToUriTest
     }
 
     @Test
+    public void toUriSpecialChars()
+    {
+        Path path = getPath("/bucket/([fol! @#$%der])");
+        URI uri = path.toUri();
+
+        // the scheme is s3
+        assertEquals("s3", uri.getScheme());
+
+        // could get the correct fileSystem
+        S3FileSystem fs = s3fsProvider.getFileSystem(uri);
+        // the host is the endpoint specified in fileSystem
+        assertEquals(fs.getEndpoint(), uri.getHost());
+
+        // bucket name as first path
+        Path pathActual = fs.provider().getPath(uri);
+
+        assertEquals(path, pathActual);
+    }
+
+    @Test
     void toUriWithEndSlash()
     {
         S3Path s3Path = getPath("/bucket/folder/");
