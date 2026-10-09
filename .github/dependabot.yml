@@ -12,6 +12,24 @@ updates:
       interval: "daily"
     commit-message:
       prefix: deps(upgrade)
+    groups:
+      # AWS SDK artifacts are released together and share a version via the BOM.
+      aws:
+        patterns:
+          - "software.amazon.awssdk:*"
+      # Google libraries (Guava, FindBugs annotations).
+      google:
+        patterns:
+          - "com.google.guava:*"
+          - "com.google.code.findbugs:*"
+      # JUnit artifacts share a version and must be upgraded together.
+      junit:
+        patterns:
+          - "org.junit.jupiter:*"
+      # Mockito artifacts share a version and must be upgraded together.
+      mockito:
+        patterns:
+          - "org.mockito:*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -19,3 +37,17 @@ updates:
       interval: "daily"
     commit-message:
       prefix: deps(upgrade)
+    groups:
+      # Official GitHub-maintained actions.
+      github-actions:
+        patterns:
+          - "actions/*"
+          - "github/codeql-action/*"
+      # Actions maintained by peter-evans.
+      peter-evans:
+        patterns:
+          - "peter-evans/*"
+      # Gradle-maintained actions.
+      gradle:
+        patterns:
+          - "gradle/actions/*"
