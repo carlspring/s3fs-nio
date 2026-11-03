@@ -253,11 +253,11 @@ publishing {
             var repositoryUrl: String;
 
             if (isReleaseVersion) {
-                val releaseMavenCentral = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                val releaseMavenCentral = "https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/"
                 val releaseInternal = (project.findProperty("s3fs.publish.internal.release") ?: System.getenv("S3FS_PUBLISH_INTERNAL_RELEASE") ?: "") as String
                 repositoryUrl = if (releaseInternal != "" && publishInternally) releaseInternal else releaseMavenCentral
             } else {
-                val snapshotMavenCentral = "https://oss.sonatype.org/content/repositories/snapshots/"
+                val snapshotMavenCentral = "https://central.sonatype.com/repository/maven-snapshots/"
                 val snapshotInternal = (project.findProperty("s3fs.publish.internal.snapshot") ?: System.getenv("S3FS_PUBLISH_INTERNAL_SNAPSHOT") ?: "") as String
                 repositoryUrl = if (snapshotInternal != "" && publishInternally) snapshotInternal else snapshotMavenCentral
             }
