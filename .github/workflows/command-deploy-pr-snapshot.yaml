@@ -81,7 +81,7 @@ jobs:
 
             ### Maven Central Snapshot Link:
 
-            [org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT](https://oss.sonatype.org/content/repositories/snapshots/org/carlspring/cloud/aws/s3fs-nio/PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT/)
+            [org.carlspring.cloud.aws:s3fs-nio:PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT](https://central.sonatype.com/repository/maven-snapshots/org/carlspring/cloud/aws/s3fs-nio/PR-${{ github.event.client_payload.github.payload.issue.number }}-SNAPSHOT/maven-metadata.xml)
 
             ### WARNING
             

@@ -57,6 +57,18 @@ jobs:
           S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
         run: ./gradlew build publish -PwithSignature=true --warn --stacktrace
 
+      # The OSSRH compatibility API only stages the upload; it has to be explicitly handed over to the Central Portal,
+      # where it can then be reviewed and published (https://central.sonatype.org/publish/publish-portal-ossrh-staging-api/).
+      - name: Transfer deployment to Central Portal
+        env:
+          S3FS_PUBLISH_SONATYPE_USER: "${{ secrets.S3FS_PUBLISH_SONATYPE_USER }}"
+          S3FS_PUBLISH_SONATYPE_PASS: "${{ secrets.S3FS_PUBLISH_SONATYPE_PASS }}"
+        run: |
+          TOKEN=$(printf '%s:%s' "$S3FS_PUBLISH_SONATYPE_USER" "$S3FS_PUBLISH_SONATYPE_PASS" | base64 -w0)
+          curl --fail-with-body -sS -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/org.carlspring"
+
       - name: Check file signature
         run: |
           ls -al ./build/libs/
