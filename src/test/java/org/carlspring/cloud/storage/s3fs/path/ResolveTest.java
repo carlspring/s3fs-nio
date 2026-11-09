@@ -6,12 +6,14 @@ import org.carlspring.cloud.storage.s3fs.S3UnitTestBase;
 import org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.carlspring.cloud.storage.s3fs.util.S3EndpointConstant.S3_GLOBAL_URI_TEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ResolveTest
         extends S3UnitTestBase
@@ -64,4 +66,34 @@ class ResolveTest
         assertEquals(getPath("/bucket2/other/child"), getPath("/bucket/path/to/file").resolve("/bucket2/other/child"));
     }
 
+
+    @Test
+    void nonS3Paths()
+    {
+        S3Path parent = getPath("/bucket");
+        S3Path child = getPath("/bucket/rabbit");
+        S3Path deepChild = getPath("/bucket/rabbit/in/space");
+        S3Path resolved = (S3Path) parent.resolve(child);
+
+        assertEquals(child, resolved);
+
+        resolved = (S3Path) parent.resolve("rabbit");
+        assertEquals(child, resolved);
+
+        resolved = (S3Path) parent.resolve(Paths.get("rabbit")); //unixPath
+        assertEquals(child, resolved);
+
+        resolved = (S3Path) parent.resolve(Paths.get("rabbit").resolve("in").resolve("space"));
+        assertEquals(deepChild, resolved);
+
+        resolved = (S3Path) parent.resolve(Paths.get("./rabbit")); //unixPath
+        assertEquals("s3://s3.test.amazonaws.com/bucket/./rabbit", resolved.toString());
+
+        resolved = (S3Path) parent.resolve(Paths.get("./rabbit in space")); //unixPath
+        assertEquals("s3://s3.test.amazonaws.com/bucket/./rabbit%20in%20space", resolved.toString());
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+                parent.resolve(Paths.get("tempDirectory").toAbsolutePath()));
+        assertEquals("other must be an instance of org.carlspring.cloud.storage.s3fs.S3Path or a relative Path", e.getMessage());
+    }
 }
