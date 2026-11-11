@@ -39,6 +39,7 @@ class S3SeekableByteChannelTest
             throws IOException
     {
         fileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST, null);
+        mockFileSystem = FileSystems.newFileSystem(S3EndpointConstant.S3_GLOBAL_URI_MOCK_TEST, null);
     }
 
     @ParameterizedTest
@@ -62,32 +63,24 @@ class S3SeekableByteChannelTest
     }
 
     @Test
-    void readDontNeedToSyncTempFile()
+    void shouldNotCallSyncWhenOnlyReading()
             throws IOException
     {
         S3ClientMock client = S3MockFactory.getS3ClientMock();
         client.bucket("buck").file("file1");
+        client.bucket("buck").file("file2");
 
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ), true));
+        S3FileSystem fs = (S3FileSystem) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_MOCK_TEST);
+        S3FileSystemProviderMock mockFsProvider = (S3FileSystemProviderMock) fs.provider();
 
-        assertNotNull(channel);
+        S3Path file1 = fs.getPath("/buck/file1");
+        S3Path file2 = fs.getPath("/buck/file2");
 
-        channel.close();
+        Files.readAllBytes(file1);
 
-        verify(channel, never()).sync();
-    }
+        verify(mockFsProvider.getByteChannelsSpies().get(file1), never()).sync();
 
-    @Test
-    void tempFileRequiredFlagToFalseDontNeedToSyncTempFile()
-            throws IOException
-    {
-        S3ClientMock client = S3MockFactory.getS3ClientMock();
-        client.bucket("buck").file("file1");
-
-        S3Path file1 = (S3Path) FileSystems.getFileSystem(S3EndpointConstant.S3_GLOBAL_URI_TEST).getPath("/buck/file1");
-        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file1, EnumSet.of(StandardOpenOption.READ), false));
-
+        S3SeekableByteChannel channel = spy(new S3SeekableByteChannel(file2, EnumSet.of(StandardOpenOption.READ), false));
         assertNotNull(channel);
 
         channel.close();
