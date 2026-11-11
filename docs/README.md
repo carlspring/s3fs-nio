@@ -21,13 +21,20 @@ This directory contains the S3FS NIO2 documentation.
 
 2. Log into the container
    ```
-   docker-compose run --rm -p 8000:8000 -v $(pwd)/../:/workspace --entrypoint /bin/sh mkdocs
+   docker-compose run --rm -p 8000:8000 --entrypoint /bin/sh serve
    ```
 
-2. Manually start the server (i.e. test plugins, cwd should be ./docs!)
+3. Manually start the server (cwd should be ./docs!)
    ```
-   mkdocs serve -a 0.0.0.0:8000
+   zensical serve -a 0.0.0.0:8000
    ```
+
+Alternatively, without Docker (Python 3.10+):
+
+```
+pip install -r requirements.txt
+zensical serve
+```
 
 ## Notes
 
@@ -36,34 +43,27 @@ This directory contains the S3FS NIO2 documentation.
 
 ## Used tools and extensions
 
+The site is built with [Zensical][zensical] (configured in `zensical.toml`) using the `classic` theme variant.
+
 | Tool                            | Documentation                         | Sources                             |
 | ------------------------------- | ------------------------------------- | ----------------------------------- |
-| mkdocs                          | [documentation][mkdocs]               | [Sources][mkdocs-src]               |
-| mkdocs-material                 | [documentation][mkdocs-material]      | [Sources][mkdocs-material-src]      |
+| zensical                        | [documentation][zensical]             | [Sources][zensical-src]             |
 | pymdown-extensions              | [documentation][pymdown-extensions]   | [Sources][pymdown-extensions-src]   |
 | mdx_gh_links                    | [documentation][mdx_gh_links]         | [Sources][mdx_gh_links]             |
-| mkdocs-redirects                | [documentation][mkdocs-redirects]     | [Sources][mkdocs-redirects]         |
-| mkdocs-markdownextradata-plugin | [documentation][mkdocs-markdownextradata-plugin] | [Sources][mkdocs-markdownextradata-plugin] |
-| mkdocs-pom-parser-plugin        | [documentation][mkdocs-pom-parser-plugin] | [Sources][mkdocs-pom-parser-plugin] |
-| mkdocs-minify-plugin            | [documentation][mkdocs-minify-plugin] | [Sources][mkdocs-minify-plugin] |
+| mdx_include                     | [documentation][mdx_include]          | [Sources][mdx_include]              |
+
+Variables defined under `[project.extra]` in `zensical.toml` (e.g. `{{ POM_VERSION }}`) can be used in pages; they are
+rendered by Zensical's `markdownextradata` compatibility extension.
 
 
 [docker-install]: https://docs.docker.com/get-docker/ "Docker Installation"
 [docker-compose-install]: https://docs.docker.com/compose/install/ "Docker Compose Installation"
 
-[mkdocs]: https://www.mkdocs.org "Mkdocs"
-[mkdocs-src]: https://github.com/mkdocs/mkdocs "Mkdocs - Sources"
-
-[mkdocs-material]: https://squidfunk.github.io/mkdocs-material/ "Material for MkDocs"
-[mkdocs-material-src]: https://github.com/squidfunk/mkdocs-material "Material for MkDocs - Sources"
+[zensical]: https://zensical.org "Zensical"
+[zensical-src]: https://github.com/zensical/zensical "Zensical - Sources"
 
 [pymdown-extensions]: https://facelessuser.github.io/pymdown-extensions "PyMdown Extensions"
 [pymdown-extensions-src]: https://github.com/facelessuser/pymdown-extensions "PyMdown Extensions - Sources"
 
-
 [mdx_gh_links]: https://github.com/Python-Markdown/github-links/
-[mkdocs-redirects]: https://github.com/datarobot/mkdocs-redirects
-[mkdocs-markdownextradata-plugin]: https://github.com/rosscdh/mkdocs-markdownextradata-plugin
-[mkdocs-pom-parser-plugin]: https://github.com/steve-todorov/mkdocs-pom-parser-plugin "A pom.xml file parser for mkdocs"
-
-[mkdocs-minify-plugin]: https://github.com/byrnereese/mkdocs-minify-plugin
+[mdx_include]: https://github.com/neurobin/mdx_include
