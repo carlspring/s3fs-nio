@@ -52,7 +52,7 @@ jobs:
         run: |
           cat <<< $(jq '."." = "${{ inputs.VERSION }}-SNAPSHOT"' .release-please-manifest.json) > .release-please-manifest.json
           sed -Ei 's/version([ ]*)\=.*/version=${{ inputs.VERSION }}-SNAPSHOT/g' gradle.properties
-          sed -Ei 's/POM_VERSION:.*/POM_VERSION: "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/mkdocs.y*ml
+          sed -Ei 's/^POM_VERSION = .*/POM_VERSION = "${{ inputs.VERSION }}-SNAPSHOT"/g' docs/zensical.toml
 
       - name: Create PR
         uses: peter-evans/create-pull-request@v8
