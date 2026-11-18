@@ -36,7 +36,6 @@ import java.nio.file.attribute.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -82,8 +81,6 @@ public class S3FileSystemProvider
     public static final String CHARSET_KEY = "s3fs.charset";
 
     public static final String S3_FACTORY_CLASS = "s3fs.amazon.s3.factory.class";
-
-    private volatile static ConcurrentMap<String, S3FileSystem> fileSystems = new ConcurrentHashMap<>();
 
     private static final List<String> PROPS_TO_OVERLOAD = Arrays.asList(ACCESS_KEY,
                                                                         SECRET_KEY,
@@ -134,7 +131,7 @@ public class S3FileSystemProvider
 
         // try to get the filesystem by the key
         String key = getFileSystemKey(uri, props);
-        if (fileSystems.containsKey(key))
+        if (getFileSystems().containsKey(key))
         {
             String safeName = uri.getScheme() + "://";
             String userInfo = uri.getUserInfo();
@@ -148,7 +145,7 @@ public class S3FileSystemProvider
         // create the filesystem with the final properties, store and return
         S3FileSystem fileSystem = createFileSystem(uri, props);
 
-        fileSystems.put(fileSystem.getKey(), fileSystem);
+        getFileSystems().put(fileSystem.getKey(), fileSystem);
 
         return fileSystem;
     }
@@ -383,9 +380,9 @@ public class S3FileSystemProvider
 
         String key = this.getFileSystemKey(uri, props); // s3fs.access.key is part of the key here.
 
-        if (fileSystems.containsKey(key))
+        if (getFileSystems().containsKey(key))
         {
-            return fileSystems.get(key);
+            return getFileSystems().get(key);
         }
 
         return newFileSystem(uri, env);
@@ -398,9 +395,9 @@ public class S3FileSystemProvider
 
         String key = this.getFileSystemKey(uri);
 
-        if (fileSystems.containsKey(key))
+        if (getFileSystems().containsKey(key))
         {
-            return fileSystems.get(key);
+            return getFileSystems().get(key);
         }
         else
         {
@@ -1114,25 +1111,36 @@ public class S3FileSystemProvider
 
     public void close(S3FileSystem fileSystem)
     {
-        if (fileSystem.getKey() != null && fileSystems.containsKey(fileSystem.getKey()))
+        if (fileSystem.getKey() != null && getFileSystems().containsKey(fileSystem.getKey()))
         {
             fileSystem.getFileAttributesCache().invalidateAll();
-            fileSystems.remove(fileSystem.getKey());
+            getFileSystems().remove(fileSystem.getKey());
+        }
+    }
+
+    /**
+     * Close all opened s3 filesystems.
+     */
+    public void close() {
+        for (S3FileSystem fileSystem : getFileSystems().values()) {
+            close(fileSystem);
         }
     }
 
     public boolean isOpen(S3FileSystem s3FileSystem)
     {
-        return fileSystems.containsKey(s3FileSystem.getKey());
+        return getFileSystems().containsKey(s3FileSystem.getKey());
     }
 
-    /**
-     * only 4 testing
-     */
 
-    protected static ConcurrentMap<String, S3FileSystem> getFilesystems()
+    @SuppressWarnings("unchecked")
+    protected <T extends S3FileSystemRegistry> T getFileSystemRegistry()
     {
-        return fileSystems;
+        return (T) DefaultS3FileSystemRegistry.getInstance();
     }
 
+    public ConcurrentMap<String, S3FileSystem> getFileSystems()
+    {
+        return getFileSystemRegistry().getFileSystems();
+    }
 }
